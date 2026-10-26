@@ -1,5 +1,5 @@
 {
-  "createdAtUtc": "2026-10-26T22:42:54.426070+00:00",
+  "createdAtUtc": "2026-10-26T23:05:55.743961+00:00",
   "actualProductAdapterCasesPassed": 18,
   "fixtureFiles": {
     "README.md": {
@@ -27,8 +27,20 @@
       "sha256": "b6e7b57fd7a4c4e55c7a7cf91c0e74f336534362738371b981bb5aaea3b13c10"
     },
     "csv-route-results.json": {
-      "bytes": 17726,
-      "sha256": "f5d426295e3af434185484aa892199625a59af4340fd3d9acb90be7b595b9877"
+      "bytes": 17893,
+      "sha256": "7072a85b27f8d753778b93291a4f8e701a7beac3f368e8f198e38d62a51bcd45"
+    },
+    "excel-real-validation.json": {
+      "bytes": 137,
+      "sha256": "9d2c487dcd524a9271230b47ad527cce79af82f4223de5c6a0a6950a4abacbf4"
+    },
+    "excel-session-validation.json": {
+      "bytes": 174,
+      "sha256": "4be0400401a03a521d9a043e121bd0599588cc8f9e5bb90cb4c147bf657c851f"
+    },
+    "excel-native-validation.json": {
+      "bytes": 191,
+      "sha256": "2744821f302a48ce83805971bbbc21be162f89dcf30c3153be1d8cc20e72b72a"
     }
   },
   "productFiles": {
@@ -36,7 +48,11 @@
     "native_helper.ps1": "c2da230f1242b0450abe21365d66842c35082ae6b7cae30420925b409e4aab15",
     "windows_ui_adapter.py": "0691fa9a86c3442f6163735d9a1c9cd1a32215e6ee72638a608c7054fea3de9a",
     "csv_source.py": "52cd5f95324fddc9a6e8a88c8e6e3ce7f72637d413ea5e2d178831c6aa6868e5",
-    "session.py": "dbe54bf04fa66e01ea0820c81393f0577af195677d273ceb5488d1cb7aaa32ca",
-    "layer_algorithm.py": "f88d93848b505c5d7317af8e5ad5913cdf9b1a62544b0dfd96d6c5721d3d357f"
+    "session.py": "4c59be2d8d1b42fff3f227f342952d05d867ed193b7ec9ba8b23c3b001dbcc06",
+    "layer_algorithm.py": "c58716206a14dab21239df024746a596828205084676b537fef47a0edf7ffc19",
+    "excel_workbook.py": "e0297c9dd0d5d4a7107badbaf31693b335a4891e537c6872d53898acc07119c5",
+    "excel_worker.ps1": "57b0ea62ff6754ae1780912b3705ac581880653ba982ae6ce42646510cbed10b",
+    "layer_charts.py": "c715f8044381139d76686db46257084abc8a8fdc6f75113fe228cb59368dc250",
+    "target_temperature.py": "64bd0978339966af85006feecc89e57585ce21f55f7d9f727d1c11d96d1789c3"
   }
 }

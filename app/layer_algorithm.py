@@ -9,8 +9,10 @@ No I/O, formulas from documents are never executed, and settings are explicit.
 from __future__ import annotations
 
 from collections import deque
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, replace
 import math
+
+from target_temperature import validate_target_temperature
 
 
 WORKBOOK_SHA256 = "2dbdff1057ab0a2f0bbe539b77ffb71782f10daf61f8d111236d6f5585e16a94"
@@ -116,6 +118,11 @@ class LayerAdaptiveController:
 
     def reset(self):
         self._history.clear()
+
+    def set_target_temperature(self, temperature_c):
+        """Change the target for future observations without replaying history."""
+        self.settings = replace(self.settings,
+            target_temperature_c=validate_target_temperature(temperature_c))
 
     def process(self, layer: int, temperature_c: float, previous_actual_power: float,
                 restart: bool = False) -> LayerRecommendation:

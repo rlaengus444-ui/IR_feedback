@@ -13,6 +13,9 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 
 from session import SessionController, SessionOptions, default_adapter_factory
 from single_instance import SingleInstance
+from layer_charts import LayerCharts
+from target_temperature import parse_target_temperature
+from excel_workbook import WorkbookSpec
 
 
 MODE_LABELS = {"조회": "monitor", "계산 미리보기": "preview", "UI 자동 적용": "control"}
@@ -60,6 +63,14 @@ class ThermalFeedbackWindow:
         self.mode = tk.StringVar(value="조회")
         self.target_temperature = tk.StringVar(value="65")
         self.settings_path = tk.StringVar()
+        self.algorithm_type = tk.StringVar(value="기본 알고리즘")
+        self.algorithm_path_label = tk.StringVar(value="설정 JSON(선택)")
+        self.workbook_sheet = tk.StringVar()
+        self.workbook_temperature_cell = tk.StringVar(value="B13")
+        self.workbook_result_cell = tk.StringVar(value="D13")
+        self.workbook_power_cell = tk.StringVar(value="C13")
+        self.workbook_target_cell = tk.StringVar(value="B5")
+        self.workbook_layer_cell = tk.StringVar(value="A13")
         self.status = tk.StringVar(value="연결 안 됨")
         self.capability = tk.StringVar(value="기존 프로그램 무수정 · UI 자동 적용은 선택 후 연결해야 시작됩니다.")
         self.layer = tk.StringVar(value="—")
@@ -67,8 +78,8 @@ class ThermalFeedbackWindow:
         self.process_state = tk.StringVar(value="—")
         self.decision = tk.StringVar(value="연결 후 새 T_recoating 기록을 기다립니다.")
         self.root.title("IR 피드백 외부 모듈 · CSV")
-        self.root.geometry("1080x740")
-        self.root.minsize(940, 650)
+        self.root.geometry("1120x900")
+        self.root.minsize(940, 760)
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self._build()
         self._refresh_buttons()
@@ -79,14 +90,14 @@ class ThermalFeedbackWindow:
     def _build(self):
         style = ttk.Style(self.root)
         style.configure("Title.TLabel", font=("Segoe UI", 20, "bold"))
-        style.configure("Metric.TLabel", font=("Segoe UI", 27, "bold"))
+        style.configure("Metric.TLabel", font=("Segoe UI", 23, "bold"))
         style.configure("Status.TLabel", font=("Segoe UI", 11, "bold"))
-        main = ttk.Frame(self.root, padding=22)
+        main = ttk.Frame(self.root, padding=14)
         main.pack(fill="both", expand=True)
         ttk.Label(main, text="IR 피드백 확장 모듈", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(main, text="원본 무수정 · Monitoring CSV 저장 후 수신 · Process 표 접근 없음", foreground="#536173").pack(anchor="w", pady=(4, 15))
+        ttk.Label(main, text="원본 무수정 · Monitoring CSV 저장 후 수신 · Process 표 접근 없음", foreground="#536173").pack(anchor="w", pady=(3, 8))
 
-        connection = ttk.LabelFrame(main, text="프로그램 연결", padding=12)
+        connection = ttk.LabelFrame(main, text="프로그램 연결", padding=8)
         connection.pack(fill="x")
         ttk.Label(connection, text="장비").grid(row=0, column=0, sticky="w")
         self.machine_box = ttk.Combobox(connection, textvariable=self.machine, values=("M1", "S3"), state="readonly", width=7)
@@ -111,26 +122,47 @@ class ThermalFeedbackWindow:
         self.mode_box.pack(side="left", padx=(8, 20))
         ttk.Label(options, text="목표 온도 °C").pack(side="left")
         self.temperature_entry = ttk.Entry(options, textvariable=self.target_temperature, width=9)
-        self.temperature_entry.pack(side="left", padx=(8, 15))
-        ttk.Label(options, text="원본 Excel 기본값 사용 · 시작 시 제어 자동 활성화 안 함", foreground="#536173").pack(side="left")
-        self.configuration_widgets.extend(((self.mode_box, "readonly"), (self.temperature_entry, "normal")))
+        self.temperature_entry.pack(side="left", padx=(8, 5))
+        self.target_apply_button = ttk.Button(options, text="목표 적용", command=self.apply_target_temperature)
+        self.target_apply_button.pack(side="left", padx=(0, 12))
+        ttk.Label(options, text="연결 중 변경 시 다음 새 층부터 반영", foreground="#536173").pack(side="left")
+        self.configuration_widgets.append((self.mode_box, "readonly"))
         advanced = ttk.Frame(connection)
         advanced.grid(row=3, column=0, columnspan=5, sticky="ew", pady=(10, 0))
-        ttk.Label(advanced, text="설정 파일(선택)").pack(side="left")
+        ttk.Label(advanced, text="알고리즘").pack(side="left")
+        self.algorithm_box = ttk.Combobox(advanced, textvariable=self.algorithm_type,
+            values=("기본 알고리즘", "Excel 수식 파일"), state="readonly", width=17)
+        self.algorithm_box.pack(side="left", padx=(8, 15))
+        self.algorithm_box.bind("<<ComboboxSelected>>", self._algorithm_changed)
+        ttk.Label(advanced, textvariable=self.algorithm_path_label).pack(side="left")
         self.settings_entry = ttk.Entry(advanced, textvariable=self.settings_path)
         self.settings_entry.pack(side="left", fill="x", expand=True, padx=8)
         self.browse_button = ttk.Button(advanced, text="찾아보기", command=self.browse)
         self.browse_button.pack(side="left")
-        self.configuration_widgets.extend(((self.settings_entry, "normal"), (self.browse_button, "normal")))
+        self.configuration_widgets.extend(((self.algorithm_box, "readonly"), (self.settings_entry, "normal"), (self.browse_button, "normal")))
+        self.excel_fields = ttk.Frame(connection)
+        self.excel_fields.grid(row=4, column=0, columnspan=5, sticky="ew", pady=(10, 0))
+        for index, (title, variable, width) in enumerate((("시트(빈칸: 첫 시트)", self.workbook_sheet, 15),
+                ("온도 시작셀", self.workbook_temperature_cell, 7),
+                ("IR 결과 시작셀", self.workbook_result_cell, 7),
+                ("현재 IR 입력셀", self.workbook_power_cell, 7),
+                ("목표 셀", self.workbook_target_cell, 7),
+                ("층 번호 셀(선택)", self.workbook_layer_cell, 7))):
+            row, group = divmod(index, 3)
+            ttk.Label(self.excel_fields, text=title).grid(row=row, column=group * 2, sticky="w", padx=(0, 4), pady=2)
+            widget = ttk.Entry(self.excel_fields, textvariable=variable, width=width)
+            widget.grid(row=row, column=group * 2 + 1, sticky="w", padx=(0, 20), pady=2)
+            self.configuration_widgets.append((widget, "normal"))
+        self.excel_fields.grid_remove()
 
         status_row = ttk.Frame(main)
-        status_row.pack(fill="x", pady=(15, 5))
+        status_row.pack(fill="x", pady=(8, 4))
         ttk.Label(status_row, textvariable=self.status, style="Status.TLabel").pack(side="left")
-        ttk.Label(main, textvariable=self.capability, wraplength=990, foreground="#9a4c10").pack(fill="x", anchor="w", pady=(0, 14))
+        ttk.Label(main, textvariable=self.capability, wraplength=990, foreground="#9a4c10").pack(fill="x", anchor="w", pady=(0, 6))
         metrics = ttk.Frame(main)
         metrics.pack(fill="x")
         for title, variable in (("최근 완료 층", self.layer), ("T_recoating (CSV)", self.temperature), ("프로그램 상태", self.process_state)):
-            card = ttk.LabelFrame(metrics, text=title, padding=12)
+            card = ttk.LabelFrame(metrics, text=title, padding=8)
             card.pack(side="left", fill="both", expand=True, padx=(0, 10))
             ttk.Label(card, textvariable=variable, style="Metric.TLabel").pack(anchor="w")
         self.outputs = ttk.Treeview(main, columns=("setting", "recommended", "scope"), height=2, show="tree headings")
@@ -143,16 +175,35 @@ class ThermalFeedbackWindow:
             self.outputs.column(column, width=220, anchor="center")
         self.outputs.insert("", "end", iid="heater1", text="IR 1", values=("—", "—", "—"))
         self.outputs.insert("", "end", iid="heater2", text="IR 2", values=("—", "—", "—"))
-        self.outputs.pack(fill="x", pady=(15, 8))
-        ttk.Label(main, textvariable=self.decision, wraplength=990).pack(fill="x", pady=(0, 12))
-        ttk.Label(main, text="상태 기록").pack(anchor="w")
-        self.log = scrolledtext.ScrolledText(main, height=7, wrap="word", font=("Segoe UI", 9), state="disabled")
+        self.outputs.pack(fill="x", pady=(8, 4))
+        ttk.Label(main, textvariable=self.decision, wraplength=990).pack(fill="x", pady=(0, 6))
+        notebook = ttk.Notebook(main)
+        notebook.pack(fill="both", expand=True)
+        graph_tab = ttk.Frame(notebook, padding=4)
+        log_tab = ttk.Frame(notebook, padding=4)
+        notebook.add(graph_tab, text="층별 그래프")
+        notebook.add(log_tab, text="상태 기록")
+        self.charts = LayerCharts(graph_tab)
+        self.charts.pack(fill="both", expand=True)
+        self.log = scrolledtext.ScrolledText(log_tab, height=7, wrap="word", font=("Segoe UI", 9), state="disabled")
         self.log.pack(fill="both", expand=True, pady=(5, 0))
 
     def browse(self):
-        value = filedialog.askopenfilename(parent=self.root, title="알고리즘 설정(선택)", filetypes=(("JSON 설정", "*.json"),))
+        excel = self.algorithm_type.get() == "Excel 수식 파일"
+        value = filedialog.askopenfilename(parent=self.root,
+            title="Excel 알고리즘 선택" if excel else "알고리즘 설정(선택)",
+            filetypes=(("Excel 통합 문서", "*.xlsx"),) if excel else (("JSON 설정", "*.json"),))
         if value:
             self.settings_path.set(value)
+
+    def _algorithm_changed(self, _event=None):
+        excel = self.algorithm_type.get() == "Excel 수식 파일"
+        self.settings_path.set("")
+        self.algorithm_path_label.set("Excel 파일" if excel else "설정 JSON(선택)")
+        if excel:
+            self.excel_fields.grid()
+        else:
+            self.excel_fields.grid_remove()
 
     def search(self):
         if self.closing or self.searching or self.controller.thread is not None:
@@ -192,10 +243,23 @@ class ThermalFeedbackWindow:
             self._append_log("실행 중인 프로그램을 검색하고 창을 선택하세요.")
             return
         try:
+            workbook = None
+            settings = None
+            if self.algorithm_type.get() == "Excel 수식 파일":
+                workbook = WorkbookSpec(path=self.settings_path.get().strip(), sheet=self.workbook_sheet.get().strip(),
+                    temperature_cell=self.workbook_temperature_cell.get().strip(),
+                    actual_power_cell=self.workbook_power_cell.get().strip(),
+                    recommendation_cell=self.workbook_result_cell.get().strip(),
+                    target_cell=self.workbook_target_cell.get().strip(),
+                    layer_cell=self.workbook_layer_cell.get().strip() or None)
+                workbook.validate()
+            elif self.settings_path.get().strip():
+                settings = Path(self.settings_path.get().strip())
             options = SessionOptions(target=target, mode=MODE_LABELS[self.mode.get()],
-                target_temperature_c=float(self.target_temperature.get()),
-                settings_path=Path(self.settings_path.get()) if self.settings_path.get().strip() else None)
+                target_temperature_c=parse_target_temperature(self.target_temperature.get()),
+                settings_path=settings, workbook_spec=workbook)
             if self.controller.connect(options):
+                self.charts.reset()
                 self.status.set("연결 중…")
                 self.capability.set("CSV 저장 후 자동 적용 · 다른 탭/최소화 가능 · 수동 편집/원본 UI 응답 실패 시 적용 정지"
                     if options.mode == "control" else "읽기·제어 가능 여부를 확인하고 있습니다.")
@@ -209,10 +273,22 @@ class ThermalFeedbackWindow:
         self.status.set("연결 해제 중…")
         self._refresh_buttons()
 
+    def apply_target_temperature(self):
+        try:
+            value = parse_target_temperature(self.target_temperature.get())
+            self.controller.update_target_temperature(value)
+            self._append_log(f"목표 온도 {value:g} °C 예약 · 다음 새 층부터 반영")
+        except ValueError as error:
+            self._append_log(str(error))
+
     def _refresh_buttons(self):
         busy = self.controller.thread is not None or self.closing
         for widget, idle_state in self.configuration_widgets:
             widget.configure(state="disabled" if busy else idle_state)
+        target_ready = (self.controller.thread is not None and not self.closing
+                        and self.controller.state in ("connecting", "connected"))
+        self.temperature_entry.configure(state="disabled" if self.closing or self.controller.state == "disconnecting" else "normal")
+        self.target_apply_button.configure(state="normal" if target_ready else "disabled")
         self.search_button.configure(state="disabled" if busy or self.searching else "normal")
         self.connect_button.configure(state="disabled" if busy or self.searching or not self.target_map else "normal")
         self.disconnect_button.configure(state="normal" if busy and not self.closing and self.controller.state != "disconnecting" else "disabled")
@@ -229,6 +305,7 @@ class ThermalFeedbackWindow:
 
     def _show_snapshot(self, payload):
         snapshot = payload["snapshot"]
+        self.charts.record(payload)
         self.layer.set("—" if snapshot.layer_index is None else f"{snapshot.layer_index + 1} 층")
         self.temperature.set("—" if snapshot.t_recoating_c is None else f"{snapshot.t_recoating_c:.1f} °C")
         self.process_state.set(snapshot.machine_state)

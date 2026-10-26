@@ -39,6 +39,35 @@ class DeferredThread:
 
 
 class WorkerTests(unittest.TestCase):
+    def test_live_target_change_waits_for_new_csv_and_records_successful_save(self):
+        adapter = Mock(spec=UiAdapter)
+        frames = [snapshot("a", 0, control_available=True, observation_is_new=True, t_recoating_c=65),
+                  snapshot("b", 1, control_available=True, observation_is_new=True, t_recoating_c=65),
+                  snapshot("c", 2, control_available=True, observation_is_new=True, t_recoating_c=65),
+                  snapshot("c", 2, control_available=True, observation_is_new=True, t_recoating_c=65),
+                  snapshot("d", 3, control_available=True, observation_is_new=True, t_recoating_c=65)]
+        adapter.read_snapshot.side_effect = frames
+        stop = threading.Event()
+        options = SessionOptions(TARGET, mode="control", target_temperature_c=65)
+        reports = []
+
+        def emit(kind, payload):
+            if kind == "snapshot":
+                reports.append(payload)
+                if len(reports) == 3:
+                    options._target_temperature_setting.set(80)
+                    adapter.apply_ir_power.assert_not_called()
+                elif len(reports) == 4:
+                    adapter.apply_ir_power.assert_not_called()
+                elif len(reports) == len(frames):
+                    stop.set()
+
+        run_ui_session(options, stop, emit, lambda: adapter)
+        self.assertEqual([{1: 50}, {1: 50}, {1: 50}, {1: 50}, {1: 55}],
+                         [row["proposed"] for row in reports])
+        self.assertEqual([{}, {}, {}, {}, {1: 55}], [row["applied"] for row in reports])
+        adapter.apply_ir_power.assert_called_once_with(1, 55, "d", stop)
+
     def test_first_csv_row_created_after_connect_counts_as_first_new_observation(self):
         adapter=Mock(spec=UiAdapter)
         frames=[snapshot("new1",1,control_available=True,observation_is_new=True),
@@ -306,6 +335,21 @@ class WorkerTests(unittest.TestCase):
 
 
 class ControllerTests(unittest.TestCase):
+    def test_target_can_be_updated_only_during_a_session(self):
+        controller = SessionController(lambda *args: None, DeferredThread)
+        with self.assertRaises(ValueError):
+            controller.update_target_temperature(70)
+        options = SessionOptions(TARGET, mode="preview", target_temperature_c=65)
+        controller.connect(options)
+        self.assertEqual(71.5, controller.update_target_temperature(71.5))
+        self.assertEqual(71.5, options._target_temperature_setting.get())
+        with self.assertRaises(ValueError):
+            controller.update_target_temperature(float("nan"))
+        self.assertEqual(71.5, options._target_temperature_setting.get())
+        controller.disconnect()
+        with self.assertRaises(ValueError):
+            controller.update_target_temperature(80)
+
     def test_single_worker_disconnect_and_generation_filters(self):
         emitted = []
         def runner(options, stop, emit):

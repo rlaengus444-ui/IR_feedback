@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "syntheticOnly": true,
+  "actualExcelAndProductSession": true,
+  "newRows": 3,
+  "saveCallsToFakeAdapter": 1,
+  "sourceWorkbookUnchanged": true
+}

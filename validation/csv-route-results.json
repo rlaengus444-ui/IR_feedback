@@ -10,282 +10,21 @@
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
       0.219,
-      0.594,
-      1.266
-    ],
-    "uiOperations": [
-      {
-        "operation": "validate",
-        "seconds": 0.282
-      },
-      {
-        "operation": "enter_sequence",
-        "seconds": 0.406
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.578
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.375
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.281
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.297
-      },
-      {
-        "operation": "verify_control",
-        "seconds": 0.406
-      },
-      {
-        "operation": "apply",
-        "seconds": 0.61
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.281
-      }
-    ]
-  },
-  {
-    "machine": "M1",
-    "case": "normal",
-    "page": "sequence",
-    "minimized": false,
-    "passed": true,
-    "saveCount": 1,
-    "processTableAccesses": 0,
-    "nonIrUnchanged": true,
-    "completeCsvToSessionSeconds": [
-      0.25,
-      0.109,
-      1.484
-    ],
-    "uiOperations": [
-      {
-        "operation": "validate",
-        "seconds": 0.266
-      },
-      {
-        "operation": "enter_sequence",
-        "seconds": 0.391
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.594
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.39
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.281
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.281
-      },
-      {
-        "operation": "verify_control",
-        "seconds": 0.406
-      },
-      {
-        "operation": "apply",
-        "seconds": 0.593
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.282
-      }
-    ]
-  },
-  {
-    "machine": "M1",
-    "case": "normal",
-    "page": "webcam",
-    "minimized": true,
-    "passed": true,
-    "saveCount": 1,
-    "processTableAccesses": 0,
-    "nonIrUnchanged": true,
-    "completeCsvToSessionSeconds": [
-      0.063,
-      0.094,
-      1.188
-    ],
-    "uiOperations": [
-      {
-        "operation": "validate",
-        "seconds": 0.281
-      },
-      {
-        "operation": "enter_sequence",
-        "seconds": 0.422
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.61
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.375
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.281
-      },
-      {
-        "operation": "verify_control",
-        "seconds": 0.406
-      },
-      {
-        "operation": "apply",
-        "seconds": 0.594
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.281
-      }
-    ]
-  },
-  {
-    "machine": "M1",
-    "case": "normal",
-    "page": "sequence",
-    "minimized": true,
-    "passed": true,
-    "saveCount": 1,
-    "processTableAccesses": 0,
-    "nonIrUnchanged": true,
-    "completeCsvToSessionSeconds": [
-      0.234,
-      0.11,
-      1.485
-    ],
-    "uiOperations": [
-      {
-        "operation": "validate",
-        "seconds": 0.282
-      },
-      {
-        "operation": "enter_sequence",
-        "seconds": 0.406
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.578
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.391
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.282
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.282
-      },
-      {
-        "operation": "verify_control",
-        "seconds": 0.422
-      },
-      {
-        "operation": "apply",
-        "seconds": 0.61
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.265
-      }
-    ]
-  },
-  {
-    "machine": "S3",
-    "case": "normal",
-    "page": "webcam",
-    "minimized": false,
-    "passed": true,
-    "saveCount": 1,
-    "processTableAccesses": 0,
-    "nonIrUnchanged": true,
-    "completeCsvToSessionSeconds": [
-      0.265,
-      0.64,
-      1.093
-    ],
-    "uiOperations": [
-      {
-        "operation": "validate",
-        "seconds": 0.25
-      },
-      {
-        "operation": "enter_sequence",
-        "seconds": 0.39
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.625
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.391
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.282
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.297
-      },
-      {
-        "operation": "verify_control",
-        "seconds": 0.406
-      },
-      {
-        "operation": "apply",
-        "seconds": 0.609
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.266
-      }
-    ]
-  },
-  {
-    "machine": "S3",
-    "case": "normal",
-    "page": "sequence",
-    "minimized": false,
-    "passed": true,
-    "saveCount": 1,
-    "processTableAccesses": 0,
-    "nonIrUnchanged": true,
-    "completeCsvToSessionSeconds": [
-      0.235,
-      0.625,
+      0.578,
       1.094
     ],
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.266
+        "seconds": 0.281
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.406
+        "seconds": 0.422
       },
       {
         "operation": "metadata",
-        "seconds": 0.578
+        "seconds": 1.063
       },
       {
         "operation": "prepare_control",
@@ -293,7 +32,7 @@
       },
       {
         "operation": "read_status",
-        "seconds": 0.281
+        "seconds": 0.313
       },
       {
         "operation": "read_status",
@@ -305,7 +44,166 @@
       },
       {
         "operation": "apply",
-        "seconds": 0.594
+        "seconds": 0.625
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "normal",
+    "page": "sequence",
+    "minimized": false,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.172,
+      0.25,
+      1.656
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.266
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.422
+      },
+      {
+        "operation": "metadata",
+        "seconds": 1.078
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.422
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.266
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.61
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "normal",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.109,
+      0.687,
+      1.187
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.266
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.406
+      },
+      {
+        "operation": "metadata",
+        "seconds": 1.281
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.266
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.422
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.625
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.313
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "normal",
+    "page": "sequence",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.157,
+      0.234,
+      1.422
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.266
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.437
+      },
+      {
+        "operation": "metadata",
+        "seconds": 1.094
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.422
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.265
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.265
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.625
       },
       {
         "operation": "read_status",
@@ -317,15 +215,15 @@
     "machine": "S3",
     "case": "normal",
     "page": "webcam",
-    "minimized": true,
+    "minimized": false,
     "passed": true,
     "saveCount": 1,
     "processTableAccesses": 0,
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
-      0.25,
-      0.094,
-      1.469
+      0.031,
+      0.078,
+      1.204
     ],
     "uiOperations": [
       {
@@ -334,19 +232,15 @@
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.406
+        "seconds": 0.422
       },
       {
         "operation": "metadata",
-        "seconds": 0.61
+        "seconds": 1.156
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.39
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.281
+        "seconds": 0.438
       },
       {
         "operation": "read_status",
@@ -354,15 +248,15 @@
       },
       {
         "operation": "verify_control",
-        "seconds": 0.391
+        "seconds": 0.422
       },
       {
         "operation": "apply",
-        "seconds": 0.594
+        "seconds": 0.625
       },
       {
         "operation": "read_status",
-        "seconds": 0.281
+        "seconds": 0.312
       }
     ]
   },
@@ -370,32 +264,32 @@
     "machine": "S3",
     "case": "normal",
     "page": "sequence",
-    "minimized": true,
+    "minimized": false,
     "passed": true,
     "saveCount": 1,
     "processTableAccesses": 0,
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
-      0.25,
-      0.109,
-      1.516
+      0.187,
+      0.235,
+      1.437
     ],
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.266
+        "seconds": 0.282
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.407
+        "seconds": 0.437
       },
       {
         "operation": "metadata",
-        "seconds": 0.578
+        "seconds": 1.281
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.39
+        "seconds": 0.407
       },
       {
         "operation": "read_status",
@@ -408,6 +302,112 @@
       {
         "operation": "verify_control",
         "seconds": 0.421
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.594
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.266
+      }
+    ]
+  },
+  {
+    "machine": "S3",
+    "case": "normal",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.484,
+      0.437,
+      1.125
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.297
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.437
+      },
+      {
+        "operation": "metadata",
+        "seconds": 1.5
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.453
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.422
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.625
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      }
+    ]
+  },
+  {
+    "machine": "S3",
+    "case": "normal",
+    "page": "sequence",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.156,
+      0.734,
+      1.188
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.281
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.407
+      },
+      {
+        "operation": "metadata",
+        "seconds": 1.062
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.422
       },
       {
         "operation": "apply",
@@ -429,14 +429,14 @@
     "processTableAccesses": 0,
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
-      0.438,
-      0.078,
-      1.406
+      0.36,
+      0.187,
+      1.11
     ],
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.265
+        "seconds": 0.281
       },
       {
         "operation": "enter_sequence",
@@ -444,7 +444,7 @@
       },
       {
         "operation": "metadata",
-        "seconds": 0.594
+        "seconds": 1.047
       },
       {
         "operation": "prepare_control",
@@ -452,23 +452,23 @@
       },
       {
         "operation": "read_status",
-        "seconds": 0.281
+        "seconds": 0.297
       },
       {
         "operation": "read_status",
-        "seconds": 0.281
+        "seconds": 0.297
       },
       {
         "operation": "verify_control",
-        "seconds": 0.407
+        "seconds": 0.438
       },
       {
         "operation": "apply",
-        "seconds": 0.609
+        "seconds": 0.625
       },
       {
         "operation": "read_status",
-        "seconds": 0.281
+        "seconds": 0.297
       }
     ]
   },
@@ -482,42 +482,42 @@
     "processTableAccesses": 0,
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
+      0.141,
       0.203,
-      0.078,
-      1.468
+      1.625
     ],
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.25
+        "seconds": 0.282
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.422
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.578
-      },
-      {
-        "operation": "prepare_control",
         "seconds": 0.406
       },
       {
-        "operation": "read_status",
-        "seconds": 0.281
+        "operation": "metadata",
+        "seconds": 1.047
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.39
       },
       {
         "operation": "read_status",
         "seconds": 0.297
       },
       {
+        "operation": "read_status",
+        "seconds": 0.266
+      },
+      {
         "operation": "verify_control",
-        "seconds": 0.406
+        "seconds": 0.39
       },
       {
         "operation": "apply",
-        "seconds": 0.61
+        "seconds": 0.64
       },
       {
         "operation": "read_status",
@@ -535,8 +535,8 @@
     "processTableAccesses": 0,
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
-      0.016,
-      0.062
+      0.219,
+      0.047
     ],
     "uiOperations": [
       {
@@ -545,15 +545,19 @@
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.407
+        "seconds": 0.422
       },
       {
         "operation": "metadata",
-        "seconds": 0.593
+        "seconds": 1.109
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.375
+        "seconds": 0.422
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.312
       },
       {
         "operation": "read_status",
@@ -561,11 +565,11 @@
       },
       {
         "operation": "verify_control",
-        "seconds": 0.422
+        "seconds": 0.438
       },
       {
         "operation": "apply",
-        "seconds": 0.891
+        "seconds": 0.922
       }
     ]
   },
@@ -579,37 +583,41 @@
     "processTableAccesses": 0,
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
-      0.063,
-      0.109
+      0.032,
+      0.125
     ],
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.281
+        "seconds": 0.312
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.438
+        "seconds": 0.469
       },
       {
         "operation": "metadata",
-        "seconds": 0.578
+        "seconds": 1.594
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.406
+        "seconds": 0.5
       },
       {
         "operation": "read_status",
-        "seconds": 0.281
+        "seconds": 0.297
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.266
       },
       {
         "operation": "verify_control",
-        "seconds": 0.39
+        "seconds": 0.5
       },
       {
         "operation": "apply",
-        "seconds": 0.844
+        "seconds": 0.938
       }
     ]
   },
@@ -623,33 +631,33 @@
     "processTableAccesses": 0,
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
-      0.219,
-      0.578
+      0.218,
+      0.078
     ],
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.266
+        "seconds": 0.312
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.406
+        "seconds": 0.438
       },
       {
         "operation": "metadata",
-        "seconds": 0.578
+        "seconds": 1.625
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.391
+        "seconds": 0.437
       },
       {
         "operation": "read_status",
-        "seconds": 0.281
+        "seconds": 0.312
       },
       {
         "operation": "read_status",
-        "seconds": 0.281
+        "seconds": 0.297
       },
       {
         "operation": "verify_control",
@@ -657,7 +665,7 @@
       },
       {
         "operation": "apply",
-        "seconds": 1.438
+        "seconds": 1.469
       }
     ]
   },
@@ -671,41 +679,41 @@
     "processTableAccesses": 0,
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
-      0.234,
-      0.078
+      0.031,
+      0.328
     ],
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.266
+        "seconds": 0.25
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.406
+        "seconds": 0.422
       },
       {
         "operation": "metadata",
-        "seconds": 0.594
+        "seconds": 1.188
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.39
+        "seconds": 0.453
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.296
       },
       {
         "operation": "read_status",
         "seconds": 0.266
       },
       {
-        "operation": "read_status",
-        "seconds": 0.281
-      },
-      {
         "operation": "verify_control",
-        "seconds": 0.391
+        "seconds": 0.453
       },
       {
         "operation": "apply",
-        "seconds": 0.453
+        "seconds": 0.5
       }
     ]
   },
@@ -722,19 +730,19 @@
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.265
+        "seconds": 0.282
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.391
+        "seconds": 0.406
       },
       {
         "operation": "metadata",
-        "seconds": 0.562
+        "seconds": 1.125
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.375
+        "seconds": 0.437
       }
     ]
   },
@@ -748,30 +756,30 @@
     "processTableAccesses": 0,
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
-      0.235,
-      0.609,
-      1.063
+      0.109,
+      0.141,
+      1.5
     ],
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.25
+        "seconds": 0.281
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.406
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.594
-      },
-      {
-        "operation": "prepare_control",
         "seconds": 0.391
       },
       {
+        "operation": "metadata",
+        "seconds": 1.031
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.406
+      },
+      {
         "operation": "read_status",
-        "seconds": 0.297
+        "seconds": 0.296
       },
       {
         "operation": "read_status",
@@ -783,7 +791,7 @@
       },
       {
         "operation": "apply",
-        "seconds": 0.594
+        "seconds": 0.61
       },
       {
         "operation": "read_status",
@@ -802,45 +810,45 @@
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
       0.484,
-      0.657,
-      1.125
+      0.453,
+      1.187
     ],
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.282
+        "seconds": 0.329
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.39
+        "seconds": 0.406
       },
       {
         "operation": "metadata",
-        "seconds": 0.594
+        "seconds": 1.109
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.391
+        "seconds": 0.422
       },
       {
         "operation": "read_status",
-        "seconds": 0.281
+        "seconds": 0.297
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.422
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.64
       },
       {
         "operation": "read_status",
         "seconds": 0.282
-      },
-      {
-        "operation": "verify_control",
-        "seconds": 0.39
-      },
-      {
-        "operation": "apply",
-        "seconds": 0.61
-      },
-      {
-        "operation": "read_status",
-        "seconds": 0.265
       }
     ]
   },
@@ -854,30 +862,30 @@
     "processTableAccesses": 0,
     "nonIrUnchanged": true,
     "completeCsvToSessionSeconds": [
-      0.25,
-      0.125,
-      0.719
+      0.015,
+      0.078,
+      0.75
     ],
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.25
+        "seconds": 0.282
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.422
+        "seconds": 0.421
       },
       {
         "operation": "metadata",
-        "seconds": 0.578
+        "seconds": 1.172
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.406
+        "seconds": 0.422
       },
       {
         "operation": "read_status",
-        "seconds": 0.281
+        "seconds": 0.297
       },
       {
         "operation": "read_status",

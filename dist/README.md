@@ -6,4 +6,4 @@
 
 압축을 전체 해제한 뒤 IRFeedback.exe를 실행하세요. GitHub 소스 체크아웃에는 런타임을 중복 저장하지 않습니다.
 
-SHA-256: 53d41cf0f36ec432b922b5821e07f9a0814370de116bd17cd38e43fc33badcf8
+SHA-256: 960fd8926abc575808ab386274a7975edacd1d79c4ee9418a4a6d2c9e59f2d84

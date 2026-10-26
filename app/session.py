@@ -1,7 +1,7 @@
 """Standalone UI session and bounded, GUI-independent worker lifecycle."""
 
 from collections import deque
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 import json
 import math
 from pathlib import Path
@@ -10,6 +10,8 @@ import time
 
 from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, MachineWindow
 from layer_algorithm import LayerAdaptiveController, LayerSettings
+from target_temperature import TargetTemperatureSetting
+from excel_workbook import WorkbookController, WorkbookSpec
 
 
 def finite(value):
@@ -22,6 +24,8 @@ class SessionOptions:
     mode: str = "monitor"
     target_temperature_c: float = 65.0
     settings_path: Path | None = None
+    workbook_spec: WorkbookSpec | None = None
+    _target_temperature_setting: TargetTemperatureSetting = field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
         if self.target.machine not in ("M1", "S3", "unknown") or self.target.pid <= 0 or self.target.hwnd <= 0:
@@ -30,8 +34,10 @@ class SessionOptions:
             raise ValueError("올바른 동작 모드를 선택하세요.")
         if self.mode == "control" and self.target.machine == "unknown":
             raise ValueError("장비 자동 식별이 안 된 창은 조회 또는 미리보기로만 연결할 수 있습니다.")
-        if not finite(self.target_temperature_c):
-            raise ValueError("목표 온도는 유효한 숫자여야 합니다.")
+        if self.workbook_spec is not None:
+            self.workbook_spec.validate()
+        object.__setattr__(self, "_target_temperature_setting",
+                           TargetTemperatureSetting(self.target_temperature_c))
 
 
 def default_adapter_factory():
@@ -54,14 +60,20 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
     known_run_key = None
     expected_settings = {}
     wait_for_different_layer = None
+    effective_target = options.target_temperature_c
     try:
+        if stop_event.is_set():
+            return
         if options.mode != "monitor":
-            path = options.settings_path or Path(__file__).with_name("workbook-replay.settings.json")
-            if Path(path).stat().st_size > 262144:
-                raise ValueError("설정 파일은 256 KiB 이하여야 합니다.")
-            settings = LayerSettings.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
-            settings = replace(settings, target_temperature_c=options.target_temperature_c)
-            controllers = {heater: LayerAdaptiveController(settings) for heater in (1, 2)}
+            if options.workbook_spec is not None:
+                controllers = {1: WorkbookController(options.workbook_spec, options.target_temperature_c, stop_event=stop_event)}
+            else:
+                path = options.settings_path or Path(__file__).with_name("workbook-replay.settings.json")
+                if Path(path).stat().st_size > 262144:
+                    raise ValueError("설정 파일은 256 KiB 이하여야 합니다.")
+                settings = LayerSettings.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+                settings = replace(settings, target_temperature_c=options.target_temperature_c)
+                controllers = {heater: LayerAdaptiveController(settings) for heater in (1, 2)}
         if stop_event.is_set():
             return
         adapter = adapter_factory()
@@ -74,6 +86,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
         emit("connected", dict(target=options.target, mode=options.mode))
         while not stop_event.is_set():
             started = time.monotonic()
+            applied = {}
             snapshot = adapter.read_snapshot(stop_event)
             if stop_event.is_set():
                 break
@@ -105,6 +118,11 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             can_calculate = effective_mode in ("preview", "control")
             values = {1: snapshot.heater1_setting_percent, 2: snapshot.heater2_setting_percent}
             heaters = (1,) if snapshot.coupled_output else (1, 2)
+            if (can_calculate and options.workbook_spec is not None and 2 in heaters
+                    and 2 not in controllers):
+                if stop_event.is_set():
+                    break
+                controllers[2] = WorkbookController(options.workbook_spec, effective_target, stop_event=stop_event)
             if effective_mode == "control":
                 for heater in heaters:
                     if finite(values[heater]):
@@ -145,6 +163,12 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                     if snapshot.run_key is not None:
                         known_run_key = snapshot.run_key
                     if all(finite(values[heater]) for heater in heaters):
+                        requested_target = options._target_temperature_setting.get()
+                        if requested_target != effective_target:
+                            for controller in controllers.values():
+                                controller.set_target_temperature(requested_target)
+                            effective_target = requested_target
+                            emit("log", f"새 CSV 관찰부터 목표 온도 {effective_target:g} °C 적용")
                         last_key = snapshot.observation_key
                         if last_layer is not None and snapshot.layer_index <= last_layer:
                             for controller in controllers.values():
@@ -166,6 +190,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                 if math.isclose(power, values[heater], rel_tol=0, abs_tol=1e-9):
                                     continue  # Holding a value needs no redundant Save.
                                 adapter.apply_ir_power(heater, power, snapshot.observation_key, stop_event)
+                                applied[heater] = power
                                 expected_settings[heater] = power
                                 writes += 1
                             status = "T_recoating 수신 · UI 자동 적용 완료" if writes else "T_recoating 수신 · 기존 설정 유지(저장 없음)"
@@ -177,14 +202,20 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 emit("log", status)
                 last_status = (effective_mode, status)
             emit("snapshot", dict(snapshot=snapshot, effective_mode=effective_mode,
-                                  proposed=dict(held), reasons=dict(reasons), status=status))
+                                  proposed=dict(held), reasons=dict(reasons), applied=applied, status=status))
             interval = snapshot.minimum_poll_seconds
             if not finite(interval):
                 interval = 1.0
             stop_event.wait(max(0.0, max(0.1, min(5.0, interval)) - (time.monotonic() - started)))
     finally:
-        if adapter is not None:
-            adapter.disconnect()
+        try:
+            if adapter is not None:
+                adapter.disconnect()
+        finally:
+            for controller in controllers.values():
+                close = getattr(controller, "close", None)
+                if close is not None:
+                    close()
 
 
 @dataclass(frozen=True)
@@ -223,6 +254,7 @@ class SessionController:
         self.state = "disconnected"
         self.closed = False
         self.error = None
+        self.target_temperature_setting = None
 
     def connect(self, options):
         if self.closed or self.thread is not None:
@@ -233,6 +265,7 @@ class SessionController:
         stop_event = self.stop_event
         self.state = "connecting"
         self.error = None
+        self.target_temperature_setting = options._target_temperature_setting
         def emit(kind, payload):
             self.events.put(WorkerEvent(generation, kind, payload))
         def work():
@@ -263,6 +296,13 @@ class SessionController:
         if self.thread is not None:
             self.state = "disconnecting"
 
+    def update_target_temperature(self, value):
+        """Schedule a new target for the next new valid CSV observation."""
+        if (self.thread is None or self.closed or self.state not in ("connecting", "connected")
+                or self.target_temperature_setting is None):
+            raise ValueError("연결 중에만 목표 온도를 적용할 수 있습니다.")
+        return self.target_temperature_setting.set(value)
+
     def close(self):
         self.closed = True
         self.disconnect()
@@ -279,6 +319,7 @@ class SessionController:
                 self.state = "error"
             elif event.kind == "finished":
                 self.thread = None  # Cleanup completed before this event was emitted.
+                self.target_temperature_setting = None
                 self.state = "error" if self.error else "disconnected"
             if event.kind == "snapshot" and self.state == "disconnecting":
                 continue

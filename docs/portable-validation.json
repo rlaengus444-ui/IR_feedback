@@ -1,10 +1,10 @@
 {
   "passed": true,
-  "archiveSha256": "53d41cf0f36ec432b922b5821e07f9a0814370de116bd17cd38e43fc33badcf8",
-  "manifestFilesVerified": 1178,
+  "archiveSha256": "960fd8926abc575808ab386274a7975edacd1d79c4ee9418a4a6d2c9e59f2d84",
+  "manifestFilesVerified": 1189,
   "noPythonOnPath": true,
   "relocatedUnicodeAndSpacePath": true,
-  "unitSummary": "Ran 91 tests in 7.463s\n\nOK",
+  "unitSummary": "Ran 124 tests in 9.029s\n\nOK",
   "replays": [
     {
       "layers": 80,
@@ -26,5 +26,5 @@
     "bits": 64,
     "tcl": "8.6.12"
   },
-  "elapsedSeconds": 13.328
+  "elapsedSeconds": 17.016
 }

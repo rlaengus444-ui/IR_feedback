@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "syntheticOnly": true,
+  "actualExcelSessionCsvAndNativeAdapter": true,
+  "processTableAccesses": 0,
+  "saveCallsToFakeUi": 1,
+  "sourceWorkbookUnchanged": true
+}
