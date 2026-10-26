@@ -70,25 +70,48 @@ internal static class FullRouteFixture
         webcam.Controls.Add(new Label { Name="labelWebCam",Text="WebCam",Left=20,Top=20,Width=200 });
         form.Controls.Add(process);form.Controls.Add(sequence);
         form.Controls.Add(webcam);
-        bool late=mode=="late"||mode=="latevisible";
-        process.Controls.Add(new Label { Name="lblProgress",Text=late?"Layer 858/1000":"Layer 1/40",Top=10,Left=10,Width=200 });
+        bool late=mode=="late"||mode=="latevisible"||mode=="backgroundlate";
+        bool background=mode.StartsWith("background")||mode=="nostroll";
+        var progress=new Label { Name="lblProgress",Text=late?"Layer 858/1000":"Layer 1/40",Top=10,Left=10,Width=200 };
+        process.Controls.Add(progress);
         var grid=new DataGridView { Name="dataGridView1",Left=10,Top=50,Width=680,Height=300,ReadOnly=true,AllowUserToAddRows=false,VirtualMode=true };
         grid.RowTemplate.Height=104;
         grid.Columns.Add("Id","ID");grid.Columns.Add("TimeStart","Start");grid.Columns.Add("TempRecoating","T_Recoating");
         grid.Columns[1].Width=260;
         int cachedViewportFirstRow=0;
+        int coreLayer=late?857:0,refreshCount=0;
+        double coreTemperature=42;
+        var coreTemperatures=new Dictionary<int,double>();coreTemperatures[coreLayer]=coreTemperature;
+        var rowCache=new Dictionary<int,double>();
+        Action refreshRows=delegate {
+            cachedViewportFirstRow=Math.Max(0,grid.FirstDisplayedScrollingRowIndex);
+            rowCache.Clear();
+            int firstPage=Math.Max(0,cachedViewportFirstRow-128)/128;
+            int lastPage=Math.Min(grid.RowCount-1,cachedViewportFirstRow+Math.Max(1,grid.DisplayedRowCount(true))+128)/128;
+            for(int row=firstPage*128;row<Math.Min(grid.RowCount,(lastPage+1)*128);row++){double value;rowCache[row]=coreTemperatures.TryGetValue(row,out value)?value:0;}
+            refreshCount++;
+        };
+        grid.Scroll+=delegate { if(background)refreshRows(); };
         grid.CellValueNeeded+=delegate(object sender,DataGridViewCellValueEventArgs cell) {
+            if(background) {
+                double value;
+                bool available=rowCache.TryGetValue(cell.RowIndex,out value);
+                if(cell.ColumnIndex==0)cell.Value=cell.RowIndex.ToString();
+                if(cell.ColumnIndex==1)cell.Value=available&&value!=0?"2026-10-27 08:30:"+(cell.RowIndex%60).ToString("00")+".123":"0001-01-01 00:00:00";
+                if(cell.ColumnIndex==2)cell.Value=available?value:0;
+                return;
+            }
             bool cached=!late||Math.Abs(cell.RowIndex-cachedViewportFirstRow)<=128;
             if(cell.ColumnIndex==0)cell.Value=cell.RowIndex.ToString();
             if(cell.ColumnIndex==1)cell.Value=cached&&cell.RowIndex==(late?857:0)?"2026-10-27 08:30:00.123":"0001-01-01 00:00:00";
             if(cell.ColumnIndex==2)cell.Value=cached&&cell.RowIndex==(late?857:0)?"42":"0";
         };
-        grid.RowCount=late?1000:40;
+        grid.RowCount=mode=="nostroll"?2:late||background?1000:40;
         process.Controls.Add(grid);
         var ir=new TextBox { Name="textBoxHeatingOutput",Text="62",Top=20,Left=20,Width=120 };
         var other=new TextBox { Name="textBoxOther",Text="5",Top=60,Left=20,Width=120 };
         var check=new CheckBox { Name="checkBoxOther",Text="Unrelated setting",Top=100,Left=20,Width=200 };
-        var save=new Button { Name="btnSave",Text="SAVE",Top=150,Left=20,Width=100 };
+        var save=new Button { Name="btnSave",Text="SAVE",Top=150,Left=20,Width=100,FlatStyle=FlatStyle.Flat };
         sequence.Controls.Add(ir);sequence.Controls.Add(other);sequence.Controls.Add(check);sequence.Controls.Add(save);
         if(fieldSpec!=null) {
             sequence.Controls.Remove(other);sequence.Controls.Remove(check);
@@ -131,11 +154,35 @@ internal static class FullRouteFixture
             File.Replace(temporary,bjt,null);
             if(mode=="savehang")Thread.Sleep(8000);
         };
-        var lifetime=new System.Windows.Forms.Timer { Interval=45000 };
+        var lifetime=new System.Windows.Forms.Timer { Interval=90000 };
+        var snapshotTimer=new System.Windows.Forms.Timer { Interval=1000 };
+        snapshotTimer.Tick+=delegate { if(process.Visible && form.WindowState!=FormWindowState.Minimized)refreshRows(); };
         var heartbeat=new System.Windows.Forms.Timer { Interval=200 };
-        heartbeat.Tick+=delegate { Volatile.Write(ref heartbeatTicks,Environment.TickCount);cachedViewportFirstRow=Math.Max(0,grid.FirstDisplayedScrollingRowIndex);File.WriteAllText(marker+".heartbeat",DateTime.UtcNow.ToString("O")+" row="+grid.FirstDisplayedScrollingRowIndex+" cell="+(grid.CurrentCell==null?-1:grid.CurrentCell.RowIndex)+" active="+(form.ActiveControl==null?"none":form.ActiveControl.Name)+" displayed="+grid.DisplayedRowCount(true));var state=new Dictionary<string,string>();foreach(Control control in sequence.Controls){var text=control as TextBox;if(text!=null)state[text.Name]=text.Text;var toggle=control as CheckBox;if(toggle!=null)state[toggle.Name]="toggle:"+(toggle.Checked?"1":"0");}File.WriteAllText(marker+".fields-state",serializer.Serialize(state)); };
+        heartbeat.Tick+=delegate {
+            if(background && File.Exists(marker+".command")) {
+                var command=serializer.Deserialize<Dictionary<string,object>>(File.ReadAllText(marker+".command"));File.Delete(marker+".command");
+                if(command.ContainsKey("page")) {
+                    string page=(string)command["page"];
+                    process.Visible=page=="process";sequence.Visible=page=="sequence";webcam.Visible=page=="webcam";
+                }
+                if(command.ContainsKey("minimized"))form.WindowState=(bool)command["minimized"]?FormWindowState.Minimized:FormWindowState.Normal;
+                if(command.ContainsKey("layer"))coreLayer=Convert.ToInt32(command["layer"]);
+                if(command.ContainsKey("temperature"))coreTemperature=Convert.ToDouble(command["temperature"]);
+                coreTemperatures[coreLayer]=coreTemperature;
+                if(command.ContainsKey("state"))taskStatus.Text=(string)command["state"];
+                if(command.ContainsKey("dirty"))foreach(Control c in sequence.Controls){var text=c as TextBox;if(text!=null && text!=ir){text.Text="9999";break;}}
+                string logDir=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Logs");Directory.CreateDirectory(logDir);
+                File.WriteAllText(Path.Combine(logDir,"20261027_"+machine+".log"),"[BJT - AUTO]: Layer: "+coreLayer+" -> Current Z = 1.23\n");
+                File.WriteAllText(marker+".command-done",serializer.Serialize(command));
+            }
+            Volatile.Write(ref heartbeatTicks,Environment.TickCount);
+            if(!background)cachedViewportFirstRow=Math.Max(0,grid.FirstDisplayedScrollingRowIndex);
+            File.WriteAllText(marker+".heartbeat",DateTime.UtcNow.ToString("O")+" row="+grid.FirstDisplayedScrollingRowIndex+" cell="+(grid.CurrentCell==null?-1:grid.CurrentCell.RowIndex)+" active="+(form.ActiveControl==null?"none":form.ActiveControl.Name)+" displayed="+grid.DisplayedRowCount(true));
+            var state=new Dictionary<string,string>();foreach(Control control in sequence.Controls){var text=control as TextBox;if(text!=null)state[text.Name]=text.Text;var toggle=control as CheckBox;if(toggle!=null)state[toggle.Name]="toggle:"+(toggle.Checked?"1":"0");}File.WriteAllText(marker+".fields-state",serializer.Serialize(state));
+            if(background)File.WriteAllText(marker+".background-state",serializer.Serialize(new { page=process.Visible?"process":sequence.Visible?"sequence":"webcam",minimized=form.WindowState==FormWindowState.Minimized,coreLayer=coreLayer,coreTemperature=coreTemperature,refreshCount=refreshCount }));
+        };
         lifetime.Tick+=delegate { form.Close(); };
-        form.Shown+=delegate { SetWindowPos(form.Handle,normallyVisible?IntPtr.Zero:new IntPtr(1),0,0,0,0,0x0001|0x0002|0x0010);if(mode=="latevisible"){grid.CurrentCell=grid.Rows[857].Cells[0];grid.FirstDisplayedScrollingRowIndex=857;}cachedViewportFirstRow=Math.Max(0,grid.FirstDisplayedScrollingRowIndex);if(form.AllowActivation)form.Activate();File.WriteAllText(marker+".initial-viewport",grid.FirstDisplayedScrollingRowIndex.ToString());File.WriteAllText(marker+".window",Process.GetCurrentProcess().Id+","+form.Handle.ToInt64());lifetime.Start();heartbeat.Start(); };
+        form.Shown+=delegate { SetWindowPos(form.Handle,normallyVisible?IntPtr.Zero:new IntPtr(1),0,0,0,0,0x0001|0x0002|0x0010);if(mode=="latevisible"){grid.CurrentCell=grid.Rows[857].Cells[0];grid.FirstDisplayedScrollingRowIndex=857;}cachedViewportFirstRow=Math.Max(0,grid.FirstDisplayedScrollingRowIndex);if(background)refreshRows();if(form.AllowActivation)form.Activate();File.WriteAllText(marker+".initial-viewport",grid.FirstDisplayedScrollingRowIndex.ToString());File.WriteAllText(marker+".window",Process.GetCurrentProcess().Id+","+form.Handle.ToInt64());lifetime.Start();heartbeat.Start();if(background)snapshotTimer.Start(); };
         Application.Run(form);
         Volatile.Write(ref watchdogStop,1);
     }

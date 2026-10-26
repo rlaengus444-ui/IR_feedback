@@ -15,6 +15,8 @@ public static class BinderJetNativeFields
     [DllImport("user32.dll")] private static extern bool IsWindowEnabled(IntPtr window);
     [DllImport("user32.dll")] private static extern bool IsIconic(IntPtr window);
     [DllImport("user32.dll")] private static extern IntPtr GetParent(IntPtr window);
+    [DllImport("user32.dll")] private static extern int GetDlgCtrlID(IntPtr window);
+    [DllImport("user32.dll", SetLastError=true)] private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] private static extern int GetClassName(IntPtr window, StringBuilder value, int count);
     [DllImport("user32.dll", EntryPoint="GetWindowLongW")] private static extern int GetWindowLong(IntPtr window, int index);
     [DllImport("user32.dll", EntryPoint="SendMessageTimeoutW", CharSet=CharSet.Unicode, SetLastError=true)]
@@ -32,8 +34,6 @@ public static class BinderJetNativeFields
             GetWindowThreadProcessId(child,out actual)==0 || actual!=(uint)pid ||
             (root!=child && !IsChild(root,child)))
             throw new InvalidOperationException("The recipe input/window identity changed.");
-        if (!IsWindowVisible(root) || !IsWindowVisible(child) || IsIconic(root))
-            throw new InvalidOperationException("The recipe input is not visible in its selected root.");
     }
 
     private static string Class(IntPtr window)
@@ -83,6 +83,20 @@ public static class BinderJetNativeFields
         EnabledChain(root,button);
         if(Class(button).IndexOf("BUTTON",StringComparison.OrdinalIgnoreCase)<0 || Role(button)!=43)
             throw new InvalidOperationException("Save is not a verified native PUSHBUTTON.");
+    }
+
+    // Hidden BM_CLICK is ignored by WinForms. BN_CLICKED follows the same
+    // parent/reflected button Click route, including the existing Save handler.
+    // Only the already audited Save HWND is accepted by the dispatcher. No
+    // private method invocation, remote pointer or synthetic keyboard input.
+    public static void QueueSave(IntPtr root, IntPtr button, int pid)
+    {
+        ValidateSave(root,button,pid);
+        IntPtr parent=GetParent(button);
+        Validate(root,parent,pid);
+        int id=GetDlgCtrlID(button);
+        if(!PostMessage(parent,0x0111,new IntPtr(id & 0xffff),button))
+            throw new InvalidOperationException("The audited Save notification could not be queued.");
     }
 
     public static string Read(IntPtr root, IntPtr child, int pid, string kind)

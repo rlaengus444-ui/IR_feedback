@@ -11,6 +11,8 @@ Run on Windows using the module's Python runtime:
 ..\runtime\python.exe -E -s -B full_route_probe.py
 ..\runtime\python.exe -E -s -B full_route_probe.py --late
 ..\runtime\python.exe -E -s -B full_route_probe.py --bootstrap
+..\runtime\python.exe -E -s -B background_route_probe.py
+..\runtime\python.exe -E -s -B background_session_probe.py
 ```
 
 The script finds only the known workspace `../standalone-ir/app` or packaged
@@ -37,3 +39,14 @@ unsaved edits; its independent report is `bootstrap-results.json`.
 The fixture executable is supplied. Its C# source and explicit-item project
 are also included for independent rebuilding with .NET Framework 4.8.
 These tests validate the external UI route, not thermal or electrical hardware.
+
+`background_route_probe.py` adds 15 cases. Its fixture stops snapshot refresh
+when hidden or minimized, while independently changing the source temperature.
+It verifies same-row temperature updates, subsequent layer receipt, background
+Save, page/minimization preservation, late-layer following, pending-edit refusal,
+layer advance between verification and edit, and fail-closed behavior when the
+table cannot scroll. Save uses a FlatStyle.Flat button, matching the original
+button's WinForms style. `background_session_probe.py` runs the actual session,
+Excel controller and native adapter through three new layers while changing
+tabs/minimization. It checks two initial holds, one Save on the third input,
+duplicate polling without another Save, and disconnect completion for M1/S3.

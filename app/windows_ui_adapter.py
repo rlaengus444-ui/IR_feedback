@@ -111,6 +111,8 @@ class WindowsUiAdapter:
         self._layer_hint: int | None = None
         self._native_handles: dict = {}
         self._native_fields: dict = {}
+        self._retained_log_hint: int | None = None
+        self._log_run_key: str | None = None
 
     def discover(self) -> list[MachineWindow]:
         response = self._request({"operation": "discover"}, None)
@@ -143,6 +145,8 @@ class WindowsUiAdapter:
             self._run_key = None
             self._native_handles = dict(response.get("handles") or {})
             self._native_fields = {}
+            self._retained_log_hint = None
+            self._log_run_key = None
             self._update_settings_locked(response)
 
     def prepare_mode(self, mode: str, stop_event) -> None:
@@ -162,7 +166,7 @@ class WindowsUiAdapter:
         before = sequence_persistence.capture(target)
         if before is None:
             raise ControlUnavailable("기존 IR 저장 파일을 찾을 수 없어 Save 결과를 확인할 수 없습니다.")
-        common = {"pid": target.pid, "hwnd": target.hwnd, "machine": target.machine, "_generation": generation}
+        common = {"pid": target.pid, "hwnd": target.hwnd, "machine": target.machine, "image_path": target.image_path, "_generation": generation}
         entered = self._request(dict(common, operation="enter_sequence", handles=handles), stop_event)
         metadata = self._request(dict(common, operation="metadata"), stop_event)
         if not entered.get("entered", False):
@@ -189,7 +193,8 @@ class WindowsUiAdapter:
             raise ControlUnavailable("연결 준비 중 기존 설정 파일이 변경되었습니다. 다시 연결하세요.")
         handles = dict(response.get("handles") or {})
         native_fields = dict(response.get("field_map") or {})
-        self._request(dict(common, operation="return_process", handles=handles), stop_event)
+        process_ready = self._request(dict(common, operation="return_process", handles=handles), stop_event)
+        handles.update(process_ready.get("handles") or {})
         with self._lock:
             if self._generation != generation or self._target != target:
                 raise AdapterError("연결 준비 중 대상이 변경되거나 연결이 해제되었습니다.")
@@ -224,11 +229,26 @@ class WindowsUiAdapter:
             if self._last_snapshot is not None and time.monotonic() - self._last_read < self.MINIMUM_POLL_SECONDS:
                 return self._last_snapshot
         layer_hint, log_run_key = _log_layer_hint(target)
+        with self._lock:
+            if log_run_key is not None and log_run_key != self._log_run_key:
+                self._retained_log_hint = None
+                self._log_run_key = log_run_key
+            if layer_hint is not None:
+                self._retained_log_hint = layer_hint
+            elif self._retained_log_hint is not None:
+                # A layer's log line can leave the bounded tail before the
+                # recoating sample arrives. Retain its coordinates, never its
+                # temperature; each hidden read must refresh the original table.
+                layer_hint = self._retained_log_hint
         response = self._request({"operation": "read", "pid": target.pid, "hwnd": target.hwnd,
                                   "machine": target.machine, "handles": handles,
+                                  "image_path": target.image_path,
                                   "_generation": generation,
                                   "require_process": self._mode == "control", "follow_row": self._mode == "control",
                                   "layer_hint": layer_hint}, stop_event)
+        native_hint = response.get("layer_hint")
+        if isinstance(native_hint, int) and not isinstance(native_hint, bool) and 0 <= native_hint <= 1000000:
+            layer_hint = native_hint
         if layer_hint is None:
             progress = str(response.get("progress", ""))
             match = re.search(r"(?i)\bLayer\s*[:#]?\s*(\d+)\s*/", progress)
@@ -277,7 +297,7 @@ class WindowsUiAdapter:
             observation_key = hashlib.sha256(identity.encode("utf-8")).hexdigest()
         if self._mode == "control" and not observation_current:
             observation_key = None
-        details = ("원본 표 UI가 제공하는 기록을 읽습니다. Layer 표 자체의 갱신 간격은 1초입니다. "
+        details = ("원본의 T_recoating 표를 읽습니다. 다른 탭·최소화 상태에서는 숨겨진 표의 기존 갱신 이벤트를 사용합니다. "
                    "표시된 IR 설정은 실시간 실출력 확인값이 아닙니다.")
         if not latest:
             details += " 원본의 Process → Layer 표 화면에서 완료된 T_Recoating 행이 보이도록 해주세요."
@@ -328,11 +348,10 @@ class WindowsUiAdapter:
         expected_number = _number(expected_ir)
         if current is None or expected_number is None or not math.isclose(current.power, expected_number, rel_tol=0, abs_tol=1e-9) or current.non_ir != persisted.non_ir:
             raise ControlUnavailable("기존 IR 또는 다른 저장 설정이 변경되어 자동 적용을 중단했습니다.")
-        common = {"pid": target.pid, "hwnd": target.hwnd, "machine": target.machine, "_generation": generation}
-        self._request(dict(common, operation="enter_sequence", handles=handles, observation=observation, layer_hint=layer_hint), stop_event)
+        common = {"pid": target.pid, "hwnd": target.hwnd, "machine": target.machine, "image_path": target.image_path, "_generation": generation}
         guarded_at = time.monotonic()
-        metadata = self._request(dict(common, operation="metadata"), stop_event)
-        fresh = self._request(dict(common, operation="prepare_control", metadata=metadata.get("records", []), handles=handles), stop_event)
+        fresh = self._request(dict(common, operation="verify_control", handles=handles,
+                                   field_map=self._native_fields, observation=observation, layer_hint=layer_hint), stop_event)
         fresh_fields = fresh.get("fields")
         if not isinstance(fresh_fields, dict) or fresh_fields != dict(baseline, textBoxHeatingOutput=expected_ir):
             raise ControlUnavailable("IR 또는 다른 Sequence 입력값이 변경되어 자동 저장을 중단했습니다.")
@@ -351,7 +370,7 @@ class WindowsUiAdapter:
             marker = Path(directory) / "save-started.txt"
             edit_marker = Path(directory) / "edit-started.txt"
             try:
-                response = self._request({"operation": "apply", "pid": target.pid, "hwnd": target.hwnd, "machine": target.machine,
+                response = self._request({"operation": "apply", "pid": target.pid, "hwnd": target.hwnd, "machine": target.machine, "image_path": target.image_path,
                                           "_generation": generation,
                                           "baseline": baseline, "expected_ir": expected_ir, "observation": observation,
                                           "handles": handles, "field_map": native_fields,
@@ -364,7 +383,6 @@ class WindowsUiAdapter:
                 verified = sequence_persistence.verify_after(current, power_percent, timeout=1.0)
                 if verified is None:
                     raise AdapterError("IR 저장 결과를 확인할 수 없습니다.")
-                self._request(dict(common, operation="return_process", handles=handles), stop_event)
             except Exception as exc:
                 with self._lock:
                     self._control_fault = "자동 적용을 중단했습니다. 결과를 확인한 뒤 다시 연결하세요."

@@ -29,6 +29,10 @@ function Visible($root, $window, $pidExpected) {
     return $window -ne [IntPtr]::Zero -and [BinderJetQueuedNavigation]::IsVisible($root, $window, $pidExpected)
 }
 
+function Owned($root, $window, $pidExpected) {
+    return $window -ne [IntPtr]::Zero -and [BinderJetQueuedNavigation]::IsOwned($root, $window, $pidExpected)
+}
+
 function MachineKind([string]$text) {
     $matchesMachine = [regex]::Matches($text, '(?i)(?:^|[^A-Z0-9])(M1|S3)(?:$|[^A-Z0-9])')
     $families = @($matchesMachine | ForEach-Object { $_.Groups[1].Value.ToUpperInvariant() } | Select-Object -Unique)
@@ -39,7 +43,7 @@ function MachineKind([string]$text) {
 function NativeMachine($root, $pidExpected, $handles) {
     $machineHandle = HandleOf $handles 'machine'
     if ($machineHandle -ne [IntPtr]::Zero) {
-        if (-not (Visible $root $machineHandle $pidExpected)) { throw 'The cached machine label is no longer visible.' }
+        if (-not (Owned $root $machineHandle $pidExpected)) { throw 'The cached machine label identity changed.' }
         $machine = ([BinderJetNativeProcess]::ReadText($root, $machineHandle, $pidExpected)).Trim().ToUpperInvariant()
         if ($machine -notin @('M1','S3')) { throw 'The cached machine label is no longer exactly M1/S3.' }
         return $machine
@@ -57,7 +61,7 @@ function CheckMachine($root, $pidExpected, $handles) {
 
 function AssertAutomatic($root, $pidExpected, $handles) {
     $stateHandle = HandleOf $handles 'state'
-    if (-not (Visible $root $stateHandle $pidExpected)) { throw 'A verified, visible task-state label is required before an IR edit or Save.' }
+    if (-not (Owned $root $stateHandle $pidExpected)) { throw 'A verified task-state label is required before an IR edit or Save.' }
     $state = ([BinderJetNativeProcess]::ReadText($root, $stateHandle, $pidExpected)).Trim()
     if ($state -notin @('AUTO','RUNNING')) { throw 'Automatic recipe updates require a fresh AUTO/RUNNING state.' }
     if ([BinderJetQueuedNavigation]::IsUserEditing($root, $pidExpected)) { throw 'The user is editing a target field; automatic Save is suspended.' }
@@ -73,18 +77,58 @@ function ClickNavigation($root, $pidExpected, $handles, [string]$name) {
     if (-not [BinderJetQueuedNavigation]::Responsive($root, $pidExpected, 250)) { throw 'The target did not acknowledge queued page navigation.' }
 }
 
+function FreshLogHint([string]$machine) {
+    # Coordinates only, never temperature. Recheck inside this native-only
+    # helper immediately before edit/Save: a layer can advance after Python's
+    # preflight while the previous temperature remains valid in the row cache.
+    if ($machine -notin @('M1','S3') -or [string]::IsNullOrWhiteSpace([string]$request.image_path)) { return $null }
+    $stream = $null
+    try {
+        $directory = [IO.Path]::Combine([IO.Path]::GetDirectoryName([string]$request.image_path), 'Logs')
+        if (-not [IO.Directory]::Exists($directory)) { return $null }
+        $selected = $null; $count = 0
+        foreach ($path in [IO.Directory]::EnumerateFiles($directory, ('*_' + $machine + '.log'))) {
+            if (++$count -gt 4096) { break }
+            $file = New-Object IO.FileInfo($path)
+            if ($null -eq $selected -or $file.LastWriteTimeUtc -gt $selected.LastWriteTimeUtc) { $selected = $file }
+        }
+        if ($null -eq $selected) { return $null }
+        $age = ([DateTime]::UtcNow - $selected.LastWriteTimeUtc).TotalSeconds
+        if ($age -lt -5 -or $age -gt 15) { return $null }
+        $stream = [IO.File]::Open($selected.FullName, [IO.FileMode]::Open, [IO.FileAccess]::Read, ([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
+        [void]$stream.Seek([Math]::Max(0, $stream.Length - 262144), [IO.SeekOrigin]::Begin)
+        $buffer = New-Object byte[] 262144; $read = 0
+        while ($read -lt $buffer.Length) {
+            $part = $stream.Read($buffer, $read, $buffer.Length - $read)
+            if ($part -eq 0) { break }; $read += $part
+        }
+        $hint = $null
+        foreach ($line in ([Text.Encoding]::UTF8.GetString($buffer, 0, $read) -split "`n")) {
+            if ($line -notmatch 'AUTO') { continue }
+            if ($line.Contains('AutoPrint started!')) { $hint = $null }
+            if ($line -match '\bLayer:\s*(\d+)\s*->\s*Current Z\s*=') { $hint = [int]$matches[1] }
+            if ($line.Contains('AutoPrint finished!') -or $line.Contains('AutoPrint cancelled.') -or $line.Contains('Stopping printing as requested.')) { $hint = $null }
+        }
+        return $hint
+    } catch { return $null }
+    finally { if ($null -ne $stream) { $stream.Dispose() } }
+}
+
 function NativeState($root, $pidExpected, $providedHandles, $hint, [bool]$follow, [bool]$requireProcess) {
+    if (-not [BinderJetQueuedNavigation]::Responsive($root, $pidExpected, 250)) { throw 'The target UI is not responding; cached temperature was rejected.' }
     $handles = @{}
     foreach ($entry in @(EntriesOf $providedHandles)) { $handles[$entry.Name] = $entry.Value }
     $machine = CheckMachine $root $pidExpected $handles
+    $liveHint = FreshLogHint $machine
+    if ($null -ne $liveHint) { $hint = $liveHint }
     $state = 'unknown'; $progress = ''
     $stateHandle = HandleOf $handles 'state'; $progressHandle = HandleOf $handles 'progress'
     if ($stateHandle -ne [IntPtr]::Zero) {
-        if (-not (Visible $root $stateHandle $pidExpected)) { throw 'The cached task-state label is no longer visible.' }
+        if (-not (Owned $root $stateHandle $pidExpected)) { throw 'The cached task-state label identity changed.' }
         $state = ([BinderJetNativeProcess]::ReadText($root, $stateHandle, $pidExpected)).Trim()
     }
     if ($progressHandle -ne [IntPtr]::Zero) {
-        if (-not (Visible $root $progressHandle $pidExpected)) { throw 'The cached progress label is no longer visible.' }
+        if (-not (Owned $root $progressHandle $pidExpected)) { throw 'The cached progress label identity changed.' }
         $progress = [BinderJetNativeProcess]::ReadText($root, $progressHandle, $pidExpected)
     }
     # Before leaf IDs have been collected, inspect only native visible STATIC
@@ -110,12 +154,15 @@ function NativeState($root, $pidExpected, $providedHandles, $hint, [bool]$follow
     if ($rowHint -lt 0 -or $rowHint -gt 1000000) { throw 'The current layer hint is outside its supported bound.' }
     $grid = HandleOf $handles 'grid'
     if ($grid -ne [IntPtr]::Zero) {
-        if (-not (Visible $root $grid $pidExpected)) { $grid = [IntPtr]::Zero }
+        if (-not (Owned $root $grid $pidExpected)) { throw 'The cached T_recoating table identity changed.' }
         elseif (-not [BinderJetAccessibleGrid]::HasRecoatingHeaders($grid)) { throw 'The cached native table no longer has the verified T_recoating headers.' }
-    } else { $grid = [BinderJetNativeProcess]::FindGrid($root, $pidExpected, $rowHint) }
-    $rows = @(); $visibleGrid = $grid -ne [IntPtr]::Zero
-    if ($visibleGrid) {
+    } else { $grid = [BinderJetNativeProcess]::FindGrid($root, $pidExpected, $rowHint, $true) }
+    $rows = @(); $hasGrid = $grid -ne [IntPtr]::Zero; $visibleGrid = $hasGrid -and (Visible $root $grid $pidExpected)
+    if ($hasGrid) {
         $handles['grid'] = $grid.ToInt64()
+        if (-not $visibleGrid -and $state -in @('AUTO','RUNNING')) {
+            [BinderJetQueuedGridScroll]::RefreshHidden($root, $grid, $pidExpected)
+        }
         $rows = @([BinderJetAccessibleGrid]::ReadRows($grid, $rowHint))
         $current = @($rows | Where-Object { [int]$_.row_index -eq $rowHint })
         if ($follow -and $current.Count -eq 1 -and
@@ -126,9 +173,9 @@ function NativeState($root, $pidExpected, $providedHandles, $hint, [bool]$follow
             $rows = @([BinderJetAccessibleGrid]::ReadRows($grid, $rowHint))
         }
     }
-    if ($requireProcess -and -not $visibleGrid) { throw 'The controlled Process T_recoating table is no longer visible.' }
+    if ($requireProcess -and -not $hasGrid) { throw 'The controlled Process T_recoating table is unavailable.' }
     return @{success=$true; machine=$machine; state=$state; setting=$null; status_powers=@{}; progress=$progress;
-        layer_label=''; rows=$rows; visible_grid=$visibleGrid; handles=$handles; layer_hint=$hint}
+        layer_label=''; rows=$rows; visible_grid=$visibleGrid; background_read=($hasGrid -and -not $visibleGrid); handles=$handles; layer_hint=$hint}
 }
 
 function FiniteNumber([string]$text) {
@@ -162,6 +209,13 @@ function AssertObservation($snapshot, $expected) {
 function UniqueVisibleRecord($records, [string]$id, [bool]$required) {
     $found = @($records | Where-Object { $_.visible -and [string]$_.id -ceq $id })
     if ($found.Count -gt 1 -or ($required -and $found.Count -ne 1)) { throw "A unique visible control '$id' is required." }
+    if ($found.Count -eq 1) { return $found[0] }
+    return $null
+}
+
+function UniqueRecord($records, [string]$id) {
+    $found = @($records | Where-Object { [string]$_.id -ceq $id })
+    if ($found.Count -gt 1) { throw "Control '$id' is ambiguous." }
     if ($found.Count -eq 1) { return $found[0] }
     return $null
 }
@@ -267,17 +321,26 @@ try {
                 $fields = ReadFields $root $pidExpected $map $scope
                 $newHandles = @{scope=$scope.ToInt64();save=$save.ToInt64();ir=$ir.ToInt64()}
                 foreach ($pair in @(@('machine','labelMachineName'),@('state','labelTaskStatus'),@('progress','lblProgress'),@('process','btnProcess'),@('sequences','btnSequences'))) {
-                    $record = UniqueVisibleRecord $records $pair[1] ($pair[0] -in @('machine','state','process','sequences'))
+                    $record = if ($pair[0] -eq 'progress') { UniqueRecord $records $pair[1] } else { UniqueVisibleRecord $records $pair[1] ($pair[0] -in @('machine','state','process','sequences')) }
                     if ($null -ne $record) { $newHandles[$pair[0]] = [long]$record.hwnd }
                 }
                 $verifiedMachine = NativeMachine $root $pidExpected $newHandles
                 if ($verifiedMachine -notin @('M1','S3') -or ($request.machine -and $verifiedMachine -cne [string]$request.machine)) { throw 'Control requires a verified exact M1/S3 native machine label.' }
                 $response = @{success=$true;machine=$verifiedMachine;fields=$fields;field_map=$map;handles=$newHandles;setting=$fields['textBoxHeatingOutput']}
             }
+            'verify_control' {
+                AssertAutomatic $root $pidExpected $handles
+                $snapshot = NativeState $root $pidExpected $handles $request.layer_hint $true $true
+                AssertObservation $snapshot $request.observation
+                $scope = HandleOf $handles 'scope'
+                if (-not (Owned $root $scope $pidExpected)) { throw 'The audited Sequence view identity changed.' }
+                $fields = ReadFields $root $pidExpected $request.field_map $scope
+                $response = @{success=$true;fields=$fields;setting=$fields['textBoxHeatingOutput'];handles=$snapshot.handles;field_map=$request.field_map}
+            }
             'apply' {
                 AssertAutomatic $root $pidExpected $handles
                 $scope = HandleOf $handles 'scope'; $ir = HandleOf $handles 'ir'; $save = HandleOf $handles 'save'
-                if (-not (Visible $root $scope $pidExpected)) { throw 'The controlled Sequence view is no longer visible.' }
+                if (-not (Owned $root $scope $pidExpected)) { throw 'The controlled Sequence view identity changed.' }
                 if (-not [BinderJetLeafMetadata]::IsDescendant($root, $scope, $ir, $pidExpected) -or
                     -not [BinderJetLeafMetadata]::IsDescendant($root, $scope, $save, $pidExpected)) { throw 'IR/Save no longer belong to the controlled Sequence view.' }
                 $irMap = ValueOf $request.field_map 'textBoxHeatingOutput'
@@ -290,17 +353,19 @@ try {
                 if ([string]::IsNullOrWhiteSpace([string]$request.edit_marker) -or [string]::IsNullOrWhiteSpace([string]$request.save_marker)) { throw 'Write-ahead edit/Save markers are required.' }
                 [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
                 AssertAutomatic $root $pidExpected $handles
+                AssertObservation (NativeState $root $pidExpected $handles $request.layer_hint $true $true) $request.observation
                 [IO.File]::WriteAllText([string]$request.edit_marker, 'edit-may-have-started')
                 [BinderJetNativeFields]::SetIr($root, $ir, $pidExpected, [string]$request.power)
                 $after = ReadFields $root $pidExpected $request.field_map $scope
                 AssertOtherFields $after $request.baseline
                 if ([Math]::Abs((FiniteNumber ([string]$after['textBoxHeatingOutput'])) - $desired) -gt 0.000000001) { throw 'IR input readback failed before Save.' }
                 AssertAutomatic $root $pidExpected $handles
+                AssertObservation (NativeState $root $pidExpected $handles $request.layer_hint $true $true) $request.observation
                 [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
                 # This durable marker precedes the only queued Save. A timeout,
                 # cancellation or uncertain result must never trigger a retry.
                 [IO.File]::WriteAllText([string]$request.save_marker, 'save-may-have-started')
-                [BinderJetQueuedNavigation]::Click($root, $save, $pidExpected)
+                [BinderJetNativeFields]::QueueSave($root, $save, $pidExpected)
                 Start-Sleep -Milliseconds 100
                 if (-not [BinderJetQueuedNavigation]::Responsive($root, $pidExpected, 250)) { throw 'Save was queued but the target acknowledgement is uncertain.' }
                 $verified = [BinderJetNativeFields]::Read($root, $ir, $pidExpected, 'text')
@@ -317,11 +382,11 @@ try {
                     $processVisible = $grid -ne [IntPtr]::Zero
                 }
                 if (-not $processVisible) {
-                    if (-not (Visible $root $scope $pidExpected)) { throw 'The user changed pages; the module will not navigate over that change.' }
+                    if (-not [BinderJetQueuedNavigation]::IsShown($root, $scope, $pidExpected)) { throw 'The user changed pages; the module will not navigate over that change.' }
                     ClickNavigation $root $pidExpected $handles 'btnProcess'
                 }
                 if (-not [BinderJetQueuedNavigation]::Responsive($root, $pidExpected, 250)) { throw 'The Process return heartbeat failed.' }
-                $response = @{success=$true}
+                $response = NativeState $root $pidExpected $handles $request.layer_hint $false $true
             }
             default { throw 'Unsupported native helper operation.' }
         }

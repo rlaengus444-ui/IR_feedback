@@ -5,55 +5,43 @@
     "passed": true,
     "saveCount": 1,
     "nonIrUnchanged": true,
-    "elapsedSeconds": 6.188,
+    "elapsedSeconds": 4.689,
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.475
+        "seconds": 0.39
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.405
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.862
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.412
-      },
-      {
-        "operation": "return_process",
         "seconds": 0.406
       },
       {
-        "operation": "read",
-        "seconds": 0.592
-      },
-      {
-        "operation": "enter_sequence",
-        "seconds": 0.481
-      },
-      {
         "operation": "metadata",
-        "seconds": 0.636
+        "seconds": 0.597
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.387
-      },
-      {
-        "operation": "apply",
-        "seconds": 0.576
+        "seconds": 0.393
       },
       {
         "operation": "return_process",
-        "seconds": 0.402
+        "seconds": 0.502
       },
       {
         "operation": "read",
-        "seconds": 0.363
+        "seconds": 0.583
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.483
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.638
+      },
+      {
+        "operation": "read",
+        "seconds": 0.379
       }
     ],
     "initialViewportRow": 0,

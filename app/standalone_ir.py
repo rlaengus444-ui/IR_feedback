@@ -197,7 +197,7 @@ class ThermalFeedbackWindow:
                 settings_path=Path(self.settings_path.get()) if self.settings_path.get().strip() else None)
             if self.controller.connect(options):
                 self.status.set("연결 중…")
-                self.capability.set("UI 자동 적용 중에는 Process/Sequences 화면을 사용합니다. 수동 편집·화면 변경 시 적용을 중단합니다."
+                self.capability.set("연결 준비 후 다른 탭·최소화 상태에서도 제어합니다. 수동 편집·갱신 확인 실패 시 적용을 중단합니다."
                     if options.mode == "control" else "읽기·제어 가능 여부를 확인하고 있습니다.")
         except (ValueError, KeyError, OSError) as error:
             self.status.set("연결하지 않음")
@@ -234,7 +234,7 @@ class ThermalFeedbackWindow:
         self.process_state.set(snapshot.machine_state)
         unavailable = not snapshot.control_available
         self.capability.set(("제어 불가 · " + snapshot.control_unavailable_reason) if unavailable else
-            "UI 자동 적용 중 · Process/Sequences 화면 사용 · 수동 편집·화면 이동 시 중단"
+            "UI 자동 적용 중 · 다른 탭/최소화 가능 · 수동 편집/갱신 오류 시 중단"
             if payload["effective_mode"] == "control" else "기존 Sequences IR + Save 경로 확인됨")
         self.status.set("연결됨 · 제어 불가" if payload["effective_mode"] == "control-unavailable" else
                         "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기"}[payload["effective_mode"]])

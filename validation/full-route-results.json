@@ -5,51 +5,39 @@
     "passed": true,
     "saveCount": 1,
     "nonIrUnchanged": true,
-    "elapsedSeconds": 5.874,
+    "elapsedSeconds": 4.433,
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.359
+        "seconds": 0.378
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.412
+        "seconds": 0.419
       },
       {
         "operation": "metadata",
-        "seconds": 0.92
+        "seconds": 0.566
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.395
+        "seconds": 0.39
       },
       {
         "operation": "return_process",
-        "seconds": 0.42
+        "seconds": 0.497
       },
       {
         "operation": "read",
-        "seconds": 0.371
+        "seconds": 0.381
       },
       {
-        "operation": "enter_sequence",
-        "seconds": 0.488
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.636
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.405
+        "operation": "verify_control",
+        "seconds": 0.477
       },
       {
         "operation": "apply",
-        "seconds": 0.543
-      },
-      {
-        "operation": "return_process",
-        "seconds": 0.409
+        "seconds": 0.63
       },
       {
         "operation": "read",
@@ -63,55 +51,43 @@
     "passed": true,
     "saveCount": 1,
     "nonIrUnchanged": true,
-    "elapsedSeconds": 5.984,
+    "elapsedSeconds": 4.522,
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.354
+        "seconds": 0.382
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.41
+        "seconds": 0.412
       },
       {
         "operation": "metadata",
-        "seconds": 1.067
+        "seconds": 0.649
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.408
+        "seconds": 0.393
       },
       {
         "operation": "return_process",
-        "seconds": 0.432
+        "seconds": 0.496
       },
       {
         "operation": "read",
-        "seconds": 0.356
+        "seconds": 0.386
       },
       {
-        "operation": "enter_sequence",
-        "seconds": 0.481
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.613
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.399
+        "operation": "verify_control",
+        "seconds": 0.465
       },
       {
         "operation": "apply",
-        "seconds": 0.548
-      },
-      {
-        "operation": "return_process",
-        "seconds": 0.405
+        "seconds": 0.664
       },
       {
         "operation": "read",
-        "seconds": 0.372
+        "seconds": 0.359
       }
     ]
   },
@@ -121,47 +97,39 @@
     "passed": true,
     "saveCount": 1,
     "nonIrUnchanged": true,
-    "elapsedSeconds": 5.215,
+    "elapsedSeconds": 4.54,
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.363
+        "seconds": 0.382
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.422
+        "seconds": 0.44
       },
       {
         "operation": "metadata",
-        "seconds": 0.818
+        "seconds": 0.596
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.41
+        "seconds": 0.392
       },
       {
         "operation": "return_process",
-        "seconds": 0.435
+        "seconds": 0.497
       },
       {
         "operation": "read",
-        "seconds": 0.367
+        "seconds": 0.377
       },
       {
-        "operation": "enter_sequence",
-        "seconds": 0.479
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.584
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.4
+        "operation": "verify_control",
+        "seconds": 0.44
       },
       {
         "operation": "apply",
-        "seconds": 0.81
+        "seconds": 1.108
       }
     ]
   },
@@ -171,47 +139,39 @@
     "passed": true,
     "saveCount": 1,
     "nonIrUnchanged": true,
-    "elapsedSeconds": 9.352,
+    "elapsedSeconds": 8.503,
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.347
+        "seconds": 0.376
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.411
+        "seconds": 0.44
       },
       {
         "operation": "metadata",
-        "seconds": 0.856
+        "seconds": 0.613
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.391
-      },
-      {
-        "operation": "return_process",
         "seconds": 0.401
       },
       {
+        "operation": "return_process",
+        "seconds": 0.51
+      },
+      {
         "operation": "read",
-        "seconds": 0.364
+        "seconds": 0.352
       },
       {
-        "operation": "enter_sequence",
-        "seconds": 0.468
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.606
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.393
+        "operation": "verify_control",
+        "seconds": 0.443
       },
       {
         "operation": "apply",
-        "seconds": 0.809
+        "seconds": 1.099
       }
     ]
   },
@@ -221,47 +181,39 @@
     "passed": true,
     "saveCount": 0,
     "nonIrUnchanged": true,
-    "elapsedSeconds": 5.768,
+    "elapsedSeconds": 5.088,
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.36
+        "seconds": 0.372
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.399
+        "seconds": 0.434
       },
       {
         "operation": "metadata",
-        "seconds": 0.864
+        "seconds": 0.56
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.384
+        "seconds": 0.425
       },
       {
         "operation": "return_process",
-        "seconds": 0.404
+        "seconds": 0.481
       },
       {
         "operation": "read",
-        "seconds": 0.364
+        "seconds": 0.376
       },
       {
-        "operation": "enter_sequence",
-        "seconds": 0.468
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.607
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.388
+        "operation": "verify_control",
+        "seconds": 0.456
       },
       {
         "operation": "apply",
-        "seconds": 1.401
+        "seconds": 1.674
       }
     ]
   },
@@ -271,47 +223,39 @@
     "passed": true,
     "saveCount": 0,
     "nonIrUnchanged": true,
-    "elapsedSeconds": 4.912,
+    "elapsedSeconds": 3.969,
     "uiOperations": [
       {
         "operation": "validate",
-        "seconds": 0.369
+        "seconds": 0.38
       },
       {
         "operation": "enter_sequence",
-        "seconds": 0.429
+        "seconds": 0.433
       },
       {
         "operation": "metadata",
-        "seconds": 0.924
+        "seconds": 0.591
       },
       {
         "operation": "prepare_control",
-        "seconds": 0.412
+        "seconds": 0.422
       },
       {
         "operation": "return_process",
-        "seconds": 0.404
+        "seconds": 0.491
       },
       {
         "operation": "read",
-        "seconds": 0.365
+        "seconds": 0.369
       },
       {
-        "operation": "enter_sequence",
-        "seconds": 0.47
-      },
-      {
-        "operation": "metadata",
-        "seconds": 0.607
-      },
-      {
-        "operation": "prepare_control",
-        "seconds": 0.379
+        "operation": "verify_control",
+        "seconds": 0.453
       },
       {
         "operation": "apply",
-        "seconds": 0.423
+        "seconds": 0.519
       }
     ]
   },
@@ -321,7 +265,7 @@
     "passed": true,
     "saveCount": 0,
     "unsavedEditPreserved": true,
-    "elapsedSeconds": 2.161
+    "elapsedSeconds": 2.084
   },
   {
     "machine": "S3",
@@ -329,6 +273,6 @@
     "passed": true,
     "saveCount": 0,
     "unsavedEditPreserved": true,
-    "elapsedSeconds": 2.361
+    "elapsedSeconds": 2.135
   }
 ]

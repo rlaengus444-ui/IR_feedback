@@ -20,6 +20,7 @@ public static class BinderJetQueuedGridScroll
     [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr window, int index);
     [DllImport("user32.dll")] private static extern bool GetScrollInfo(IntPtr window, int bar, ref ScrollInfo info);
     [DllImport("user32.dll", SetLastError = true)] private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr SendMessageTimeout(IntPtr window, uint message, IntPtr wParam, IntPtr lParam, uint flags, uint timeout, out UIntPtr result);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
     [DllImport("user32.dll")] private static extern bool IsChild(IntPtr parent, IntPtr child);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr window);
@@ -40,8 +41,8 @@ public static class BinderJetQueuedGridScroll
     {
         if (expectedPid <= 0 || rowCount <= 0 || currentRow < 0 || currentRow >= rowCount)
             throw new ArgumentOutOfRangeException("currentRow", "The requested row must belong to the verified layer grid.");
-        if (!Owned(root, expectedPid) || !Owned(grid, expectedPid) || !IsChild(root, grid) || !IsWindowVisible(grid))
-            throw new InvalidOperationException("The visible grid no longer belongs to the selected process/window.");
+        if (!Owned(root, expectedPid) || !Owned(grid, expectedPid) || !IsChild(root, grid))
+            throw new InvalidOperationException("The grid no longer belongs to the selected process/window.");
 
         IntPtr child = GetWindow(grid, 5); // GW_CHILD, then direct siblings only.
         for (int index = 0; child != IntPtr.Zero && index < 32; index++, child = GetWindow(child, 2))
@@ -51,7 +52,7 @@ public static class BinderJetQueuedGridScroll
             if (className.ToString().IndexOf("SCROLLBAR", StringComparison.OrdinalIgnoreCase) < 0 ||
                 (GetWindowLong(child, -16) & 1) == 0) // GWL_STYLE / SBS_VERT.
                 continue;
-            if (!Owned(child, expectedPid) || GetParent(child) != grid || !IsWindowVisible(child))
+            if (!Owned(child, expectedPid) || GetParent(child) != grid)
                 continue;
 
             var info = new ScrollInfo { Size = (uint)Marshal.SizeOf(typeof(ScrollInfo)), Mask = 7 };
@@ -84,5 +85,41 @@ public static class BinderJetQueuedGridScroll
             return messages;
         }
         throw new InvalidOperationException("The selected grid has no verified visible vertical scrollbar.");
+    }
+
+    // LayerInfoTable stops its timer on page hide, but its existing Scroll
+    // handler still calls UpdateUI/ReadSnapshot. Move one row and restore the
+    // original position. A completed standard message plus observed scrollbar
+    // movement proves the event was processed; WM_NULL alone cannot acknowledge
+    // a queued PostMessage. Never consume the old hidden row cache on failure.
+    public static void RefreshHidden(IntPtr root, IntPtr grid, int expectedPid)
+    {
+        if(!Owned(root,expectedPid)||!Owned(grid,expectedPid)||!IsChild(root,grid))
+            throw new InvalidOperationException("The background table identity changed.");
+        IntPtr child=GetWindow(grid,5);
+        for(int index=0;child!=IntPtr.Zero && index<32;index++,child=GetWindow(child,2))
+        {
+            var name=new StringBuilder(256);GetClassName(child,name,name.Capacity);
+            if(name.ToString().IndexOf("SCROLLBAR",StringComparison.OrdinalIgnoreCase)<0 ||
+                (GetWindowLong(child,-16)&1)==0 || !Owned(child,expectedPid) || GetParent(child)!=grid)continue;
+            var before=new ScrollInfo{Size=(uint)Marshal.SizeOf(typeof(ScrollInfo)),Mask=7};
+            if(!GetScrollInfo(child,2,ref before))continue;
+            long maximum=(long)before.Maximum-before.Page+1;
+            if(before.Page==0 || maximum<=before.Minimum || before.Position<before.Minimum || before.Position>maximum)continue;
+            int forward=before.Position<maximum?1:0;
+            UIntPtr result;
+            if(SendMessageTimeout(grid,0x0115,new IntPtr(forward),child,0x23,250,out result)==IntPtr.Zero)
+                throw new InvalidOperationException("The background refresh scroll did not finish within 250 ms.");
+            var moved=new ScrollInfo{Size=before.Size,Mask=7};
+            bool movedOk=GetScrollInfo(child,2,ref moved) && moved.Position!=before.Position;
+            if(SendMessageTimeout(grid,0x0115,new IntPtr(forward==1?0:1),child,0x23,250,out result)==IntPtr.Zero)
+                throw new InvalidOperationException("The background refresh return scroll did not finish within 250 ms.");
+            var after=new ScrollInfo{Size=before.Size,Mask=7};
+            if(!movedOk || !GetScrollInfo(child,2,ref after) || after.Position!=before.Position ||
+                after.Minimum!=before.Minimum || after.Maximum!=before.Maximum || after.Page!=before.Page)
+                throw new InvalidOperationException("Background refresh movement/range was not confirmed; cached temperature was rejected.");
+            return;
+        }
+        throw new InvalidOperationException("Background T_recoating refresh requires an existing scrollable layer table; cached temperature was rejected.");
     }
 }

@@ -166,11 +166,16 @@ public static class BinderJetNativeProcess
 
     public static IntPtr FindGrid(IntPtr root, int expectedPid, int currentRow)
     {
+        return FindGrid(root,expectedPid,currentRow,false);
+    }
+
+    public static IntPtr FindGrid(IntPtr root, int expectedPid, int currentRow, bool includeHidden)
+    {
         IntPtr found = IntPtr.Zero;
         foreach (Hashtable control in Enumerate(root, expectedPid))
         {
             string className = (string)control["class_name"];
-            if (!(bool)control["visible"] ||
+            if ((!includeHidden && !(bool)control["visible"]) ||
                 (className.IndexOf("WindowsForms", StringComparison.OrdinalIgnoreCase) < 0 &&
                  className.IndexOf("DataGrid", StringComparison.OrdinalIgnoreCase) < 0) ||
                 className.IndexOf("BUTTON", StringComparison.OrdinalIgnoreCase) >= 0 ||

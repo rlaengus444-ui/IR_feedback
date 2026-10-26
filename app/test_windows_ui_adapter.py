@@ -132,7 +132,7 @@ class WindowsUiAdapterTests(unittest.TestCase):
             if request["operation"] == "return_process":
                 state["page"] = "process"
                 return {"success": True}
-            if request["operation"] == "prepare_control":
+            if request["operation"] in ("prepare_control", "verify_control"):
                 return {"success": True, "setting": state["power"], "fields": fields}
             if request["operation"] == "apply":
                 if request["baseline"]["textBoxSpeed"] != state["speed"]:
@@ -183,13 +183,13 @@ class WindowsUiAdapterTests(unittest.TestCase):
                 self.assertEqual(0, state["saves"])
                 self.assertTrue(snapshot.control_available)
 
-    def test_disconnect_during_metadata_prevents_a_late_edit_or_save(self):
+    def test_disconnect_during_background_verification_prevents_a_late_edit_or_save(self):
         with tempfile.TemporaryDirectory() as directory:
             adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
             original = adapter._runner
             def disconnecting(request, stop):
                 result = original(request, stop)
-                if request["operation"] == "metadata":
+                if request["operation"] == "verify_control":
                     adapter.disconnect()
                 return result
             adapter._runner = disconnecting
@@ -199,19 +199,20 @@ class WindowsUiAdapterTests(unittest.TestCase):
             self.assertEqual(0, state["saves"])
             self.assertEqual("62", json.loads(config.read_text())[0]["Value"])
 
-    def test_process_return_failure_after_verified_save_is_not_retried(self):
+    def test_background_save_preserves_user_page_and_needs_no_further_navigation_or_metadata(self):
         with tempfile.TemporaryDirectory() as directory:
             adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
             original = adapter._runner
-            def failed_return(request, stop):
-                if request["operation"] == "return_process":
-                    raise AdapterError("Process return acknowledgement failed")
+            state["page"] = "webcam"
+            start = len(calls)
+            def no_navigation(request, stop):
+                if request["operation"] in ("return_process", "enter_sequence", "metadata", "prepare_control"):
+                    raise AssertionError("An active background session must preserve the user's page")
                 return original(request, stop)
-            adapter._runner = failed_return
-            with self.assertRaises(AmbiguousWriteError):
-                adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
-            with self.assertRaises(ControlUnavailable):
-                adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
+            adapter._runner = no_navigation
+            adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
+            self.assertEqual("webcam", state["page"])
+            self.assertEqual(["verify_control", "apply"], [call["operation"] for call in calls[start:]])
             self.assertEqual(1, state["saves"])
             self.assertEqual("67", json.loads(config.read_text())[0]["Value"])
 
@@ -254,6 +255,20 @@ class WindowsUiAdapterTests(unittest.TestCase):
             self.assertIsNone(waiting.observation_key)
             with self.assertRaises(ControlUnavailable):
                 adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
+            self.assertEqual(0, state["saves"])
+
+    def test_hidden_page_retains_confirmed_layer_when_verbose_log_tail_moves_on(self):
+        with tempfile.TemporaryDirectory() as directory:
+            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
+            state["row"] = 7
+            with patch("windows_ui_adapter._log_layer_hint", side_effect=[(7, "job"), (None, None)]):
+                adapter._last_read = 0
+                first = adapter.read_snapshot(threading.Event())
+                adapter._last_read = 0
+                second = adapter.read_snapshot(threading.Event())
+            self.assertIsNotNone(first.observation_key)
+            self.assertEqual(first.observation_key, second.observation_key)
+            self.assertEqual(7, calls[-1]["layer_hint"])
             self.assertEqual(0, state["saves"])
 
     def test_stale_observation_or_changed_other_settings_prevents_save(self):

@@ -129,4 +129,15 @@ public static class BinderJetQueuedNavigation
             (root == child || IsChild(root, child)) && !IsIconic(root) &&
             IsWindowVisible(root) && IsWindowVisible(child);
     }
+
+    public static bool IsOwned(IntPtr root, IntPtr child, int expectedPid)
+    {
+        return HasIdentity(root, expectedPid) && HasIdentity(child, expectedPid) &&
+            (root == child || IsChild(root, child));
+    }
+
+    public static bool IsShown(IntPtr root, IntPtr child, int expectedPid)
+    {
+        return IsOwned(root,child,expectedPid) && IsWindowVisible(root) && IsWindowVisible(child);
+    }
 }
