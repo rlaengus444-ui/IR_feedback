@@ -68,7 +68,7 @@ function AssertAutomatic($root, $pidExpected, $handles) {
 }
 
 function ClickNavigation($root, $pidExpected, $handles, [string]$name) {
-    $key = if ($name -eq 'btnProcess') { 'process' } elseif ($name -eq 'btnSequences') { 'sequences' } else { throw 'Unsupported navigation.' }
+    $key = if ($name -eq 'btnSequences') { 'sequences' } else { throw 'Unsupported navigation.' }
     $button = HandleOf $handles $key
     if ($button -eq [IntPtr]::Zero) { $button = [BinderJetNativeProcess]::FindNavigation($root, $pidExpected, $name) }
     if ([BinderJetQueuedNavigation]::IsUserEditing($root, $pidExpected)) { throw 'The user is editing a target field; automatic page navigation is suspended.' }
@@ -114,70 +114,6 @@ function FreshLogHint([string]$machine) {
     finally { if ($null -ne $stream) { $stream.Dispose() } }
 }
 
-function NativeState($root, $pidExpected, $providedHandles, $hint, [bool]$follow, [bool]$requireProcess) {
-    if (-not [BinderJetQueuedNavigation]::Responsive($root, $pidExpected, 250)) { throw 'The target UI is not responding; cached temperature was rejected.' }
-    $handles = @{}
-    foreach ($entry in @(EntriesOf $providedHandles)) { $handles[$entry.Name] = $entry.Value }
-    $machine = CheckMachine $root $pidExpected $handles
-    $liveHint = FreshLogHint $machine
-    if ($null -ne $liveHint) { $hint = $liveHint }
-    $state = 'unknown'; $progress = ''
-    $stateHandle = HandleOf $handles 'state'; $progressHandle = HandleOf $handles 'progress'
-    if ($stateHandle -ne [IntPtr]::Zero) {
-        if (-not (Owned $root $stateHandle $pidExpected)) { throw 'The cached task-state label identity changed.' }
-        $state = ([BinderJetNativeProcess]::ReadText($root, $stateHandle, $pidExpected)).Trim()
-    }
-    if ($progressHandle -ne [IntPtr]::Zero) {
-        if (-not (Owned $root $progressHandle $pidExpected)) { throw 'The cached progress label identity changed.' }
-        $progress = [BinderJetNativeProcess]::ReadText($root, $progressHandle, $pidExpected)
-    }
-    # Before leaf IDs have been collected, inspect only native visible STATIC
-    # text. Ambiguous labels are rejected instead of adopting another control.
-    if ($stateHandle -eq [IntPtr]::Zero -or $progressHandle -eq [IntPtr]::Zero) {
-        $stateCandidates = @(); $progressCandidates = @()
-        foreach ($control in @([BinderJetNativeProcess]::Enumerate($root, $pidExpected))) {
-            if (-not $control.visible -or [string]$control.class_name -notmatch '(?i)STATIC') { continue }
-            $text = ([string]$control.text).Trim()
-            if ($text -in @('AUTO','RUNNING','IDLE','PAUSED','PAUSE','STOPPED','STOP','ERROR','FAULT','UNKNOWN')) { $stateCandidates += $control }
-            if ($text -match '(?i)\bLayer\s*[:#]?\s*\d+\s*/') { $progressCandidates += $control }
-        }
-        if ($stateHandle -eq [IntPtr]::Zero -and $stateCandidates.Count -eq 1) {
-            $state = ([string]$stateCandidates[0].text).Trim(); $handles['state'] = [long]$stateCandidates[0].hwnd
-        } elseif ($stateHandle -eq [IntPtr]::Zero -and $stateCandidates.Count -gt 1) { throw 'The native task-state label is ambiguous.' }
-        if ($progressHandle -eq [IntPtr]::Zero -and $progressCandidates.Count -eq 1) {
-            $progress = [string]$progressCandidates[0].text; $handles['progress'] = [long]$progressCandidates[0].hwnd
-        } elseif ($progressHandle -eq [IntPtr]::Zero -and $progressCandidates.Count -gt 1) { throw 'The native layer-progress label is ambiguous.' }
-    }
-    if ([string]::IsNullOrWhiteSpace($state)) { $state = 'unknown' }
-    if ($null -eq $hint -and $progress -match '(?i)\bLayer\s*[:#]?\s*(\d+)\s*/') { $hint = [Math]::Max(0, [int]$matches[1] - 1) }
-    $rowHint = if ($null -eq $hint) { 0 } else { [int]$hint }
-    if ($rowHint -lt 0 -or $rowHint -gt 1000000) { throw 'The current layer hint is outside its supported bound.' }
-    $grid = HandleOf $handles 'grid'
-    if ($grid -ne [IntPtr]::Zero) {
-        if (-not (Owned $root $grid $pidExpected)) { throw 'The cached T_recoating table identity changed.' }
-        elseif (-not [BinderJetAccessibleGrid]::HasRecoatingHeaders($grid)) { throw 'The cached native table no longer has the verified T_recoating headers.' }
-    } else { $grid = [BinderJetNativeProcess]::FindGrid($root, $pidExpected, $rowHint, $true) }
-    $rows = @(); $hasGrid = $grid -ne [IntPtr]::Zero; $visibleGrid = $hasGrid -and (Visible $root $grid $pidExpected)
-    if ($hasGrid) {
-        $handles['grid'] = $grid.ToInt64()
-        if (-not $visibleGrid -and $state -in @('AUTO','RUNNING')) {
-            [BinderJetQueuedGridScroll]::RefreshHidden($root, $grid, $pidExpected)
-        }
-        $rows = @([BinderJetAccessibleGrid]::ReadRows($grid, $rowHint))
-        $current = @($rows | Where-Object { [int]$_.row_index -eq $rowHint })
-        if ($follow -and $current.Count -eq 1 -and
-            ([string]$current[0].start -match '0001' -or [string]$current[0].temperature -eq '0')) {
-            [void][BinderJetQueuedGridScroll]::Follow($root, $grid, $pidExpected, $rowHint, [int]$current[0].row_count)
-            Start-Sleep -Milliseconds 200
-            if (-not [BinderJetQueuedNavigation]::Responsive($root, $pidExpected, 250)) { throw 'The target did not acknowledge bounded native row following.' }
-            $rows = @([BinderJetAccessibleGrid]::ReadRows($grid, $rowHint))
-        }
-    }
-    if ($requireProcess -and -not $hasGrid) { throw 'The controlled Process T_recoating table is unavailable.' }
-    return @{success=$true; machine=$machine; state=$state; setting=$null; status_powers=@{}; progress=$progress;
-        layer_label=''; rows=$rows; visible_grid=$visibleGrid; background_read=($hasGrid -and -not $visibleGrid); handles=$handles; layer_hint=$hint}
-}
-
 function FiniteNumber([string]$text) {
     $number = 0.0
     if (-not [double]::TryParse($text.Replace(',','.'), [Globalization.NumberStyles]::Float,
@@ -187,23 +123,20 @@ function FiniteNumber([string]$text) {
     return $number
 }
 
-function AssertObservation($snapshot, $expected) {
-    if ($snapshot.state -notin @('AUTO','RUNNING')) { throw 'A fresh T_recoating decision requires AUTO/RUNNING.' }
-    if ($null -eq $snapshot.layer_hint) { throw 'A verified current production layer is required before an IR decision.' }
-    $expectedIndex = [int]$expected.row_index
-    if ($expectedIndex -lt ([int]$snapshot.layer_hint - 1) -or $expectedIndex -gt [int]$snapshot.layer_hint) {
-        throw 'The expected T_recoating row does not match the current production layer.'
+function AssertCsvFile($token, $observation) {
+    $path = [string](ValueOf $token 'path')
+    if ([string]::IsNullOrWhiteSpace($path) -or [IO.Path]::GetFileName($path) -notmatch '^LayerDatasheet_\d{8}_\d{6}\.csv$') { throw 'A verified Monitoring CSV token is required.' }
+    $file = New-Object IO.FileInfo($path)
+    $file.Refresh()
+    if (-not $file.Exists -or $file.Length -ne [long](ValueOf $token 'size') -or
+        $file.LastWriteTimeUtc.Ticks -ne [long](ValueOf $token 'mtime_ticks')) {
+        throw 'The Monitoring CSV changed after the decision; no settings were saved.'
     }
-    $found = $false
-    foreach ($row in @($snapshot.rows)) {
-        if ([string]$row.start -match '0001') { continue }
-        try { $temperature = FiniteNumber ([string]$row.temperature) } catch { continue }
-        if ($temperature -eq 0) { continue }
-        if ([int]$row.row_index -gt $expectedIndex) { throw 'A newer completed T_recoating row exists; the old decision was not saved.' }
-        if ([int]$row.row_index -eq $expectedIndex -and [string]$row.start -ceq [string]$expected.start -and
-            [Math]::Abs($temperature - (FiniteNumber ([string]$expected.temperature))) -le 0.000000001) { $found = $true }
-    }
-    if (-not $found) { throw 'The expected fresh T_recoating row is no longer available; no settings were saved.' }
+    $age = ([DateTime]::UtcNow - $file.LastWriteTimeUtc).TotalSeconds
+    if ($age -lt -2 -or $age -gt 5) { throw 'The completed CSV record is no longer fresh enough for an IR update.' }
+    $index = [int]$observation.row_index
+    $hint = FreshLogHint ([string]$request.machine)
+    if ($null -ne $hint -and ($hint -lt $index -or $hint -gt ($index + 1))) { throw 'The production layer advanced beyond the completed CSV decision.' }
 }
 
 function UniqueVisibleRecord($records, [string]$id, [bool]$required) {
@@ -248,52 +181,57 @@ try {
     Add-Type -Path ([string]$request.bridge_path)
     if ($request.operation -eq 'discover') {
         $windows = New-Object 'Collections.Generic.List[object]'
+        $instance = $null
+        try {
+            $registry = [IO.Path]::Combine([Environment]::GetFolderPath('LocalApplicationData'), 'BinderJet.Unified', 'runtime-instance.json')
+            $info = New-Object IO.FileInfo($registry)
+            if ($info.Exists -and $info.Length -le 65536) { $instance = [IO.File]::ReadAllText($registry) | ConvertFrom-Json }
+        } catch { }
         foreach ($process in Get-Process) {
-            if ($process.MainWindowHandle -eq [IntPtr]::Zero) { continue }
             $title = [string]$process.MainWindowTitle; $name = [string]$process.ProcessName
             if (($title + ' ' + $name) -notmatch '(?i)Binder\s*Jet|BinderJet|BinderjetController') { continue }
+            $window = $process.MainWindowHandle
+            if ($window -eq [IntPtr]::Zero) { $window = [BinderJetNativeProcess]::FindRoot([int]$process.Id) }
+            if ($window -eq [IntPtr]::Zero) { continue }
             $image = ''; try { $image = [string]$process.Path } catch { }
             $machine = 'unknown'
-            try {
-                $native = [BinderJetNativeProcess]::IdentifyMachine($process.MainWindowHandle, [int]$process.Id)
-                if ($native -ne 'unknown') { $machine = $native }
-            } catch { }
+            if ($null -ne $instance -and [int]$instance.processId -eq $process.Id -and [string]$instance.machineName -in @('M1','S3')) { $machine = [string]$instance.machineName }
             if ($machine -eq 'unknown') { $machine = MachineKind ($title + ' ' + [IO.Path]::GetFileName($image)) }
-            $windows.Add(@{machine=$machine;pid=$process.Id;hwnd=$process.MainWindowHandle.ToInt64();title=$title;image_path=$image})
+            if ($machine -eq 'unknown' -and [BinderJetQueuedNavigation]::Responsive($window,[int]$process.Id,100)) {
+                try { $machine = [BinderJetNativeProcess]::IdentifyMachine($window, [int]$process.Id) } catch { }
+            }
+            $windows.Add(@{machine=$machine;pid=$process.Id;hwnd=$window.ToInt64();title=$title;image_path=$image})
             if ($windows.Count -ge 12) { break }
         }
         $response = @{success=$true;windows=@($windows.ToArray())}
     } else {
         $root = [IntPtr][long]$request.hwnd; $pidExpected = [int]$request.pid; $handles = $request.handles
-        # ReadText validates HWND/PID even if metadata and all optional handles
-        # are absent. This standard scalar/text read never creates a UIA root.
-        [void][BinderJetNativeProcess]::ReadText($root, $root, $pidExpected)
-        $machine = CheckMachine $root $pidExpected $handles
+        # Identity validation does not enter the target window procedure.
+        [BinderJetNativeProcess]::ValidateWindow($root, $pidExpected)
+        $machine = if ($request.operation -eq 'validate') { [string]$request.machine } else { CheckMachine $root $pidExpected $handles }
         switch ([string]$request.operation) {
-            { $_ -in @('validate','read') } {
-                $response = NativeState $root $pidExpected $handles $request.layer_hint ([bool]$request.follow_row) ([bool]$request.require_process)
+            'validate' {
+                $response = @{success=$true;machine=$machine;handles=@{}}
+            }
+            'read_status' {
+                $stateHandle = HandleOf $handles 'state'
+                if (-not (Owned $root $stateHandle $pidExpected)) { throw 'The audited task-state label is unavailable.' }
+                $state = ([BinderJetNativeProcess]::ReadText($root, $stateHandle, $pidExpected)).Trim()
+                $response = @{success=$true;machine=$machine;state=$state}
             }
             'enter_sequence' {
-                $entered = $false
-                if ($null -ne $request.observation) {
-                    $snapshot = NativeState $root $pidExpected $handles $request.layer_hint $true $true
-                    AssertObservation $snapshot $request.observation
-                    if ([BinderJetQueuedNavigation]::IsUserEditing($root, $pidExpected)) { throw 'The user is editing a target field; the pending decision was not applied.' }
-                    ClickNavigation $root $pidExpected $handles 'btnSequences'
-                    $entered = $true
-                } else {
-                    $hint = if ($null -eq $request.layer_hint) { 0 } else { [int]$request.layer_hint }
-                    $grid = [BinderJetNativeProcess]::FindGrid($root, $pidExpected, $hint)
-                    if ($grid -ne [IntPtr]::Zero -or [bool]$request.force_sequence) {
-                        ClickNavigation $root $pidExpected $handles 'btnSequences'
-                        $entered = $true
-                    }
-                }
-                $response = @{success=$true;machine=$machine;entered=$entered}
+                # A native menu click creates/shows the existing Sequence view.
+                # Never identify, read, scroll or open the Process table.
+                ClickNavigation $root $pidExpected $handles 'btnSequences'
+                $response = @{success=$true;machine=$machine;entered=$true}
             }
             'metadata' {
-                $hint = if ($null -eq $request.layer_hint) { 0 } else { [int]$request.layer_hint }
-                if ([BinderJetNativeProcess]::FindGrid($root, $pidExpected, $hint) -ne [IntPtr]::Zero) { throw 'Leaf metadata collection requires the Process grid to be hidden.' }
+                $saveVisible = $false
+                foreach ($control in @([BinderJetNativeProcess]::Enumerate($root, $pidExpected))) {
+                    if ($control.visible -and [string]$control.class_name -match '(?i)BUTTON' -and
+                        ([string]$control.text).Trim() -ieq 'Save') { $saveVisible = $true }
+                }
+                if (-not $saveVisible) { throw 'The Sequence Save button is not visible; leaf metadata was not collected.' }
                 $response = @{success=$true;records=@([BinderJetLeafMetadata]::Collect($root, $pidExpected))}
             }
             'prepare_control' {
@@ -320,8 +258,8 @@ try {
                 [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
                 $fields = ReadFields $root $pidExpected $map $scope
                 $newHandles = @{scope=$scope.ToInt64();save=$save.ToInt64();ir=$ir.ToInt64()}
-                foreach ($pair in @(@('machine','labelMachineName'),@('state','labelTaskStatus'),@('progress','lblProgress'),@('process','btnProcess'),@('sequences','btnSequences'))) {
-                    $record = if ($pair[0] -eq 'progress') { UniqueRecord $records $pair[1] } else { UniqueVisibleRecord $records $pair[1] ($pair[0] -in @('machine','state','process','sequences')) }
+                foreach ($pair in @(@('machine','labelMachineName'),@('state','labelTaskStatus'),@('sequences','btnSequences'))) {
+                    $record = UniqueVisibleRecord $records $pair[1] $true
                     if ($null -ne $record) { $newHandles[$pair[0]] = [long]$record.hwnd }
                 }
                 $verifiedMachine = NativeMachine $root $pidExpected $newHandles
@@ -330,12 +268,11 @@ try {
             }
             'verify_control' {
                 AssertAutomatic $root $pidExpected $handles
-                $snapshot = NativeState $root $pidExpected $handles $request.layer_hint $true $true
-                AssertObservation $snapshot $request.observation
+                AssertCsvFile $request.csv_token $request.observation
                 $scope = HandleOf $handles 'scope'
                 if (-not (Owned $root $scope $pidExpected)) { throw 'The audited Sequence view identity changed.' }
                 $fields = ReadFields $root $pidExpected $request.field_map $scope
-                $response = @{success=$true;fields=$fields;setting=$fields['textBoxHeatingOutput'];handles=$snapshot.handles;field_map=$request.field_map}
+                $response = @{success=$true;fields=$fields;setting=$fields['textBoxHeatingOutput'];handles=$handles;field_map=$request.field_map}
             }
             'apply' {
                 AssertAutomatic $root $pidExpected $handles
@@ -353,14 +290,14 @@ try {
                 if ([string]::IsNullOrWhiteSpace([string]$request.edit_marker) -or [string]::IsNullOrWhiteSpace([string]$request.save_marker)) { throw 'Write-ahead edit/Save markers are required.' }
                 [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
                 AssertAutomatic $root $pidExpected $handles
-                AssertObservation (NativeState $root $pidExpected $handles $request.layer_hint $true $true) $request.observation
+                AssertCsvFile $request.csv_token $request.observation
                 [IO.File]::WriteAllText([string]$request.edit_marker, 'edit-may-have-started')
                 [BinderJetNativeFields]::SetIr($root, $ir, $pidExpected, [string]$request.power)
                 $after = ReadFields $root $pidExpected $request.field_map $scope
                 AssertOtherFields $after $request.baseline
                 if ([Math]::Abs((FiniteNumber ([string]$after['textBoxHeatingOutput'])) - $desired) -gt 0.000000001) { throw 'IR input readback failed before Save.' }
                 AssertAutomatic $root $pidExpected $handles
-                AssertObservation (NativeState $root $pidExpected $handles $request.layer_hint $true $true) $request.observation
+                AssertCsvFile $request.csv_token $request.observation
                 [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
                 # This durable marker precedes the only queued Save. A timeout,
                 # cancellation or uncertain result must never trigger a retry.
@@ -371,22 +308,6 @@ try {
                 $verified = [BinderJetNativeFields]::Read($root, $ir, $pidExpected, 'text')
                 if ([Math]::Abs((FiniteNumber $verified) - $desired) -gt 0.000000001) { throw 'IR readback after queued Save did not match.' }
                 $response = @{success=$true;save_invoked=$true;setting=$verified}
-            }
-            'return_process' {
-                $scope = HandleOf $handles 'scope'; $grid = HandleOf $handles 'grid'
-                $processVisible = (Visible $root $grid $pidExpected)
-                if ($processVisible -and -not [BinderJetAccessibleGrid]::HasRecoatingHeaders($grid)) { throw 'The cached Process table changed.' }
-                if (-not $processVisible) {
-                    $hint = if ($null -eq $request.layer_hint) { 0 } else { [int]$request.layer_hint }
-                    $grid = [BinderJetNativeProcess]::FindGrid($root, $pidExpected, $hint)
-                    $processVisible = $grid -ne [IntPtr]::Zero
-                }
-                if (-not $processVisible) {
-                    if (-not [BinderJetQueuedNavigation]::IsShown($root, $scope, $pidExpected)) { throw 'The user changed pages; the module will not navigate over that change.' }
-                    ClickNavigation $root $pidExpected $handles 'btnProcess'
-                }
-                if (-not [BinderJetQueuedNavigation]::Responsive($root, $pidExpected, 250)) { throw 'The Process return heartbeat failed.' }
-                $response = NativeState $root $pidExpected $handles $request.layer_hint $false $true
             }
             default { throw 'Unsupported native helper operation.' }
         }

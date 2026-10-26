@@ -66,7 +66,7 @@ class ThermalFeedbackWindow:
         self.temperature = tk.StringVar(value="—")
         self.process_state = tk.StringVar(value="—")
         self.decision = tk.StringVar(value="연결 후 새 T_recoating 기록을 기다립니다.")
-        self.root.title("IR 피드백 외부 모듈")
+        self.root.title("IR 피드백 외부 모듈 · CSV")
         self.root.geometry("1080x740")
         self.root.minsize(940, 650)
         self.root.protocol("WM_DELETE_WINDOW", self.close)
@@ -84,7 +84,7 @@ class ThermalFeedbackWindow:
         main = ttk.Frame(self.root, padding=22)
         main.pack(fill="both", expand=True)
         ttk.Label(main, text="IR 피드백 확장 모듈", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(main, text="원본 프로그램 무수정 · T_recoating 수신 · Excel 계산식", foreground="#536173").pack(anchor="w", pady=(4, 15))
+        ttk.Label(main, text="원본 무수정 · Monitoring CSV 저장 후 수신 · Process 표 접근 없음", foreground="#536173").pack(anchor="w", pady=(4, 15))
 
         connection = ttk.LabelFrame(main, text="프로그램 연결", padding=12)
         connection.pack(fill="x")
@@ -129,7 +129,7 @@ class ThermalFeedbackWindow:
         ttk.Label(main, textvariable=self.capability, wraplength=990, foreground="#9a4c10").pack(fill="x", anchor="w", pady=(0, 14))
         metrics = ttk.Frame(main)
         metrics.pack(fill="x")
-        for title, variable in (("현재 층", self.layer), ("T_recoating", self.temperature), ("프로그램 상태", self.process_state)):
+        for title, variable in (("최근 완료 층", self.layer), ("T_recoating (CSV)", self.temperature), ("프로그램 상태", self.process_state)):
             card = ttk.LabelFrame(metrics, text=title, padding=12)
             card.pack(side="left", fill="both", expand=True, padx=(0, 10))
             ttk.Label(card, textvariable=variable, style="Metric.TLabel").pack(anchor="w")
@@ -197,7 +197,7 @@ class ThermalFeedbackWindow:
                 settings_path=Path(self.settings_path.get()) if self.settings_path.get().strip() else None)
             if self.controller.connect(options):
                 self.status.set("연결 중…")
-                self.capability.set("연결 준비 후 다른 탭·최소화 상태에서도 제어합니다. 수동 편집·갱신 확인 실패 시 적용을 중단합니다."
+                self.capability.set("CSV 저장 후 자동 적용 · 다른 탭/최소화 가능 · 수동 편집/원본 UI 응답 실패 시 적용 정지"
                     if options.mode == "control" else "읽기·제어 가능 여부를 확인하고 있습니다.")
         except (ValueError, KeyError, OSError) as error:
             self.status.set("연결하지 않음")
@@ -234,7 +234,7 @@ class ThermalFeedbackWindow:
         self.process_state.set(snapshot.machine_state)
         unavailable = not snapshot.control_available
         self.capability.set(("제어 불가 · " + snapshot.control_unavailable_reason) if unavailable else
-            "UI 자동 적용 중 · 다른 탭/최소화 가능 · 수동 편집/갱신 오류 시 중단"
+            "CSV 자동 적용 중 · Process 표 접근 없음 · 다른 탭/최소화 가능"
             if payload["effective_mode"] == "control" else "기존 Sequences IR + Save 경로 확인됨")
         self.status.set("연결됨 · 제어 불가" if payload["effective_mode"] == "control-unavailable" else
                         "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기"}[payload["effective_mode"]])

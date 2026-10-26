@@ -16,6 +16,10 @@ public static class BinderJetNativeProcess
     private const uint TextMessage = 0x000D;
     private const uint TimeoutFlags = 0x0001 | 0x0002 | 0x0020;
     private delegate bool ChildCallback(IntPtr window, IntPtr parameter);
+    [StructLayout(LayoutKind.Sequential)] private struct Rect { public int Left,Top,Right,Bottom; }
+    [DllImport("user32.dll")] private static extern bool EnumWindows(ChildCallback callback,IntPtr parameter);
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr window,out Rect rect);
+    [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr window,uint command);
 
     [DllImport("user32.dll")]
     private static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
@@ -129,8 +133,8 @@ public static class BinderJetNativeProcess
 
     public static IntPtr FindNavigation(IntPtr root, int expectedPid, string id)
     {
-        string expected = id == "btnProcess" ? "Process" : id == "btnSequences" ? "Sequences" : null;
-        if (expected == null) throw new ArgumentException("Only the audited Process/Sequences navigation buttons are supported.", "id");
+        string expected = id == "btnSequences" ? "Sequences" : null;
+        if (expected == null) throw new ArgumentException("Only the audited Sequences navigation button is supported.", "id");
         IntPtr found = IntPtr.Zero;
         foreach (Hashtable control in Enumerate(root, expectedPid))
         {
@@ -164,33 +168,20 @@ public static class BinderJetNativeProcess
         return found ?? "unknown";
     }
 
-    public static IntPtr FindGrid(IntPtr root, int expectedPid, int currentRow)
-    {
-        return FindGrid(root,expectedPid,currentRow,false);
-    }
+    public static void ValidateWindow(IntPtr root, int expectedPid) { ValidateRoot(root,expectedPid); }
 
-    public static IntPtr FindGrid(IntPtr root, int expectedPid, int currentRow, bool includeHidden)
+    public static IntPtr FindRoot(int expectedPid)
     {
-        IntPtr found = IntPtr.Zero;
-        foreach (Hashtable control in Enumerate(root, expectedPid))
-        {
-            string className = (string)control["class_name"];
-            if ((!includeHidden && !(bool)control["visible"]) ||
-                (className.IndexOf("WindowsForms", StringComparison.OrdinalIgnoreCase) < 0 &&
-                 className.IndexOf("DataGrid", StringComparison.OrdinalIgnoreCase) < 0) ||
-                className.IndexOf("BUTTON", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                className.IndexOf("STATIC", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                className.IndexOf("EDIT", StringComparison.OrdinalIgnoreCase) >= 0) continue;
-            IntPtr window = new IntPtr((long)control["hwnd"]);
-            bool matches = false;
-            try { matches = BinderJetAccessibleGrid.HasRecoatingHeaders(window); }
-            catch (COMException) { }
-            catch (InvalidOperationException) { }
-            if (!matches) continue;
-            if (found != IntPtr.Zero) throw new InvalidOperationException("Multiple native T_recoating tables are visible.");
-            found = window;
-        }
-        if (found != IntPtr.Zero) ValidateChild(root, found, expectedPid);
-        return found;
+        IntPtr selected=IntPtr.Zero;long largest=-1;
+        ChildCallback callback=delegate(IntPtr window,IntPtr unused) {
+            if(!HasProcess(window,expectedPid)||GetWindow(window,4)!=IntPtr.Zero)return true;
+            if(ClassName(window).IndexOf("WindowsForms",StringComparison.OrdinalIgnoreCase)<0)return true;
+            Rect rect;if(!GetWindowRect(window,out rect))return true;
+            long area=(long)Math.Max(0,rect.Right-rect.Left)*Math.Max(0,rect.Bottom-rect.Top);
+            if(IsWindowVisible(window))area+=1L<<40;
+            if(area>largest){largest=area;selected=window;}
+            return true;
+        };
+        EnumWindows(callback,IntPtr.Zero);GC.KeepAlive(callback);return selected;
     }
 }

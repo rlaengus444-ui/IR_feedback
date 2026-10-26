@@ -41,6 +41,7 @@ class UiSnapshot:
     coupled_output: bool = True
     minimum_poll_seconds: float = 1.0
     run_key: str | None = None
+    observation_is_new: bool | None = None
 
 
 class UiAdapter(Protocol):

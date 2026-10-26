@@ -118,12 +118,13 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             # create a control action. Wait for receipt of a new T_recoating row.
             if effective_mode == "waiting":
                 pass
-            elif not baseline_seen:
+            elif not baseline_seen and not (valid and snapshot.observation_is_new is True):
                 if valid:
                     baseline_seen = True
                     last_key = snapshot.observation_key
                     known_run_key = snapshot.run_key
             elif can_calculate and valid and snapshot.observation_key != last_key:
+                baseline_seen = True
                 run_changed = snapshot.run_key is not None and snapshot.run_key != known_run_key and last_layer is not None
                 uncertain_same_layer = last_layer == snapshot.layer_index
                 if wait_for_different_layer == snapshot.layer_index:

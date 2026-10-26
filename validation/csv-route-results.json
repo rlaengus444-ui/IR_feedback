@@ -1,0 +1,888 @@
+[
+  {
+    "machine": "M1",
+    "case": "normal",
+    "page": "webcam",
+    "minimized": false,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.219,
+      0.594,
+      1.266
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.282
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.406
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.578
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.375
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.61
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "normal",
+    "page": "sequence",
+    "minimized": false,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.25,
+      0.109,
+      1.484
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.266
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.391
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.594
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.39
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.593
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.282
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "normal",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.063,
+      0.094,
+      1.188
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.281
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.422
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.61
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.375
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.594
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "normal",
+    "page": "sequence",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.234,
+      0.11,
+      1.485
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.282
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.406
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.578
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.391
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.282
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.282
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.422
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.61
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.265
+      }
+    ]
+  },
+  {
+    "machine": "S3",
+    "case": "normal",
+    "page": "webcam",
+    "minimized": false,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.265,
+      0.64,
+      1.093
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.25
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.39
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.625
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.391
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.282
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.609
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.266
+      }
+    ]
+  },
+  {
+    "machine": "S3",
+    "case": "normal",
+    "page": "sequence",
+    "minimized": false,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.235,
+      0.625,
+      1.094
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.266
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.406
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.578
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.594
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      }
+    ]
+  },
+  {
+    "machine": "S3",
+    "case": "normal",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.25,
+      0.094,
+      1.469
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.281
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.406
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.61
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.39
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.391
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.594
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      }
+    ]
+  },
+  {
+    "machine": "S3",
+    "case": "normal",
+    "page": "sequence",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.25,
+      0.109,
+      1.516
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.266
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.407
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.578
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.39
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.282
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.421
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.61
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "partial",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.438,
+      0.078,
+      1.406
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.265
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.422
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.594
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.407
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.609
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "connectmin",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.203,
+      0.078,
+      1.468
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.25
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.422
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.578
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.61
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.282
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "savehang",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.016,
+      0.062
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.266
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.407
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.593
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.375
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.422
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.891
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "savetardy",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.063,
+      0.109
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.281
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.438
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.578
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.39
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.844
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "edithang",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 0,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.219,
+      0.578
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.266
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.406
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.578
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.391
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "apply",
+        "seconds": 1.438
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "statechange",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 0,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.234,
+      0.078
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.266
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.406
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.594
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.39
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.266
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.391
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.453
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "dirty",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 0,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.265
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.391
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.562
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.375
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "late",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.235,
+      0.609,
+      1.063
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.25
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.406
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.594
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.391
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.297
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.594
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "newfile",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 1,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.484,
+      0.657,
+      1.125
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.282
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.39
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.594
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.391
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.282
+      },
+      {
+        "operation": "verify_control",
+        "seconds": 0.39
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.61
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.265
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "statushang",
+    "page": "webcam",
+    "minimized": true,
+    "passed": true,
+    "saveCount": 0,
+    "processTableAccesses": 0,
+    "nonIrUnchanged": true,
+    "completeCsvToSessionSeconds": [
+      0.25,
+      0.125,
+      0.719
+    ],
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.25
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.422
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.578
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.406
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.281
+      },
+      {
+        "operation": "read_status",
+        "seconds": 0.531
+      }
+    ]
+  }
+]

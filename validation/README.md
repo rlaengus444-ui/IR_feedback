@@ -1,52 +1,27 @@
-# Synthetic UI Automation validation
+# CSV transport validation
 
-`full_route_probe.py` launches only `fullroutebin/FullRouteFixture.exe` and uses
-the PID/HWND that this fixture writes to its own marker file. It never discovers
-or selects a running BinderJet process. All settings and temperatures are fake.
-The non-activating fixture is placed behind other windows at 1% opacity.
+This fixture never launches or selects a real BinderJet process. It generates
+fake M1/S3 settings, fake machine logs and fake Monitoring CSV rows, and uses
+only the PID/HWND written by its own executable.
 
-Run on Windows using the module's Python runtime:
+Run from this directory with the bundled runtime:
 
 ```powershell
-..\runtime\python.exe -E -s -B full_route_probe.py
-..\runtime\python.exe -E -s -B full_route_probe.py --late
-..\runtime\python.exe -E -s -B full_route_probe.py --bootstrap
-..\runtime\python.exe -E -s -B background_route_probe.py
-..\runtime\python.exe -E -s -B background_session_probe.py
+..\runtime\python.exe -E -s -B csv_route_probe.py
 ```
 
-The script finds only the known workspace `../standalone-ir/app` or packaged
-`../app` / `../../app` directory. It generates complete M1/S3 field snapshots
-and fake owner files in the fixture's `fullroutebin/Machines/*/Configs` folder.
-No real machine configuration is copied. Each run produces a JSON result file.
-The script calls the supplied product `WindowsUiAdapter` unchanged; it contains
-no experimental helper replacements. The fixture uses the original application's
-v4.7.2 runtime compatibility profile, a virtual grid with 104-pixel rows, and a
-timer snapshot that exposes only the viewport's ±128-row cache.
+The actual session, Excel algorithm, CSV reader and native Sequence adapter are
+used unchanged. The source factory only points the reader at the fixture's
+own Monitoring directory. A 1,820-row virtual Process table rejects and records
+WM_GETOBJECT, scrolling, and Process menu navigation. All 18 scenarios require
+zero Process table accesses.
 
-Cases cover successful M1/S3 Sequence IR edits and one Save, unchanged non-IR
-owner parameters, acknowledgement timeout, a commit that finishes after the
-helper timeout, an interrupted textbox edit, and refusal of a pre-existing
-unsaved non-IR edit while preserving it, and AUTO→IDLE immediately after the IR
-textbox changes. `--late` starts at viewport 0 and tests layer 858 of 1000.
+Cases include M1/S3 WebCam/Sequences while normal/minimized, a partial CSV row,
+connection while minimized, delayed/ambiguous Save, interrupted edit, AUTO to
+IDLE after edit, dirty settings, a late layer, first CSV creation after connect,
+and a UI stall while the CSV reader keeps receiving data and IR is suspended.
 
-The default eight-case result is `full-route-results.json`; the late-layer result
-is written separately to `late-layer-results.json`. Prototype evidence is kept
-separately and is not substituted for the product-adapter results.
-`--bootstrap` verifies initial WebCam pages and already-open Sequences pages with
-unsaved edits; its independent report is `bootstrap-results.json`.
-
-The fixture executable is supplied. Its C# source and explicit-item project
-are also included for independent rebuilding with .NET Framework 4.8.
-These tests validate the external UI route, not thermal or electrical hardware.
-
-`background_route_probe.py` adds 15 cases. Its fixture stops snapshot refresh
-when hidden or minimized, while independently changing the source temperature.
-It verifies same-row temperature updates, subsequent layer receipt, background
-Save, page/minimization preservation, late-layer following, pending-edit refusal,
-layer advance between verification and edit, and fail-closed behavior when the
-table cannot scroll. Save uses a FlatStyle.Flat button, matching the original
-button's WinForms style. `background_session_probe.py` runs the actual session,
-Excel controller and native adapter through three new layers while changing
-tabs/minimization. It checks two initial holds, one Save on the third input,
-duplicate polling without another Save, and disconnect completion for M1/S3.
+Every normal case checks two initial holds, one Save on the third new CSV row,
+no repeated Save for duplicate polling, unchanged non-IR parameters and
+disconnect completion. These are synthetic transport tests, not hardware or
+thermal-response validation.

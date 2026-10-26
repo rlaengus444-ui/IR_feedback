@@ -24,10 +24,12 @@ try:
     from .adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, MachineWindow, UiSnapshot
     from . import sequence_persistence
     from .sequence_field_audit import assert_fields_match_persisted
+    from .csv_source import MonitoringCsvReader
 except ImportError:
     from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, MachineWindow, UiSnapshot
     import sequence_persistence
     from sequence_field_audit import assert_fields_match_persisted
+    from csv_source import MonitoringCsvReader
 
 
 CONTROL_REASON = "기존 Sequence IR 입력·Save 경로와 저장 파일을 아직 확인하지 못했습니다."
@@ -86,13 +88,22 @@ def _log_layer_hint(target: MachineWindow) -> tuple[int | None, str | None]:
 
 
 class WindowsUiAdapter:
-    MINIMUM_POLL_SECONDS = 1.0
+    MINIMUM_POLL_SECONDS = 0.25
 
-    def __init__(self, helper_timeout: float = 3.0, *, runner: Callable | None = None):
+    def __init__(self, helper_timeout: float = 3.0, *, runner: Callable | None = None, source_factory=MonitoringCsvReader):
         if not 0.1 <= helper_timeout <= 10:
             raise ValueError("UI helper timeout must be in 0.1..10 seconds.")
         self.helper_timeout = float(helper_timeout)
         self._runner = runner
+        self._source_factory = source_factory
+        self._csv = None
+        self._csv_token = None
+        self._new_sample_key = None
+        self._baseline_sample_key = None
+        self._status_at = 0.0
+        self._machine_state = "unknown"
+        self._last_applied_key = None
+        self._settings_at = 0.0
         self._lock = threading.Lock()
         self._helper_lock = threading.Lock()
         self._active_helper: subprocess.Popen | None = None
@@ -129,7 +140,7 @@ class WindowsUiAdapter:
         self._check_stopped(stop_event)
         if target.pid <= 0 or target.hwnd <= 0:
             raise AdapterError("유효한 원본 프로그램 창을 선택해야 합니다.")
-        response = self._request({"operation": "validate", "pid": target.pid, "hwnd": target.hwnd}, stop_event)
+        response = self._request({"operation": "validate", "pid": target.pid, "hwnd": target.hwnd, "machine": target.machine}, stop_event)
         reported = str(response.get("machine", "unknown")).upper()
         if target.machine in {"M1", "S3"} and reported in {"M1", "S3"} and reported != target.machine:
             raise AdapterError("선택한 창의 장비 종류가 변경되었습니다. 다시 검색하세요.")
@@ -148,6 +159,12 @@ class WindowsUiAdapter:
             self._retained_log_hint = None
             self._log_run_key = None
             self._update_settings_locked(response)
+            self._csv = self._source_factory(target)
+            self._csv_token = None
+            self._new_sample_key = None
+            self._baseline_sample_key = None
+            self._status_at = 0.0
+            self._last_applied_key = None
 
     def prepare_mode(self, mode: str, stop_event) -> None:
         self._check_stopped(stop_event)
@@ -193,8 +210,6 @@ class WindowsUiAdapter:
             raise ControlUnavailable("연결 준비 중 기존 설정 파일이 변경되었습니다. 다시 연결하세요.")
         handles = dict(response.get("handles") or {})
         native_fields = dict(response.get("field_map") or {})
-        process_ready = self._request(dict(common, operation="return_process", handles=handles), stop_event)
-        handles.update(process_ready.get("handles") or {})
         with self._lock:
             if self._generation != generation or self._target != target:
                 raise AdapterError("연결 준비 중 대상이 변경되거나 연결이 해제되었습니다.")
@@ -224,102 +239,86 @@ class WindowsUiAdapter:
         with self._lock:
             target, generation = self._target, self._generation
             handles = dict(self._native_handles)
-            if target is None:
+            if target is None or self._csv is None:
                 raise AdapterError("원본 프로그램에 연결되어 있지 않습니다.")
             if self._last_snapshot is not None and time.monotonic() - self._last_read < self.MINIMUM_POLL_SECONDS:
                 return self._last_snapshot
-        layer_hint, log_run_key = _log_layer_hint(target)
-        with self._lock:
-            if log_run_key is not None and log_run_key != self._log_run_key:
-                self._retained_log_hint = None
-                self._log_run_key = log_run_key
-            if layer_hint is not None:
-                self._retained_log_hint = layer_hint
-            elif self._retained_log_hint is not None:
-                # A layer's log line can leave the bounded tail before the
-                # recoating sample arrives. Retain its coordinates, never its
-                # temperature; each hidden read must refresh the original table.
-                layer_hint = self._retained_log_hint
-        response = self._request({"operation": "read", "pid": target.pid, "hwnd": target.hwnd,
-                                  "machine": target.machine, "handles": handles,
-                                  "image_path": target.image_path,
-                                  "_generation": generation,
-                                  "require_process": self._mode == "control", "follow_row": self._mode == "control",
-                                  "layer_hint": layer_hint}, stop_event)
-        native_hint = response.get("layer_hint")
-        if isinstance(native_hint, int) and not isinstance(native_hint, bool) and 0 <= native_hint <= 1000000:
-            layer_hint = native_hint
-        if layer_hint is None:
-            progress = str(response.get("progress", ""))
-            match = re.search(r"(?i)\bLayer\s*[:#]?\s*(\d+)\s*/", progress)
-            if match:
-                layer_hint = max(0, int(match.group(1)) - 1)
-        candidates: list[tuple[int, float, str]] = []
-        for row in response.get("rows", []):
-            if not isinstance(row, dict):
-                continue
-            temperature = _number(row.get("temperature"))
-            start = str(row.get("start", "")).strip()
+        source = self._csv.read()
+        sample = source.sample
+        if self._mode == "control" and time.monotonic() - self._status_at >= 1.0:
             try:
-                index = int(row["row_index"])
-            except (KeyError, TypeError, ValueError):
-                continue
-            # Original future/unmeasured rows use 0 and DateTime.MinValue. The UI
-            # has no measurement-valid bit, so never treat that default as data.
-            if temperature is None or temperature == 0 or not -273.15 <= temperature <= 2000 or not start or "0001" in start:
-                continue
-            candidates.append((index, temperature, start))
-        latest = max(candidates, key=lambda row: row[0]) if candidates else None
-        persisted_power = None
-        try:
-            committed = sequence_persistence.capture(target)
-            if committed is not None:
-                persisted_power = committed.power
-        except (RuntimeError, OSError):
-            pass
-        with self._lock:
-            if persisted_power is not None:
-                self._last_settings = [persisted_power, persisted_power]
-                response = dict(response, setting=None, status_powers={})
-            self._update_settings_locked(response)
-            settings = tuple(self._last_settings)
-            control_ready = self._mode == "control" and self._control_baseline is not None and self._control_fault is None
-            observation_current = layer_hint is not None and latest is not None and layer_hint - 1 <= latest[0] <= layer_hint
-            initial = next((row for row in candidates if row[0] == 0), None)
-            if initial is not None:
-                self._run_key = hashlib.sha256(json.dumps([target.pid, target.hwnd, initial[2]]).encode()).hexdigest()
-            if log_run_key is not None:
-                self._run_key = log_run_key
-            run_key = self._run_key
-        observation_key = None
-        if latest:
-            identity = json.dumps([target.pid, target.hwnd, latest[0], latest[2], latest[1]], ensure_ascii=False)
-            observation_key = hashlib.sha256(identity.encode("utf-8")).hexdigest()
-        if self._mode == "control" and not observation_current:
-            observation_key = None
-        details = ("원본의 T_recoating 표를 읽습니다. 다른 탭·최소화 상태에서는 숨겨진 표의 기존 갱신 이벤트를 사용합니다. "
-                   "표시된 IR 설정은 실시간 실출력 확인값이 아닙니다.")
-        if not latest:
-            details += " 원본의 Process → Layer 표 화면에서 완료된 T_Recoating 행이 보이도록 해주세요."
-        if self._mode == "control" and not observation_current:
-            details += " 현재 생산 층과 새 T_recoating 확인을 기다리는 중이며 설정을 적용하지 않습니다."
-        reason = self._control_fault or CONTROL_REASON
-        if target.machine == "unknown":
-            reason = "장비 종류를 M1/S3로 확인할 수 없습니다. " + reason
-        snapshot = UiSnapshot(target=target, layer_index=latest[0] if latest else None,
-                              t_recoating_c=latest[1] if latest else None, observation_key=observation_key,
-                              heater1_setting_percent=settings[0], heater2_setting_percent=settings[1],
-                              machine_state=str(response.get("state", "unknown")), control_available=control_ready,
-                              control_unavailable_reason=reason, details=details, coupled_output=True,
-                              minimum_poll_seconds=self.MINIMUM_POLL_SECONDS, run_key=run_key)
+                status = self._request({"operation": "read_status", "pid": target.pid, "hwnd": target.hwnd,
+                                        "machine": target.machine, "handles": handles, "_generation": generation}, stop_event)
+                self._machine_state = str(status.get("state", "unknown"))
+            except AdapterError as error:
+                self._check_stopped(stop_event)
+                if not any(text in str(error) for text in ("WM_GETTEXT", "UI 응답 제한", "not responding")):
+                    raise
+                # This request contains no edit or Save. Keep reading the CSV,
+                # but UNKNOWN makes the worker reset learning and suspend IR.
+                self._machine_state = "unknown"
+            self._status_at = time.monotonic()
+        machine_state = self._machine_state if self._mode == "control" else source.context.state
+        persisted = None
+        if source.is_new or time.monotonic() - self._settings_at >= 1.0:
+            persisted = sequence_persistence.capture(target)
+            self._settings_at = time.monotonic()
         with self._lock:
             if self._generation != generation or self._target != target:
                 raise AdapterError("관측 중 연결이 해제되거나 변경되었습니다.")
+            if persisted is not None:
+                self._last_settings = [persisted.power, persisted.power]
+            if self._run_key != source.context.run_key:
+                self._baseline_sample_key = None
+                self._new_sample_key = None
+            self._run_key = source.context.run_key
+            if sample and source.token:
+                if self._baseline_sample_key is None:
+                    self._baseline_sample_key = sample.key
+                if source.is_new:
+                    self._new_sample_key = sample.key
+            fresh = sample is not None and -2 <= time.time() - sample.finished.timestamp() <= MonitoringCsvReader.MAX_NEW_AGE_SECONDS
+            key = sample.key if sample and source.token and (
+                sample.key == self._baseline_sample_key or (sample.key == self._new_sample_key and fresh)) else None
+            details = source.details
+            if self._mode == "control" and machine_state == "unknown":
+                details += " 원본 UI 응답 대기 · CSV 조회만 계속하며 IR 적용은 정지합니다."
+            if sample and sample.delay_seconds is not None:
+                details += f" 리코팅 완료→인쇄 완료 기록 차이 {sample.delay_seconds:.1f}초."
+            ready = self._mode == "control" and self._control_baseline is not None and self._control_fault is None
+            snapshot = UiSnapshot(target=target, layer_index=sample.layer_index if sample else None,
+                t_recoating_c=sample.temperature if sample else None, observation_key=key,
+                heater1_setting_percent=self._last_settings[0], heater2_setting_percent=self._last_settings[1],
+                machine_state=machine_state, control_available=ready,
+                control_unavailable_reason=self._control_fault or CONTROL_REASON,
+                details=details, coupled_output=True, minimum_poll_seconds=self.MINIMUM_POLL_SECONDS,
+                run_key=self._run_key, observation_is_new=bool(sample and sample.key == self._new_sample_key and fresh))
+            self._csv_token = source.token
+            self._layer_hint = source.context.current_layer
+            self._observation_row = {"row_index": sample.layer_index, "temperature": sample.temperature,
+                                     "start": sample.start} if sample else None
             self._last_snapshot, self._last_read = snapshot, time.monotonic()
-            self._native_handles = dict(response.get("handles") or self._native_handles)
-            self._observation_row = {"row_index": latest[0], "temperature": latest[1], "start": latest[2]} if latest else None
-            self._layer_hint = layer_hint
-        return snapshot
+            return snapshot
+
+    def _verify_csv_observation(self, expected_key):
+        with self._lock:
+            reader, generation = self._csv, self._generation
+        if reader is None:
+            raise AdapterError("연결이 해제되어 CSV 검증을 중단했습니다.")
+        source = reader.read()
+        with self._lock:
+            if generation != self._generation:
+                raise AdapterError("연결이 변경되어 CSV 검증을 중단했습니다.")
+        sample = source.sample
+        if sample is None or source.token is None or sample.key != expected_key or source.context.run_key != self._run_key:
+            raise ControlUnavailable("CSV의 현재 작업/완료 층이 변경되었거나 기록 중이어서 저장하지 않았습니다.")
+        age = time.time() - sample.finished.timestamp()
+        if sample.key != self._new_sample_key or not -2 <= age <= MonitoringCsvReader.MAX_NEW_AGE_SECONDS:
+            raise ControlUnavailable("오래된 CSV 기록은 새 제어 명령에 재사용하지 않습니다.")
+        hint = source.context.current_layer
+        if hint is None or not sample.layer_index <= hint <= sample.layer_index + 1:
+            raise ControlUnavailable("CSV 완료 층과 현재 운전 로그의 층이 일치하지 않습니다.")
+        return source.token
 
     def apply_ir_power(self, heater: int, power_percent: int | float, expected_observation_key: str, stop_event) -> None:
         self._check_stopped(stop_event)
@@ -336,6 +335,8 @@ class WindowsUiAdapter:
                 raise ControlUnavailable(self._control_fault or CONTROL_REASON)
             if snapshot is None or snapshot.observation_key != expected_observation_key or observation is None or time.monotonic() - self._last_read > 3:
                 raise ControlUnavailable("최신 T_recoating 관측값을 다시 확인해야 합니다.")
+            if self._last_applied_key == expected_observation_key:
+                raise ControlUnavailable("같은 CSV 행에는 IR을 두 번 저장하지 않습니다.")
             if not snapshot.control_available or self._layer_hint is None or not self._layer_hint - 1 <= observation["row_index"] <= self._layer_hint:
                 raise ControlUnavailable("현재 생산 층과 일치하는 최신 관측값이 필요합니다.")
             layer_hint = self._layer_hint
@@ -350,8 +351,10 @@ class WindowsUiAdapter:
             raise ControlUnavailable("기존 IR 또는 다른 저장 설정이 변경되어 자동 적용을 중단했습니다.")
         common = {"pid": target.pid, "hwnd": target.hwnd, "machine": target.machine, "image_path": target.image_path, "_generation": generation}
         guarded_at = time.monotonic()
+        csv_token = self._verify_csv_observation(expected_observation_key)
         fresh = self._request(dict(common, operation="verify_control", handles=handles,
-                                   field_map=self._native_fields, observation=observation, layer_hint=layer_hint), stop_event)
+                                   field_map=self._native_fields, observation=observation, layer_hint=layer_hint,
+                                   csv_token=csv_token), stop_event)
         fresh_fields = fresh.get("fields")
         if not isinstance(fresh_fields, dict) or fresh_fields != dict(baseline, textBoxHeatingOutput=expected_ir):
             raise ControlUnavailable("IR 또는 다른 Sequence 입력값이 변경되어 자동 저장을 중단했습니다.")
@@ -366,6 +369,7 @@ class WindowsUiAdapter:
             raise ControlUnavailable("관측 확인 후 시간이 지나 이번 적용을 중단했습니다. 다시 연결해 새 관측을 확인하세요.")
         handles = dict(fresh.get("handles") or handles)
         native_fields = dict(fresh.get("field_map") or self._native_fields)
+        csv_token = self._verify_csv_observation(expected_observation_key)
         with tempfile.TemporaryDirectory(prefix="binderjet-save-") as directory:
             marker = Path(directory) / "save-started.txt"
             edit_marker = Path(directory) / "edit-started.txt"
@@ -374,8 +378,8 @@ class WindowsUiAdapter:
                                           "_generation": generation,
                                           "baseline": baseline, "expected_ir": expected_ir, "observation": observation,
                                           "handles": handles, "field_map": native_fields,
+                                          "csv_token": csv_token,
                                           "layer_hint": layer_hint,
-                                          "follow_row": True,
                                           "power": power_text, "save_marker": str(marker), "edit_marker": str(edit_marker)}, stop_event)
                 readback = _number(response.get("setting"))
                 if not response.get("save_invoked") or readback is None or not math.isclose(readback, power_percent, rel_tol=0, abs_tol=1e-9):
@@ -398,6 +402,7 @@ class WindowsUiAdapter:
             self._control_baseline = dict(fresh_fields, textBoxHeatingOutput=str(response["setting"]))
             self._expected_ir = str(response["setting"])
             self._last_settings = [power_percent, power_percent]
+            self._last_applied_key = expected_observation_key
             self._last_snapshot = None
             self._last_read = 0
 
@@ -410,6 +415,8 @@ class WindowsUiAdapter:
             self._persisted_baseline = None
             self._native_handles = {}
             self._native_fields = {}
+            self._csv = None
+            self._csv_token = None
             helper = self._active_helper
         if helper is not None and helper.poll() is None:
             try:
@@ -434,7 +441,7 @@ class WindowsUiAdapter:
             if not isinstance(response, dict):
                 raise AdapterError("UI 읽기 도우미가 올바른 응답을 반환하지 않았습니다.")
             if not response.get("success", False):
-                raise AdapterError(str(response.get("error", "UI 읽기에 실패했습니다.")))
+                raise AdapterError("[" + str(request.get("operation", "unknown")) + "] " + str(response.get("error", "UI 읽기에 실패했습니다.")))
             return response
         if os.name != "nt":
             raise AdapterError("기존 프로그램 화면 연결은 Windows에서만 지원합니다.")
@@ -478,7 +485,7 @@ class WindowsUiAdapter:
             except (json.JSONDecodeError, TypeError) as exc:
                 raise AdapterError("Windows UI 읽기 도우미가 올바른 응답을 반환하지 않았습니다. " + stderr[-300:]) from exc
             if not isinstance(response, dict) or not response.get("success", False):
-                raise AdapterError(str(response.get("error", "Windows UI 읽기에 실패했습니다.")))
+                raise AdapterError("[" + str(request.get("operation", "unknown")) + "] " + str(response.get("error", "Windows UI 읽기에 실패했습니다.")))
             return response
         finally:
             if process is not None:

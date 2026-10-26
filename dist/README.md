@@ -1,3 +1,9 @@
-# 배포 사용 보류
+# 무설치 실행판
 
-현재 실행판은 추가 안정성 검증 중입니다. 실장비 자동 제어에 사용하지 마세요.
+전체 ZIP에는 Python/Tk 런타임이 포함되어 있습니다.
+
+[IRFeedback-Standalone.zip 다운로드 (팀 드라이브)](https://drive.google.com/file/d/1FcFj4zA-jT9egEwRlR-fX4T3jSGbpzfK/view)
+
+압축을 전체 해제한 뒤 IRFeedback.exe를 실행하세요. GitHub 소스 체크아웃에는 런타임을 중복 저장하지 않습니다.
+
+SHA-256: 53d41cf0f36ec432b922b5821e07f9a0814370de116bd17cd38e43fc33badcf8

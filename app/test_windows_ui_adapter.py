@@ -1,6 +1,10 @@
-import subprocess
+"""CSV acquisition and native Sequence orchestration; all data are synthetic."""
+import csv
+from datetime import datetime, timedelta
+import io
 import json
 from pathlib import Path
+import subprocess
 import tempfile
 import threading
 import time
@@ -8,335 +12,253 @@ import unittest
 from unittest.mock import patch
 
 from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, MachineWindow
-from windows_ui_adapter import WindowsUiAdapter, _HELPER, _log_layer_hint
+from csv_source import MonitoringCsvReader
+from windows_ui_adapter import WindowsUiAdapter, _HELPER
 
 
-TARGET = MachineWindow("M1", 1234, 5678, "BinderJet", "C:/test/Operator.exe")
+def csv_bytes(rows):
+    text=io.StringIO(newline="")
+    csv.writer(text,lineterminator="\r\n").writerows(rows)
+    return text.getvalue().encode("utf-8")
 
 
-class WindowsUiAdapterTests(unittest.TestCase):
-    def make_adapter(self, rows=None):
-        calls = []
-        def runner(request, stop):
+class AdapterTests(unittest.TestCase):
+    def fixture(self,directory,mode="control"):
+        root=Path(directory)
+        target=MachineWindow("M1",1234,5678,"Own synthetic target",str(root/"Operator.exe"))
+        configs=root/"Machines/M1/Configs";configs.mkdir(parents=True)
+        path=configs/"BJT.parameters.json"
+        values=[{"Scope":"Printing","Name":"IRHeatingOutputPct","Type":"DoubleParameter","Value":"62"},
+                {"Scope":"Printing","Name":"OtherSpeed","Type":"DoubleParameter","Value":"5"}]
+        path.write_text(json.dumps(values),encoding="utf-8")
+        started=datetime.now().replace(microsecond=0)-timedelta(minutes=5)
+        logs=root/"Logs";logs.mkdir()
+        log=logs/"20261027_M1.log"
+        def log_line(stamp,text):
+            return stamp.strftime("%Y-%m-%d%p%I%M%S")+"...[BJT - AUTO]: "+text+"\n"
+        log.write_text(log_line(started,"AutoPrint started!")+log_line(started,"Layer: 0 -> Current Z = 1.2"),encoding="utf-8")
+        monitoring=root/"Monitoring"
+        job=monitoring/(started.strftime("%Y%m%d_%H%M%S")+"_1820-layer");job.mkdir(parents=True)
+        source=job/("LayerDatasheet_"+started.strftime("%Y%m%d_%H%M%S")+".csv")
+        header=list(MonitoringCsvReader.REQUIRED)
+        def row(index,temperature,finish):
+            return [str(index+1),started.strftime("%m/%d/%Y %H:%M:%S"),
+                    (finish-timedelta(seconds=24)).strftime("%m/%d/%Y %H:%M:%S"),
+                    finish.strftime("%m/%d/%Y %H:%M:%S"),str(temperature)]
+        source.write_bytes(csv_bytes([header,row(0,42,started+timedelta(seconds=60))]))
+        state={"power":"62","speed":"5","saves":0,"page":"webcam","state":"AUTO",
+               "skip_persist":False,"fail_after_edit":False,"hook":None}
+        calls=[]
+        def runner(request,stop):
             calls.append(request)
-            if request["operation"] == "discover":
-                return {"success": True, "windows": [{"machine": "M1", "pid": 1234, "hwnd": 5678, "title": "BinderJet", "image_path": "test.exe"}]}
-            return {"success": True, "machine": "M1", "state": "AUTO", "setting": "62", "rows": rows or [], "visible_grid": bool(rows)}
-        return WindowsUiAdapter(runner=runner), calls
-
-    def test_discovery_connect_and_valid_visible_recoating_data(self):
-        adapter, calls = self.make_adapter([
-            {"row_index": 7, "temperature": "42.5", "start": "2026-10-27 08:30:00"},
-            {"row_index": 8, "temperature": "0", "start": "0001-01-01 00:00:00"},
-        ])
-        self.assertEqual("M1", adapter.discover()[0].machine)
-        adapter.connect(TARGET, threading.Event())
-        state = adapter.read_snapshot(threading.Event())
-        self.assertEqual((7, 42.5, 62, 62, "AUTO"), (state.layer_index, state.t_recoating_c, state.heater1_setting_percent, state.heater2_setting_percent, state.machine_state))
-        self.assertTrue(state.observation_key)
-        self.assertFalse(state.control_available)
-        self.assertEqual(["discover", "validate", "read"], [call["operation"] for call in calls])
-
-    def test_fast_poll_uses_memory_and_never_touches_ui_provider_again(self):
-        adapter, calls = self.make_adapter()
-        adapter.connect(TARGET, threading.Event())
-        first = adapter.read_snapshot(threading.Event())
-        for _ in range(1000):
-            self.assertIs(first, adapter.read_snapshot(threading.Event()))
-        self.assertEqual(2, len(calls))
-        self.assertIsNone(first.t_recoating_c)
-        self.assertIn("Layer", first.details)
-
-    def test_control_is_explicitly_unavailable_and_cannot_create_any_write_request(self):
-        adapter, calls = self.make_adapter()
-        adapter.connect(TARGET, threading.Event())
-        with self.assertRaises(ControlUnavailable):
-            adapter.apply_ir_power(1, 50, "observed", threading.Event())
-        self.assertEqual(["validate"], [call["operation"] for call in calls])
-        for unsafe in ("WriteProcessMemory", "SendInput", "WM_SETTEXT", "SetFocus("):
-            self.assertNotIn(unsafe, _HELPER)
-
-    def test_native_dispatcher_cannot_materialize_a_form_or_grid_automation_tree(self):
-        # Form/grid UIA access reproduced a host UI-thread Bounds recursion.
-        # Keep native transport free of those APIs; the one metadata operation
-        # delegates to the separately bounded leaf-ID-only collector.
-        source = Path(__file__).with_name("native_helper.ps1").read_text(encoding="utf-8-sig")
-        for unsafe in ("AutomationElement", "TreeWalker", "IsOffscreen", "BoundingRectangle", "ValuePattern", "InvokePattern"):
-            self.assertNotIn(unsafe, source)
-        self.assertIn("[BinderJetLeafMetadata]::Collect", source)
-
-    def test_unknown_machine_and_invalid_or_default_rows_are_not_claimed_as_measurements(self):
-        adapter, _ = self.make_adapter([None, [], {"row_index": 1, "temperature": "NaN", "start": "now"}, {"row_index": 2, "temperature": "0", "start": "now"}])
-        unknown = MachineWindow("unknown", 1234, 5678, "BinderJet", "operator.exe")
-        adapter.connect(unknown, threading.Event())
-        state = adapter.read_snapshot(threading.Event())
-        self.assertIsNone(state.observation_key)
-        self.assertIsNone(state.t_recoating_c)
-        self.assertIn("M1/S3", state.control_unavailable_reason)
-
-    def test_disconnect_and_cancellation_are_resource_only(self):
-        adapter, calls = self.make_adapter()
-        adapter.connect(TARGET, threading.Event())
-        adapter.disconnect()
-        with self.assertRaises(AdapterError):
-            adapter.read_snapshot(threading.Event())
-        cancelled = threading.Event()
-        cancelled.set()
-        with self.assertRaises(AdapterError):
-            adapter.connect(TARGET, cancelled)
-        self.assertEqual(1, len(calls))
-
-    def test_hung_ui_provider_is_bounded_and_only_own_helper_is_killed(self):
-        class HungHelper:
-            def __init__(self): self.killed = False
-            def poll(self): return -9 if self.killed else None
-            def communicate(self, payload=None, timeout=None):
-                if self.killed: return "", ""
-                time.sleep(timeout)
-                raise subprocess.TimeoutExpired("test UIA helper", timeout)
-            def kill(self): self.killed = True
-        helper = HungHelper()
-        adapter = WindowsUiAdapter(helper_timeout=0.1)
-        started = time.monotonic()
-        with patch("windows_ui_adapter.subprocess.Popen", return_value=helper):
-            with self.assertRaises(AdapterError):
-                adapter.discover()
-        self.assertTrue(helper.killed)
-        self.assertLess(time.monotonic() - started, 0.5)
-
-    def control_fixture(self, directory, audit_error=None, initial_page="process"):
-        # Field mapping/type coverage is tested against all real bindings in
-        # test_sequence_field_audit; this fixture isolates adapter orchestration.
-        audit_patch = patch("windows_ui_adapter.assert_fields_match_persisted", side_effect=audit_error)
-        audit = audit_patch.start()
-        self.addCleanup(audit_patch.stop)
-        target = MachineWindow("M1", 1234, 5678, "BinderJet", str(Path(directory) / "Operator.exe"))
-        config = Path(directory) / "Machines/M1/Configs/BJT.parameters.json"
-        config.parent.mkdir(parents=True)
-        values = [{"Scope": "Printing", "Name": "IRHeatingOutputPct", "Type": "DoubleParameter", "Value": "62"},
-                  {"Scope": "Printing", "Name": "OtherSpeed", "Type": "DoubleParameter", "Value": "5"}]
-        config.write_text(json.dumps(values))
-        state = {"power": "62", "speed": "5", "saves": 0, "fail_after_edit": False, "skip_persist": False, "page": initial_page}
-        calls = []
-        def runner(request, stop):
-            calls.append(request)
-            fields = {"textBoxHeatingOutput": state["power"], "textBoxSpeed": state["speed"], "checkBoxHeat": "toggle:1"}
-            if request["operation"] == "enter_sequence":
-                entered = state["page"] == "process" or bool(request.get("force_sequence"))
-                if entered:
-                    state["page"] = "sequence"
-                return {"success": True, "entered": entered}
-            if request["operation"] == "metadata":
-                return {"success": True, "records": ([{"id": "textBoxHeatingOutput", "visible": True}, {"id": "btnSave", "visible": True}]
-                                                       if state["page"] == "sequence" else [])}
-            if request["operation"] == "return_process":
-                state["page"] = "process"
-                return {"success": True}
-            if request["operation"] in ("prepare_control", "verify_control"):
-                return {"success": True, "setting": state["power"], "fields": fields}
-            if request["operation"] == "apply":
-                if request["baseline"]["textBoxSpeed"] != state["speed"]:
-                    raise AdapterError("Another Sequence setting changed")
-                Path(request["edit_marker"]).write_text("started")
-                if state["fail_after_edit"]:
-                    raise AdapterError("provider stopped during edit")
-                Path(request["save_marker"]).write_text("started")
-                state["power"] = str(request["power"])
-                state["saves"] += 1
+            fields={"textBoxHeatingOutput":state["power"],"textBoxSpeed":state["speed"],"checkBoxHeat":"toggle:1"}
+            op=request["operation"]
+            if op=="discover":
+                return {"success":True,"windows":[dict(machine="M1",pid=1234,hwnd=5678,title="Synthetic",image_path=target.image_path)]}
+            if op=="enter_sequence":
+                state["page"]="sequence"
+                return {"success":True,"entered":True}
+            if op=="metadata":
+                return {"success":True,"records":[{"id":"textBoxHeatingOutput","visible":True},{"id":"btnSave","visible":True}]}
+            if op in {"prepare_control","verify_control"}:
+                if state["hook"] and op=="verify_control":state["hook"](request)
+                return {"success":True,"fields":fields,"setting":state["power"],"handles":{"state":99}}
+            if op=="apply":
+                Path(request["edit_marker"]).write_text("edit")
+                if state["fail_after_edit"]:raise AdapterError("Own fake edit interrupted")
+                state["power"]=request["power"]
+                Path(request["save_marker"]).write_text("save")
+                state["saves"]+=1
                 if not state["skip_persist"]:
-                    values[0]["Value"] = state["power"]
-                    config.write_text(json.dumps(values))
-                return {"success": True, "save_invoked": True, "setting": state["power"], "fields": dict(fields, textBoxHeatingOutput=state["power"])}
-            return {"success": True, "machine": "M1", "state": "AUTO", "setting": state["power"],
-                    "rows": [] if state.get("empty") else [{"row_index": state.get("row", 0), "temperature": "42", "start": "2026-10-27 08:30:00"}], "visible_grid": True,
-                    "progress": "Layer 1 / 1000 (1%)"}
-        adapter = WindowsUiAdapter(runner=runner)
-        adapter._test_audit = audit
-        adapter.connect(target, threading.Event())
-        adapter.prepare_mode("control", threading.Event())
-        snapshot = adapter.read_snapshot(threading.Event())
-        return adapter, state, calls, config, values, snapshot
+                    values[0]["Value"]=state["power"];path.write_text(json.dumps(values),encoding="utf-8")
+                return {"success":True,"save_invoked":True,"setting":state["power"]}
+            if op=="read_status" and state.get("status_timeout"):
+                return {"success":False,"error":"The selected control did not answer WM_GETTEXT within 250 ms."}
+            return {"success":True,"machine":"M1","state":state["state"]}
+        audit=patch("windows_ui_adapter.assert_fields_match_persisted")
+        mocked=audit.start();self.addCleanup(audit.stop)
+        adapter=WindowsUiAdapter(runner=runner,source_factory=lambda t:MonitoringCsvReader(t,roots=[monitoring]))
+        adapter.connect(target,threading.Event())
+        adapter.prepare_mode(mode,threading.Event())
+        baseline=adapter.read_snapshot(threading.Event())
+        def append(index=1,temperature=43,age=0,partial=False):
+            now=datetime.now().replace(microsecond=0)-timedelta(seconds=age)
+            encoded=csv_bytes([row(index,temperature,now)])
+            with source.open("ab") as stream:stream.write(encoded[:-3] if partial else encoded)
+            with log.open("a",encoding="utf-8") as stream:stream.write(log_line(datetime.now(),"Layer: "+str(index+1)+" -> Current Z = 1.1"))
+            adapter._last_read=0
+            return adapter.read_snapshot(threading.Event())
+        return adapter,state,calls,path,values,append,baseline,source,mocked
 
-    def test_explicit_control_saves_once_and_requires_persisted_ir_readback(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
-            self.assertTrue(snapshot.control_available)
-            self.assertIsNotNone(snapshot.run_key)
-            adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
-            self.assertEqual(1, state["saves"])
-            self.assertEqual("67", json.loads(config.read_text())[0]["Value"])
-            self.assertEqual("5", json.loads(config.read_text())[1]["Value"])
-            self.assertEqual(67, adapter.read_snapshot(threading.Event()).heater1_setting_percent)
-            self.assertEqual(2, adapter._test_audit.call_count)
+    def test_csv_monitor_reads_without_ui_provider_requests(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d,"monitor")
+            self.assertEqual((0,42,62),(baseline.layer_index,baseline.t_recoating_c,baseline.heater1_setting_percent))
+            snapshot=append()
+            self.assertEqual((1,43),(snapshot.layer_index,snapshot.t_recoating_c))
+            self.assertEqual(["validate"],[c["operation"] for c in calls])
+            self.assertFalse(snapshot.control_available)
 
-    def test_existing_unsaved_fields_block_control_admission(self):
-        with tempfile.TemporaryDirectory() as directory:
-            with self.assertRaises(ControlUnavailable):
-                self.control_fixture(directory, audit_error=ValueError("textBoxLayerThickness differs from persisted value"))
+    def test_control_never_opens_reads_or_scrolls_process_table(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            snapshot=append()
+            state["page"]="webcam"
+            a.apply_ir_power(1,67,snapshot.observation_key,threading.Event())
+            self.assertEqual("webcam",state["page"])
+            self.assertFalse(any(c["operation"] in {"read","return_process","open_process","follow_row"} for c in calls))
+            self.assertEqual(1,state["saves"])
 
-    def test_initial_other_page_enters_sequence_once_but_existing_sequence_is_not_reentered(self):
-        for initial_page in ("webcam", "sequence"):
-            with self.subTest(initial_page=initial_page), tempfile.TemporaryDirectory() as directory:
-                adapter, state, calls, config, values, snapshot = self.control_fixture(directory, initial_page=initial_page)
-                forced = [call for call in calls if call["operation"] == "enter_sequence" and call.get("force_sequence")]
-                self.assertEqual(1 if initial_page == "webcam" else 0, len(forced))
-                self.assertEqual(0, state["saves"])
-                self.assertTrue(snapshot.control_available)
+    def test_initial_history_cannot_be_saved_as_a_new_measurement(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            with self.assertRaises(ControlUnavailable):a.apply_ir_power(1,67,baseline.observation_key,threading.Event())
+            self.assertEqual(0,state["saves"])
 
-    def test_disconnect_during_background_verification_prevents_a_late_edit_or_save(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
-            original = adapter._runner
-            def disconnecting(request, stop):
-                result = original(request, stop)
-                if request["operation"] == "verify_control":
-                    adapter.disconnect()
-                return result
-            adapter._runner = disconnecting
-            with self.assertRaises(AdapterError):
-                adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
-            self.assertFalse(any(call["operation"] == "apply" for call in calls))
-            self.assertEqual(0, state["saves"])
-            self.assertEqual("62", json.loads(config.read_text())[0]["Value"])
+    def test_new_csv_record_saves_once_and_verifies_persistence(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            snapshot=append()
+            self.assertTrue(snapshot.observation_is_new)
+            a.apply_ir_power(1,67,snapshot.observation_key,threading.Event())
+            self.assertEqual("67",json.loads(path.read_text())[0]["Value"])
+            self.assertEqual("5",json.loads(path.read_text())[1]["Value"])
+            again=a.read_snapshot(threading.Event())
+            with self.assertRaises(ControlUnavailable):a.apply_ir_power(1,67,again.observation_key,threading.Event())
+            self.assertEqual(1,state["saves"])
 
-    def test_background_save_preserves_user_page_and_needs_no_further_navigation_or_metadata(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
-            original = adapter._runner
-            state["page"] = "webcam"
-            start = len(calls)
-            def no_navigation(request, stop):
-                if request["operation"] in ("return_process", "enter_sequence", "metadata", "prepare_control"):
-                    raise AssertionError("An active background session must preserve the user's page")
-                return original(request, stop)
-            adapter._runner = no_navigation
-            adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
-            self.assertEqual("webcam", state["page"])
-            self.assertEqual(["verify_control", "apply"], [call["operation"] for call in calls[start:]])
-            self.assertEqual(1, state["saves"])
-            self.assertEqual("67", json.loads(config.read_text())[0]["Value"])
+    def test_fractional_ir_setting_is_not_rounded_to_integer(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            snapshot=append()
+            a.apply_ir_power(1,67.5,snapshot.observation_key,threading.Event())
+            self.assertEqual("67.5",json.loads(path.read_text())[0]["Value"])
 
-    def test_repeated_field_audit_failure_blocks_before_any_input_edit(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
-            adapter._test_audit.side_effect = ValueError("staged field differs")
-            with self.assertRaises(ControlUnavailable):
-                adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
-            self.assertFalse(any(call["operation"] == "apply" for call in calls))
-            self.assertEqual(0, state["saves"])
+    def test_partial_csv_record_cannot_trigger_save(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            snapshot=append(partial=True)
+            self.assertIsNone(snapshot.observation_key)
+            with self.assertRaises(ControlUnavailable):a.apply_ir_power(1,67,snapshot.observation_key,threading.Event())
+            self.assertEqual(0,state["saves"])
 
-    def test_fractional_save_preserves_requested_setting_without_integer_rounding(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
-            adapter.apply_ir_power(1, 67.5, snapshot.observation_key, threading.Event())
-            self.assertEqual("67.5", json.loads(config.read_text())[0]["Value"])
-            self.assertEqual("67.5", next(call for call in calls if call["operation"] == "apply")["power"])
-            self.assertEqual(67.5, adapter.read_snapshot(threading.Event()).heater1_setting_percent)
+    def test_stale_completed_record_is_not_applied(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            snapshot=append(age=30)
+            self.assertIsNone(snapshot.observation_key)
+            self.assertFalse(snapshot.observation_is_new)
+            self.assertEqual(0,state["saves"])
 
-    def test_transient_empty_rows_preserve_capability_but_cannot_trigger_a_save(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
-            state["empty"] = True
-            adapter._last_read = 0
-            waiting = adapter.read_snapshot(threading.Event())
-            self.assertTrue(waiting.control_available)
-            self.assertIsNone(waiting.observation_key)
-            with self.assertRaises(ControlUnavailable):
-                adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
-            self.assertEqual(0, state["saves"])
+    def test_newer_record_between_preflight_and_edit_blocks_save(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            snapshot=append()
+            state["hook"]=lambda request:append(index=2,temperature=44)
+            with self.assertRaises(ControlUnavailable):a.apply_ir_power(1,67,snapshot.observation_key,threading.Event())
+            self.assertFalse(any(c["operation"]=="apply" for c in calls))
+            self.assertEqual(0,state["saves"])
 
-    def test_previous_job_future_row_is_not_trusted_against_layer_zero_hint(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
-            state["row"] = 8
-            adapter._last_read = 0
-            waiting = adapter.read_snapshot(threading.Event())
-            self.assertTrue(waiting.control_available)
-            self.assertIsNone(waiting.observation_key)
-            with self.assertRaises(ControlUnavailable):
-                adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
-            self.assertEqual(0, state["saves"])
+    def test_unrelated_pending_sequence_edit_blocks_before_ir_edit(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            snapshot=append();state["speed"]="999"
+            with self.assertRaises(ControlUnavailable):a.apply_ir_power(1,67,snapshot.observation_key,threading.Event())
+            self.assertEqual(0,state["saves"])
+            self.assertFalse(any(c["operation"]=="apply" for c in calls))
 
-    def test_hidden_page_retains_confirmed_layer_when_verbose_log_tail_moves_on(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
-            state["row"] = 7
-            with patch("windows_ui_adapter._log_layer_hint", side_effect=[(7, "job"), (None, None)]):
-                adapter._last_read = 0
-                first = adapter.read_snapshot(threading.Event())
-                adapter._last_read = 0
-                second = adapter.read_snapshot(threading.Event())
-            self.assertIsNotNone(first.observation_key)
-            self.assertEqual(first.observation_key, second.observation_key)
-            self.assertEqual(7, calls[-1]["layer_hint"])
-            self.assertEqual(0, state["saves"])
+    def test_saved_other_parameter_change_blocks_before_edit(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            snapshot=append();values[1]["Value"]="6";path.write_text(json.dumps(values))
+            with self.assertRaises(ControlUnavailable):a.apply_ir_power(1,67,snapshot.observation_key,threading.Event())
+            self.assertEqual(0,state["saves"])
 
-    def test_stale_observation_or_changed_other_settings_prevents_save(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
-            with self.assertRaises(ControlUnavailable):
-                adapter.apply_ir_power(1, 67, "wrong-observation", threading.Event())
-            values[1]["Value"] = "6"
-            config.write_text(json.dumps(values))
-            with self.assertRaises(ControlUnavailable):
-                adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
-            self.assertEqual(0, state["saves"])
-            self.assertFalse(any(call["operation"] == "apply" for call in calls))
+    def test_disconnect_during_preflight_cannot_send_late_apply(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            snapshot=append();state["hook"]=lambda request:a.disconnect()
+            with self.assertRaises(AdapterError):a.apply_ir_power(1,67,snapshot.observation_key,threading.Event())
+            self.assertFalse(any(c["operation"]=="apply" for c in calls))
 
-    def test_edit_started_fault_is_not_suppressed_or_retried_as_read_cancellation(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
-            state["fail_after_edit"] = True
-            with self.assertRaises(AmbiguousWriteError):
-                adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
-            with self.assertRaises(ControlUnavailable):
-                adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
-            self.assertEqual(1, sum(call["operation"] == "apply" for call in calls))
-            self.assertEqual(0, state["saves"])
+    def test_ambiguous_edit_never_retries_or_undoes(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            snapshot=append();state["fail_after_edit"]=True
+            with self.assertRaises(AmbiguousWriteError):a.apply_ir_power(1,67,snapshot.observation_key,threading.Event())
+            with self.assertRaises(ControlUnavailable):a.apply_ir_power(1,67,snapshot.observation_key,threading.Event())
+            self.assertEqual(1,sum(c["operation"]=="apply" for c in calls))
+            self.assertEqual(0,state["saves"])
 
-    def test_textbox_readback_alone_cannot_claim_save_succeeded(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, config, values, snapshot = self.control_fixture(directory)
-            state["skip_persist"] = True
-            with patch("windows_ui_adapter.sequence_persistence.verify_after", side_effect=RuntimeError("persisted value did not change")):
-                with self.assertRaises(AmbiguousWriteError):
-                    adapter.apply_ir_power(1, 67, snapshot.observation_key, threading.Event())
-            self.assertEqual("62", json.loads(config.read_text())[0]["Value"])
-            self.assertEqual(1, state["saves"])
+    def test_text_readback_without_saved_file_does_not_claim_success(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            snapshot=append();state["skip_persist"]=True
+            with patch("windows_ui_adapter.sequence_persistence.verify_after",side_effect=RuntimeError("not saved")):
+                with self.assertRaises(AmbiguousWriteError):a.apply_ir_power(1,67,snapshot.observation_key,threading.Event())
+            self.assertEqual("62",json.loads(path.read_text())[0]["Value"])
+            self.assertEqual(1,state["saves"])
 
-    def test_preview_mode_never_prepares_or_invokes_save(self):
-        adapter, calls = self.make_adapter()
-        adapter.connect(TARGET, threading.Event())
-        adapter.prepare_mode("preview", threading.Event())
-        adapter.read_snapshot(threading.Event())
-        self.assertFalse(any(call["operation"] in {"prepare_control", "apply"} for call in calls))
+    def test_pause_state_is_read_without_table_access(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            state["state"]="PAUSED";a._status_at=0
+            snapshot=append()
+            self.assertEqual("PAUSED",snapshot.machine_state)
+            self.assertFalse(any(c["operation"]=="read" for c in calls))
 
-    def test_process_page_preserves_connection_setting_without_guessing_off_as_zero(self):
-        responses = iter([
-            {"success": True, "machine": "M1", "setting": "62"},
-            {"success": True, "machine": "M1", "state": "AUTO", "setting": None, "status_powers": {"1": "0"}, "rows": []},
-        ])
-        adapter = WindowsUiAdapter(runner=lambda request, stop: next(responses))
-        adapter.connect(TARGET, threading.Event())
-        self.assertEqual(62, adapter.read_snapshot(threading.Event()).heater1_setting_percent)
+    def test_preview_performs_no_sequence_or_save_requests(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d,"preview")
+            append()
+            self.assertEqual(["validate"],[c["operation"] for c in calls])
 
-    def test_fractional_settings_are_preserved_for_preview(self):
-        adapter = WindowsUiAdapter(runner=lambda request, stop: {"success": True, "machine": "M1", "setting": "62.2", "rows": []})
-        adapter.connect(TARGET, threading.Event())
-        self.assertEqual(62.2, adapter.read_snapshot(threading.Event()).heater1_setting_percent)
+    def test_original_ui_read_timeout_keeps_csv_but_suspends_control(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
+            state["status_timeout"]=True;a._status_at=0
+            result=append()
+            self.assertEqual(43,result.t_recoating_c)
+            self.assertEqual("unknown",result.machine_state)
+            self.assertIn("CSV 조회만",result.details)
+            self.assertEqual(0,state["saves"])
 
-    def test_readonly_log_hint_is_bounded_and_ignores_finished_jobs(self):
-        with tempfile.TemporaryDirectory() as directory:
-            target = MachineWindow("M1", 1234, 5678, "BinderJet", str(Path(directory) / "Operator.exe"))
-            log = Path(directory) / "Logs/20261027_M1.log"
-            log.parent.mkdir()
-            log.write_text("unrelated-prefix" * 30000 + "\n[08:30:00 BJT - AUTO]: AutoPrint started!\n[08:30:01 BJT - AUTO]: Layer: 450 -> Current Z = 1.23\n")
-            layer, run = _log_layer_hint(target)
-            self.assertEqual(450, layer)
-            self.assertIsNotNone(run)
-            log.write_text(log.read_text() + "[08:30:02 BJT - AUTO]: AutoPrint finished!\n")
-            self.assertIsNone(_log_layer_hint(target)[0])
+    def test_fast_poll_returns_cached_snapshot_without_transport(self):
+        with tempfile.TemporaryDirectory() as d:
+            a,state,calls,path,values,append,baseline,source,audit=self.fixture(d,"monitor")
+            count=len(calls)
+            for unused in range(1000):self.assertIs(baseline,a.read_snapshot(threading.Event()))
+            self.assertEqual(count,len(calls))
+
+    def test_cancelled_connect_is_resource_only(self):
+        cancelled=threading.Event();cancelled.set();calls=[]
+        a=WindowsUiAdapter(runner=lambda req,stop:calls.append(req))
+        with self.assertRaises(AdapterError):a.connect(MachineWindow("M1",1,2,"x","x"),cancelled)
+        self.assertEqual([],calls)
+
+    def test_hung_helper_is_bounded_and_only_own_helper_is_killed(self):
+        class Hung:
+            killed=False
+            def poll(self):return -9 if self.killed else None
+            def communicate(self,payload=None,timeout=None):
+                if self.killed:return "",""
+                time.sleep(timeout);raise subprocess.TimeoutExpired("own fake helper",timeout)
+            def kill(self):self.killed=True
+        child=Hung();a=WindowsUiAdapter(helper_timeout=.1);started=time.monotonic()
+        with patch("windows_ui_adapter.subprocess.Popen",return_value=child):
+            with self.assertRaises(AdapterError):a.discover()
+        self.assertTrue(child.killed)
+        self.assertLess(time.monotonic()-started,.5)
+
+    def test_production_transport_has_no_table_or_scroll_entry_point(self):
+        source=Path(__file__).with_name("native_helper.ps1").read_text(encoding="utf-8-sig")
+        for forbidden in ("BinderJetAccessibleGrid","BinderJetQueuedGridScroll","FindGrid","return_process","AutomationElement","InvokePattern","BoundingRectangle"):
+            self.assertNotIn(forbidden,source)
+        binary=Path(__file__).with_name("UiaBridge.dll").read_bytes()
+        self.assertNotIn(b"BinderJetAccessibleGrid",binary)
+        self.assertNotIn(b"BinderJetQueuedGridScroll",binary)
+        self.assertIn("AssertCsvFile",source)
+        self.assertIn("[BinderJetNativeFields]::QueueSave",source)
 
 
-if __name__ == "__main__":
-    unittest.main()
+if __name__=="__main__":unittest.main()

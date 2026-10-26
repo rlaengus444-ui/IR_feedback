@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $framework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
 $compiler = Join-Path $framework 'csc.exe'
-$sources = @((Join-Path $PSScriptRoot 'UiaBridge.cs'), (Join-Path $PSScriptRoot 'UiaBridge.msaa.part.cs'), (Join-Path $PSScriptRoot 'UiaBridge.navigation.part.cs'), (Join-Path $PSScriptRoot 'UiaBridge.scrolling.part.cs'), (Join-Path $PSScriptRoot 'UiaBridge.process.part.cs'), (Join-Path $PSScriptRoot 'UiaBridge.metadata.part.cs'), (Join-Path $PSScriptRoot 'UiaBridge.fields.part.cs'))
+$sources = @((Join-Path $PSScriptRoot 'UiaBridge.cs'), (Join-Path $PSScriptRoot 'UiaBridge.navigation.part.cs'), (Join-Path $PSScriptRoot 'UiaBridge.process.part.cs'), (Join-Path $PSScriptRoot 'UiaBridge.metadata.part.cs'), (Join-Path $PSScriptRoot 'UiaBridge.fields.part.cs'))
 $output = Join-Path $PSScriptRoot 'UiaBridge.dll'
 $references = @(
     (Join-Path $framework 'WPF\UIAutomationClient.dll'),

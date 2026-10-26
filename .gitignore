@@ -5,6 +5,8 @@ IR-module-error.log
 *.build.stderr.log
 validation/fullroutebin/Machines/
 validation/fullroutebin/Logs/
+validation/Monitoring/
+validation/*.table-access
 validation/*.window
 validation/*.saves
 validation/*.fields.json

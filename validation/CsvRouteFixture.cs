@@ -10,6 +10,16 @@ using System.Web.Script.Serialization;
 [assembly:System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8",FrameworkDisplayName=".NET Framework 4.8")]
 internal static class FullRouteFixture
 {
+    private sealed class PoisonGrid:DataGridView {
+        public string Marker;
+        protected override void WndProc(ref Message message) {
+            if((message.Msg==0x003D || message.Msg==0x0114 || message.Msg==0x0115) && !string.IsNullOrEmpty(Marker)) {
+                File.AppendAllText(Marker,"forbidden-table-message="+message.Msg+";");
+                throw new InvalidOperationException("The CSV module touched the Process table.");
+            }
+            base.WndProc(ref message);
+        }
+    }
     private sealed class QuietForm:Form { public bool AllowActivation;protected override bool ShowWithoutActivation { get { return !AllowActivation; } } }
     [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr h,IntPtr after,int x,int y,int cx,int cy,uint flags);
     [STAThread] private static void Main(string[] args)
@@ -66,7 +76,7 @@ internal static class FullRouteFixture
         form.Controls.Add(processButton); form.Controls.Add(sequencesButton);
         var process=new Panel { Name="ProcessPanel",Left=10,Top=90,Width=720,Height=440 };
         var sequence=new UserControl { Name="MeteorSequenceView",Left=10,Top=90,Width=720,Height=440,Visible=false };
-        var webcam=new Panel { Name="WebCamPanel",Left=10,Top=90,Width=720,Height=440,Visible=mode=="bootstrap" };
+        var webcam=new Panel { Name="WebCamPanel",Left=10,Top=90,Width=720,Height=440,Visible=mode=="bootstrap"||mode.StartsWith("backgroundcsv") };
         webcam.Controls.Add(new Label { Name="labelWebCam",Text="WebCam",Left=20,Top=20,Width=200 });
         form.Controls.Add(process);form.Controls.Add(sequence);
         form.Controls.Add(webcam);
@@ -74,7 +84,7 @@ internal static class FullRouteFixture
         bool background=mode.StartsWith("background")||mode=="nostroll";
         var progress=new Label { Name="lblProgress",Text=late?"Layer 858/1000":"Layer 1/40",Top=10,Left=10,Width=200 };
         process.Controls.Add(progress);
-        var grid=new DataGridView { Name="dataGridView1",Left=10,Top=50,Width=680,Height=300,ReadOnly=true,AllowUserToAddRows=false,VirtualMode=true };
+        var grid=new PoisonGrid { Marker=marker+".table-access",Name="dataGridView1",Left=10,Top=50,Width=680,Height=300,ReadOnly=true,AllowUserToAddRows=false,VirtualMode=true };
         grid.RowTemplate.Height=104;
         grid.Columns.Add("Id","ID");grid.Columns.Add("TimeStart","Start");grid.Columns.Add("TempRecoating","T_Recoating");
         grid.Columns[1].Width=260;
@@ -106,7 +116,7 @@ internal static class FullRouteFixture
             if(cell.ColumnIndex==1)cell.Value=cached&&cell.RowIndex==(late?857:0)?"2026-10-27 08:30:00.123":"0001-01-01 00:00:00";
             if(cell.ColumnIndex==2)cell.Value=cached&&cell.RowIndex==(late?857:0)?"42":"0";
         };
-        grid.RowCount=mode=="nostroll"?2:late||background?1000:40;
+        grid.RowCount=mode=="nostroll"?2:late||background?1820:40;
         process.Controls.Add(grid);
         var ir=new TextBox { Name="textBoxHeatingOutput",Text="62",Top=20,Left=20,Width=120 };
         var other=new TextBox { Name="textBoxOther",Text="5",Top=60,Left=20,Width=120 };
@@ -123,7 +133,7 @@ internal static class FullRouteFixture
                 Control input;
                 if(field.Value.StartsWith("toggle:")) input=new CheckBox { Name=field.Key,Checked=field.Value=="toggle:1",Text=field.Key,Left=160+column*180,Top=15+row*32,Width=170 };
                 else input=new TextBox { Name=field.Key,Text=field.Value,Left=160+column*180,Top=15+row*32,Width=160 };
-                if((mode=="dirty"||mode=="dirtysequence")&&number==0) {
+                if((mode.EndsWith("dirty")||mode=="dirtysequence")&&number==0) {
                     var textInput=input as TextBox;if(textInput!=null)textInput.Text="9999";
                     var checkbox=input as CheckBox;if(checkbox!=null)checkbox.Checked=!checkbox.Checked;
                 }
@@ -131,16 +141,16 @@ internal static class FullRouteFixture
             }
         }
         ir.TextChanged+=delegate {
-            if(mode=="edithang"&&ir.Text!="62") { File.WriteAllText(marker+".edited",ir.Text);Thread.Sleep(8000); }
-            if(mode=="statechange"&&ir.Text!="62") { File.WriteAllText(marker+".edited",ir.Text);taskStatus.Text="IDLE"; }
+            if(mode.EndsWith("edithang")&&ir.Text!="62") { File.WriteAllText(marker+".edited",ir.Text);Thread.Sleep(8000); }
+            if(mode.EndsWith("statechange")&&ir.Text!="62") { File.WriteAllText(marker+".edited",ir.Text);taskStatus.Text="IDLE"; }
         };
-        processButton.Click+=delegate { File.AppendAllText(marker+".trace","process-start;");sequence.Visible=false;webcam.Visible=false;File.AppendAllText(marker+".trace","sequence-hidden;");process.Visible=true;File.AppendAllText(marker+".trace","process-shown;");process.BringToFront();File.AppendAllText(marker+".trace","process-end first="+grid.FirstDisplayedScrollingRowIndex+" displayed="+grid.DisplayedRowCount(true)+";"); };
+        processButton.Click+=delegate { File.AppendAllText(marker+".table-access","process-menu;"); File.AppendAllText(marker+".trace","process-start;");sequence.Visible=false;webcam.Visible=false;File.AppendAllText(marker+".trace","sequence-hidden;");process.Visible=true;File.AppendAllText(marker+".trace","process-shown;");process.BringToFront();File.AppendAllText(marker+".trace","process-end first="+grid.FirstDisplayedScrollingRowIndex+" displayed="+grid.DisplayedRowCount(true)+";"); };
         sequencesButton.Click+=delegate { sequenceClicks++;File.WriteAllText(marker+".sequence-clicks",sequenceClicks.ToString());process.Visible=false;webcam.Visible=false;sequence.Visible=true;sequence.BringToFront(); };
-        if(mode=="bootstrap") { process.Visible=false;sequence.Visible=false;webcam.Visible=true;webcam.BringToFront(); }
+        if(mode=="bootstrap"||mode.StartsWith("backgroundcsv")) { process.Visible=false;sequence.Visible=false;webcam.Visible=true;webcam.BringToFront(); }
         if(mode=="dirtysequence") { process.Visible=false;sequence.Visible=true;webcam.Visible=false;sequence.BringToFront(); }
         save.Click+=delegate {
             saves++;File.WriteAllText(marker+".saves",saves.ToString());
-            if(mode=="savetardy")Thread.Sleep(4500);
+            if(mode.EndsWith("savetardy"))Thread.Sleep(4500);
             string temporary=bjt+".tmp";
             if(fieldSpec==null)File.WriteAllText(temporary,Parameters(ir.Text));
             else {
@@ -152,9 +162,9 @@ internal static class FullRouteFixture
                 File.WriteAllText(temporary,serializer.Serialize(entries));
             }
             File.Replace(temporary,bjt,null);
-            if(mode=="savehang")Thread.Sleep(8000);
+            if(mode.EndsWith("savehang"))Thread.Sleep(8000);
         };
-        var lifetime=new System.Windows.Forms.Timer { Interval=90000 };
+        var lifetime=new System.Windows.Forms.Timer { Interval=120000 };
         var snapshotTimer=new System.Windows.Forms.Timer { Interval=1000 };
         snapshotTimer.Tick+=delegate { if(process.Visible && form.WindowState!=FormWindowState.Minimized)refreshRows(); };
         var heartbeat=new System.Windows.Forms.Timer { Interval=200 };
@@ -172,8 +182,8 @@ internal static class FullRouteFixture
                 if(command.ContainsKey("state"))taskStatus.Text=(string)command["state"];
                 if(command.ContainsKey("dirty"))foreach(Control c in sequence.Controls){var text=c as TextBox;if(text!=null && text!=ir){text.Text="9999";break;}}
                 string logDir=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Logs");Directory.CreateDirectory(logDir);
-                File.WriteAllText(Path.Combine(logDir,"20261027_"+machine+".log"),"[BJT - AUTO]: Layer: "+coreLayer+" -> Current Z = 1.23\n");
-                File.WriteAllText(marker+".command-done",serializer.Serialize(command));
+                File.AppendAllText(Path.Combine(logDir,"20261027_"+machine+".log"),DateTime.Now.ToString("yyyy-MM-ddtthhmmss")+"...[BJT - AUTO]: Layer: "+coreLayer+" -> Current Z = 1.23\n");
+                File.WriteAllText(marker+".command-done",serializer.Serialize(command)); if(command.ContainsKey("hangMs"))Thread.Sleep(Convert.ToInt32(command["hangMs"]));
             }
             Volatile.Write(ref heartbeatTicks,Environment.TickCount);
             if(!background)cachedViewportFirstRow=Math.Max(0,grid.FirstDisplayedScrollingRowIndex);

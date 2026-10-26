@@ -39,6 +39,20 @@ class DeferredThread:
 
 
 class WorkerTests(unittest.TestCase):
+    def test_first_csv_row_created_after_connect_counts_as_first_new_observation(self):
+        adapter=Mock(spec=UiAdapter)
+        frames=[snapshot("new1",1,control_available=True,observation_is_new=True),
+                snapshot("new2",2,control_available=True,observation_is_new=True),
+                snapshot("new3",3,control_available=True,observation_is_new=True)]
+        adapter.read_snapshot.side_effect=frames
+        stop=threading.Event();reports=[]
+        def emit(kind,payload):
+            if kind=="snapshot":
+                reports.append(payload)
+                if len(reports)==len(frames):stop.set()
+        run_ui_session(SessionOptions(TARGET,mode="control"),stop,emit,lambda:adapter)
+        adapter.apply_ir_power.assert_called_once_with(1,45,"new3",stop)
+
     def test_monitor_never_writes_and_disconnect_releases_only_own_adapter(self):
         adapter = Mock(spec=UiAdapter)
         adapter.read_snapshot.return_value = snapshot()

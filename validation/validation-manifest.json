@@ -1,65 +1,42 @@
 {
-  "createdAtUtc": "2026-10-26T20:49:57.654462+00:00",
-  "actualProductAdapterCasesPassed": 30,
+  "createdAtUtc": "2026-10-26T22:42:54.426070+00:00",
+  "actualProductAdapterCasesPassed": 18,
   "fixtureFiles": {
     "README.md": {
-      "bytes": 3111,
-      "sha256": "66ecc6e4f48930f88bf5045086eab34a59a0802ed94cbb532e90a69eb4d36860"
+      "bytes": 1272,
+      "sha256": "dc683d60af4c16793fe6452ad69f8c35b47594dc39e6d55a9fc4f43c08dfe05d"
     },
-    "FullRouteFixture.cs": {
-      "bytes": 14791,
-      "sha256": "5386c3c51b318307fe5688c22dae520e586c2342188a0ee5c21de5870d8421fb"
+    "CsvRouteFixture.cs": {
+      "bytes": 15844,
+      "sha256": "048de59fde477c6865f48061dc62df598dbe6e284d6f3c640dca4a155aed17e9"
     },
-    "FullRouteFixture.csproj": {
-      "bytes": 659,
-      "sha256": "2868962b90c767619e07e44213c15fb7ccbd35fe7dee122a32fd8dbc6f5a4611"
+    "build_fixture.ps1": {
+      "bytes": 487,
+      "sha256": "2806ab5f69bfbd0c0fb8f3a3e36acf0fd5f13e35ae5d2a3dcc2ce540b3b98610"
     },
-    "fullroutebin/FullRouteFixture.exe": {
-      "bytes": 21504,
-      "sha256": "eabcfb41e355cf0ad8f6a5da965bd42db56383d4b720fc4393807a6334d4f9a4"
+    "fullroutebin/CsvRouteFixture.exe": {
+      "bytes": 22528,
+      "sha256": "b88466d3d7b5a54df660b5060c0b80b915b01bc30000293ebc48e088ae5984f9"
     },
-    "fullroutebin/FullRouteFixture.exe.config": {
+    "fullroutebin/CsvRouteFixture.exe.config": {
       "bytes": 165,
       "sha256": "c3fcd94f1c65dc24d868964104342a3a594c54fded8c4bf92e73e7c6e19532a3"
     },
-    "full_route_probe.py": {
-      "bytes": 8889,
-      "sha256": "e9fa40dac68b4507fbc978bde50159bc99a16dddcb006a350aa2c43ba43227e9"
+    "csv_route_probe.py": {
+      "bytes": 9877,
+      "sha256": "b6e7b57fd7a4c4e55c7a7cf91c0e74f336534362738371b981bb5aaea3b13c10"
     },
-    "full-route-results.json": {
-      "bytes": 5496,
-      "sha256": "76679ecbd81b0d1626bc5ef1588b72bcb13ab1db68827beed4bb7e3e873b749b"
-    },
-    "late-layer-results.json": {
-      "bytes": 1033,
-      "sha256": "24acfd3e93fc58bb8bca8941b208a862efc38c384523143c6e13dae097b95d54"
-    },
-    "bootstrap-results.json": {
-      "bytes": 2564,
-      "sha256": "0753535260348030a01e34ad0b6027cc0ad254873a39d72c8908dddb724eeb1b"
-    },
-    "background_route_probe.py": {
-      "bytes": 8153,
-      "sha256": "cd786ff2de5a12f4811c06df6f826da635f2f632457a099467b874a0a0d3e375"
-    },
-    "background-results.json": {
-      "bytes": 17018,
-      "sha256": "451228e715f606cd37a698ee09e2ad76895cb8c7355a6817bb721ed848838579"
-    },
-    "background_session_probe.py": {
-      "bytes": 4070,
-      "sha256": "cec9e8a13d63d29aabf91eaa35ab877264ce8c3c38a220d45db3f03a21ec4979"
-    },
-    "background-session-results.json": {
-      "bytes": 1855,
-      "sha256": "a94d630b23a0c4f5b72eb76076c6c37028d63f9137d7ce9376ae3b58a67cd1ff"
+    "csv-route-results.json": {
+      "bytes": 17726,
+      "sha256": "f5d426295e3af434185484aa892199625a59af4340fd3d9acb90be7b595b9877"
     }
   },
   "productFiles": {
-    "UiaBridge.dll": "a7f767e62a6d9d21ecd709cf235766fb5f52daf7a1d5877b5664f87285533afb",
-    "native_helper.ps1": "4f6d3564bda73419324728f71114ec42ccb81d011c0c669ecea56b77fd9fd015",
-    "windows_ui_adapter.py": "dfc332a39dd38d89bd35f33664f1b1f913987eba5f8ec7ad8eddf2daff384d6c",
-    "session.py": "a3b086f5ae5f3d94fa2ba1716f90f362f8f9bd32c5befc18badc14a8d07b1710",
+    "UiaBridge.dll": "7d0d94474a500d0cbfa5725b9e1e385682b32266ac2e862d09048f8de98f4a72",
+    "native_helper.ps1": "c2da230f1242b0450abe21365d66842c35082ae6b7cae30420925b409e4aab15",
+    "windows_ui_adapter.py": "0691fa9a86c3442f6163735d9a1c9cd1a32215e6ee72638a608c7054fea3de9a",
+    "csv_source.py": "52cd5f95324fddc9a6e8a88c8e6e3ce7f72637d413ea5e2d178831c6aa6868e5",
+    "session.py": "dbe54bf04fa66e01ea0820c81393f0577af195677d273ceb5488d1cb7aaa32ca",
     "layer_algorithm.py": "f88d93848b505c5d7317af8e5ad5913cdf9b1a62544b0dfd96d6c5721d3d357f"
   }
 }
