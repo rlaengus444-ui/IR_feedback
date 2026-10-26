@@ -2,9 +2,10 @@
 
 from dataclasses import replace
 import unittest
+from unittest.mock import Mock
 
 from adapter_contracts import MachineWindow, UiSnapshot
-from layer_charts import LayerCharts, LayerHistory
+from layer_charts import LayerCharts, LayerHistory, _HoverIndex
 
 
 TARGET = MachineWindow("M1", 123, 456, "fixture", "C:/fixture.exe")
@@ -106,6 +107,121 @@ class PlotTests(unittest.TestCase):
         LayerCharts._draw(canvas, history.points, True)
         markers = [call for call in canvas.calls if call[0] == "oval" and call[2].get("fill") == "#ef8b26"]
         self.assertEqual(1, len(markers))
+
+    def test_current_target_is_visible_when_empty_and_outside_temperature_range(self):
+        canvas = FakeCanvas()
+        LayerCharts._draw(canvas, (), False, target=120)
+        lines = [call for call in canvas.calls if call[0] == "line" and call[2].get("fill") == "#27845b"]
+        self.assertEqual(1, len(lines))
+        self.assertTrue(any("현재 목표 120" in call[2].get("text", "") for call in canvas.calls if call[0] == "text"))
+        self.assertTrue(any("데이터가 없습니다" in call[2].get("text", "") for call in canvas.calls if call[0] == "text"))
+        history = LayerHistory()
+        history.record(dict(snapshot=frame("a", t_recoating_c=50)))
+        canvas = FakeCanvas()
+        LayerCharts._draw(canvas, history.points, False, target=120)
+        line = next(call for call in canvas.calls if call[0] == "line" and call[2].get("fill") == "#27845b")
+        self.assertGreaterEqual(line[1][1], 12)
+        self.assertLessEqual(line[1][1], 132)
+
+    def test_changing_effective_target_redraws_even_without_a_new_observation(self):
+        view = Mock()
+        view._target_temperature = None
+        LayerCharts.set_target_temperature(view, 65)
+        self.assertEqual(65.0, view._target_temperature)
+        view._schedule_redraw.assert_called_once()
+        LayerCharts.set_target_temperature(view, 65)
+        view._schedule_redraw.assert_called_once()
+        LayerCharts.set_target_temperature(view, 70)
+        self.assertEqual(2, view._schedule_redraw.call_count)
+        for invalid in (float("nan"), float("inf"), "70", 2001):
+            with self.assertRaises(ValueError):
+                LayerCharts.set_target_temperature(view, invalid)
+        self.assertEqual(70.0, view._target_temperature)
+
+    def test_hover_returns_exact_layer_value_for_temperature_and_saved_power(self):
+        history = LayerHistory()
+        history.record(dict(snapshot=frame("a", 0, t_recoating_c=64.25), applied={1: 57}))
+        history.record(dict(snapshot=frame("b", 1, t_recoating_c=65.5, heater1_setting_percent=57)))
+        temperature = LayerCharts._draw(FakeCanvas(), history.points, False, target=65)
+        temp_point = next(point for point in temperature.points if "64.25" in point[2])
+        self.assertEqual("1층\nT_recoating: 64.25 °C", temperature.nearest(temp_point[0], temp_point[1])[2])
+        power = LayerCharts._draw(FakeCanvas(), history.points, True)
+        saved = next(point for point in power.points if "저장값" in point[2])
+        self.assertEqual("1층\nIR 저장값: 57.0%", power.nearest(saved[0], saved[1])[2])
+        self.assertIsNone(power.nearest(-100, -100))
+
+    def test_missing_power_is_not_a_hover_target_and_many_points_are_bounded(self):
+        history = LayerHistory()
+        history.record(dict(snapshot=frame("a", 0, heater1_setting_percent=None)))
+        index = LayerCharts._draw(FakeCanvas(), history.points, True)
+        self.assertEqual((), index.points)
+        for layer in range(1, 2000):
+            history.record(dict(snapshot=frame(str(layer), layer)))
+        canvas = FakeCanvas()
+        index = LayerCharts._draw(canvas, history.points, False)
+        self.assertEqual(2000, len(index.points))
+        markers = [call for call in canvas.calls if call[0] == "oval"]
+        self.assertLessEqual(len(markers), 301)
+        self.assertIsNotNone(index.nearest(index.points[1000][0], index.points[1000][1]))
+
+    def test_overlapping_observed_and_saved_values_are_both_shown(self):
+        history = LayerHistory()
+        history.record(dict(snapshot=frame("a", 0, heater1_setting_percent=57), applied={1: 57}))
+        index = LayerCharts._draw(FakeCanvas(), history.points, True)
+        x, y, _ = index.points[0]
+        label = index.nearest(x, y)[2]
+        self.assertIn("1층", label)
+        self.assertIn("IR 설정: 57.0%", label)
+        self.assertIn("IR 저장값: 57.0%", label)
+
+
+class TkHoverTests(unittest.TestCase):
+    def setUp(self):
+        import tkinter as tk
+        self.root = tk.Tk()
+        self.root.geometry("940x300-10000-10000")
+        self.graph = LayerCharts(self.root)
+        self.graph.pack(fill="both", expand=True)
+        self.graph.set_target_temperature(65)
+        self.graph.record(dict(snapshot=frame("first", 0, t_recoating_c=64.25,
+                                                   heater1_setting_percent=57), applied={1: 57}))
+        self.graph.record(dict(snapshot=frame("second", 1, t_recoating_c=66,
+                                                    heater1_setting_percent=58)))
+        self.root.update()
+
+    def tearDown(self):
+        self.root.destroy()
+
+    def test_motion_and_leave_show_correct_temperature_and_overlapping_ir(self):
+        for canvas, needle, expected in (
+            (self.graph.temperature_canvas, "64.25", ("1층", "64.25 °C")),
+            (self.graph.power_canvas, "IR 저장값", ("1층", "IR 설정: 57.0%", "IR 저장값: 57.0%")),
+        ):
+            index = self.graph._hover_indexes[canvas]
+            x, y, _ = next(point for point in index.points if needle in point[2])
+            canvas.event_generate("<Motion>", x=int(round(x)), y=int(round(y)))
+            self.root.update()
+            items = canvas.find_withtag("hover-text")
+            self.assertEqual(1, len(items))
+            tooltip = canvas.itemcget(items[0], "text")
+            for value in expected:
+                self.assertIn(value, tooltip)
+            canvas.event_generate("<Leave>")
+            self.root.update()
+            self.assertEqual((), canvas.find_withtag("hover-tooltip"))
+
+    def test_resize_rebuilds_hover_coordinates(self):
+        canvas = self.graph.temperature_canvas
+        x_before = self.graph._hover_indexes[canvas].points[-1][0]
+        self.root.geometry("1040x300-10000-10000")
+        self.root.update()
+        x_after, y_after, _ = self.graph._hover_indexes[canvas].points[-1]
+        self.assertNotEqual(x_before, x_after)
+        canvas.event_generate("<Motion>", x=int(round(x_after)), y=int(round(y_after)))
+        self.root.update()
+        items = canvas.find_withtag("hover-text")
+        self.assertEqual(1, len(items))
+        self.assertIn("2층", canvas.itemcget(items[0], "text"))
 
 
 if __name__ == "__main__":

@@ -201,8 +201,10 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             if last_status != (effective_mode, status):
                 emit("log", status)
                 last_status = (effective_mode, status)
+            display_target = options._target_temperature_setting.get() if options.mode == "monitor" else effective_target
             emit("snapshot", dict(snapshot=snapshot, effective_mode=effective_mode,
-                                  proposed=dict(held), reasons=dict(reasons), applied=applied, status=status))
+                                  proposed=dict(held), reasons=dict(reasons), applied=applied, status=status,
+                                  display_target_c=display_target))
             interval = snapshot.minimum_poll_seconds
             if not finite(interval):
                 interval = 1.0

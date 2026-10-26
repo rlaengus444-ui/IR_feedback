@@ -112,6 +112,21 @@ class FeatureViewTests(unittest.TestCase):
         self.assertEqual(65, self.controller.target_temperature_setting.get())
         self.assertIn("유효한 숫자", self.view.log.get("1.0", "end"))
 
+    def test_reference_line_follows_applied_target_not_just_requested_target(self):
+        self.view.mode.set("계산 미리보기")
+        self.view.connect()
+        self.assertEqual(65, self.view.charts._target_temperature)
+        self.view.target_temperature.set("72")
+        self.view.apply_target_temperature()
+        self.assertEqual(65, self.view.charts._target_temperature)
+        payload = dict(snapshot=snapshot("same", 4), effective_mode="preview",
+                       proposed={}, reasons={}, applied={}, status="계산", display_target_c=65)
+        self.view._show_snapshot(payload)
+        self.assertEqual(65, self.view.charts._target_temperature)
+        payload["display_target_c"] = 72
+        self.view._show_snapshot(payload)
+        self.assertEqual(72, self.view.charts._target_temperature)
+
 
 if __name__ == "__main__":
     unittest.main()

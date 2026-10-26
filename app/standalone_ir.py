@@ -184,6 +184,7 @@ class ThermalFeedbackWindow:
         notebook.add(graph_tab, text="층별 그래프")
         notebook.add(log_tab, text="상태 기록")
         self.charts = LayerCharts(graph_tab)
+        self.charts.set_target_temperature(parse_target_temperature(self.target_temperature.get()))
         self.charts.pack(fill="both", expand=True)
         self.log = scrolledtext.ScrolledText(log_tab, height=7, wrap="word", font=("Segoe UI", 9), state="disabled")
         self.log.pack(fill="both", expand=True, pady=(5, 0))
@@ -260,6 +261,7 @@ class ThermalFeedbackWindow:
                 settings_path=settings, workbook_spec=workbook)
             if self.controller.connect(options):
                 self.charts.reset()
+                self.charts.set_target_temperature(options.target_temperature_c)
                 self.status.set("연결 중…")
                 self.capability.set("CSV 저장 후 자동 적용 · 다른 탭/최소화 가능 · 수동 편집/원본 UI 응답 실패 시 적용 정지"
                     if options.mode == "control" else "읽기·제어 가능 여부를 확인하고 있습니다.")
@@ -305,6 +307,8 @@ class ThermalFeedbackWindow:
 
     def _show_snapshot(self, payload):
         snapshot = payload["snapshot"]
+        if "display_target_c" in payload:
+            self.charts.set_target_temperature(payload["display_target_c"])
         self.charts.record(payload)
         self.layer.set("—" if snapshot.layer_index is None else f"{snapshot.layer_index + 1} 층")
         self.temperature.set("—" if snapshot.t_recoating_c is None else f"{snapshot.t_recoating_c:.1f} °C")

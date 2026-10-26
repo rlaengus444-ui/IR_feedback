@@ -66,6 +66,7 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual([{1: 50}, {1: 50}, {1: 50}, {1: 50}, {1: 55}],
                          [row["proposed"] for row in reports])
         self.assertEqual([{}, {}, {}, {}, {1: 55}], [row["applied"] for row in reports])
+        self.assertEqual([65, 65, 65, 65, 80], [row["display_target_c"] for row in reports])
         adapter.apply_ir_power.assert_called_once_with(1, 55, "d", stop)
 
     def test_first_csv_row_created_after_connect_counts_as_first_new_observation(self):
@@ -93,6 +94,23 @@ class WorkerTests(unittest.TestCase):
         adapter.apply_ir_power.assert_not_called()
         adapter.prepare_mode.assert_called_once_with("monitor", stop)
         adapter.disconnect.assert_called_once()
+
+    def test_monitor_target_reference_updates_without_new_csv_row(self):
+        adapter = Mock(spec=UiAdapter)
+        adapter.read_snapshot.return_value = snapshot()
+        stop = threading.Event()
+        options = SessionOptions(TARGET, mode="monitor", target_temperature_c=65)
+        targets = []
+        def emit(kind, value):
+            if kind == "snapshot":
+                targets.append(value["display_target_c"])
+                if len(targets) == 1:
+                    options._target_temperature_setting.set(72)
+                else:
+                    stop.set()
+        run_ui_session(options, stop, emit, lambda: adapter)
+        self.assertEqual([65, 72], targets)
+        adapter.apply_ir_power.assert_not_called()
 
     def test_control_unavailable_is_visible_and_never_silently_becomes_preview(self):
         adapter = Mock(spec=UiAdapter)
