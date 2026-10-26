@@ -15,3 +15,13 @@ ZIP 전체를 풀고 `IRFeedback.exe`를 실행합니다. 원본 프로그램에
 [배포 및 검증 자료 폴더](https://drive.google.com/drive/folders/1Fd_1vA4HLd2NpzHmsO7KMK1lrk5Dx3_5)
 
 배포본 SHA-256: `d60494098dab16bff9554caa4445db1aa960a285c715ffbacd87b959d7a8db95`
+
+## 저장소 구성
+
+- `app/`: 외부 모듈, Windows native 브리지, 알고리즘과 단위 검사
+- `validation/`: 실제 제품 어댑터를 쓰는 별도 시험 창과 13개 시나리오 결과
+- `docs/`: 검증 결과와 무설치·한글/공백 경로 이동 시험 기록
+- `packaging/Launcher.cs`: Windows 실행 파일 런처 소스
+- `dist/`: 전체 배포 ZIP 위치와 SHA-256
+
+GitHub의 소스 ZIP에는 Python/Tk 런타임을 중복 저장하지 않았습니다. 설치 없이 사용하려면 위의 **전체 배포본 ZIP**을 내려받으세요. 원본 BinderJet 저장소의 코드나 실행 파일을 교체하지 않습니다.

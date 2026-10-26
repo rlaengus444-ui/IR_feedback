@@ -1,0 +1,152 @@
+[
+  {
+    "machine": "M1",
+    "case": "bootstrap",
+    "passed": true,
+    "saveCount": 1,
+    "nonIrUnchanged": true,
+    "elapsedSeconds": 6.308,
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.35
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.281
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.369
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.429
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.829
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.385
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.394
+      },
+      {
+        "operation": "read",
+        "seconds": 0.344
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.481
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.569
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.395
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.532
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.403
+      },
+      {
+        "operation": "read",
+        "seconds": 0.359
+      }
+    ]
+  },
+  {
+    "machine": "S3",
+    "case": "bootstrap",
+    "passed": true,
+    "saveCount": 1,
+    "nonIrUnchanged": true,
+    "elapsedSeconds": 6.358,
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.31
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.289
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.363
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.408
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.918
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.412
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.396
+      },
+      {
+        "operation": "read",
+        "seconds": 0.345
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.484
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.607
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.396
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.541
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.403
+      },
+      {
+        "operation": "read",
+        "seconds": 0.35
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "dirtysequence",
+    "passed": true,
+    "saveCount": 0,
+    "unsavedEditPreserved": true,
+    "elapsedSeconds": 1.805,
+    "sequenceNavigationCount": 0
+  },
+  {
+    "machine": "S3",
+    "case": "dirtysequence",
+    "passed": true,
+    "saveCount": 0,
+    "unsavedEditPreserved": true,
+    "elapsedSeconds": 1.76,
+    "sequenceNavigationCount": 0
+  }
+]

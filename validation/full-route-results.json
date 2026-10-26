@@ -1,0 +1,334 @@
+[
+  {
+    "machine": "M1",
+    "case": "success",
+    "passed": true,
+    "saveCount": 1,
+    "nonIrUnchanged": true,
+    "elapsedSeconds": 5.874,
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.359
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.412
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.92
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.395
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.42
+      },
+      {
+        "operation": "read",
+        "seconds": 0.371
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.488
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.636
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.405
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.543
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.409
+      },
+      {
+        "operation": "read",
+        "seconds": 0.377
+      }
+    ]
+  },
+  {
+    "machine": "S3",
+    "case": "success",
+    "passed": true,
+    "saveCount": 1,
+    "nonIrUnchanged": true,
+    "elapsedSeconds": 5.984,
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.354
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.41
+      },
+      {
+        "operation": "metadata",
+        "seconds": 1.067
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.408
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.432
+      },
+      {
+        "operation": "read",
+        "seconds": 0.356
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.481
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.613
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.399
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.548
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.405
+      },
+      {
+        "operation": "read",
+        "seconds": 0.372
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "savehang",
+    "passed": true,
+    "saveCount": 1,
+    "nonIrUnchanged": true,
+    "elapsedSeconds": 5.215,
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.363
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.422
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.818
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.41
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.435
+      },
+      {
+        "operation": "read",
+        "seconds": 0.367
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.479
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.584
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.4
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.81
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "savetardy",
+    "passed": true,
+    "saveCount": 1,
+    "nonIrUnchanged": true,
+    "elapsedSeconds": 9.352,
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.347
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.411
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.856
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.391
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.401
+      },
+      {
+        "operation": "read",
+        "seconds": 0.364
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.468
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.606
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.393
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.809
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "edithang",
+    "passed": true,
+    "saveCount": 0,
+    "nonIrUnchanged": true,
+    "elapsedSeconds": 5.768,
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.36
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.399
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.864
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.384
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.404
+      },
+      {
+        "operation": "read",
+        "seconds": 0.364
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.468
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.607
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.388
+      },
+      {
+        "operation": "apply",
+        "seconds": 1.401
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "statechange",
+    "passed": true,
+    "saveCount": 0,
+    "nonIrUnchanged": true,
+    "elapsedSeconds": 4.912,
+    "uiOperations": [
+      {
+        "operation": "validate",
+        "seconds": 0.369
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.429
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.924
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.412
+      },
+      {
+        "operation": "return_process",
+        "seconds": 0.404
+      },
+      {
+        "operation": "read",
+        "seconds": 0.365
+      },
+      {
+        "operation": "enter_sequence",
+        "seconds": 0.47
+      },
+      {
+        "operation": "metadata",
+        "seconds": 0.607
+      },
+      {
+        "operation": "prepare_control",
+        "seconds": 0.379
+      },
+      {
+        "operation": "apply",
+        "seconds": 0.423
+      }
+    ]
+  },
+  {
+    "machine": "M1",
+    "case": "dirty",
+    "passed": true,
+    "saveCount": 0,
+    "unsavedEditPreserved": true,
+    "elapsedSeconds": 2.161
+  },
+  {
+    "machine": "S3",
+    "case": "dirty",
+    "passed": true,
+    "saveCount": 0,
+    "unsavedEditPreserved": true,
+    "elapsedSeconds": 2.361
+  }
+]

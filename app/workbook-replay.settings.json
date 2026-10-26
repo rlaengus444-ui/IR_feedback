@@ -1,0 +1,31 @@
+{
+  "purpose": "S3 source workbook replay; these values are not M1 hardware validation",
+  "source": "https://app.notion.com/p/3f105e94a225801c9cd6c70784c2d9ec",
+  "workbookSha256": "2dbdff1057ab0a2f0bbe539b77ffb71782f10daf61f8d111236d6f5585e16a94",
+  "parameters": {
+    "target_temperature_c": 65,
+    "deadband_c": 0.5,
+    "prediction_layers": 2,
+    "wait_layers": 2,
+    "maximum_step_percent": 5,
+    "minimum_power_percent": 0,
+    "maximum_power_percent": 100,
+    "minimum_reaction_c": 0.5,
+    "minimum_change_percent": 0,
+    "initial_alpha": 0.2,
+    "initial_beta": 0.5,
+    "initial_g": 0.5,
+    "calibrate_g": true,
+    "auto_alpha": true,
+    "auto_beta": true,
+    "alpha_reactions": 4,
+    "alpha_required_improvement": 0.2,
+    "beta_observation_layers": 8,
+    "beta_minimum_reactions": 3,
+    "beta_maximum_g_change_ratio": 0.1,
+    "beta_step": 0.05,
+    "beta_minimum": 0.2,
+    "beta_maximum": 0.8,
+    "beta_slow_ratio": 0.8
+  }
+}

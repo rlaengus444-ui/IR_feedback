@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+IR-module-error.log
+*.build.stdout.log
+*.build.stderr.log
+validation/fullroutebin/Machines/
+validation/full-route-*.window
+validation/full-route-*.saves
+validation/full-route-*.fields.json
+validation/full-route-*.state.json
+validation/full-route-*.heartbeat
+validation/full-route-*.trace
+validation/full-route-*.stack
+validation/full-route-*.error

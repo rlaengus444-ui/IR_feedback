@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "archiveSha256": "d60494098dab16bff9554caa4445db1aa960a285c715ffbacd87b959d7a8db95",
+  "manifestFilesVerified": 1179,
+  "noPythonOnPath": true,
+  "relocatedUnicodeAndSpacePath": true,
+  "unitSummary": "Ran 74 tests in 6.791s\n\nOK",
+  "replays": [
+    {
+      "layers": 80,
+      "numericChecks": 4400,
+      "mismatchCount": 0,
+      "workbookSha256": "2dbdff1057ab0a2f0bbe539b77ffb71782f10daf61f8d111236d6f5585e16a94",
+      "implementationSourceSha256": "2dbdff1057ab0a2f0bbe539b77ffb71782f10daf61f8d111236d6f5585e16a94"
+    },
+    {
+      "layers": 67,
+      "numericChecks": 3685,
+      "mismatchCount": 0,
+      "workbookSha256": "2dbdff1057ab0a2f0bbe539b77ffb71782f10daf61f8d111236d6f5585e16a94",
+      "implementationSourceSha256": "2dbdff1057ab0a2f0bbe539b77ffb71782f10daf61f8d111236d6f5585e16a94"
+    }
+  ],
+  "nativeLauncherAndTk": {
+    "ok": true,
+    "bits": 64,
+    "tcl": "8.6.12"
+  },
+  "elapsedSeconds": 12.844
+}
