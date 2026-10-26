@@ -114,6 +114,22 @@ class CsvSourceTests(unittest.TestCase):
                 reader = MonitoringCsvReader(self.target,roots=[self.root],log=self.log)
                 with self.assertRaises(CsvSourceError):reader.read()
 
+    def test_disabled_thermometer_sentinel_stops_control_for_both_machines(self):
+        for machine in ("M1", "S3"):
+            with self.subTest(machine=machine):
+                self.path.write_bytes(encode_rows([HEADER, self.row(1, 42, self.now - timedelta(minutes=1))]))
+                target = MachineWindow(machine, 1, 2, "fixture", str(self.root / "Operator.exe"))
+                reader = MonitoringCsvReader(target, roots=[self.root], log=self.log)
+                self.assertEqual(42, reader.read().sample.temperature)
+                self.append([self.row(2, -1, self.now)])
+                with self.assertRaisesRegex(CsvSourceError, "-1"):
+                    reader.read()
+                # Re-reading the same file must remain blocked; no stale token
+                # or later row may turn the disabled sensor into a control input.
+                self.append([self.row(3, 43, self.now)])
+                with self.assertRaisesRegex(CsvSourceError, "-1"):
+                    reader.read()
+
     def test_same_layer_correction_and_reversed_order_reject_control(self):
         for row in (self.row(1,50,self.now),self.row(0,50,self.now)):
             with self.subTest(row=row):

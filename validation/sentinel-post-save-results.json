@@ -1,0 +1,26 @@
+[
+  {
+    "machine": "M1",
+    "case": "sentinel-post-save",
+    "passed": true,
+    "normalTemperature": 42,
+    "invalidTemperature": -1,
+    "savesBefore": 1,
+    "savesAfter": 1,
+    "controlStopped": true,
+    "processTableAccesses": 0,
+    "error": "온도계 비활성 값(-1°C)이 기록되어 IR 제어를 중단합니다."
+  },
+  {
+    "machine": "S3",
+    "case": "sentinel-post-save",
+    "passed": true,
+    "normalTemperature": 42,
+    "invalidTemperature": -1,
+    "savesBefore": 1,
+    "savesAfter": 1,
+    "controlStopped": true,
+    "processTableAccesses": 0,
+    "error": "온도계 비활성 값(-1°C)이 기록되어 IR 제어를 중단합니다."
+  }
+]

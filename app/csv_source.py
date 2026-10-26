@@ -260,6 +260,11 @@ class MonitoringCsvReader:
         start, finish = record_time(data["TimeStart"]), record_time(data["TimePrintingFinished"])
         if temperature == 0 or start is None or finish is None:
             return None  # Original future/unmeasured placeholder rows.
+        # The printer records -1 when its thermometer is disabled. A completed
+        # row carrying that sentinel is not a temperature measurement and must
+        # stop control, rather than be learned as a valid low temperature.
+        if temperature == -1:
+            raise CsvSourceError("온도계 비활성 값(-1°C)이 기록되어 IR 제어를 중단합니다.")
         if index < context.first_layer or start < context.first_started - timedelta(seconds=2) or finish < start:
             raise CsvSourceError("CSV 행이 현재 작업의 시작 시점/층과 일치하지 않습니다.")
         recoating = record_time(data["TimeRecoatingFinished"])
