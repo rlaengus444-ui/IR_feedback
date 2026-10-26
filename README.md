@@ -11,3 +11,5 @@
 [전체 ZIP 다운로드 (팀 드라이브)](https://drive.google.com/file/d/1aOazW0PM1LQN6KvjQQ5aH8GDXMeK9tlb/view)
 
 SHA-256: `19091c07323be471b11ec47283aeab866638a23abb546f4d8e1a6aeecbe2bfe8`
+
+**배포 상태:** Google Drive에서 이 ZIP의 다운로드가 악성코드 또는 스팸 분류로 차단됩니다. Drive 링크는 저장 위치이며 현재 다운로드 가능 여부가 확인되지 않았습니다.
