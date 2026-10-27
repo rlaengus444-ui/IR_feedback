@@ -1,0 +1,32 @@
+name: Validate and publish IR csv.5
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  validate-and-upload:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify archive and run Windows GUI tests with bundled Python
+        shell: pwsh
+        run: |
+          $zip = "$env:GITHUB_WORKSPACE\dist\IRFeedback-2026.10.27-csv.5.zip"
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne 'A92DF3E1A831B9FEE5C0727E1147685049C0042CDBDC9A62FE0FAE4CAC5CD8A7') { throw 'ZIP hash mismatch' }
+          $dest = Join-Path $env:RUNNER_TEMP 'IRFeedback'
+          Expand-Archive -Path $zip -DestinationPath $dest
+          if (!(Test-Path "$dest\IRFeedback.exe") -or !(Test-Path "$dest\runtime\pythonw.exe")) { throw 'Missing launcher or runtime' }
+          if ((Get-FileHash "$dest\app\layer_charts.py" -Algorithm SHA256).Hash -ne (Get-FileHash 'app\layer_charts.py' -Algorithm SHA256).Hash) { throw 'Graph source mismatch' }
+          Copy-Item 'app\test_layer_charts.py' "$dest\app\test_layer_charts.py"
+          Push-Location "$dest\app"
+          & "$dest\runtime\python.exe" -m unittest -v test_layer_charts
+          if ($LASTEXITCODE -ne 0) { throw 'Windows GUI tests failed' }
+          Pop-Location
+      - name: Upload verified ZIP to draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload 2026.10.27-csv.5 'dist/IRFeedback-2026.10.27-csv.5.zip' --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Release asset upload failed' }
