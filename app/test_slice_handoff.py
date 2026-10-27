@@ -86,7 +86,8 @@ class HandoffTests(unittest.TestCase):
         options = SessionOptions(TARGET, mode='preview', workbook_spec=SPEC, slice_dataset=A)
         excel = self.excel()
         frames = [self.frame('a', 0, False), self.frame('b', 1), self.frame('b', 1, False),
-                  self.frame('b-edited', 1), self.frame('cached-c', 2, False), self.frame('d', 3)]
+                  self.frame('b-edited', 1), self.frame('cached-c', 2, False),
+                  self.frame('cached-c-edited', 2), self.frame('d', 3)]
         def hook(n, row):
             if n == 2:
                 options._slice_dataset_setting.request(B)
@@ -95,8 +96,8 @@ class HandoffTests(unittest.TestCase):
         self.assertEqual([0, 50], [c.kwargs['slice_features']['whole_coverage_pct'] for c in excel.process.call_args_list])
         excel.reset.assert_called_once()
         adapter.apply_ir_power.assert_not_called()
-        self.assertEqual([0, 0, 1, 1, 1, 1], [r['slice_epoch'] for r in reports])
-        self.assertEqual([{}, {}, {}], [r['proposed'] for r in reports[2:5]])
+        self.assertEqual([0, 0, 1, 1, 1, 1, 1], [r['slice_epoch'] for r in reports])
+        self.assertEqual([{}, {}, {}, {}], [r['proposed'] for r in reports[2:6]])
         self.assertEqual(1, sum(k == 'slice_activated' for k, _ in events))
 
     def test_identical_reanalysis_is_noop_and_preserves_excel_history(self):
