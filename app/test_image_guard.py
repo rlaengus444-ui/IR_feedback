@@ -106,7 +106,7 @@ class ImageGuardTests(unittest.TestCase):
         self.assertEqual(2, c.process(5, 85, r.power_percent, slice_features=feature()).diagnostics['CI'])
 
     def test_unknown_from_start_preserves_all_legacy_fixture_fields(self):
-        fixture = json.loads((Path(__file__).parent / 'random80_validation.json').read_text())
+        fixture = json.loads((Path(__file__).parent / 'random80_validation.json').read_text(encoding='utf-8'))
         baseline, unknown = LayerAdaptiveController(source_settings()), LayerAdaptiveController(source_settings())
         for item in fixture['rows']:
             args = item['A'], item['B'], item['C']
@@ -150,7 +150,7 @@ class ImageGuardTests(unittest.TestCase):
 
     def test_valid_printing_before_trigger_matches_legacy(self):
         for filename in ('random80_validation.json', 'input_example_validation.json'):
-            fixture = json.loads((Path(__file__).parent / filename).read_text())
+            fixture = json.loads((Path(__file__).parent / filename).read_text(encoding='utf-8'))
             baseline, observed = LayerAdaptiveController(source_settings()), LayerAdaptiveController(source_settings())
             for item in fixture['rows']:
                 args = item['A'], item['B'], item['C']
