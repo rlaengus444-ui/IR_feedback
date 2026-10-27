@@ -214,9 +214,39 @@ function AssertOtherFields($actual, $baseline) {
     foreach ($key in $before.Keys) { if (-not $now.ContainsKey($key) -or [string]$now[$key] -cne [string]$before[$key]) { throw "A non-IR Sequence input changed ('$key'); no automatic Save is allowed." } }
 }
 
+function ImportBundledBridge([string]$path) {
+    # Pin the reviewed bridge bytes, including for Internet-zone downloads.
+    # Rebuilding UiaBridge.dll requires review and updating this digest.
+    $expected = '7d0d94474a500d0cbfa5725b9e1e385682b32266ac2e862d09048f8de98f4a72'
+    $stream = $null; $sha = $null
+    try {
+        if (-not [IO.File]::Exists($path)) { throw 'Bundled UI bridge file is missing.' }
+        $stream = [IO.File]::Open($path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+        $size = $stream.Length
+        if ($size -le 0 -or $size -gt 1048576) { throw 'Bundled UI bridge exceeds its verified size bound.' }
+        $bytes = New-Object byte[] ([int]$size)
+        $read = 0
+        while ($read -lt $bytes.Length) {
+            $part = $stream.Read($bytes, $read, $bytes.Length - $read)
+            if ($part -eq 0) { throw 'Bundled UI bridge is truncated.' }
+            $read += $part
+        }
+        if ($stream.Length -ne $size) { throw 'Bundled UI bridge changed during verification.' }
+        $sha = [Security.Cryptography.SHA256]::Create()
+        $digest = ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant()
+        if ($digest -cne $expected) { throw 'Bundled UI bridge SHA-256 verification failed. Extract the complete trusted release again.' }
+    } finally {
+        if ($null -ne $sha) { $sha.Dispose() }
+        if ($null -ne $stream) { $stream.Dispose() }
+    }
+    # Dependencies are Windows framework assemblies, never arbitrary package paths.
+    Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, Accessibility
+    [void][Reflection.Assembly]::Load([byte[]]$bytes)
+}
+
 try {
     $request = [Console]::In.ReadToEnd() | ConvertFrom-Json
-    Add-Type -Path ([string]$request.bridge_path)
+    ImportBundledBridge ([string]$request.bridge_path)
     if ($request.operation -eq 'discover') {
         $windows = New-Object 'Collections.Generic.List[object]'
         $instance = $null
