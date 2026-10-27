@@ -1,0 +1,10 @@
+# Default developer: GPT-6.1 Terra Medium.
+model = "gpt-6.1-terra"
+model_reasoning_effort = "medium"
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 2
+# Reserve Sol Max for sol_reviewer; ordinary helpers use Terra Medium.
+default_subagent_model = "gpt-6.1-terra"
+default_subagent_reasoning_effort = "medium"
