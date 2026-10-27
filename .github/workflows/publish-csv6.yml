@@ -8,7 +8,10 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 15
     steps:
+      # Historical csv.6 must use its matching source and one-argument verifier.
       - uses: actions/checkout@v4
+        with:
+          ref: 9f1cb65ac0f120445ebc7b796dae4171d9cc755d
       - name: Verify complete package and run Windows tests using packaged runtime
         shell: pwsh
         run: |

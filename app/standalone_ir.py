@@ -16,6 +16,7 @@ from single_instance import SingleInstance
 from layer_charts import LayerCharts
 from target_temperature import parse_target_temperature
 from excel_workbook import WorkbookSpec
+from slice_panel import SlicePanel
 
 
 MODE_LABELS = {"조회": "monitor", "계산 미리보기": "preview", "UI 자동 적용": "control"}
@@ -71,6 +72,7 @@ class ThermalFeedbackWindow:
         self.workbook_power_cell = tk.StringVar(value="C13")
         self.workbook_target_cell = tk.StringVar(value="B5")
         self.workbook_layer_cell = tk.StringVar(value="A13")
+        self.workbook_slice_cell = tk.StringVar()
         self.status = tk.StringVar(value="연결 안 됨")
         self.capability = tk.StringVar(value="기존 프로그램 무수정 · UI 자동 적용은 선택 후 연결해야 시작됩니다.")
         self.layer = tk.StringVar(value="—")
@@ -147,7 +149,8 @@ class ThermalFeedbackWindow:
                 ("IR 결과 시작셀", self.workbook_result_cell, 7),
                 ("현재 IR 입력셀", self.workbook_power_cell, 7),
                 ("목표 셀", self.workbook_target_cell, 7),
-                ("층 번호 셀(선택)", self.workbook_layer_cell, 7))):
+                ("층 번호 셀(선택)", self.workbook_layer_cell, 7),
+                ("이미지 시작셀(선택)", self.workbook_slice_cell, 7))):
             row, group = divmod(index, 3)
             ttk.Label(self.excel_fields, text=title).grid(row=row, column=group * 2, sticky="w", padx=(0, 4), pady=2)
             widget = ttk.Entry(self.excel_fields, textvariable=variable, width=width)
@@ -188,6 +191,24 @@ class ThermalFeedbackWindow:
         self.charts.pack(fill="both", expand=True)
         self.log = scrolledtext.ScrolledText(log_tab, height=7, wrap="word", font=("Segoe UI", 9), state="disabled")
         self.log.pack(fill="both", expand=True, pady=(5, 0))
+        self.slice_panel = SlicePanel(notebook,
+            busy=lambda: self.controller.thread is not None or self.closing,
+            use_workbook=self._use_slice_workbook)
+        notebook.add(self.slice_panel, text="슬라이싱 이미지")
+        self.configuration_widgets.extend(self.slice_panel.configuration_widgets)
+
+    def _use_slice_workbook(self, path):
+        if self.controller.thread is not None or self.closing:
+            return
+        self.algorithm_type.set("Excel 수식 파일")
+        self._algorithm_changed()
+        self.settings_path.set(path)
+        for variable, value in ((self.workbook_sheet, "수동 테스트"), (self.workbook_temperature_cell, "B13"),
+                (self.workbook_power_cell, "C13"), (self.workbook_result_cell, "D13"),
+                (self.workbook_target_cell, "B5"), (self.workbook_layer_cell, "A13"),
+                (self.workbook_slice_cell, "BL13")):
+            variable.set(value)
+        self._append_log("슬라이싱 수동시트 지정 · 이미지 BL:BW 자동 입력 · 기존 G·알파·베타 수식 유지")
 
     def browse(self):
         excel = self.algorithm_type.get() == "Excel 수식 파일"
@@ -244,6 +265,10 @@ class ThermalFeedbackWindow:
             self._append_log("실행 중인 프로그램을 검색하고 창을 선택하세요.")
             return
         try:
+            if self.slice_panel.running:
+                raise ValueError("슬라이싱 이미지 분석 완료 후 연결하세요.")
+            if self.slice_panel.paths and self.slice_panel.dataset is None:
+                raise ValueError("선택한 이미지 분석을 완료하거나 선택을 지운 후 연결하세요.")
             workbook = None
             settings = None
             if self.algorithm_type.get() == "Excel 수식 파일":
@@ -252,13 +277,14 @@ class ThermalFeedbackWindow:
                     actual_power_cell=self.workbook_power_cell.get().strip(),
                     recommendation_cell=self.workbook_result_cell.get().strip(),
                     target_cell=self.workbook_target_cell.get().strip(),
-                    layer_cell=self.workbook_layer_cell.get().strip() or None)
+                    layer_cell=self.workbook_layer_cell.get().strip() or None,
+                    slice_start_cell=self.workbook_slice_cell.get().strip() or None)
                 workbook.validate()
             elif self.settings_path.get().strip():
                 settings = Path(self.settings_path.get().strip())
             options = SessionOptions(target=target, mode=MODE_LABELS[self.mode.get()],
                 target_temperature_c=parse_target_temperature(self.target_temperature.get()),
-                settings_path=settings, workbook_spec=workbook)
+                settings_path=settings, workbook_spec=workbook, slice_dataset=self.slice_panel.dataset)
             if self.controller.connect(options):
                 self.charts.reset()
                 self.charts.set_target_temperature(options.target_temperature_c)
@@ -292,7 +318,7 @@ class ThermalFeedbackWindow:
         self.temperature_entry.configure(state="disabled" if self.closing or self.controller.state == "disconnecting" else "normal")
         self.target_apply_button.configure(state="normal" if target_ready else "disabled")
         self.search_button.configure(state="disabled" if busy or self.searching else "normal")
-        self.connect_button.configure(state="disabled" if busy or self.searching or not self.target_map else "normal")
+        self.connect_button.configure(state="disabled" if busy or self.searching or self.slice_panel.running or not self.target_map else "normal")
         self.disconnect_button.configure(state="normal" if busy and not self.closing and self.controller.state != "disconnecting" else "disabled")
 
     def _append_log(self, message):
@@ -310,6 +336,15 @@ class ThermalFeedbackWindow:
         if "display_target_c" in payload:
             self.charts.set_target_temperature(payload["display_target_c"])
         self.charts.record(payload)
+        features = payload.get('slice_features')
+        if features is None:
+            self.slice_panel.live.set("실행 중 층 데이터: 이미지 미연결 또는 유효한 관찰 없음")
+        else:
+            current = (f"중앙 {features['center_coverage_pct']:.3f}% / 전체 {features['whole_coverage_pct']:.3f}%"
+                       if features['image_valid'] else '미확인')
+            previous = (f"중앙 {features['previous_center_coverage_pct']:.3f}% / 전체 {features['previous_whole_coverage_pct']:.3f}%"
+                        if features['previous_image_valid'] else '미확인')
+            self.slice_panel.live.set(f"이번 층 계획: {current} · 이전 층 계획: {previous} · 센서 위치/실제 분사 확인값 아님")
         self.layer.set("—" if snapshot.layer_index is None else f"{snapshot.layer_index + 1} 층")
         self.temperature.set("—" if snapshot.t_recoating_c is None else f"{snapshot.t_recoating_c:.1f} °C")
         self.process_state.set(snapshot.machine_state)
@@ -370,6 +405,7 @@ class ThermalFeedbackWindow:
         if self.closing:
             return
         self.closing = True
+        self.slice_panel.cancel_event.set()
         self.controller.close()
         self.close_deadline = time.monotonic() + self.CLOSE_GRACE_SECONDS
         self.status.set("종료 중…")

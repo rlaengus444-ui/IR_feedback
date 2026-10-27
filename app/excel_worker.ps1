@@ -17,6 +17,7 @@ $tempColumn = $null
 $actualColumn = $null
 $recommendationColumn = $null
 $layerColumn = $null
+$sliceColumns = @{}
 $targetCell = $null
 $firstRow = 0
 $lastRow = 0
@@ -31,7 +32,7 @@ function Send-Reply($message) {
 }
 
 function Clear-Inputs {
-    foreach ($column in @($tempColumn, $actualColumn, $layerColumn)) {
+    foreach ($column in (@($tempColumn, $actualColumn, $layerColumn) + @($sliceColumns.Values))) {
         if ($null -ne $column) {
             [void]$sheet.Range($sheet.Cells.Item($firstRow, $column), $sheet.Cells.Item($lastRow, $column)).ClearContents()
         }
@@ -80,6 +81,9 @@ try {
                     $recommendationColumn = [int]$sheet.Range([string]$request.recommendation).Column
                     $targetCell = $sheet.Range($targetAddress)
                     if ($request.layer) { $layerColumn = [int]$sheet.Range([string]$request.layer).Column }
+                    foreach ($property in $request.slice_inputs.PSObject.Properties) {
+                        $sliceColumns[$property.Name] = [int]$sheet.Range([string]$property.Value).Column
+                    }
                     Clear-Inputs
                     Send-Reply @{ ok = $true }
                 }
@@ -105,6 +109,12 @@ try {
                     $sheet.Cells.Item($row, $tempColumn).Value2 = [double]$request.temperature
                     $sheet.Cells.Item($row, $actualColumn).Value2 = [double]$request.actual
                     if ($null -ne $layerColumn) { $sheet.Cells.Item($row, $layerColumn).Value2 = [int]$request.layer }
+                    foreach ($name in $sliceColumns.Keys) {
+                        $cell = $sheet.Cells.Item($row, $sliceColumns[$name])
+                        $value = $request.image.PSObject.Properties[$name].Value
+                        if ($null -eq $value) { [void]$cell.ClearContents() }
+                        else { $cell.Value2 = [double]$value }
+                    }
                     $excel.Calculate()
                     $value = $output.Value2
                     if (($value -isnot [double]) -and ($value -isnot [int]) -and ($value -isnot [decimal])) {
