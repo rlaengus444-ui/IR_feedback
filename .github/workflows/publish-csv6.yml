@@ -1,37 +1,33 @@
-name: Validate and publish IR csv.6
+name: Publish reviewed S3 connection evaluation ZIP
 on:
   workflow_dispatch:
 permissions:
   contents: write
+  actions: read
 jobs:
-  validate-and-upload:
+  publish-reviewed-candidate:
     runs-on: windows-2022
-    timeout-minutes: 15
+    timeout-minutes: 8
     steps:
-      # Historical csv.6 must use its matching source and one-argument verifier.
+      - name: Preserve checkout bytes
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
         with:
-          ref: 9f1cb65ac0f120445ebc7b796dae4171d9cc755d
-      - name: Verify complete package and run Windows tests using packaged runtime
-        shell: pwsh
-        run: |
-          $zip = "$env:GITHUB_WORKSPACE\dist\IRFeedback-2026.10.27-csv.6.zip"
-          if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne 'FF216AACA807A47B44DE34F47194AFF88F28DD0F08A9874F330CDD8C67BE5E84') { throw 'ZIP hash mismatch' }
-          py -3 release_tools/verify_package.py $zip
-          if ($LASTEXITCODE -ne 0) { throw 'Incomplete package' }
-          $dest = Join-Path $env:RUNNER_TEMP 'IRFeedback'
-          Expand-Archive -Path $zip -DestinationPath $dest
-          if ((Get-FileHash "$dest\app\workbook-replay.settings.json" -Algorithm SHA256).Hash -ne '3453C5F1911F484CED847505CE30C5F94367EB168F8F5402F5EC96AC31D3A8E6') { throw 'Default settings mismatch' }
-          Copy-Item 'app\test_layer_charts.py','app\test_session.py','app\test_target_temperature.py','app\test_layer_algorithm.py','app\test_new_features.py' "$dest\app"
-          Copy-Item 'app\input_example_validation.json','app\random80_validation.json' "$dest\app"
-          Push-Location "$dest\app"
-          & "$dest\runtime\python.exe" -m unittest -v test_layer_charts test_session test_target_temperature test_layer_algorithm test_new_features
-          if ($LASTEXITCODE -ne 0) { throw 'Windows package tests failed' }
-          Pop-Location
-      - name: Upload verified ZIP to draft release
+          ref: 62393c9159a9523eb74aabbf6911383bd247ccf1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          repository: rlaengus444-ui/IR_feedback
+          github-token: ${{ github.token }}
+          run-id: 40577487288
+          name: slice-candidate-046895bdebcd7cd13ddfbaf0c5dfa9a46a0e4614
+          path: ${{ runner.temp }}/verified-s3-candidate
+      - name: Validate exact evidence and publish only the reviewed evaluation ZIP
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          gh release upload 2026.10.27-csv.6 'dist/IRFeedback-2026.10.27-csv.6.zip' --clobber
-          if ($LASTEXITCODE -ne 0) { throw 'Release asset upload failed' }
+          python release_tools/publish_s3_candidate.py "$env:RUNNER_TEMP\verified-s3-candidate" 046895bdebcd7cd13ddfbaf0c5dfa9a46a0e4614 7372e0529fb0e54e9100eda1625184f76b13a8e81807621231e2d4c89645c584 docs/validation/s3-discovery-2026.10.28-review.json
+          if ($LASTEXITCODE -ne 0) { throw 'Reviewed S3 evaluation publication failed' }
