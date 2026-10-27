@@ -12,6 +12,7 @@ using Accessibility;
 public static class BinderJetNativeProcess
 {
     private const int MaximumChildren = 900;
+    private const int MaximumWindowVisits = 16384;
     private const int MaximumTextCharacters = 4096;
     private const uint TextMessage = 0x000D;
     private const uint TimeoutFlags = 0x0001 | 0x0002 | 0x0020;
@@ -83,34 +84,68 @@ public static class BinderJetNativeProcess
         return value.ToString();
     }
 
-    public static Hashtable[] Enumerate(IntPtr root, int expectedPid)
+    private static bool IsLeafClass(string className, bool includeEdits)
+    {
+        return className.IndexOf("STATIC", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            className.IndexOf("BUTTON", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            (includeEdits && className.IndexOf("EDIT", StringComparison.OrdinalIgnoreCase) >= 0);
+    }
+
+    // Native enumeration is bounded separately from the eligible leaf inventory.
+    // Hidden views and non-leaf containers must not exhaust the 900-control
+    // budget or receive WM_GETTEXT/UIA requests. Always finish the bounded scan
+    // before a caller selects a match, so late duplicates cannot be hidden.
+    internal static IntPtr[] VisibleLeafHandles(IntPtr root, int expectedPid, bool includeEdits)
     {
         ValidateRoot(root, expectedPid);
         var handles = new List<IntPtr>();
-        bool truncated = false;
+        int visits = 0;
+        bool visitLimit = false, candidateLimit = false, unreadableClass = false;
         ChildCallback callback = delegate(IntPtr window, IntPtr unused)
         {
-            if (handles.Count >= MaximumChildren) { truncated = true; return false; }
-            if (HasProcess(window, expectedPid) && IsChild(root, window)) handles.Add(window);
+            if (++visits > MaximumWindowVisits) { visitLimit = true; return false; }
+            if (!HasProcess(window, expectedPid) || !IsChild(root, window) || !IsWindowVisible(window)) return true;
+            string className = ClassName(window);
+            if (className.Length == 0) { unreadableClass = true; return false; }
+            if (!IsLeafClass(className, includeEdits)) return true;
+            if (handles.Count >= MaximumChildren) { candidateLimit = true; return false; }
+            handles.Add(window);
             return true;
         };
         EnumChildWindows(root, callback, IntPtr.Zero);
         GC.KeepAlive(callback);
-        if (truncated) throw new InvalidOperationException("Native control discovery exceeds the 900-child bound.");
+        if (visitLimit) throw new InvalidOperationException("Native window discovery exceeds the 16384-visit bound; no partial inventory was used.");
+        if (candidateLimit) throw new InvalidOperationException("Visible native leaf discovery exceeds the 900-control bound; no partial inventory was used.");
+        if (unreadableClass) throw new InvalidOperationException("A visible native control class could not be verified.");
+        ValidateRoot(root, expectedPid);
+        return handles.ToArray();
+    }
+
+    internal static string ValidateVisibleLeaf(IntPtr root, IntPtr window, int expectedPid, bool includeEdits)
+    {
+        ValidateChild(root, window, expectedPid);
+        string className = ClassName(window);
+        if (!IsWindowVisible(window) || !IsLeafClass(className, includeEdits))
+            throw new InvalidOperationException("A native discovery candidate is no longer a visible supported leaf.");
+        return className;
+    }
+
+    public static Hashtable[] Enumerate(IntPtr root, int expectedPid)
+    {
+        IntPtr[] handles = VisibleLeafHandles(root, expectedPid, false);
         var result = new List<Hashtable>();
         foreach (IntPtr window in handles)
         {
-            ValidateChild(root, window, expectedPid);
-            string className = ClassName(window);
-            bool visible = IsWindowVisible(window);
+            string className = ValidateVisibleLeaf(root, window, expectedPid, false);
             // Inventory does not collect unrelated edit values. Explicit cached
             // ReadText calls remain available for an audited status/progress HWND.
-            bool readable = visible && (className.IndexOf("STATIC", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                className.IndexOf("BUTTON", StringComparison.OrdinalIgnoreCase) >= 0);
+            string text = ReadText(root, window, expectedPid);
+            if (ValidateVisibleLeaf(root, window, expectedPid, false) != className)
+                throw new InvalidOperationException("A native discovery candidate class changed during its text read.");
             result.Add(new Hashtable {
                 { "hwnd", window.ToInt64() }, { "class_name", className },
-                { "text", readable ? ReadText(root, window, expectedPid) : "" },
-                { "visible", visible }, { "enabled", IsWindowEnabled(window) }
+                { "text", text },
+                { "visible", true }, { "enabled", IsWindowEnabled(window) }
             });
         }
         ValidateRoot(root, expectedPid);

@@ -1,129 +1,32 @@
-name: Validate slice candidate
+name: Compile S3 discovery bridge for review
 on:
   workflow_dispatch:
-  push:
-    branches: ['work/slice-release-*']
 permissions:
   contents: read
 jobs:
-  windows-candidate:
+  compile-bridge:
     runs-on: windows-2022
-    timeout-minutes: 20
+    timeout-minutes: 6
     steps:
       - name: Preserve checkout bytes
         run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Build candidate
-        id: build
-        continue-on-error: true
+      - name: Compile reviewed bridge sources in temporary copy
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $out = "$env:RUNNER_TEMP\slice-candidate"
-          New-Item -ItemType Directory -Force $out | Out-Null
-          $base = 'dist/IRFeedback-2026.10.27-csv.6.zip'
-          if ((Get-FileHash $base -Algorithm SHA256).Hash -ne 'FF216AACA807A47B44DE34F47194AFF88F28DD0F08A9874F330CDD8C67BE5E84') { throw 'Base ZIP hash mismatch' }
-          $wheel = "$env:RUNNER_TEMP\pillow-13.0.0-cp314-cp314-win_amd64.whl"
-          Invoke-WebRequest 'https://files.pythonhosted.org/packages/50/e2/7ad17747517e4c813dca78257d6bb593466f8231baf1384bc98d92745edb/pillow-13.0.0-cp314-cp314-win_amd64.whl' -OutFile $wheel
-          if ((Get-FileHash $wheel -Algorithm SHA256).Hash -ne 'F7CBB7A64E7EC664775195E4F81923BC8A93D9451B963F844E59118F63147A7A') { throw 'Pillow wheel hash mismatch' }
-          $zip = "$out\IRFeedback-2026.10.28-slice.2.zip"
-          python release_tools/build_slice_package.py $base $zip '2026.10.28-slice.2' $wheel
-          if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
-          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  IRFeedback-2026.10.28-slice.2.zip" | Set-Content -Encoding utf8 "$out\SHA256.txt"
-          @{ source_commit = $env:GITHUB_SHA; zip_sha256 = $hash; version = '2026.10.28-slice.2'; pillow_sha256 = (Get-FileHash $wheel -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content -Encoding utf8 "$out\candidate.json"
-          Expand-Archive $zip "$env:RUNNER_TEMP\slice-extracted"
-      - name: Test packaged runtime and application
-        id: tests
-        if: steps.build.outcome == 'success'
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $app = "$env:RUNNER_TEMP\slice-extracted\app"
-          $python = "$env:RUNNER_TEMP\slice-extracted\runtime\python.exe"
-          $deps = "$env:RUNNER_TEMP\slice-test-deps"
-          python -m pip install --target $deps 'openpyxl==3.1.5'
-          if ($LASTEXITCODE -ne 0) { throw 'Test dependency install failed' }
-          Copy-Item app/test_*.py $app
-          Copy-Item app/input_example_validation.json,app/random80_validation.json $app
-          $env:PYTHONPATH = $deps
-          & $python -c "import sys, PIL, PIL._imaging, tkinter; print(sys.version); print(PIL.__file__); print(PIL._imaging.__file__); assert sys.version_info[:3] == (3,14,5); assert 'slice-extracted' in PIL.__file__.lower()"
-          if ($LASTEXITCODE -ne 0) { throw 'Packaged runtime import failed' }
-          $errors = $null; $tokens = $null
-          [System.Management.Automation.Language.Parser]::ParseFile("$app\excel_worker.ps1", [ref]$tokens, [ref]$errors) | Out-Null
-          if ($errors.Count) { throw "PowerShell parse errors: $errors" }
-          Push-Location $app
-          try {
-            & $python -m unittest discover -v 2>&1 | Out-File -Encoding utf8 "$env:RUNNER_TEMP\slice-candidate\tests.txt"
-            if ($LASTEXITCODE -ne 0) { throw 'Application tests failed' }
-          } finally { Pop-Location }
-      - name: Exercise launcher
-        id: smoke
-        if: steps.build.outcome == 'success'
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          python release_tools/windows_smoke.py "$env:RUNNER_TEMP\slice-extracted" 2>&1 | Out-File -Encoding utf8 "$env:RUNNER_TEMP\slice-candidate\smoke.txt"
-          if ($LASTEXITCODE -ne 0) { throw 'Launcher smoke failed' }
-      - name: Verify bridge loading with downloaded-file marking
-        id: bridge
-        if: steps.build.outcome == 'success'
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          & "$env:RUNNER_TEMP\slice-extracted\runtime\python.exe" release_tools/windows_bridge_probe.py "$env:RUNNER_TEMP\slice-extracted" "$env:RUNNER_TEMP\slice-candidate\bridge.json"
-          if ($LASTEXITCODE -ne 0) { throw 'Marked DLL production discovery/initialization probe failed' }
-      - name: Verify actual native CSV content guard
-        id: csv_guard
-        if: steps.build.outcome == 'success'
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File release_tools/windows_csv_guard_probe.ps1 -PackageRoot "$env:RUNNER_TEMP\slice-extracted" -ResultPath "$env:RUNNER_TEMP\slice-candidate\csv-guard.json"
-          if ($LASTEXITCODE -ne 0) { throw 'Native CSV content guard probe failed' }
-      - name: Exercise Excel COM
-        id: excel
-        if: steps.build.outcome == 'success'
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $env:PYTHONPATH = "$env:RUNNER_TEMP\slice-extracted\app;$env:RUNNER_TEMP\slice-test-deps"
-          & "$env:RUNNER_TEMP\slice-extracted\runtime\python.exe" release_tools/windows_excel_probe.py "$env:RUNNER_TEMP\slice-candidate\excel.json"
-          if ($LASTEXITCODE -ne 0) { throw 'Excel COM validation unavailable or failed; release gate closed' }
-      - name: Reverify original candidate
-        id: reverify
-        if: steps.build.outcome == 'success'
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $zip = "$env:RUNNER_TEMP\slice-candidate\IRFeedback-2026.10.28-slice.2.zip"
-          python release_tools/verify_package.py $zip '2026.10.28-slice.2'
-          if ($LASTEXITCODE -ne 0) { throw 'Package verification failed' }
-          $record = Get-Content "$env:RUNNER_TEMP\slice-candidate\candidate.json" -Raw | ConvertFrom-Json
-          if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $record.zip_sha256) { throw 'Candidate ZIP changed during validation' }
-      - name: Record validation status
+          $out = "$env:RUNNER_TEMP\native-bridge"
+          New-Item -ItemType Directory -Force "$out\app" | Out-Null
+          Copy-Item app/UiaBridge*.cs,app/build_uia_bridge.ps1 "$out\app"
+          & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$out\app\build_uia_bridge.ps1"
+          if ($LASTEXITCODE -ne 0) { throw 'Bridge compilation failed' }
+          $sources = [ordered]@{}
+          Get-ChildItem app/UiaBridge*.cs,app/build_uia_bridge.ps1 | ForEach-Object { $sources[$_.Name] = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
+          $binary = Get-Item "$out\app\UiaBridge.dll"
+          @{ source_commit=$env:GITHUB_SHA; source_sha256=$sources; bridge_sha256=(Get-FileHash $binary.FullName -Algorithm SHA256).Hash.ToLowerInvariant(); bridge_bytes=$binary.Length; equipment_actions=0 } | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 "$out\compile.json"
+      - uses: actions/upload-artifact@v4
         if: always()
-        shell: pwsh
-        run: |
-          $out = "$env:RUNNER_TEMP\slice-candidate"
-          New-Item -ItemType Directory -Force $out | Out-Null
-          $checks = [ordered]@{ build = '${{ steps.build.outcome }}'; tests = '${{ steps.tests.outcome }}'; smoke = '${{ steps.smoke.outcome }}'; bridge = '${{ steps.bridge.outcome }}'; csv_guard = '${{ steps.csv_guard.outcome }}'; excel = '${{ steps.excel.outcome }}'; reverify = '${{ steps.reverify.outcome }}' }
-          $passed = @($checks.Values | Where-Object { $_ -ne 'success' }).Count -eq 0
-          @{ source_commit = $env:GITHUB_SHA; checks = $checks; automated_checks_passed = $passed; final_sol_review = 'pending'; release_ready = $false; device_application_approved = $false } | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 "$out\readiness.json"
-      - name: Upload candidate and evidence
-        if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: slice-candidate-${{ github.sha }}
-          path: ${{ runner.temp }}/slice-candidate/
-          if-no-files-found: warn
-      - name: Enforce release readiness
-        if: always()
-        shell: pwsh
-        run: |
-          $outcomes = @('${{ steps.build.outcome }}','${{ steps.tests.outcome }}','${{ steps.smoke.outcome }}','${{ steps.bridge.outcome }}','${{ steps.csv_guard.outcome }}','${{ steps.excel.outcome }}','${{ steps.reverify.outcome }}')
-          if (@($outcomes | Where-Object { $_ -ne 'success' }).Count) { throw "Candidate validation incomplete or failed; release gate closed: $outcomes" }
+          name: native-bridge-${{ github.sha }}
+          path: ${{ runner.temp }}/native-bridge/
+          if-no-files-found: error

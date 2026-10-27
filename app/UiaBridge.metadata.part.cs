@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows.Automation;
 
 /// <summary>
@@ -13,9 +12,7 @@ using System.Windows.Automation;
 /// </summary>
 public static class BinderJetLeafMetadata
 {
-    private const int MaximumChildren = 900;
     private const int MaximumParentDepth = 64;
-    private delegate bool ChildCallback(IntPtr window, IntPtr parameter);
 
     [DllImport("user32.dll")]
     private static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
@@ -29,10 +26,6 @@ public static class BinderJetLeafMetadata
     private static extern bool IsWindowEnabled(IntPtr window);
     [DllImport("user32.dll")]
     private static extern IntPtr GetParent(IntPtr window);
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    private static extern int GetClassName(IntPtr window, StringBuilder value, int maximum);
-    [DllImport("user32.dll")]
-    private static extern bool EnumChildWindows(IntPtr root, ChildCallback callback, IntPtr parameter);
 
     private static bool HasProcess(IntPtr window, int expectedPid)
     {
@@ -48,44 +41,16 @@ public static class BinderJetLeafMetadata
             throw new InvalidOperationException("The selected native control/window identity changed.");
     }
 
-    private static string ClassName(IntPtr window)
-    {
-        var value = new StringBuilder(256);
-        if (GetClassName(window, value, value.Capacity) == 0)
-            throw new InvalidOperationException("A native leaf control class could not be read.");
-        return value.ToString();
-    }
-
-    private static bool IsSupportedLeafClass(string className)
-    {
-        return className.IndexOf("EDIT", StringComparison.OrdinalIgnoreCase) >= 0 ||
-            className.IndexOf("BUTTON", StringComparison.OrdinalIgnoreCase) >= 0 ||
-            className.IndexOf("STATIC", StringComparison.OrdinalIgnoreCase) >= 0;
-    }
-
     public static Hashtable[] Collect(IntPtr root, int expectedPid)
     {
         ValidateOwned(root, root, expectedPid);
-        var handles = new List<IntPtr>();
-        bool truncated = false;
-        ChildCallback callback = delegate(IntPtr window, IntPtr unused)
-        {
-            if (handles.Count >= MaximumChildren) { truncated = true; return false; }
-            if (HasProcess(window, expectedPid) && IsChild(root, window)) handles.Add(window);
-            return true;
-        };
-        EnumChildWindows(root, callback, IntPtr.Zero);
-        GC.KeepAlive(callback);
-        if (truncated)
-            throw new InvalidOperationException("Native leaf discovery exceeds the 900-child bound.");
+        IntPtr[] handles = BinderJetNativeProcess.VisibleLeafHandles(root, expectedPid, true);
 
         BinderJetUiAutomationInitialization.Initialize();
         var records = new List<Hashtable>();
         foreach (IntPtr window in handles)
         {
-            ValidateOwned(root, window, expectedPid);
-            string className = ClassName(window);
-            if (!IsSupportedLeafClass(className)) continue;
+            string className = BinderJetNativeProcess.ValidateVisibleLeaf(root, window, expectedPid, true);
 
             // Element-only cached ID access is intentional. Do not replace with
             // Current, FindAll, tree walkers, root FromHandle, bounds or patterns.
@@ -104,7 +69,8 @@ public static class BinderJetLeafMetadata
                 id = Convert.ToString(leaf.GetCachedPropertyValue(AutomationElement.AutomationIdProperty),
                     CultureInfo.InvariantCulture);
             }
-            ValidateOwned(root, window, expectedPid);
+            if (BinderJetNativeProcess.ValidateVisibleLeaf(root, window, expectedPid, true) != className)
+                throw new InvalidOperationException("A native leaf changed visibility/class during metadata collection.");
             if (id.Length > 1024)
                 throw new InvalidOperationException("A native leaf AutomationId exceeds the metadata bound.");
             records.Add(new Hashtable {
