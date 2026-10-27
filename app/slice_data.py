@@ -19,6 +19,33 @@ MAX_IMAGE_PIXELS = 120_000_000
 MAX_FILES = 100_000
 MAX_ARCHIVE_BYTES = 16 * 1024**3
 
+def validate_features(features):
+    """Normalize the 12 workbook inputs and validate before advancing state."""
+    values = dict.fromkeys(FEATURE_NAMES)
+    values.update(image_valid=0, previous_image_valid=0, previous_powder_layers=0)
+    if features is not None:
+        if not isinstance(features, dict) or set(features) != set(FEATURE_NAMES):
+            raise ValueError("슬라이싱 입력 항목이 일치하지 않습니다.")
+        values.update(features)
+    for name, value in values.items():
+        if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)):
+            raise ValueError("슬라이싱 입력값이 올바르지 않습니다: " + name)
+        if value is None:
+            continue
+        if name.endswith('_pct') and not 0 <= value <= 100:
+            raise ValueError("슬라이싱 비율은 0~100이어야 합니다.")
+        if name in ('image_valid', 'previous_image_valid') and value not in (0, 1):
+            raise ValueError("이미지 유효성은 0 또는 1이어야 합니다.")
+        if name == 'previous_powder_layers' and (type(value) is not int or value < 0):
+            raise ValueError("무분사 참고 층 수가 올바르지 않습니다.")
+        if name in ('radius_mm', 'dpi_x', 'dpi_y') and value <= 0:
+            raise ValueError("반경과 DPI는 양수여야 합니다.")
+    for prefix in ('', 'previous_'):
+        present = [values[prefix + name] is not None for name in ('center_coverage_pct', 'center_intensity_pct', 'whole_coverage_pct')]
+        if values[prefix + 'image_valid'] not in (0, 1) or all(present) != bool(values[prefix + 'image_valid']) or (any(present) and not all(present)):
+            raise ValueError("누락 이미지와 수치의 유효성이 일치하지 않습니다.")
+    return values
+
 @dataclass(frozen=True)
 class SliceConfig:
     radius_mm: float

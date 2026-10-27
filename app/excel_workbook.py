@@ -23,7 +23,7 @@ import zipfile
 from xml.etree import ElementTree as ET
 
 from layer_algorithm import LayerRecommendation, number
-from slice_data import FEATURE_NAMES
+from slice_data import FEATURE_NAMES, validate_features
 
 _CELL = re.compile(r"^\$?([A-Za-z]{1,3})\$?([1-9][0-9]{0,6})$")
 _SAFE_FUNCTIONS = frozenset("IF IFERROR IFNA AND OR NOT TRUE FALSE ABS MIN MAX SUM AVERAGE COUNT COUNTA COUNTIF COUNTIFS SUMIF SUMIFS AVERAGEIF AVERAGEIFS INT ROUND ROUNDUP ROUNDDOWN SIGN MOD POWER SQRT ISNUMBER ISBLANK ISTEXT ISERROR ISNA CHOOSE MATCH INDEX LOOKUP VLOOKUP HLOOKUP XLOOKUP SUMPRODUCT MEDIAN LARGE SMALL FLOOR CEILING TRUNC EXACT LEN LEFT RIGHT MID CONCAT CONCATENATE TEXT VALUE N NA".split())
@@ -398,41 +398,19 @@ class WorkbookController:
     def process(self, layer, temperature_c, previous_actual_power, restart=False, *, slice_features=None):
         if not isinstance(layer, int) or isinstance(layer, bool) or layer < 1:
             raise ValueError("층 번호는 양의 정수여야 합니다.")
-        if not number(temperature_c) or not number(previous_actual_power) or not 0 <= previous_actual_power <= 100:
+        if not number(temperature_c) or temperature_c == -1 or not number(previous_actual_power) or not 0 <= previous_actual_power <= 100:
             raise ValueError("온도 또는 현재 IR 출력이 올바르지 않습니다.")
-        if restart or (self._last_layer is not None and layer != self._last_layer + 1):
-            self.reset()
-        if self.metadata["first_row"] + self._count > self.metadata["last_row"]:
-            raise ValueError("Excel 수식이 준비된 층 수를 초과했습니다.")
         request = dict(op="step", index=self._count, layer=layer,
                        temperature=temperature_c, actual=previous_actual_power, target=self.target)
         spec = getattr(self, 'spec', None)
         if spec is not None and spec.slice_start_cell:
-            values = dict.fromkeys(FEATURE_NAMES)
-            values.update(image_valid=0, previous_image_valid=0, previous_powder_layers=0)
-            if slice_features is not None:
-                if set(slice_features) != set(FEATURE_NAMES):
-                    raise ValueError("슬라이싱 입력 항목이 일치하지 않습니다.")
-                values.update(slice_features)
-            for name, value in values.items():
-                if value is not None and not number(value):
-                    raise ValueError("슬라이싱 입력값이 올바르지 않습니다: " + name)
-                if value is None:
-                    continue
-                if name.endswith('_pct') and not 0 <= value <= 100:
-                    raise ValueError("슬라이싱 비율은 0~100이어야 합니다.")
-                if name in ('image_valid', 'previous_image_valid') and value not in (0, 1):
-                    raise ValueError("이미지 유효성은 0 또는 1이어야 합니다.")
-                if name == 'previous_powder_layers' and (type(value) is not int or value < 0):
-                    raise ValueError("무분사 참고 층 수가 올바르지 않습니다.")
-                if name in ('radius_mm', 'dpi_x', 'dpi_y') and value <= 0:
-                    raise ValueError("반경과 DPI는 양수여야 합니다.")
-            for prefix in ('', 'previous_'):
-                fields = ('center_coverage_pct', 'center_intensity_pct', 'whole_coverage_pct')
-                present = [values[prefix + name] is not None for name in fields]
-                if values[prefix + 'image_valid'] not in (0, 1) or (all(present) != bool(values[prefix + 'image_valid'])) or (any(present) and not all(present)):
-                    raise ValueError("누락 이미지와 수치의 유효성이 일치하지 않습니다.")
+            values = validate_features(slice_features)
             request['image'] = values
+        if restart or (self._last_layer is not None and layer != self._last_layer + 1):
+            self.reset()
+            request['index'] = 0
+        if self.metadata["first_row"] + self._count > self.metadata["last_row"]:
+            raise ValueError("Excel 수식이 준비된 층 수를 초과했습니다.")
         response = self._call(request)
         value = response.get("value")
         if not number(value) or not 0 <= value <= 100:

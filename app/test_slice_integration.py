@@ -36,6 +36,31 @@ class SliceIntegration(unittest.TestCase):
         self.assertEqual(1060,b.args[0]);self.assertEqual(100,b.kwargs['slice_features']['center_coverage_pct'])
         self.assertEqual(0,b.kwargs['slice_features']['previous_whole_coverage_pct'])
         adapter.apply_ir_power.assert_not_called()
+    def test_builtin_session_image_guard_changes_actual_recommendation(self):
+        paths=[]
+        for layer in range(1, 5):
+            path=self.rootdir/f'print_{layer:03}.png'
+            Image.new('L',(100,100),255).save(path); paths.append(path)
+        dataset=analyze(paths,SliceConfig(1,400,400))
+        def run(selected):
+            adapter=Mock(spec=UiAdapter)
+            adapter.read_snapshot.side_effect=[UiSnapshot(TARGET,layer_index=k,t_recoating_c=t,
+                observation_key=str(k),heater1_setting_percent=60.,machine_state='AUTO',
+                observation_is_new=True,minimum_poll_seconds=0) for k,t in enumerate((65.,65.,65.,61.))]
+            stop=threading.Event(); outputs=[]
+            def emit(kind,payload):
+                if kind=='snapshot':
+                    outputs.append(payload)
+                    if len(outputs)==4: stop.set()
+            run_ui_session(SessionOptions(TARGET,mode='preview',slice_dataset=selected),stop,emit,lambda:adapter)
+            adapter.apply_ir_power.assert_not_called()
+            return outputs
+        guarded=run(dataset); plain=run(None)
+        self.assertEqual(1, guarded[-1]['slice_features']['previous_image_valid'])
+        self.assertEqual(60, guarded[-1]['proposed'][1])
+        self.assertGreater(plain[-1]['proposed'][1], guarded[-1]['proposed'][1])
+        self.assertIn('증출력 보류', guarded[-1]['reasons'][1])
+
     def test_gui_import_invalidates_old_radius_and_sets_workbook_mapping(self):
         root=tk.Tk();self.addCleanup(root.destroy)
         view=ThermalFeedbackWindow(root,auto_discover=False)

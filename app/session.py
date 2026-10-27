@@ -10,6 +10,7 @@ import time
 
 from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, MachineWindow
 from layer_algorithm import LayerAdaptiveController, LayerSettings
+from image_guard import ImageGuardSettings
 from target_temperature import TargetTemperatureSetting
 from excel_workbook import WorkbookController, WorkbookSpec
 from slice_data import SliceDataset
@@ -75,9 +76,11 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 path = options.settings_path or Path(__file__).with_name("workbook-replay.settings.json")
                 if Path(path).stat().st_size > 262144:
                     raise ValueError("설정 파일은 256 KiB 이하여야 합니다.")
-                settings = LayerSettings.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+                document = json.loads(Path(path).read_text(encoding="utf-8"))
+                settings = LayerSettings.from_dict(document)
+                image_guard = ImageGuardSettings.from_dict(document)
                 settings = replace(settings, target_temperature_c=options.target_temperature_c)
-                controllers = {heater: LayerAdaptiveController(settings) for heater in (1, 2)}
+                controllers = {heater: LayerAdaptiveController(settings, image_guard) for heater in (1, 2)}
         if stop_event.is_set():
             return
         adapter = adapter_factory()
@@ -179,7 +182,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                 controller.reset()
                         for heater in heaters:
                             extra = {}
-                            if options.workbook_spec is not None and options.workbook_spec.slice_start_cell:
+                            if (options.workbook_spec is None and options.slice_dataset is not None) or (options.workbook_spec is not None and options.workbook_spec.slice_start_cell):
                                 extra['slice_features'] = (options.slice_dataset.features(snapshot.layer_index + 1)
                                     if options.slice_dataset is not None else None)
                             result = controllers[heater].process(snapshot.layer_index + 1,

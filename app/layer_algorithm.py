@@ -11,8 +11,11 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass, fields, replace
 import math
+from statistics import median
 
 from target_temperature import validate_target_temperature
+from image_guard import ImageGuardSettings, classify
+from slice_data import validate_features
 
 
 WORKBOOK_SHA256 = "2dbdff1057ab0a2f0bbe539b77ffb71782f10daf61f8d111236d6f5585e16a94"
@@ -112,34 +115,102 @@ class LayerRecommendation:
 class LayerAdaptiveController:
     """One instance per heater; call once per received T_recoating observation."""
 
-    def __init__(self, settings: LayerSettings):
+    def __init__(self, settings: LayerSettings, image_guard_settings=None):
         self.settings = settings
+        self.image_guard_settings = image_guard_settings or ImageGuardSettings()
+        self._target_changed = False
         self._history = deque(maxlen=3)
 
     def reset(self):
         self._history.clear()
+        self._target_changed = False
 
     def set_target_temperature(self, temperature_c):
         """Change the target for future observations without replaying history."""
+        self._target_changed = temperature_c != self.settings.target_temperature_c
         self.settings = replace(self.settings,
             target_temperature_c=validate_target_temperature(temperature_c))
 
     def process(self, layer: int, temperature_c: float, previous_actual_power: float,
-                restart: bool = False) -> LayerRecommendation:
+                restart: bool = False, *, slice_features=None) -> LayerRecommendation:
         s = self.settings
         if type(restart) is not bool:
             raise ValueError("restart must be boolean")
         if not isinstance(layer, int) or isinstance(layer, bool) or layer < 1:
             raise ValueError("layer must be a one-based positive integer")
-        if not number(temperature_c):
+        if not number(temperature_c) or temperature_c == -1:
             raise ValueError("temperature must be finite")
         if not number(previous_actual_power) or not s.minimum_power_percent <= previous_actual_power <= s.maximum_power_percent:
             raise ValueError("previous actual power is outside configured bounds")
-        if restart or (self._history and layer != self._history[-1]["A"] + 1):
+        values = validate_features(slice_features)
+        supplied = bool(values['image_valid'] == 1 or values['previous_image_valid'] == 1)
+        discontinuity = restart or bool(self._history and layer != self._history[-1]["A"] + 1)
+        prior_context = bool(self._history and self._history[-1].get("CD") and not discontinuity)
+        context = self.image_guard_settings.enabled and (supplied or prior_context)
+        current = classify(values) if context else -1
+        previous = classify(values, True) if context else -1
+        changed = bool(self._history and context and (self._target_changed or abs(previous_actual_power - self._history[-1]["D"]) > 0.000001))
+        seen_before = bool(self._history and self._history[-1].get("CY"))
+        guard_only_reset = changed and not seen_before and not discontinuity
+        preserve_seen = changed and seen_before and not discontinuity
+        if discontinuity or preserve_seen:
             self.reset()
+            context = self.image_guard_settings.enabled and (supplied or (prior_context and not discontinuity))
+            current = classify(values) if context else -1
+            previous = classify(values, True) if context else -1
+        self._target_changed = False
         first = not self._history
         prev = self._history[-1] if self._history else {}
+        guard_prev = {"CY": 1} if preserve_seen else {} if guard_only_reset else prev
         row = {"A": layer, "B": temperature_c, "C": previous_actual_power}
+        g = self.image_guard_settings
+        prior = list(self._history)
+        guard_count = min(3, guard_prev.get("DA", 0) + 1)
+        reference = max(x["B"] for x in prior) if context and len(prior) == 3 and guard_prev.get("DA", 0) >= 3 else None
+        prior_range = reference - min(x["B"] for x in prior) if reference is not None else None
+        drop = reference - temperature_c if reference is not None else None
+        shock = int(reference is not None and prior_range <= g.prior_stability_c and drop >= g.drop_c)
+        armed = guard_prev.get("CJ", 1) if context else 1
+        age = guard_prev.get("CI", 0) if context else 0
+        recovery = guard_prev.get("CK", 0) if context else 0
+        stable = bool(context and len(prior) >= 2 and (age or not armed) and
+                      abs(temperature_c - s.target_temperature_c) <= g.recovery_band_c and
+                      abs((temperature_c - prior[-2]["B"]) / 2) <= g.recovery_step_c and
+                      abs(previous_actual_power - prior[-1]["C"]) <= g.stable_ir_step_pp)
+        stable_count = (guard_prev.get("DP", 0) + 1 if stable else 0) if g.absolute_recovery else 0
+        recovered = bool(context and prior and abs(temperature_c - s.target_temperature_c) <= g.recovery_band_c and abs(temperature_c - prior[-1]["B"]) <= g.recovery_step_c)
+        recovery = recovery + 1 if recovered else 0
+        if (stable_count >= g.exit_observations if g.absolute_recovery else recovery >= g.recovery_observations):
+            armed, age = 1, 0
+        duration = g.maximum_recovery_observations + g.handoff_observations if g.absolute_recovery else g.window_observations
+        timeout = int(age >= duration)
+        if timeout:
+            age = 0
+        trigger = int(context and armed and age == 0 and not timeout and shock and previous == 1)
+        if trigger:
+            if g.absolute_recovery and (not number(prev.get("K")) or prev["K"] <= 0 or
+                    not number(prev.get("L")) or prev["L"] <= 0 or
+                    not number(prev["K"] / prev["L"]) or prev["K"] / prev["L"] <= 0):
+                raise ValueError("entry beta and G must be positive and finite")
+            age, armed, recovery, stable_count = 1, 0, 0, 0
+        elif age:
+            age += 1
+        state = (1 if age <= g.hold_observations else 3 if g.absolute_recovery and age > g.maximum_recovery_observations else 2) if age else 0
+        seen = int(bool(trigger or guard_prev.get("CY", 0)))
+        exclude_print = int(g.exclude_print_learning_after_event and seen and (current == 1 or previous == 1))
+        availability_changed = bool(not first and not guard_only_reset and ((current != -1) != (guard_prev.get("CE", -1) != -1) or
+                                                   (previous != -1) != (guard_prev.get("CF", -1) != -1)))
+        immediate = int(context and seen and (state != 0 or exclude_print or (current != -1 and previous != -1 and current != previous) or availability_changed))
+        clean = 0 if immediate else min(s.wait_layers + 3, guard_prev.get("CO", s.wait_layers + 3) + 1) if context else s.wait_layers + 3
+        blocked = int(context and seen and (immediate or clean < s.wait_layers + 3))
+        rejection = (0 if trigger else 1 if not context else 2 if reference is None else
+                     3 if prior_range > g.prior_stability_c else 4 if drop < g.drop_c else
+                     5 if previous != 1 else 6 if age else 7 if not armed else 8 if timeout else 9)
+        row.update(CU=reference, CV=drop, CW=prior_range, CX=rejection, CY=seen, CZ=exclude_print, DA=guard_count,
+                   DP=stable_count, DQ=int(stable))
+        row.update(CD=int(context), CE=current, CF=previous, CG=shock, CH=trigger,
+                   CI=age, CJ=armed, CK=recovery, CL=state, CM=timeout,
+                   CN=immediate, CO=clean, CP=blocked, CR=s.target_temperature_c)
         row["O"] = 1 if first else min(3, prev["O"] + 1)
         row["P"] = 0 if first else previous_actual_power - prev["C"]
         row["Q"] = 0 if first else s.wait_layers if row["P"] != 0 else max(0, prev["Q"] - 1)
@@ -159,6 +230,9 @@ class LayerAdaptiveController:
                 row["X"] = prev["A"] if row["AH"] else None
             elif prev["X"] is not None and layer - prev["X"] <= evaluation_layers:
                 row["X"] = prev["X"]
+        if blocked:
+            row["AH"] = 0
+            row["X"] = None
         for column in ("Y", "Z", "AA", "AB", "AC", "AD", "AE", "AF"):
             row[column] = None
         if row["X"] is not None:
@@ -181,6 +255,10 @@ class LayerAdaptiveController:
             if row["AG"]:
                 row[error_column] = ((0 if prev["AM"] >= s.alpha_reactions else prev[error_column])
                                      + (row["AE"] - prev[g_column] * row["AA"]) ** 2)
+        if blocked:
+            row["AM"] = 0
+            for column in ("AN", "AO", "AP"):
+                row[column] = 0
         errors = [row[column] for column in ("AN", "AO", "AP")]
         row["AQ"] = (1 if s.initial_alpha == 0.1 else 3 if s.initial_alpha == 0.3 else 2) if first else prev["AQ"]
         if (not first and s.calibrate_g and s.auto_alpha and row["AG"] and row["AM"] == s.alpha_reactions
@@ -201,22 +279,22 @@ class LayerAdaptiveController:
         row["AV"] = int(not first and s.calibrate_g and s.auto_beta and row["O"] == 3
                         and row["AR"] >= s.beta_minimum_reactions and row["AS"] == 0
                         and row["AT"] <= s.beta_maximum_g_change_ratio + 0.000000000001
-                        and row["BK"] == 1 and prev["AU"] == 0)
+                        and row["BK"] == 1 and prev["AU"] == 0 and not blocked)
         row["AW"] = 0
         for column in ("AY", "AZ", "BA", "BB", "BC", "BD", "BE", "BF"):
             row[column] = 0
         if row["AV"]:
             row["AW"] = 1 if prev["AW"] == 0 or prev["AW"] >= s.beta_observation_layers else prev["AW"] + 1
             block_start = row["AW"] == 1
-            prior = lambda column: 0 if block_start else prev[column]
-            row["AY"] = prior("AY") + (row["AX"] if row["AW"] <= 3 else 0)
-            row["AZ"] = prior("AZ") + (row["AX"] if row["AW"] > s.beta_observation_layers - 3 else 0)
-            row["BA"] = prior("BA") + int(row["P"] != 0)
-            row["BB"] = sign(row["P"]) if row["P"] != 0 else prior("BB")
-            row["BC"] = prior("BC") + int(row["AW"] > 1 and row["P"] != 0 and prev["BB"] != 0 and sign(row["P"]) != prev["BB"])
-            row["BD"] = sign(row["T"]) if row["AX"] > 0 else prior("BD")
-            row["BE"] = prior("BE") + int(row["AW"] > 1 and row["AX"] > 0 and prev["BD"] != 0 and sign(row["T"]) != prev["BD"])
-            row["BF"] = int(prior("BF") == 1 or abs(prev["V"]) >= s.maximum_step_percent
+            block_prior = lambda column: 0 if block_start else prev[column]
+            row["AY"] = block_prior("AY") + (row["AX"] if row["AW"] <= 3 else 0)
+            row["AZ"] = block_prior("AZ") + (row["AX"] if row["AW"] > s.beta_observation_layers - 3 else 0)
+            row["BA"] = block_prior("BA") + int(row["P"] != 0)
+            row["BB"] = sign(row["P"]) if row["P"] != 0 else block_prior("BB")
+            row["BC"] = block_prior("BC") + int(row["AW"] > 1 and row["P"] != 0 and prev["BB"] != 0 and sign(row["P"]) != prev["BB"])
+            row["BD"] = sign(row["T"]) if row["AX"] > 0 else block_prior("BD")
+            row["BE"] = block_prior("BE") + int(row["AW"] > 1 and row["AX"] > 0 and prev["BD"] != 0 and sign(row["T"]) != prev["BD"])
+            row["BF"] = int(block_prior("BF") == 1 or abs(prev["V"]) >= s.maximum_step_percent
                              or prev["D"] <= s.minimum_power_percent or prev["D"] >= s.maximum_power_percent)
         row["BJ"] = int(row["AV"] == 1 and row["AW"] == s.beta_observation_layers)
         row["BG"] = 0
@@ -237,10 +315,59 @@ class LayerAdaptiveController:
             # Excel ROUND on this nonnegative quantity rounds .5 upward.
             magnitude = math.floor(row["I"] * (abs(row["U"]) - s.deadband_c) + 0.000000000001 + 0.5)
             row["V"] = sign(row["U"]) * min(s.maximum_step_percent, magnitude)
-        row["D"] = min(s.maximum_power_percent, max(s.minimum_power_percent, previous_actual_power + row["V"]))
+        row["CQ"] = min(s.maximum_power_percent, max(s.minimum_power_percent, previous_actual_power + row["V"]))
+        cap = 0 if state == 1 else g.positive_limit_pp if state == 2 else s.maximum_step_percent
+        row.update(DC=None, DD=None, DE=None, DF=None, DG=None, DH=None, DI=0, DJ=0,
+                   DK=None, DL=0, DM=0, DN=None, DO=None, DR=0)
+        if g.absolute_recovery:
+            fixed_reference = median(x["C"] for x in prior) if trigger else guard_prev.get("DC")
+            gain = min(g.maximum_recovery_k, prev["K"] / prev["L"]) if trigger else guard_prev.get("DD")
+            integral = 0 if trigger else guard_prev.get("DJ", 0)
+            row.update(DC=fixed_reference, DD=gain, DI=integral, DJ=integral)
+            if state:
+                measured = median((prior[-2]["B"], prior[-1]["B"], temperature_c))
+                trend = (temperature_c - prior[-2]["B"]) / 2
+                error = s.target_temperature_c - measured
+                forecast = error - g.forecast_layers * max(0, trend)
+                raw = fixed_reference + gain * forecast + integral
+                weight = (age - g.maximum_recovery_observations) / g.handoff_observations if state == 3 else 0
+                poscap = 0 if state == 1 else g.positive_limit_pp + (s.maximum_step_percent - g.positive_limit_pp) * weight
+                poscap = min(s.maximum_step_percent, poscap)
+                negcap = min(s.maximum_step_percent, g.negative_limit_pp + (s.maximum_step_percent - g.negative_limit_pp) * weight)
+                desired = (1 - weight) * raw + weight * row["CQ"]
+                clipped = min(s.maximum_power_percent, previous_actual_power + poscap,
+                              max(s.minimum_power_percent, previous_actual_power - negcap, desired))
+                if temperature_c > s.target_temperature_c + s.deadband_c:
+                    clipped = min(clipped, previous_actual_power)
+                actual = min(clipped, row["CQ"]) if row["CQ"] < previous_actual_power else clipped
+                eligible = int(state != 3 and age >= g.residual_after_observations and
+                               all(t < s.target_temperature_c - s.deadband_c for t in (prior[-2]["B"], prior[-1]["B"], temperature_c)) and
+                               forecast > s.deadband_c and actual >= raw - 1e-9)
+                if eligible:
+                    integral += gain / g.integral_time_layers * max(0, forecast - s.deadband_c)
+                if temperature_c > s.target_temperature_c + s.deadband_c:
+                    integral -= gain / g.integral_time_layers * max(0, temperature_c - s.target_temperature_c)
+                integral = min(s.maximum_power_percent - fixed_reference, max(0, integral))
+                row.update(DE=measured, DF=trend, DG=error, DH=forecast, DJ=integral, DK=raw,
+                           DL=weight, DM=poscap, DN=clipped, DO=desired, DR=eligible)
+                row["D"] = actual
+            else:
+                row["D"] = row["CQ"]
+        else:
+            row["D"] = min(s.maximum_power_percent, max(s.minimum_power_percent, previous_actual_power + min(row["V"], cap)))
         row["E"] = row["D"] - previous_actual_power
         self._history.append(row)
-        return LayerRecommendation(row["D"], self._reason(row), dict(row))
+        reason = self._reason(row)
+        if g.absolute_recovery and row["CL"]:
+            phase = "증출력 보류 · " if row["CL"] == 1 else ""
+            reason = f"{phase}절대값 회복: 기준 {row['DC']:.2f}%, 권장 {row['D']:.2f}% (증감 {row['E']:+.2f}%p)"
+        elif row["CD"]:
+            label = "증출력 보류" if row["CL"] == 1 else "증출력 제한" if row["CL"] == 2 else "복귀 전환" if row["CL"] == 3 else "억제 시간 종료" if row["CM"] else "이미지 미확인" if row["CE"] == -1 or row["CF"] == -1 else "이미지 정상"
+            if row["CL"] == 1 and row["V"] > 0 and row["E"] == 0:
+                reason = "증출력 보류"
+            else:
+                reason = label + ": " + reason
+        return LayerRecommendation(row["D"], reason, dict(row))
 
     def _reason(self, row):
         if row["Q"] > 0:

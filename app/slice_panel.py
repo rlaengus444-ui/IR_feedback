@@ -150,7 +150,7 @@ class SlicePanel(ttk.Frame):
             try:save_workbook(path,self.dataset)
             except Exception as error:messagebox.showerror('시트 저장 실패',str(error),parent=self);return
             self.use_workbook(path)
-            self.summary.set('수동 계산시트 저장 완료 · Excel 알고리즘 입력 셀을 함께 설정했습니다. 기존 G·알파·베타 계산식과 이미지 참고 열을 편집할 수 있습니다.')
+            self.summary.set('수동 계산시트 저장 완료 · Excel 입력 셀을 함께 설정했습니다. 이미지 기반 급락 억제와 기존 G·알파·베타 계산식, 억제 설정을 편집할 수 있습니다.')
 
     def _destroy(self,event):
         if event.widget is self:

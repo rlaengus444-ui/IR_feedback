@@ -14,10 +14,14 @@ class SliceExcelTests(unittest.TestCase):
         for start in ['C13','D13','BL14','XFD13']:
             with self.assertRaises(ValueError):spec(slice_start_cell=start).validate()
         with self.assertRaises(ValueError):inspect_workbook(spec(slice_start_cell='D13'),workbook())
-    def test_template_default_control_formula_preserved_and_extra_inputs_declared(self):
+    def test_template_actual_control_uses_guard_and_keeps_unlimited_reference(self):
         s=WorkbookSpec(str(TEMPLATE),'수동 테스트','B13','C13','D13','B5','A13','BL13')
         m=inspect_workbook(s,TEMPLATE.read_bytes());self.assertEqual(3012,m['last_row'])
-        book=load_workbook(TEMPLATE);self.assertIn('C13+V13',book['수동 테스트']['D13'].value)
+        book=load_workbook(TEMPLATE);sheet=book['수동 테스트']
+        self.assertIn('C13+V13',sheet['CQ13'].value)
+        self.assertIn('CL13',sheet['D13'].value)
+        self.assertIn('MIN(V13',sheet['D13'].value)
+        self.assertIn('이미지 억제 설정',book.sheetnames)
         self.assertEqual(12,len(s.slice_cells()));self.assertEqual(('dpi_y','BW13'),s.slice_cells()[-1])
     def test_offline_export_clears_unknown_values_and_can_be_loaded_by_existing_controller(self):
         with tempfile.TemporaryDirectory() as directory:

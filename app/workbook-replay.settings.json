@@ -27,5 +27,27 @@
     "beta_minimum": 0.2,
     "beta_maximum": 0.8,
     "beta_slow_ratio": 0.8
+  },
+  "image_guard": {
+    "enabled": true,
+    "drop_c": 4,
+    "prior_stability_c": 1,
+    "hold_observations": 2,
+    "window_observations": 24,
+    "positive_limit_pp": 1,
+    "recovery_band_c": 0.5,
+    "recovery_step_c": 0.25,
+    "recovery_observations": 3,
+    "exclude_print_learning_after_event": false,
+    "absolute_recovery": true,
+    "forecast_layers": 8,
+    "negative_limit_pp": 2,
+    "maximum_recovery_k": 2,
+    "residual_after_observations": 12,
+    "integral_time_layers": 30,
+    "maximum_recovery_observations": 120,
+    "handoff_observations": 12,
+    "exit_observations": 5,
+    "stable_ir_step_pp": 1
   }
 }
