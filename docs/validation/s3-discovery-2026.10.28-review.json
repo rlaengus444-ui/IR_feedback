@@ -1,0 +1,197 @@
+{
+  "candidate_commit": "046895bdebcd7cd13ddfbaf0c5dfa9a46a0e4614",
+  "candidate_zip_sha256": "7372e0529fb0e54e9100eda1625184f76b13a8e81807621231e2d4c89645c584",
+  "evaluation_distribution_allowed": true,
+  "independent_post_review_complete": true,
+  "equipment_application_approved": false,
+  "stable_release_approved": false,
+  "final_control_algorithm_approval": "ON HOLD",
+  "actual_excel_com_tested": false,
+  "actual_S3_connection_tested": false,
+  "reviewed_at_utc": "2026-10-27 20:31:01 UTC",
+  "review_route": {
+    "actual_route": "Native collaboration /root/sol_reviewer, independent read-only source/diff/test/artifact review",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "configuration_source": ".codex/agents/sol_reviewer.toml and explicit delegated request",
+    "provider_identity_independently_verified": false,
+    "earlier_cli_authentication_restored": false
+  },
+  "scope": {
+    "base_release": "4e9936ad6934b2efdbc73982fc33744e96375d55",
+    "compiled_CSharp_source_commit": "6982264c38aea52d7dd3d345d678ca66f63179be",
+    "passing_Windows_candidate_commit": "046895bdebcd7cd13ddfbaf0c5dfa9a46a0e4614",
+    "reviewed_publisher_commit": "c20c20e897c456b9bb51b79ea22d0da14d934302",
+    "version": "2026.10.28-s3.1",
+    "purpose": "Fix native S3 connection discovery counting hidden/unrelated HWNDs against900. No new control algorithm and no changes to the two previously delivered external calculation workbooks.",
+    "reviewer_source_edits": false,
+    "reviewer_equipment_actions": false,
+    "reviewer_external_writes": false
+  },
+  "disposition": "No unresolved P1/P2 defects found in the reviewed native discovery change, exact candidate ZIP or publisher after fixes. The explicitly authorized evaluation ZIP may be delivered as a prerelease with make_latest=false after its own exact tag/asset readbacks pass. This is not stable qualification, actual S3/Excel validation, final control-algorithm approval or permission to apply IR on equipment.",
+  "implementation_review": [
+    "app/UiaBridge.process.part.cs:99-126: shared VisibleLeafHandles counts every native callback against16,384; collects only owned visible supported leaves; checks900 cap only on eligible addition; completes bounded inventory before returning; overflow/class failure rejects without partial inventory.",
+    "Process enumeration selects visible STATIC/BUTTON; metadata uses same policy with EDIT included. Disabled visible leaves and all eligible IDs remain available; no narrow target-ID allowlist hides unrelated Sequence inputs.",
+    "app/UiaBridge.process.part.cs:128-158 and metadata.part.cs:50-75 validate ownership, visibility and supported class before/after text or cached metadata reads. PID/root/IsChild checks and ambiguity checks remain; UIA stays element-only, with no new tree/root/grid walk, Bounds or scroll.",
+    "New Windows-compiled DLL21,504B SHA181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f matches compile source manifest, packaged DLL, loader pin and MOTW probe. Existing bounded byte-buffer hashing/load and native250ms text timeout retained.",
+    "Original .2 control law, session, CSV, persistence, Windows adapter, Excel contract/worker/default settings and advisory workbook are unchanged. The two previously delivered new XLSX hashes remain unchanged in their original delivery directory."
+  ],
+  "checks_executed_by_reviewer": [
+    "Read actual production diff6982264/base4e, final046 test-readiness correction, publisherc20 and pinned publication workflow template; checked current exact source hashes.",
+    "Verified Windows compile.json source hashes against every current C# build source and build script, and its binary digest against current DLL/loader pin.",
+    "Ran release_tools/verify_package.py on actual final ZIP: CRC/path/manifest/source/runtime/license completeness PASS; returned SHA7372e0529fb0e54e9100eda1625184f76b13a8e81807621231e2d4c89645c584.",
+    "Independently opened actual final ZIP:8 control/data/Excel/session/settings files byte-identical to git4e; packaged DLL matches new pin. Separately checked9 source/template files and both prior external evaluation XLSX hashes unchanged.",
+    "Python AST checks for changed probe/verifier scripts PASS.",
+    "Ran SIX fully mocked publisher scenarios: success; wrong review ZIP digest; failed native gate; existing exact tag; wrong uploaded asset digest; changed tag commit. All PASS. Negative cases did not publish, wrong review/native failed before external-call mocks, bad uploaded digest retained draft. Original Actions checksum preserved. No actual gh/API/tag/release/upload invoked."
+  ],
+  "actual_Windows_evidence_inspected": {
+    "run_id": 40577487288,
+    "artifact_id": 12766509327,
+    "directory": "/workspace/ir-s3-review/windows-046895b",
+    "application_tests": "159/159 PASS in44.476s on packaged Windows runtime",
+    "native_discovery": "14/14 checks PASS across9 synthetic cases",
+    "bulk_fixture": "1,201 hidden eligible STATIC PoisonLabels plus1,201 visible unsupported PoisonPanels; actual production helper enter_sequence0.4647913s, metadata0.3816284s, prepare_control0.3933065s; original DLL900-child failure reproduced.",
+    "negative_native_checks": "Late M1/S3 conflict, duplicate navigation caption, duplicate visible AutomationId, wrong PID, hidden/reparented/destroyed cached leaf all rejected with expected errors. Disabled visible text input retained in full baseline.",
+    "candidate_boundaries": "Actual compiled shared VisibleLeafHandles(includeEdits=true) accepted exactly900 including later irrelevant HWND and rejected901; this is not a claim of900 full UIA Collect calls within timeout.",
+    "message_and_write_observation": "Strict measured hidden/unsupported WM_GETTEXT/WM_GETOBJECT/scroll log empty in all9 cases. Every fixture heartbeat progressed, IR remained62 and Save count0; synthetic navigation click count1 for bulk.",
+    "startup_evidence": "Fixture now publishes readiness atomically after two UI Timer turns. Pre-ready events retained separately (bulkD4804, boundaryD3 each); no InSendMessageEx exclusion, timeout relaxation or retry-to-pass. Measured strict checks unchanged.",
+    "MOTW": "9/9 PASS: Zone3 old LoadFrom failure reproduced, actual adapter discover/initialization succeeds, tamper/oversize/missing reject, bytes/ADS restored.",
+    "native_CSV": "6 guards PASS including same-size preserved-mtime42 to-1 rejection and bounded32MiB content assertion.",
+    "launcher": "Owned packaged pythonw window observed and closed normally viaWM_CLOSE; no forced-cleanup pass.",
+    "build_reverify": "Both PASS; same candidate ZIP retained.",
+    "Excel": "Only failed gate is Excel COM not registered. readiness.automated_checks_passed=false/release_ready=false/device_application_approved=false are correct."
+  },
+  "resolved_findings": [
+    {
+      "severity": "P2 test coverage",
+      "finding": "Initial bulk fixture used hidden unsupported Panels, so it did not distinguish visibility filtering from class-only filtering.",
+      "resolution": "Replaced with1,201 hidden eligible STATIC PoisonLabels, forced native handle creation; passing report shows no measured hidden-label reads."
+    },
+    {
+      "severity": "P2 test coverage",
+      "finding": "Initial probe omitted actual helper enter_sequence and described internal selector boundary as full metadata.",
+      "resolution": "Actual helper enter_sequence+navigation count added at3s deadline; boundary keys/report explicitly name shared native selector."
+    },
+    {
+      "severity": "P2 evidence",
+      "finding": "First full run6548860 had native failure: initial direct text timeout and startup own-panel text messages.",
+      "resolution": "Failed report preserved in windows-6548860. Production binary unchanged. Test readiness deferred until two UI Timer turns; startup logs preserved, strict measured assertions retained;046 rerun14/14 PASS."
+    },
+    {
+      "severity": "P1 publisher",
+      "finding": "Review initially bound only commit, not exact ZIP, and lacked existing git-tag validation.",
+      "resolution": "Requires review candidate_zip_sha256, rejects existing exact tag, creates lightweight tag at pinned candidate, validates tag commit before/after publication."
+    },
+    {
+      "severity": "P2 publisher",
+      "finding": "Initial publisher overwrote downloaded Actions SHA256 evidence and did not fully verify release/asset state.",
+      "resolution": "Separate TEMP checksum, exact draft/prerelease/tag checks, uploaded asset state/size/server digest checks before and after publishing, make_latest=false and URL only after readback. Six independent mocked scenarios passed."
+    }
+  ],
+  "publisher_and_workflow": {
+    "publisher_source_commit": "c20c20e897c456b9bb51b79ea22d0da14d934302",
+    "workflow_template": "/workspace/ir-s3-review/publish-workflow.template.yml",
+    "reviewed_conditions": "Exact previous run40577487288 and artifact name/source046/ZIP7372 pinned. All7 non-Excel Windows gates and3 native report passed flags required. User-authorized evaluation only; explicit known Excel-unregistered status, equipment/stable false required. No rebuild/install. Reject existing tag/release and asset overwrites. Draft then upload/digest verification then prerelease publication with latest=false; final tag/state/assets readback before URL.",
+    "template_instantiation": "Replace only __PUBLISH_SOURCE__ with a full immutable commit containing unchanged publisher and this completed review JSON. Candidate source/ZIP pins stay046/7372; review-containing commit need not be candidate commit."
+  },
+  "remaining_limits": [
+    "No real S3 machine connection, sensor/PLC/lamp output or long-duration equipment validation. Synthetic S3-labelled WinForms fixtures do not establish real-layout compatibility or equipment safety.",
+    "Microsoft Excel COM remains unavailable/unvalidated; prior LibreOffice workbook parity and source compatibility are distinct evidence. Final algorithm approval and equipment application remain ON HOLD.",
+    "Actual16,384 raw-HWND overflow was not executed because default per-process USER handle quota prevents that fixture size. Production hard-stop branch was inspected; do not claim this boundary experimentally tested.",
+    "Discovery/metadata are not an atomic UI snapshot. Native ownership/class/visibility rechecks and existing actuation guards remain; no absolute race-free or stale-sensor guarantee is claimed.",
+    "Global900 candidate cap and existing helper/read deadlines remain deliberate fail-closed limits; the patch specifically fixes hidden/unrelated controls consuming the candidate budget, not every possible UI delay or S3 layout issue.",
+    "Earlier CLI authentication failure is separate from this completed native collaboration review; CLI restoration was not performed or claimed."
+  ],
+  "evidence_and_source_hashes": [
+    {
+      "path": "/workspace/IR_feedback_s3_fix/app/UiaBridge.process.part.cs",
+      "sha256": "c2cf0912592664c3d614570f68672dcb747a53464ca3fd359a1868bdee355d98",
+      "bytes": 11428
+    },
+    {
+      "path": "/workspace/IR_feedback_s3_fix/app/UiaBridge.metadata.part.cs",
+      "sha256": "66f0fa82f40c53090a2266e33009e2afeadd1e516dd4fbd23053d0451b4e874f",
+      "bytes": 5447
+    },
+    {
+      "path": "/workspace/IR_feedback_s3_fix/app/UiaBridge.dll",
+      "sha256": "181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f",
+      "bytes": 21504
+    },
+    {
+      "path": "/workspace/IR_feedback_s3_fix/app/native_helper.ps1",
+      "sha256": "937acdce7bfd76605451ab63a62f1bb49c5fcb69b98d192166a5077ba6e571f3",
+      "bytes": 24839
+    },
+    {
+      "path": "/workspace/IR_feedback_s3_fix/release_tools/windows_discovery_probe.py",
+      "sha256": "7e7ba77c202a365c464602304e3eea528ddd85124b00fe5d380301b3899e291d",
+      "bytes": 12783
+    },
+    {
+      "path": "/workspace/IR_feedback_s3_fix/validation/NativeDiscoveryFixture.cs",
+      "sha256": "2f92b58bdf9e87af19f84ad3fecc8ae7df001ebad65645f504e275085b334940",
+      "bytes": 5827
+    },
+    {
+      "path": "/workspace/IR_feedback_s3_fix/release_tools/publish_s3_candidate.py",
+      "sha256": "4ea37a75145867a9f89b848da964593fe0ac0b14a8913e0a786c19b5bb4e884f",
+      "bytes": 7567
+    },
+    {
+      "path": "/workspace/ir-s3-review/publish-workflow.template.yml",
+      "sha256": "37df94d827c32908f0a5d91989c29f3e7c0aeddd020b3648e76138469d95c89a",
+      "bytes": 1302
+    },
+    {
+      "path": "/workspace/ir-s3-review/windows-046895b/candidate.json",
+      "sha256": "2b7f9928a734dc7670359212e5dd429702705a31f672ffba025fca1ccb0a6149",
+      "bytes": 275
+    },
+    {
+      "path": "/workspace/ir-s3-review/windows-046895b/readiness.json",
+      "sha256": "21ee0cf3ebed50eb0bc0d4f5990ae8b606d3e88c6add2a843f511b904196eec9",
+      "bytes": 447
+    },
+    {
+      "path": "/workspace/ir-s3-review/windows-046895b/discovery.json",
+      "sha256": "685d6587b95c4f3e5cfa95807e9e26a4b5f652276ec109afd0cf563277906912",
+      "bytes": 32997
+    },
+    {
+      "path": "/workspace/ir-s3-review/windows-046895b/tests.txt",
+      "sha256": "e06d8caf15e0febcd23d517b7b031e2aa049397d64ae73fe92e7170bfaf0544a",
+      "bytes": 26380
+    },
+    {
+      "path": "/workspace/ir-s3-review/windows-046895b/bridge.json",
+      "sha256": "e7c5104605d15cd162c8db0150b9078fceec978bcfbb37fce91d514f1795e26b",
+      "bytes": 1431
+    },
+    {
+      "path": "/workspace/ir-s3-review/windows-046895b/csv-guard.json",
+      "sha256": "2dd4ad67c8b2d5962e2805ee3451e65708272d126fa25f5797a3c36150efea76",
+      "bytes": 505
+    },
+    {
+      "path": "/workspace/ir-s3-review/windows-046895b/smoke.txt",
+      "sha256": "dc5c41216d84caaaecc0ad03f52a3e54dde84263b183be711d36653271cbdf8a",
+      "bytes": 125
+    },
+    {
+      "path": "/workspace/ir-s3-review/windows-046895b/excel.json",
+      "sha256": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03",
+      "bytes": 106
+    },
+    {
+      "path": "/workspace/ir-s3-review/windows-046895b/SHA256.txt",
+      "sha256": "a7b23b7fadcdb938e553f58300a718eae8d623ef7485818447ef45cf0a3135c3",
+      "bytes": 98
+    },
+    {
+      "path": "/workspace/ir-s3-review/windows-046895b/IRFeedback-2026.10.28-s3.1.zip",
+      "sha256": "7372e0529fb0e54e9100eda1625184f76b13a8e81807621231e2d4c89645c584",
+      "bytes": 35309931
+    }
+  ]
+}
