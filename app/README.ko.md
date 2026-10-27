@@ -1,6 +1,6 @@
 # IR 피드백 외부 모듈 · CSV
 
-버전: `2026.10.27-csv.5`. 원본 BinderJet 소스·실행 파일·설정을 추가로 바꾸지 않고, 기존 Monitoring CSV에 새 완료 행이 저장되면 `TemperaturePostRecoating`을 읽어 IR 설정을 계산합니다. Process 표 조회·접근성 객체·스크롤·Process 탭 전환은 사용하지 않습니다.
+버전: `2026.10.27-csv.6`. 원본 BinderJet 소스·실행 파일·설정을 추가로 바꾸지 않고, 기존 Monitoring CSV에 새 완료 행이 저장되면 `TemperaturePostRecoating`을 읽어 IR 설정을 계산합니다. Process 표 조회·접근성 객체·스크롤·Process 탭 전환은 사용하지 않습니다.
 
 **온도 신뢰성:** 온도계 비활성 상태를 나타내는 -1 값은 제어 입력으로 사용하지 않습니다. 정상 범위의 오래된 센서값은 CSV만으로 감지할 수 없습니다. 실제 S3 센서·PLC·램프 출력은 미검증이므로 먼저 조회 모드로 확인하고 자동 적용은 보류하세요.
 
