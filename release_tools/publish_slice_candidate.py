@@ -60,6 +60,11 @@ def main():
     actual = verify(archive, VERSION)
     if actual != args.expected_zip_sha256:
         raise ValueError('Verified ZIP digest mismatch')
+    test_text = (args.evidence / 'tests.txt').read_text(encoding='utf-8-sig')
+    matched = re.search(r'Ran (\d+) tests', test_text)
+    if matched is None or not re.search(r'\nOK\s*$', test_text):
+        raise ValueError('Actual Windows application test summary is missing')
+    test_count = int(matched.group(1))
     # The version is immutable: do not replace an existing release or its assets.
     releases = gh_json(f'repos/{REPOSITORY}/releases?per_page=100')
     if any(release['tag_name'] == VERSION for release in releases):
@@ -79,12 +84,6 @@ def main():
             raise ValueError('Version tag changed from the reviewed candidate')
 
     assert_tag()
-    test_text = (args.evidence / 'tests.txt').read_text(encoding='utf-8-sig')
-    matched = re.search(r'Ran (\d+) tests', test_text)
-    if matched is None or not re.search(r'\nOK\s*$', test_text):
-        raise ValueError('Actual Windows application test summary is missing')
-    test_count = int(matched.group(1))
-    performance = read('slice-performance.json')
     body = ('연결 중에도 슬라이싱 ZIP·이미지·분석 설정을 변경할 수 있는 평가용 배포입니다. '
             '분석 중에는 기존 데이터를 유지하며, 완료된 최신 데이터만 세션에 교체 예약합니다. '
             '이미지를 사용하는 Excel은 전용 계산 이력을 초기화하고 다른 새 층부터 계산합니다. '
