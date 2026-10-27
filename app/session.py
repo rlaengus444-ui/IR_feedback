@@ -19,6 +19,50 @@ def finite(value):
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
+class SliceDatasetSetting:
+    """Nonblocking staged image handoff; only the session worker activates it."""
+
+    def __init__(self, dataset=None):
+        self._lock = threading.Lock()
+        self._active = (0, dataset)
+        self._desired = self._active
+
+    def request(self, dataset):
+        if dataset is not None and not isinstance(dataset, SliceDataset):
+            raise ValueError("완료된 슬라이싱 분석 데이터가 필요합니다.")
+        with self._lock:
+            desired = self._desired[1]
+            if (dataset is desired or
+                    (dataset is not None and desired is not None and
+                     dataset.fingerprint == desired.fingerprint and dataset.config == desired.config)):
+                return self._desired[0]
+            epoch = self._desired[0] + 1
+            self._desired = (epoch, dataset)
+            return epoch
+
+    def desired(self):
+        with self._lock:
+            return self._desired
+
+    def active(self):
+        with self._lock:
+            return self._active
+
+    def activate(self, epoch):
+        with self._lock:
+            if self._desired[0] != epoch:
+                return False
+            self._active = self._desired
+            return True
+
+    def admit(self, epoch):
+        # This is the admission boundary, not a lock around external I/O.
+        # An admitted Save may finish/verify if a request arrives afterward;
+        # activation is acknowledged only when that worker returns to its loop.
+        with self._lock:
+            return self._active[0] == self._desired[0] == epoch
+
+
 @dataclass(frozen=True)
 class SessionOptions:
     target: MachineWindow
@@ -28,6 +72,7 @@ class SessionOptions:
     workbook_spec: WorkbookSpec | None = None
     slice_dataset: SliceDataset | None = None
     _target_temperature_setting: TargetTemperatureSetting = field(init=False, repr=False, compare=False)
+    _slice_dataset_setting: SliceDatasetSetting = field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
         if self.target.machine not in ("M1", "S3", "unknown") or self.target.pid <= 0 or self.target.hwnd <= 0:
@@ -42,6 +87,7 @@ class SessionOptions:
             raise ValueError("검증된 슬라이싱 분석 데이터가 필요합니다.")
         object.__setattr__(self, "_target_temperature_setting",
                            TargetTemperatureSetting(self.target_temperature_c))
+        object.__setattr__(self, "_slice_dataset_setting", SliceDatasetSetting(self.slice_dataset))
 
 
 def default_adapter_factory():
@@ -65,6 +111,12 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
     expected_settings = {}
     wait_for_different_layer = None
     effective_target = options.target_temperature_c
+    slice_setting = options._slice_dataset_setting
+    slice_epoch, slice_dataset = slice_setting.active()
+    image_consuming = bool(options.mode != "monitor" and options.workbook_spec is not None
+                           and options.workbook_spec.slice_start_cell)
+    image_waiting = False
+    image_baseline_layer = None
     try:
         if stop_event.is_set():
             return
@@ -136,9 +188,50 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             valid = (snapshot.observation_key is not None and finite(snapshot.t_recoating_c)
                      and isinstance(snapshot.layer_index, int) and not isinstance(snapshot.layer_index, bool)
                      and snapshot.layer_index >= 0)
+            # Editing/analysis is staged outside the active session. Only a
+            # complete latest result requests a new epoch. Never mutate frozen
+            # Excel rows or interrupt an already admitted Save to switch images.
+            desired_epoch, desired_dataset = slice_setting.desired()
+            handoff_pending = desired_epoch != slice_epoch
+            if handoff_pending:
+                if image_consuming:
+                    held.clear()
+                    reasons.clear()
+                    for controller in controllers.values():
+                        controller.reset()  # Reopens its pristine private copy.
+                if slice_setting.activate(desired_epoch):
+                    slice_epoch, slice_dataset = desired_epoch, desired_dataset
+                    if image_consuming:
+                        baseline_seen = valid
+                        last_key = snapshot.observation_key if valid else None
+                        last_layer = None
+                        known_run_key = snapshot.run_key
+                        wait_for_different_layer = None
+                        image_waiting = True
+                        image_baseline_layer = snapshot.layer_index if valid else None
+                    emit("slice_activated", dict(epoch=slice_epoch, dataset=slice_dataset,
+                         image_consuming=image_consuming))
+                else:
+                    # A newer complete result superseded this handoff during
+                    # reset. Wait; no calculation may use the intermediate one.
+                    can_calculate = False
+            image_hold = image_consuming and (handoff_pending or image_waiting)
+            if image_waiting and not handoff_pending:
+                if valid and image_baseline_layer is None:
+                    image_baseline_layer = snapshot.layer_index
+                elif (valid and snapshot.observation_is_new is True and
+                      snapshot.layer_index != image_baseline_layer and snapshot.observation_key != last_key):
+                    image_waiting = False
+                    image_hold = False
+                if image_hold and valid:
+                    baseline_seen = True
+                    last_key = snapshot.observation_key
+                    known_run_key = snapshot.run_key
             # Existing historical rows at connection time are shown but do not
             # create a control action. Wait for receipt of a new T_recoating row.
-            if effective_mode == "waiting":
+            if image_hold and effective_mode in ("preview", "control"):
+                status = "이미지 교체 중 · 새 층의 T_recoating 대기(저장 없음)"
+            elif effective_mode == "waiting":
                 pass
             elif not baseline_seen and not (valid and snapshot.observation_is_new is True):
                 if valid:
@@ -180,8 +273,8 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                         for heater in heaters:
                             extra = {}
                             if options.workbook_spec is not None and options.workbook_spec.slice_start_cell:
-                                extra['slice_features'] = (options.slice_dataset.features(snapshot.layer_index + 1)
-                                    if options.slice_dataset is not None else None)
+                                extra['slice_features'] = (slice_dataset.features(snapshot.layer_index + 1)
+                                    if slice_dataset is not None else None)
                             result = controllers[heater].process(snapshot.layer_index + 1,
                                 snapshot.t_recoating_c, values[heater], **extra)
                             held[heater] = result.power_percent
@@ -193,6 +286,11 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                 if stop_event.is_set():
                                     break
                                 power = held[heater]
+                                if image_consuming and not slice_setting.admit(slice_epoch):
+                                    held.clear()
+                                    reasons.clear()
+                                    status = "이미지 교체 요청됨 · 이전 계산 적용 보류"
+                                    break
                                 if not finite(power) or not 0 <= power <= 100:
                                     raise ControlUnavailable("기존 UI에 전달할 유효한 출력 범위를 벗어났습니다.")
                                 if math.isclose(power, values[heater], rel_tol=0, abs_tol=1e-9):
@@ -201,11 +299,16 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                 applied[heater] = power
                                 expected_settings[heater] = power
                                 writes += 1
-                            status = "T_recoating 수신 · UI 자동 적용 완료" if writes else "T_recoating 수신 · 기존 설정 유지(저장 없음)"
+                            if not (image_consuming and slice_setting.desired()[0] != slice_epoch):
+                                status = "T_recoating 수신 · UI 자동 적용 완료" if writes else "T_recoating 수신 · 기존 설정 유지(저장 없음)"
                         else:
                             status = "T_recoating 수신 · 계산만 표시"
                     else:
                         status = "T_recoating 수신 · 현재 IR 설정을 읽을 수 없어 계산 대기"
+            if image_consuming and slice_setting.desired()[0] != slice_epoch:
+                held.clear()
+                reasons.clear()
+                status = "이미지 교체 요청됨 · 이전 계산 적용 보류"
             if last_status != (effective_mode, status):
                 emit("log", status)
                 last_status = (effective_mode, status)
@@ -213,8 +316,10 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             emit("snapshot", dict(snapshot=snapshot, effective_mode=effective_mode,
                                   proposed=dict(held), reasons=dict(reasons), applied=applied, status=status,
                                   display_target_c=display_target,
-                                  slice_features=(options.slice_dataset.features(snapshot.layer_index + 1)
-                                      if options.slice_dataset is not None and valid else None)))
+                                  slice_epoch=slice_epoch,
+                                  slice_fingerprint=slice_dataset.fingerprint if slice_dataset is not None else None,
+                                  slice_features=(slice_dataset.features(snapshot.layer_index + 1)
+                                      if slice_dataset is not None and valid else None)))
             interval = snapshot.minimum_poll_seconds
             if not finite(interval):
                 interval = 1.0
@@ -267,6 +372,8 @@ class SessionController:
         self.closed = False
         self.error = None
         self.target_temperature_setting = None
+        self.slice_dataset_setting = None
+        self.image_consuming = False
 
     def connect(self, options):
         if self.closed or self.thread is not None:
@@ -278,6 +385,9 @@ class SessionController:
         self.state = "connecting"
         self.error = None
         self.target_temperature_setting = options._target_temperature_setting
+        self.slice_dataset_setting = options._slice_dataset_setting
+        self.image_consuming = bool(options.mode != "monitor" and options.workbook_spec is not None
+                                    and options.workbook_spec.slice_start_cell)
         def emit(kind, payload):
             self.events.put(WorkerEvent(generation, kind, payload))
         def work():
@@ -315,6 +425,13 @@ class SessionController:
             raise ValueError("연결 중에만 목표 온도를 적용할 수 있습니다.")
         return self.target_temperature_setting.set(value)
 
+    def update_slice_dataset(self, dataset):
+        """Queue a complete dataset/clear; activation belongs to the worker."""
+        if (self.thread is None or self.closed or self.state not in ("connecting", "connected")
+                or self.slice_dataset_setting is None):
+            raise ValueError("연결 중에만 이미지 데이터 교체를 예약할 수 있습니다.")
+        return self.slice_dataset_setting.request(dataset)
+
     def close(self):
         self.closed = True
         self.disconnect()
@@ -332,9 +449,17 @@ class SessionController:
             elif event.kind == "finished":
                 self.thread = None  # Cleanup completed before this event was emitted.
                 self.target_temperature_setting = None
+                self.slice_dataset_setting = None
+                self.image_consuming = False
                 self.state = "error" if self.error else "disconnected"
             if event.kind == "snapshot" and self.state == "disconnecting":
                 continue
+            if event.kind == "snapshot" and self.image_consuming and self.slice_dataset_setting is not None:
+                desired_epoch = self.slice_dataset_setting.desired()[0]
+                if event.payload.get("slice_epoch", 0) != desired_epoch:
+                    payload = dict(event.payload, proposed={}, reasons={}, slice_features=None,
+                                   status="이미지 교체 예약 · 이전 권장값 표시 보류")
+                    event = WorkerEvent(event.generation, event.kind, payload)
             result.append(event)
         return result
 
