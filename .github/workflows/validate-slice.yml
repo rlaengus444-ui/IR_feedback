@@ -1,4 +1,4 @@
-name: Validate slice candidate
+name: Validate S3 discovery candidate
 on:
   workflow_dispatch:
   push:
@@ -29,12 +29,12 @@ jobs:
           $wheel = "$env:RUNNER_TEMP\pillow-13.0.0-cp314-cp314-win_amd64.whl"
           Invoke-WebRequest 'https://files.pythonhosted.org/packages/50/e2/7ad17747517e4c813dca78257d6bb593466f8231baf1384bc98d92745edb/pillow-13.0.0-cp314-cp314-win_amd64.whl' -OutFile $wheel
           if ((Get-FileHash $wheel -Algorithm SHA256).Hash -ne 'F7CBB7A64E7EC664775195E4F81923BC8A93D9451B963F844E59118F63147A7A') { throw 'Pillow wheel hash mismatch' }
-          $zip = "$out\IRFeedback-2026.10.28-slice.2.zip"
-          python release_tools/build_slice_package.py $base $zip '2026.10.28-slice.2' $wheel
+          $zip = "$out\IRFeedback-2026.10.28-s3.1.zip"
+          python release_tools/build_slice_package.py $base $zip '2026.10.28-s3.1' $wheel
           if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
           $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  IRFeedback-2026.10.28-slice.2.zip" | Set-Content -Encoding utf8 "$out\SHA256.txt"
-          @{ source_commit = $env:GITHUB_SHA; zip_sha256 = $hash; version = '2026.10.28-slice.2'; pillow_sha256 = (Get-FileHash $wheel -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content -Encoding utf8 "$out\candidate.json"
+          "$hash  IRFeedback-2026.10.28-s3.1.zip" | Set-Content -Encoding utf8 "$out\SHA256.txt"
+          @{ source_commit = $env:GITHUB_SHA; zip_sha256 = $hash; version = '2026.10.28-s3.1'; pillow_sha256 = (Get-FileHash $wheel -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content -Encoding utf8 "$out\candidate.json"
           Expand-Archive $zip "$env:RUNNER_TEMP\slice-extracted"
       - name: Test packaged runtime and application
         id: tests
@@ -46,8 +46,20 @@ jobs:
           $app = "$env:RUNNER_TEMP\slice-extracted\app"
           $python = "$env:RUNNER_TEMP\slice-extracted\runtime\python.exe"
           $deps = "$env:RUNNER_TEMP\slice-test-deps"
-          python -m pip install --target $deps 'openpyxl==3.1.5'
-          if ($LASTEXITCODE -ne 0) { throw 'Test dependency install failed' }
+          # Unpack pinned test-only wheels in TEMP; do not install into the runtime.
+          @'
+          import hashlib, io, sys, urllib.request, zipfile
+          from pathlib import Path
+          dest=Path(sys.argv[1]); dest.mkdir(exist_ok=True)
+          wheels=[
+            ('https://files.pythonhosted.org/packages/c0/da/977ded879c29cbd04de313843e76868e6e13408a94ed6b987245dc7c8506/openpyxl-3.1.5-py2.py3-none-any.whl','5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2'),
+            ('https://files.pythonhosted.org/packages/c1/8b/5fe2cc11fee489817272089c4203e679c63b570a5aaeb18d852ae3cbba6a/et_xmlfile-2.0.0-py3-none-any.whl','7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa')]
+          for url,expected in wheels:
+              with urllib.request.urlopen(url,timeout=30) as response: data=response.read()
+              assert hashlib.sha256(data).hexdigest()==expected
+              with zipfile.ZipFile(io.BytesIO(data)) as archive: archive.extractall(dest)
+          '@ | python - $deps
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned test wheels could not be unpacked' }
           Copy-Item app/test_*.py $app
           Copy-Item app/input_example_validation.json,app/random80_validation.json $app
           $env:PYTHONPATH = $deps
@@ -77,6 +89,23 @@ jobs:
         run: |
           & "$env:RUNNER_TEMP\slice-extracted\runtime\python.exe" release_tools/windows_bridge_probe.py "$env:RUNNER_TEMP\slice-extracted" "$env:RUNNER_TEMP\slice-candidate\bridge.json"
           if ($LASTEXITCODE -ne 0) { throw 'Marked DLL production discovery/initialization probe failed' }
+      - name: Verify S3 large native inventory and closed-failure cases
+        id: native_discovery
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $old = "$env:RUNNER_TEMP\old-UiaBridge.dll"
+          $archive = [IO.Compression.ZipFile]::OpenRead("$env:GITHUB_WORKSPACE\dist\IRFeedback-2026.10.27-csv.6.zip")
+          try {
+            $input = $archive.GetEntry('app/UiaBridge.dll').Open()
+            $output = [IO.File]::Create($old)
+            try { $input.CopyTo($output) } finally { $output.Dispose(); $input.Dispose() }
+          } finally { $archive.Dispose() }
+          if ((Get-FileHash $old -Algorithm SHA256).Hash -ne '7D0D94474A500D0CBFA5725B9E1E385682B32266AC2E862D09048F8DE98F4A72') { throw 'Old bridge reference mismatch' }
+          & "$env:RUNNER_TEMP\slice-extracted\runtime\python.exe" release_tools/windows_discovery_probe.py "$env:RUNNER_TEMP\slice-extracted" "$env:RUNNER_TEMP\slice-candidate\discovery.json" $old 2>&1 | Out-File -Encoding utf8 "$env:RUNNER_TEMP\slice-candidate\discovery.txt"
+          if ($LASTEXITCODE -ne 0) { throw 'Large native inventory regression failed' }
       - name: Verify actual native CSV content guard
         id: csv_guard
         if: steps.build.outcome == 'success'
@@ -100,8 +129,8 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          $zip = "$env:RUNNER_TEMP\slice-candidate\IRFeedback-2026.10.28-slice.2.zip"
-          python release_tools/verify_package.py $zip '2026.10.28-slice.2'
+          $zip = "$env:RUNNER_TEMP\slice-candidate\IRFeedback-2026.10.28-s3.1.zip"
+          python release_tools/verify_package.py $zip '2026.10.28-s3.1'
           if ($LASTEXITCODE -ne 0) { throw 'Package verification failed' }
           $record = Get-Content "$env:RUNNER_TEMP\slice-candidate\candidate.json" -Raw | ConvertFrom-Json
           if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $record.zip_sha256) { throw 'Candidate ZIP changed during validation' }
@@ -111,7 +140,7 @@ jobs:
         run: |
           $out = "$env:RUNNER_TEMP\slice-candidate"
           New-Item -ItemType Directory -Force $out | Out-Null
-          $checks = [ordered]@{ build = '${{ steps.build.outcome }}'; tests = '${{ steps.tests.outcome }}'; smoke = '${{ steps.smoke.outcome }}'; bridge = '${{ steps.bridge.outcome }}'; csv_guard = '${{ steps.csv_guard.outcome }}'; excel = '${{ steps.excel.outcome }}'; reverify = '${{ steps.reverify.outcome }}' }
+          $checks = [ordered]@{ build = '${{ steps.build.outcome }}'; tests = '${{ steps.tests.outcome }}'; smoke = '${{ steps.smoke.outcome }}'; bridge = '${{ steps.bridge.outcome }}'; csv_guard = '${{ steps.csv_guard.outcome }}'; native_discovery = '${{ steps.native_discovery.outcome }}'; excel = '${{ steps.excel.outcome }}'; reverify = '${{ steps.reverify.outcome }}' }
           $passed = @($checks.Values | Where-Object { $_ -ne 'success' }).Count -eq 0
           @{ source_commit = $env:GITHUB_SHA; checks = $checks; automated_checks_passed = $passed; final_sol_review = 'pending'; release_ready = $false; device_application_approved = $false } | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 "$out\readiness.json"
       - name: Upload candidate and evidence
@@ -125,5 +154,5 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $outcomes = @('${{ steps.build.outcome }}','${{ steps.tests.outcome }}','${{ steps.smoke.outcome }}','${{ steps.bridge.outcome }}','${{ steps.csv_guard.outcome }}','${{ steps.excel.outcome }}','${{ steps.reverify.outcome }}')
+          $outcomes = @('${{ steps.build.outcome }}','${{ steps.tests.outcome }}','${{ steps.smoke.outcome }}','${{ steps.bridge.outcome }}','${{ steps.csv_guard.outcome }}','${{ steps.native_discovery.outcome }}','${{ steps.excel.outcome }}','${{ steps.reverify.outcome }}')
           if (@($outcomes | Where-Object { $_ -ne 'success' }).Count) { throw "Candidate validation incomplete or failed; release gate closed: $outcomes" }
