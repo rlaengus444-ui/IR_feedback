@@ -71,10 +71,12 @@ try:
         raise RuntimeError('Launcher exited with an error')
     print(f'Observed launcher PID {launcher.pid}, packaged pythonw PID {target[1]} and expected window')
 finally:
+    forced = False
     for hwnd, _, _ in windows(child_ids | {launcher.pid}):
         user.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
     for handle in handles.values():
         if kernel.WaitForSingleObject(handle, 5000) == 0x102:
+            forced = True
             kernel.TerminateProcess(handle, 1)
             kernel.WaitForSingleObject(handle, 5000)
         kernel.CloseHandle(handle)
@@ -82,4 +84,8 @@ finally:
         try:
             launcher.wait(timeout=5)
         except subprocess.TimeoutExpired:
+            forced = True
             launcher.terminate()
+    if forced:
+        raise RuntimeError('Owned launcher/application did not close normally; forced cleanup was required')
+    print('Owned application closed normally after WM_CLOSE')

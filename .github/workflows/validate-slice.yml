@@ -69,6 +69,14 @@ jobs:
         run: |
           python release_tools/windows_smoke.py "$env:RUNNER_TEMP\slice-extracted" 2>&1 | Out-File -Encoding utf8 "$env:RUNNER_TEMP\slice-candidate\smoke.txt"
           if ($LASTEXITCODE -ne 0) { throw 'Launcher smoke failed' }
+      - name: Verify actual native CSV content guard
+        id: csv_guard
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File release_tools/windows_csv_guard_probe.ps1 -PackageRoot "$env:RUNNER_TEMP\slice-extracted" -ResultPath "$env:RUNNER_TEMP\slice-candidate\csv-guard.json"
+          if ($LASTEXITCODE -ne 0) { throw 'Native CSV content guard probe failed' }
       - name: Exercise Excel COM
         id: excel
         if: steps.build.outcome == 'success'
@@ -95,7 +103,7 @@ jobs:
         run: |
           $out = "$env:RUNNER_TEMP\slice-candidate"
           New-Item -ItemType Directory -Force $out | Out-Null
-          $checks = [ordered]@{ build = '${{ steps.build.outcome }}'; tests = '${{ steps.tests.outcome }}'; smoke = '${{ steps.smoke.outcome }}'; excel = '${{ steps.excel.outcome }}'; reverify = '${{ steps.reverify.outcome }}' }
+          $checks = [ordered]@{ build = '${{ steps.build.outcome }}'; tests = '${{ steps.tests.outcome }}'; smoke = '${{ steps.smoke.outcome }}'; csv_guard = '${{ steps.csv_guard.outcome }}'; excel = '${{ steps.excel.outcome }}'; reverify = '${{ steps.reverify.outcome }}' }
           $passed = @($checks.Values | Where-Object { $_ -ne 'success' }).Count -eq 0
           @{ source_commit = $env:GITHUB_SHA; checks = $checks; automated_checks_passed = $passed; final_sol_review = 'pending'; release_ready = $false; device_application_approved = $false } | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 "$out\readiness.json"
       - name: Upload candidate and evidence
@@ -109,5 +117,5 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $outcomes = @('${{ steps.build.outcome }}','${{ steps.tests.outcome }}','${{ steps.smoke.outcome }}','${{ steps.excel.outcome }}','${{ steps.reverify.outcome }}')
+          $outcomes = @('${{ steps.build.outcome }}','${{ steps.tests.outcome }}','${{ steps.smoke.outcome }}','${{ steps.csv_guard.outcome }}','${{ steps.excel.outcome }}','${{ steps.reverify.outcome }}')
           if (@($outcomes | Where-Object { $_ -ne 'success' }).Count) { throw "Candidate validation incomplete or failed; release gate closed: $outcomes" }
