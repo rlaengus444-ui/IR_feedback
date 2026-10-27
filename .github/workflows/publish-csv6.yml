@@ -20,6 +20,7 @@ jobs:
           Expand-Archive -Path $zip -DestinationPath $dest
           if ((Get-FileHash "$dest\app\workbook-replay.settings.json" -Algorithm SHA256).Hash -ne '3453C5F1911F484CED847505CE30C5F94367EB168F8F5402F5EC96AC31D3A8E6') { throw 'Default settings mismatch' }
           Copy-Item 'app\test_layer_charts.py','app\test_session.py','app\test_target_temperature.py','app\test_layer_algorithm.py','app\test_new_features.py' "$dest\app"
+          Copy-Item 'app\input_example_validation.json','app\random80_validation.json' "$dest\app"
           Push-Location "$dest\app"
           & "$dest\runtime\python.exe" -m unittest -v test_layer_charts test_session test_target_temperature test_layer_algorithm test_new_features
           if ($LASTEXITCODE -ne 0) { throw 'Windows package tests failed' }
