@@ -1,37 +1,69 @@
-name: Validate and publish IR csv.6
+name: Deliver reviewed slice candidate
 on:
   workflow_dispatch:
 permissions:
+  actions: read
   contents: write
 jobs:
-  validate-and-upload:
-    runs-on: windows-2022
-    timeout-minutes: 15
+  deliver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      # Historical csv.6 must use its matching source and one-argument verifier.
       - uses: actions/checkout@v4
         with:
-          ref: 9f1cb65ac0f120445ebc7b796dae4171d9cc755d
-      - name: Verify complete package and run Windows tests using packaged runtime
-        shell: pwsh
+          ref: 0c84a7e0033626ebb940f7a50391be4f2cd88551
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: slice-candidate-0c84a7e0033626ebb940f7a50391be4f2cd88551
+          run-id: 40544117791
+          github-token: ${{ github.token }}
+          path: candidate
+      - name: Verify exact reviewed bytes and candidate identity
         run: |
-          $zip = "$env:GITHUB_WORKSPACE\dist\IRFeedback-2026.10.27-csv.6.zip"
-          if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne 'FF216AACA807A47B44DE34F47194AFF88F28DD0F08A9874F330CDD8C67BE5E84') { throw 'ZIP hash mismatch' }
-          py -3 release_tools/verify_package.py $zip
-          if ($LASTEXITCODE -ne 0) { throw 'Incomplete package' }
-          $dest = Join-Path $env:RUNNER_TEMP 'IRFeedback'
-          Expand-Archive -Path $zip -DestinationPath $dest
-          if ((Get-FileHash "$dest\app\workbook-replay.settings.json" -Algorithm SHA256).Hash -ne '3453C5F1911F484CED847505CE30C5F94367EB168F8F5402F5EC96AC31D3A8E6') { throw 'Default settings mismatch' }
-          Copy-Item 'app\test_layer_charts.py','app\test_session.py','app\test_target_temperature.py','app\test_layer_algorithm.py','app\test_new_features.py' "$dest\app"
-          Copy-Item 'app\input_example_validation.json','app\random80_validation.json' "$dest\app"
-          Push-Location "$dest\app"
-          & "$dest\runtime\python.exe" -m unittest -v test_layer_charts test_session test_target_temperature test_layer_algorithm test_new_features
-          if ($LASTEXITCODE -ne 0) { throw 'Windows package tests failed' }
-          Pop-Location
-      - name: Upload verified ZIP to draft release
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          import sys
+          sys.path.insert(0,'release_tools')
+          from verify_package import verify
+          root=Path('candidate')
+          record=json.loads((root/'candidate.json').read_text(encoding='utf-8-sig'))
+          assert record['source_commit']=='0c84a7e0033626ebb940f7a50391be4f2cd88551'
+          digest=verify(root/'IRFeedback-2026.10.28-slice.1.zip','2026.10.28-slice.1')
+          assert digest==record['zip_sha256']=='0de4d040b8bc9647a11f70b55a8ee6aeab8508997ca1d1b17ebee8a0b36d96e9'
+          (root/'SHA256.txt').write_text(digest+'  IRFeedback-2026.10.28-slice.1.zip\n')
+          print('Exact reviewed ZIP verified:',digest)
+          PY
+      - name: Publish explicitly requested evaluation ZIP
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: pwsh
         run: |
-          gh release upload 2026.10.27-csv.6 'dist/IRFeedback-2026.10.27-csv.6.zip' --clobber
-          if ($LASTEXITCODE -ne 0) { throw 'Release asset upload failed' }
+          cat > candidate/RELEASE-NOTES.md <<'EOF'
+          검증용 EXE ZIP입니다. 사용자가 Excel COM 미검증 상태를 안내받은 후 우선 전달을 요청한 파일입니다.
+
+          ZIP 전체를 새 폴더에 압축 해제한 뒤 IRFeedback.exe를 실행하세요. Python은 포함되어 있습니다.
+
+          Windows 내장 Python 시험159/159, EXE 실행·정상 종료, 실제 PowerShell CSV 보호6개 시험, 파일 누락·해시 검사와 Sol Max 독립 코드 검토를 통과했습니다. 설정 JSON·수동 XLSX·Pillow와 라이선스를 포함합니다.
+
+          실제 Microsoft Excel COM 연동은 미검증입니다. 제어 알고리즘의 최종 승인과 실제 장비 적용은 계속 보류합니다. 정식 배포 검증 완료로 표기하지 않습니다.
+
+          소스: 0c84a7e0033626ebb940f7a50391be4f2cd88551
+          ZIP SHA-256: 0de4d040b8bc9647a11f70b55a8ee6aeab8508997ca1d1b17ebee8a0b36d96e9
+          EOF
+          gh release create 2026.10.28-slice.1 candidate/IRFeedback-2026.10.28-slice.1.zip candidate/SHA256.txt --target 0c84a7e0033626ebb940f7a50391be4f2cd88551 --draft --prerelease --latest=false --title 'IR 피드백 외부 모듈 2026.10.28-slice.1 · 검증용' --notes-file candidate/RELEASE-NOTES.md
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/2026.10.28-slice.1" > candidate/published-release.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          release=json.loads(Path('candidate/published-release.json').read_text())
+          assert release['draft'] and release['prerelease']
+          asset=next(a for a in release['assets'] if a['name']=='IRFeedback-2026.10.28-slice.1.zip')
+          assert asset['state']=='uploaded'
+          assert asset['size']==Path('candidate/IRFeedback-2026.10.28-slice.1.zip').stat().st_size
+          assert asset['digest']=='sha256:0de4d040b8bc9647a11f70b55a8ee6aeab8508997ca1d1b17ebee8a0b36d96e9'
+          print('Uploaded ZIP server digest verified')
+          PY
+          gh release edit 2026.10.28-slice.1 --draft=false --prerelease --latest=false
