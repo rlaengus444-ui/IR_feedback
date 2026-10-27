@@ -246,6 +246,22 @@ class HandoffTests(unittest.TestCase):
         self.assertEqual((0, None), controller.slice_dataset_setting.active())
         self.assertEqual((0, None), controller.slice_dataset_setting.desired())
 
+    def test_annotation_only_modes_drop_stale_images_but_keep_valid_math(self):
+        no_images=WorkbookSpec('fixture.xlsx','','B13','C13','D13','B5','A13')
+        for workbook in (None,no_images):
+            controller=SessionController(lambda *a:None,DeferredThread)
+            controller.connect(SessionOptions(TARGET,mode='preview',workbook_spec=workbook,slice_dataset=A))
+            controller.events.put(WorkerEvent(controller.generation,'snapshot',dict(
+                snapshot=self.frame('old',1),proposed={1:55},reasons={1:'valid math'},applied={},
+                status='preview',slice_features=A.features(2),slice_epoch=0)))
+            epoch=controller.update_slice_dataset(B)
+            controller.slice_dataset_setting.activate(epoch)
+            payload=controller.poll()[0].payload
+            self.assertIsNone(payload['slice_features'])
+            self.assertEqual({1:55},payload['proposed'])
+            self.assertEqual({1:'valid math'},payload['reasons'])
+            self.assertEqual('preview',payload['status'])
+
 
 if __name__ == '__main__':
     unittest.main()

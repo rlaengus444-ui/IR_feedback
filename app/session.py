@@ -454,11 +454,13 @@ class SessionController:
                 self.state = "error" if self.error else "disconnected"
             if event.kind == "snapshot" and self.state == "disconnecting":
                 continue
-            if event.kind == "snapshot" and self.image_consuming and self.slice_dataset_setting is not None:
+            if event.kind == "snapshot" and self.slice_dataset_setting is not None:
                 desired_epoch = self.slice_dataset_setting.desired()[0]
                 if event.payload.get("slice_epoch", 0) != desired_epoch:
-                    payload = dict(event.payload, proposed={}, reasons={}, slice_features=None,
-                                   status="이미지 교체 예약 · 이전 권장값 표시 보류")
+                    payload = dict(event.payload, slice_features=None)
+                    if self.image_consuming:
+                        payload.update(proposed={}, reasons={},
+                                       status="이미지 교체 예약 · 이전 권장값 표시 보류")
                     event = WorkerEvent(event.generation, event.kind, payload)
             result.append(event)
         return result
