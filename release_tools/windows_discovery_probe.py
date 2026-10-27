@@ -5,6 +5,7 @@ Builds a disposable fixture with the Windows framework compiler in a temporary d
 No existing application windows are enumerated; no heater edit or Save is performed.
 """
 import base64
+from collections import Counter
 import hashlib
 import json
 import os
@@ -150,6 +151,8 @@ def main(root, output, old):
                     result['heartbeat_progress'] = bool(first and second and first != second)
                     result['ir_and_saves'] = second.split(',')[1:] if second else []
                     result['unsupported_messages'] = Path(str(marker)+'.poison').read_text() if Path(str(marker)+'.poison').exists() else ''
+                    startup = Path(str(marker)+'.startup-poison')
+                    result['startup_message_counts'] = dict(Counter(startup.read_text().splitlines())) if startup.exists() else {}
                     result['navigation_clicks'] = Path(str(marker)+'.nav-clicks').read_text() if Path(str(marker)+'.nav-clicks').exists() else '0'
                     return result
                 finally:

@@ -60,6 +60,8 @@ internal static class NativeDiscoveryFixture {
         var stale = new Label { Name="staleLabel", Text="fixture", Left=500, Top=10 };
         if(mode.StartsWith("stale_")) form.Controls.Add(stale);
         var reparentTarget = new Form();
+        int startupTicks=0;
+        bool readyAnnounced=false;
         var heartbeat = new Timer { Interval=250 };
         heartbeat.Tick += delegate {
             string command = marker+".command";
@@ -71,12 +73,19 @@ internal static class NativeDiscoveryFixture {
                 File.WriteAllText(marker+".done", action);
             }
             File.WriteAllText(marker+".heartbeat", DateTime.UtcNow.Ticks+","+ir.Text+","+saves);
+            // Shown precedes some WinForms activation/layout work. Announce
+            // readiness after two UI timer turns; retain startup messages as
+            // separate evidence and keep client-probe assertions unchanged.
+            if(!readyAnnounced && ++startupTicks>=2) {
+                if(File.Exists(marker+".poison")) File.Move(marker+".poison",marker+".startup-poison");
+                File.WriteAllText(marker+".ready.tmp", Process.GetCurrentProcess().Id+","+form.Handle.ToInt64());
+                File.Move(marker+".ready.tmp",marker+".ready");
+                readyAnnounced=true;
+            }
         };
         form.Shown += delegate {
             foreach(Control c in form.Controls) { var h=c.Handle; }
             if(mode.StartsWith("stale_")) File.WriteAllText(marker+".stale", stale.Handle.ToInt64().ToString());
-            if (File.Exists(marker+".poison")) File.Delete(marker+".poison");
-            File.WriteAllText(marker+".ready", Process.GetCurrentProcess().Id+","+form.Handle.ToInt64());
             File.WriteAllText(marker+".saves", "0"); heartbeat.Start();
         };
         Application.Run(form);
