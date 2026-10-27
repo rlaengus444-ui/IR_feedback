@@ -1,4 +1,4 @@
-name: Validate S3 discovery candidate
+name: Validate connected slice candidate
 on:
   workflow_dispatch:
   push:
@@ -29,12 +29,12 @@ jobs:
           $wheel = "$env:RUNNER_TEMP\pillow-13.0.0-cp314-cp314-win_amd64.whl"
           Invoke-WebRequest 'https://files.pythonhosted.org/packages/50/e2/7ad17747517e4c813dca78257d6bb593466f8231baf1384bc98d92745edb/pillow-13.0.0-cp314-cp314-win_amd64.whl' -OutFile $wheel
           if ((Get-FileHash $wheel -Algorithm SHA256).Hash -ne 'F7CBB7A64E7EC664775195E4F81923BC8A93D9451B963F844E59118F63147A7A') { throw 'Pillow wheel hash mismatch' }
-          $zip = "$out\IRFeedback-2026.10.28-s3.1.zip"
-          python release_tools/build_slice_package.py $base $zip '2026.10.28-s3.1' $wheel
+          $zip = "$out\IRFeedback-2026.10.28-slice.3.zip"
+          python release_tools/build_slice_package.py $base $zip '2026.10.28-slice.3' $wheel
           if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
           $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  IRFeedback-2026.10.28-s3.1.zip" | Set-Content -Encoding utf8 "$out\SHA256.txt"
-          @{ source_commit = $env:GITHUB_SHA; zip_sha256 = $hash; version = '2026.10.28-s3.1'; pillow_sha256 = (Get-FileHash $wheel -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content -Encoding utf8 "$out\candidate.json"
+          "$hash  IRFeedback-2026.10.28-slice.3.zip" | Set-Content -Encoding utf8 "$out\SHA256.txt"
+          @{ source_commit = $env:GITHUB_SHA; zip_sha256 = $hash; version = '2026.10.28-slice.3'; pillow_sha256 = (Get-FileHash $wheel -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content -Encoding utf8 "$out\candidate.json"
           Expand-Archive $zip "$env:RUNNER_TEMP\slice-extracted"
       - name: Test packaged runtime and application
         id: tests
@@ -114,6 +114,14 @@ jobs:
         run: |
           & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File release_tools/windows_csv_guard_probe.ps1 -PackageRoot "$env:RUNNER_TEMP\slice-extracted" -ResultPath "$env:RUNNER_TEMP\slice-candidate\csv-guard.json"
           if ($LASTEXITCODE -ne 0) { throw 'Native CSV content guard probe failed' }
+      - name: Crosscheck slice analysis parity and performance
+        id: slice_perf
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          & "$env:RUNNER_TEMP\slice-extracted\runtime\python.exe" release_tools/windows_slice_analysis_probe.py "$env:RUNNER_TEMP\slice-extracted" "$env:RUNNER_TEMP\slice-candidate\slice-performance.json" 2>&1 | Out-File -Encoding utf8 "$env:RUNNER_TEMP\slice-candidate\slice-performance.txt"
+          if ($LASTEXITCODE -ne 0) { throw 'Slice analysis parity/performance check failed' }
       - name: Exercise Excel COM
         id: excel
         if: steps.build.outcome == 'success'
@@ -129,8 +137,8 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          $zip = "$env:RUNNER_TEMP\slice-candidate\IRFeedback-2026.10.28-s3.1.zip"
-          python release_tools/verify_package.py $zip '2026.10.28-s3.1'
+          $zip = "$env:RUNNER_TEMP\slice-candidate\IRFeedback-2026.10.28-slice.3.zip"
+          python release_tools/verify_package.py $zip '2026.10.28-slice.3'
           if ($LASTEXITCODE -ne 0) { throw 'Package verification failed' }
           $record = Get-Content "$env:RUNNER_TEMP\slice-candidate\candidate.json" -Raw | ConvertFrom-Json
           if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $record.zip_sha256) { throw 'Candidate ZIP changed during validation' }
@@ -140,7 +148,7 @@ jobs:
         run: |
           $out = "$env:RUNNER_TEMP\slice-candidate"
           New-Item -ItemType Directory -Force $out | Out-Null
-          $checks = [ordered]@{ build = '${{ steps.build.outcome }}'; tests = '${{ steps.tests.outcome }}'; smoke = '${{ steps.smoke.outcome }}'; bridge = '${{ steps.bridge.outcome }}'; csv_guard = '${{ steps.csv_guard.outcome }}'; native_discovery = '${{ steps.native_discovery.outcome }}'; excel = '${{ steps.excel.outcome }}'; reverify = '${{ steps.reverify.outcome }}' }
+          $checks = [ordered]@{ build = '${{ steps.build.outcome }}'; tests = '${{ steps.tests.outcome }}'; smoke = '${{ steps.smoke.outcome }}'; bridge = '${{ steps.bridge.outcome }}'; csv_guard = '${{ steps.csv_guard.outcome }}'; native_discovery = '${{ steps.native_discovery.outcome }}'; slice_perf = '${{ steps.slice_perf.outcome }}'; excel = '${{ steps.excel.outcome }}'; reverify = '${{ steps.reverify.outcome }}' }
           $passed = @($checks.Values | Where-Object { $_ -ne 'success' }).Count -eq 0
           @{ source_commit = $env:GITHUB_SHA; checks = $checks; automated_checks_passed = $passed; final_sol_review = 'pending'; release_ready = $false; device_application_approved = $false } | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 "$out\readiness.json"
       - name: Upload candidate and evidence
@@ -154,5 +162,5 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $outcomes = @('${{ steps.build.outcome }}','${{ steps.tests.outcome }}','${{ steps.smoke.outcome }}','${{ steps.bridge.outcome }}','${{ steps.csv_guard.outcome }}','${{ steps.native_discovery.outcome }}','${{ steps.excel.outcome }}','${{ steps.reverify.outcome }}')
+          $outcomes = @('${{ steps.build.outcome }}','${{ steps.tests.outcome }}','${{ steps.smoke.outcome }}','${{ steps.bridge.outcome }}','${{ steps.csv_guard.outcome }}','${{ steps.native_discovery.outcome }}','${{ steps.slice_perf.outcome }}','${{ steps.excel.outcome }}','${{ steps.reverify.outcome }}')
           if (@($outcomes | Where-Object { $_ -ne 'success' }).Count) { throw "Candidate validation incomplete or failed; release gate closed: $outcomes" }

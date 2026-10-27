@@ -1,0 +1,266 @@
+{
+  "candidate_commit": "6bf031de98fb4e5dfa5cb7f0ea537f9a11037313",
+  "candidate_zip_sha256": "1ecdf0e214e0809621553b03680afd760179ce67a038663e19d62d65038087a4",
+  "evaluation_distribution_allowed": true,
+  "independent_post_review_complete": true,
+  "equipment_application_approved": false,
+  "stable_release_approved": false,
+  "final_control_algorithm_approval": "ON HOLD",
+  "actual_excel_com_tested": false,
+  "reviewed_at_utc": "2026-10-27 21:27:39 UTC",
+  "review_route": {
+    "actual_route": "Native collaboration /root/sol_reviewer; actual independent source/diff/test/artifact review completed",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "configuration_source": ".codex/agents/sol_reviewer.toml and explicit delegated request",
+    "provider_identity_independently_verified": false,
+    "earlier_cli_authentication_restored": false
+  },
+  "scope": {
+    "base_published_release": "2026.10.28-s3.1 /046895bdebcd7cd13ddfbaf0c5dfa9a46a0e4614",
+    "reviewed_source": "6bf031de98fb4e5dfa5cb7f0ea537f9a11037313",
+    "version": "2026.10.28-slice.3",
+    "purpose": "Allow image selection/reanalysis during an existing connection with staged versioned handoff; accelerate identical analysis without changing numeric results.",
+    "reviewer_source_edits": false,
+    "reviewer_equipment_actions": false,
+    "reviewer_external_writes": false,
+    "host_python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "host_pillow": "12.3.0"
+  },
+  "disposition": "No unresolved P1/P2 findings remain in the exact reviewed candidate after fixes. The previously authorized evaluation ZIP may be distributed as a prerelease with latest=false through the reviewed pinned publisher. No stable qualification, final control-algorithm approval, real equipment use, actual Excel COM validation or universal performance guarantee is supplied.",
+  "implementation_review": [
+    "SessionOptions owns a thread-safe SliceDatasetSetting. Active and staged datasets remain immutable and distinct. Complete latest analysis alone requests a monotonic epoch; unchanged current desired fingerprint/config is a no-op. A->B->A still supersedes correctly.",
+    "Session worker alone activates. Image-consuming Excel resets/reopens its pristine private copy, clears old recommendations and consumes current observation as baseline. It resumes only on a different fresh key/layer that is actually eligible to calculate, including available control and finite required actual settings. Every ineligible valid waiting observation updates the consumed baseline, blocking cached or same-layer corrections.",
+    "Admission checked before each heater apply. A previously admitted Save may finish/verify under the old epoch; another old write is blocked and activation is acknowledged only afterward. Image change/cancellation never reuses session shutdown to interrupt Save. Existing ambiguity/fault handling is retained.",
+    "Builtin control and Excel without image mapping retain their original calculation history; monitor is annotation-only. Stale image annotations are suppressed in every mode, while valid image-independent math and raw/applied history remain.",
+    "Main GUI leaves image controls available while keeping workbook/algorithm/cell selectors locked. Analysis and connection generations reject stale publication. Active/pending badges reconcile from authoritative binding each GUI pump so bounded event loss cannot leave a false profile label.",
+    "Analyzer hashes complete bytes after size checks, retains at most256 successful numeric tuples per analysis, still reads every ZIP member/CRC and updates every layer/name/hash/powder-run record. Grayscale L identity avoids a copy; alpha/palette/inversion/ROI masks/arithmetic/order are unchanged. No NumPy or parallel decoding added."
+  ],
+  "resolved_findings": [
+    {
+      "severity": "P1",
+      "finding": "Fresh different-layer sample received while control unavailable or actual C missing prematurely cleared image_waiting, allowing later cached same row to calculate/Save. Cached different-layer then same-layer correction also bypassed intended boundary.",
+      "resolution": "8eb9914 requires can_calculate and all finite actual settings before release; consumed waiting rows advance both baseline layer and key.6bf031d adds targeted cached-layer correction regression. Reviewer independently reran all3 failure sequences: only subsequent fully eligible fresh DIFFERENT layer may calculate/apply. Original eec artifact is superseded, not approved for delivery."
+    },
+    {
+      "severity": "P2",
+      "finding": "Lossy bounded display queue could drop slice_activated and leave GUI showing A/pending while B was active.",
+      "resolution": "Authoritative binding reconciliation every GUI pump; independently reproduced129-snapshot overflow before fix and verified active epoch/B/pending clearance afterward."
+    },
+    {
+      "severity": "P2",
+      "finding": "Identical active dataset reanalysis unnecessarily reset Excel history and learned coefficients.",
+      "resolution": "Same current desired identity/fingerprint/config request is a no-op; already-active acknowledgement clears pending. Independent original repro now has0 resets; A->B->A revisions retained."
+    },
+    {
+      "severity": "P2",
+      "finding": "Builtin/non-image Excel could retain queued A image annotations while GUI labelled B active.",
+      "resolution": "Stale features suppressed for all modes, but proposals/reasons and raw/applied history masked only when image-dependent. Independent repro verified both image-independent modes."
+    },
+    {
+      "severity": "P2 publisher",
+      "finding": "New local tests-summary validation originally occurred after public tag creation.",
+      "resolution": "Moved all local summary/report validation before API/mutation; missing summary and failed performance/native gates reject before any mocked API call."
+    }
+  ],
+  "checks_executed_independently": [
+    "Latest focused suite:37/37 PASS in2.073s, including handoff, UI, cache and original slice-data tests on DISPLAY94.",
+    "Reproduced and rechecked original P1 sequences: missing actual C->cached restored, unavailable control->cached available, cached different layer->fresh-key same-layer correction. No process/proposal/Save before future eligible different fresh layer; only expected future observation key applied.",
+    "Reproduced and rechecked all3 P2 issues with real Tk/session objects or exact worker harness: activation event overflow, same-plan reset, stale annotations in builtin/non-image Excel.",
+    "Compared original git046 session with current across original80/67 fixtures, repeated image replacements/clears and target changes: outputs/reasons and8,085 controller diagnostic fields EXACTLY equal for builtin, no actuator calls.",
+    "Compared exact original git046 analyzer and preserved baseline against current:360 records including96 repeated,48 unique and24 palette4096x4096 profiles plus192 randomized transparency/RGB/RGBA/LA/palette/1-bit, polarity, threshold, anisotropic ROI and mapping-gap records. Numeric fields, record metadata and fingerprints EXACTLY equal.",
+    "Verified actual final ZIP with release_tools/verify_package.py: CRC/path/manifest/source/runtime/license completeness PASS; SHA1ecdf0e214e0809621553b03680afd760179ce67a038663e19d62d65038087a4.",
+    "Independently opened actual final ZIP:9 original control/Excel/native/data/settings files byte-identical to published046; DLL pin181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f retained. Both prior external XLSX hashes unchanged. Portable baseline reference source exact to git046.",
+    "Eight fully mocked publisher scenarios PASS: success, review ZIP mismatch, native failure, performance failure, missing tests summary, existing tag, uploaded digest mismatch, changed tag commit. Local evidence failures reject before API; bad assets remain draft; original Actions checksum preserved. No actual gh/API/tag/release/upload performed.",
+    "Reviewed exact publisher workflow template: final run40585593546/artifact-name/source6bf/ZIP1ecd pins, no rebuild/install. Only __PUBLISH_SOURCE__ may be replaced with full immutable review-containing source commit."
+  ],
+  "actual_Windows_evidence_inspected": {
+    "run_id": 40585593546,
+    "artifact_id": 12771457342,
+    "directory": "/workspace/ir-slice-live-review/windows-6bf031d",
+    "tests": "187/187 PASS in36.036s on actual packaged Python3.14.5/Pillow13.0.0",
+    "gates": "All8 non-Excel gates PASS: build,tests,smoke,bridge,csv_guard,native_discovery,slice_perf,reverify.",
+    "native": "S3 discovery14 checks, MOTW bridge9 checks, native CSV6 checks PASS. Owned launcher/pythonw window observed and normally closed byWM_CLOSE.",
+    "analysis_parity": "All per-layer records and fingerprints exact against pinned published analyzer in3 paired interleaved rounds for each synthetic ZIP.",
+    "performance_cases": {
+      "duplicate": {
+        "layers": 96,
+        "unique_bytes": 3,
+        "pixels": [
+          4096,
+          4096
+        ],
+        "median_seconds": {
+          "baseline": 1.1623486000000298,
+          "candidate": 0.03494630000000143
+        },
+        "speedup": 33.26099186466042,
+        "exact_parity": true,
+        "zip_sha256": "880fec52c0d8c8c48cd037a2366ba66f08a64f47fc8ecf4291889754cc73a54d"
+      },
+      "unique": {
+        "layers": 48,
+        "unique_bytes": 48,
+        "pixels": [
+          4096,
+          4096
+        ],
+        "median_seconds": {
+          "baseline": 0.5669010999999955,
+          "candidate": 0.428387999999984
+        },
+        "speedup": 1.3233356209791514,
+        "exact_parity": true,
+        "zip_sha256": "9ae63e44cabf34c621c0cd805bb7ebb3594c3092887b05cd2a17b3c0703fd8aa"
+      },
+      "palette": {
+        "layers": 24,
+        "unique_bytes": 4,
+        "pixels": [
+          4096,
+          4096
+        ],
+        "median_seconds": {
+          "baseline": 0.5294578000000456,
+          "candidate": 0.09059519999999566
+        },
+        "speedup": 5.844214704532591,
+        "exact_parity": true,
+        "zip_sha256": "6822b7fadeb572acc66408c6b6d340e51536a6dfbeff6a0b364f76140ece96e2"
+      }
+    },
+    "synthetic_polling": {
+      "samples": 4,
+      "maximum_gap_seconds": 0.10969460000001163,
+      "real_device_latency_tested": false
+    },
+    "Excel": "Only failed gate: Excel COM is not registered. Stable/equipment gates correctly remain false; original readiness artifact is not rewritten. This independent review supplies separate evaluation-only disposition.",
+    "superseded_evidence": "Earlier windows-22a4d60 and windows-eec53e8 retained; not delivery candidates after later source fixes."
+  },
+  "publisher_constraints": "Exact commit and ZIP must match completed review. All8 non-Excel gates and4 report passed flags required, expected unavailable-Excel state and stable/equipment false retained. Local tests summary checked before API. Reject existing release/tag; create exact candidate tag; draft prerelease, upload unchanged ZIP+separate checksum, verify tag/state/asset size+server digest before and after publication; make_latest=false; URL only after readback.",
+  "remaining_limits": [
+    "Actual Microsoft Excel COM execution/private-workbook reset and live Excel handoff remain untested. Mocked lifecycle and prior LibreOffice parity do not establish end-to-end Microsoft Excel operation.",
+    "No actual S3/PLC/sensor/lamp control, real device polling latency or long-duration equipment/stability validation. Final algorithm approval and equipment application remain ON HOLD.",
+    "Performance results use synthetic4096x4096 ZIPs and within-run paired medians. Duplicate33.26x, unique1.323x, palette5.844x are these benchmark results, not guaranteed user ZIP speedups. The brief fake polling check has4 samples and is not real device latency qualification.",
+    "Normal-looking stale sensor values, image-to-job/ROI alignment, actual binder execution and physical dryness cannot be independently proved by CSV or slice plans. Existing invalid-marker and sensor limitations remain.",
+    "During staging the previous active dataset intentionally continues. A Save admitted before replacement may finish; image replacement is not emergency cancellation. Workbook/algorithm/cell configuration changes still require disconnection.",
+    "Existing S3 raw16,384 HWND overflow remains an inspected guard rather than an experimentally exercised native boundary; no new claim is made by retaining that fix."
+  ],
+  "evidence_and_source_hashes": [
+    {
+      "path": "/workspace/IR_feedback_slice_live/app/session.py",
+      "sha256": "a24e5c9232f99cb218f43424fdc65435fdd54072d1291f155d08fe96a9e1bd53",
+      "bytes": 24101
+    },
+    {
+      "path": "/workspace/IR_feedback_slice_live/app/slice_panel.py",
+      "sha256": "fe16747b9115f632fa741ce615a0595288fd50e74f067127f0b9badbda0b56c1",
+      "bytes": 12802
+    },
+    {
+      "path": "/workspace/IR_feedback_slice_live/app/standalone_ir.py",
+      "sha256": "416ad4ca2c52b90eb629cb05c781a0fa036a372d0bdecd8be68c740fe73d604b",
+      "bytes": 26675
+    },
+    {
+      "path": "/workspace/IR_feedback_slice_live/app/slice_data.py",
+      "sha256": "acbe9f4bd9825e4667b32f3fbcd38f5db5b81a18bf00806f589ed3b045bb6875",
+      "bytes": 13110
+    },
+    {
+      "path": "/workspace/IR_feedback_slice_live/app/test_slice_handoff.py",
+      "sha256": "e062dbd9c5dcfa01fee2c16efa2e246c8b35655bc0c8af461a41ad615dec2d25",
+      "bytes": 15051
+    },
+    {
+      "path": "/workspace/IR_feedback_slice_live/app/test_slice_live_ui.py",
+      "sha256": "c95d3e44cb466a02f75b5ffdf0d065da3391e098b3aa5a476dc7a7db5bdff2da",
+      "bytes": 7404
+    },
+    {
+      "path": "/workspace/IR_feedback_slice_live/app/test_slice_performance.py",
+      "sha256": "4e52ecfbb0ccbf640fae6fb03ca9b8957fda9c9da69c954a72dc0531375f03a6",
+      "bytes": 5482
+    },
+    {
+      "path": "/workspace/IR_feedback_slice_live/release_tools/publish_slice_candidate.py",
+      "sha256": "216132dc9e0251329440f930cf0c5c6f450d71d96b06b3ce34840ab6d571b685",
+      "bytes": 8202
+    },
+    {
+      "path": "/workspace/IR_feedback_slice_live/release_tools/windows_slice_analysis_probe.py",
+      "sha256": "b95a760dfdfadc6f38be7e70fbfd62e6eb7e0b3cc7acb565f37f9b2265a5f24d",
+      "bytes": 6113
+    },
+    {
+      "path": "/workspace/IR_feedback_slice_live/validation/reference/slice_data_s3_1.py",
+      "sha256": "df8381be1ec0b2b29a73ed18d39760f928bd2bcf07fc42eb5278de8fefcc1881",
+      "bytes": 12506
+    },
+    {
+      "path": "/workspace/IR_feedback_slice_live/docs/SLICE_LIVE.ko.md",
+      "sha256": "3cbe8be11a7aee302b504af47bddb686683be416fee3ac7b1289db911386d0e2",
+      "bytes": 3571
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/publish-workflow.template.yml",
+      "sha256": "3eeab9a64d08b12c3da4bed872bd4769c11014912b746cc613ecd1c30f79ee43",
+      "bytes": 1314
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/windows-6bf031d/candidate.json",
+      "sha256": "52f87c2225ab3cb551a98e6e1df7b247ace1b08e520d1470bb797141b47abefb",
+      "bytes": 278
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/windows-6bf031d/readiness.json",
+      "sha256": "403068683c3ee0816979d1ac0b58f49497958c31eb195731455f64967246d216",
+      "bytes": 477
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/windows-6bf031d/tests.txt",
+      "sha256": "b3c1e1acfb94a563f9ea7bf7f0440fe42f28c3a76db7544adbcd7aaf04d82b6b",
+      "bytes": 31022
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/windows-6bf031d/slice-performance.json",
+      "sha256": "46b39d361ecb203dd01d21d8f8319dc6b6652e500a1462f5485d3b6a7fee56fb",
+      "bytes": 2965
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/windows-6bf031d/bridge.json",
+      "sha256": "3308f7b0cc064a2532c6f8d7fca788f29708db0fea6db4c96a992606f48c21ff",
+      "bytes": 1431
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/windows-6bf031d/discovery.json",
+      "sha256": "4651b7cf13a24726d057b20b85bd7d7ee5248fbf32aff2b09d5e6493318debfb",
+      "bytes": 32981
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/windows-6bf031d/csv-guard.json",
+      "sha256": "86ece4cf56a2cf9009da9f5a5ea1407d043b56f4e895b7d4faa1e17b30707e1d",
+      "bytes": 505
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/windows-6bf031d/excel.json",
+      "sha256": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03",
+      "bytes": 106
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/windows-6bf031d/smoke.txt",
+      "sha256": "472d3702b3b1af9023354e62a6d36603383fe0c5d622ef00a02774bff12f8e26",
+      "bytes": 125
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/windows-6bf031d/SHA256.txt",
+      "sha256": "62754790fd128b69b4d3783176015583880d8566bd06dee37faf03facac50e52",
+      "bytes": 101
+    },
+    {
+      "path": "/workspace/ir-slice-live-review/windows-6bf031d/IRFeedback-2026.10.28-slice.3.zip",
+      "sha256": "1ecdf0e214e0809621553b03680afd760179ce67a038663e19d62d65038087a4",
+      "bytes": 35315189
+    }
+  ]
+}

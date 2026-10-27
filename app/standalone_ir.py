@@ -192,10 +192,28 @@ class ThermalFeedbackWindow:
         self.log = scrolledtext.ScrolledText(log_tab, height=7, wrap="word", font=("Segoe UI", 9), state="disabled")
         self.log.pack(fill="both", expand=True, pady=(5, 0))
         self.slice_panel = SlicePanel(notebook,
-            busy=lambda: self.controller.thread is not None or self.closing,
-            use_workbook=self._use_slice_workbook)
+            busy=lambda: self.closing or self.controller.state == "disconnecting",
+            workbook_busy=lambda: self.controller.thread is not None,
+            use_workbook=self._use_slice_workbook,
+            publish_dataset=self._publish_slice_dataset,
+            context_token=lambda: self.controller.generation)
         notebook.add(self.slice_panel, text="슬라이싱 이미지")
-        self.configuration_widgets.extend(self.slice_panel.configuration_widgets)
+
+    def _publish_slice_dataset(self, dataset, token):
+        if (self.closing or token != self.controller.generation or self.controller.thread is None
+                or self.controller.state not in ("connecting", "connected")):
+            return
+        try:
+            epoch = self.controller.update_slice_dataset(dataset)
+        except ValueError:
+            return
+        active_epoch, active_dataset = self.controller.slice_dataset_setting.active()
+        if epoch == active_epoch:
+            self.slice_panel.mark_session_active(active_dataset, epoch)
+            return
+        self.slice_panel.mark_pending(epoch)
+        self._append_log("이미지 교체 예약 · 다음 새 층부터 반영" if dataset is not None
+                         else "이미지 선택 해제 예약 · 다음 새 층부터 반영")
 
     def _use_slice_workbook(self, path):
         if self.controller.thread is not None or self.closing:
@@ -313,6 +331,7 @@ class ThermalFeedbackWindow:
         busy = self.controller.thread is not None or self.closing
         for widget, idle_state in self.configuration_widgets:
             widget.configure(state="disabled" if busy else idle_state)
+        self.slice_panel.set_locked(self.closing or self.controller.state == "disconnecting")
         target_ready = (self.controller.thread is not None and not self.closing
                         and self.controller.state in ("connecting", "connected"))
         self.temperature_entry.configure(state="disabled" if self.closing or self.controller.state == "disconnecting" else "normal")
@@ -330,6 +349,24 @@ class ThermalFeedbackWindow:
             self.log.delete("1.0", f"{lines - 100}.0")
         self.log.see("end")
         self.log.configure(state="disabled")
+
+    def _reconcile_slice_state(self):
+        # Activation events share a bounded display queue and may be dropped.
+        # The immutable worker binding is authoritative, even after UI backlog.
+        setting = self.controller.slice_dataset_setting
+        if setting is None or self.controller.state not in ("connecting", "connected"):
+            return
+        epoch, dataset = setting.active()
+        desired_epoch, _ = setting.desired()
+        panel = self.slice_panel
+        if panel.active_epoch != epoch or panel.active_dataset is not dataset:
+            panel.mark_session_active(dataset, epoch)
+        if desired_epoch != epoch:
+            if panel.pending_epoch != desired_epoch:
+                panel.mark_pending(desired_epoch)
+        elif panel.pending_epoch is not None:
+            panel.pending_epoch = None
+            panel._active_text()
 
     def _show_snapshot(self, payload):
         snapshot = payload["snapshot"]
@@ -387,6 +424,14 @@ class ThermalFeedbackWindow:
         for event in self.controller.poll():
             if event.kind == "connected":
                 self.status.set("연결됨 · 상태 확인 중")
+                setting = self.controller.slice_dataset_setting
+                if setting is not None:
+                    epoch, dataset = setting.active()
+                    self.slice_panel.mark_session_active(dataset, epoch)
+            elif event.kind == "slice_activated":
+                setting = self.controller.slice_dataset_setting
+                if setting is not None and event.payload['epoch'] == setting.desired()[0]:
+                    self.slice_panel.mark_session_active(event.payload['dataset'], event.payload['epoch'])
             elif event.kind == "snapshot":
                 self._show_snapshot(event.payload)
             elif event.kind == "log":
@@ -396,8 +441,10 @@ class ThermalFeedbackWindow:
                 self.capability.set(str(event.payload))
                 self._append_log(event.payload)
             elif event.kind == "finished":
+                self.slice_panel.clear_session()
                 self.status.set("연결 오류" if self.controller.error else "연결 해제됨")
                 self._append_log("외부 모듈 연결 종료. 원본 프로그램의 가열 ON/OFF는 변경하지 않습니다.")
+        self._reconcile_slice_state()
         self._refresh_buttons()
         self.root.after(50, self._pump)
 

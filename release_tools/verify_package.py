@@ -17,7 +17,8 @@ REQUIRED_APP = (
 )
 SOURCES = {**{'app/' + name: 'app/' + name for name in REQUIRED_APP},
            'README.md': 'README.md', 'VERSION.txt': 'VERSION.txt',
-           'VALIDATION.ko.md': 'docs/S3_DISCOVERY.ko.md',
+           'VALIDATION.ko.md': 'docs/SLICE_LIVE.ko.md',
+           'docs/SLICE_LIVE.ko.md': 'docs/SLICE_LIVE.ko.md',
            'docs/S3_DISCOVERY.ko.md': 'docs/S3_DISCOVERY.ko.md',
            'docs/BRIDGE_VALIDATION.ko.md': 'docs/BRIDGE_VALIDATION.ko.md',
            'SLICE_INPUT.ko.md': 'docs/SLICE_INPUT.ko.md',

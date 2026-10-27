@@ -1,0 +1,61 @@
+{
+  "delivered_at_utc": "2026-10-27T21:32:28Z",
+  "candidate_commit": "6bf031de98fb4e5dfa5cb7f0ea537f9a11037313",
+  "review_commit": "68612168b86e25b3ab74d9b06f00e1676f29fb3e",
+  "publisher_commit": "11e417563586e29dda2448fd6c50061e9351d71b",
+  "version": "2026.10.28-slice.3",
+  "actual_publication_run": 40587401893,
+  "publication_conclusion": "success",
+  "release_id": 426006799,
+  "release_tag_points_to_candidate": true,
+  "draft": false,
+  "prerelease": true,
+  "make_latest": false,
+  "zip_asset_id": 682932606,
+  "checksum_asset_id": 682932607,
+  "zip_bytes": 35315189,
+  "zip_sha256": "1ecdf0e214e0809621553b03680afd760179ce67a038663e19d62d65038087a4",
+  "zip_url": "https://github.com/rlaengus444-ui/IR_feedback/releases/download/2026.10.28-slice.3/IRFeedback-2026.10.28-slice.3.zip",
+  "readback": {
+    "downloaded_via": "GitHub release asset API",
+    "exact_reviewed_zip": true,
+    "crc_safe_paths_full_manifest_and_source_parity": true,
+    "archive_entries": 3642,
+    "settings_json_present_and_parseable": true
+  },
+  "actual_windows_validation_run": 40585593546,
+  "tests_passed": 187,
+  "non_excel_gates_passed": 8,
+  "sol_review": {
+    "completed": true,
+    "route": "native collaboration /root/sol_reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_verified": false,
+    "cli_authentication_restored": false,
+    "record": "slice-live-2026.10.28-review.json"
+  },
+  "notion": {
+    "page_id": "3f105e94-a225-801c-9cd6-c70784c2d9ec",
+    "path": "3D printing team / 자료: 기기, 제품, 이론 등 / 스터디 / IR 출력 피드백 제어",
+    "latest_toggle_updated": true,
+    "old_s3_1_link_added_in_collapsed_toggle": true,
+    "existing_two_xlsx_and_old_media_unmodified": true,
+    "updates_completed_without_warnings": true
+  },
+  "drive": {
+    "file_id": "1R7KmZW_mJ2qOy2w0DS7h94bNb1ZNvY6x",
+    "folder_id": "1Fd_1vA4HLd2NpzHmsO7KMK1lrk5Dx3_5",
+    "name": "IRFeedback-2026.10.28-slice.3_다운로드.txt",
+    "bytes": 2468,
+    "sha256": "896a6aafedc294e185504e7802d419d638c859ed9739237fec109fb3ce70c196",
+    "content_readback_exact": true,
+    "delivery_method": "Updated GitHub ZIP download guidance in place. No claim of raw EXE ZIP hosted by Drive; previous Drive raw-ZIP download blocked. Actual two XLSX files remain on Drive."
+  },
+  "draft_pr": "https://github.com/rlaengus444-ui/IR_feedback/pull/4",
+  "actual_excel_com_tested": false,
+  "actual_equipment_tested": false,
+  "final_control_algorithm_approved": false,
+  "equipment_application_approved": false,
+  "source_changes_after_review": "Evidence only; distributed ZIP unchanged."
+}

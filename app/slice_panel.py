@@ -8,9 +8,13 @@ from slice_data import SliceConfig, analyze
 from slice_workbook import save_workbook
 
 class SlicePanel(ttk.Frame):
-    def __init__(self, parent, busy=lambda:False, use_workbook=lambda path:None):
+    def __init__(self, parent, busy=lambda:False, use_workbook=lambda path:None,
+                 workbook_busy=lambda:False, publish_dataset=lambda dataset, token:None,
+                 context_token=lambda:None):
         super().__init__(parent, padding=8)
         self.busy=busy;self.use_workbook=use_workbook
+        self.workbook_busy=workbook_busy;self.publish_dataset=publish_dataset;self.context_token=context_token
+        self.active_dataset=None;self.active_epoch=None;self.pending_epoch=None
         self.paths=();self.dataset=None;self.running=False;self.cancel_event=threading.Event()
         self.worker=None;self.pump_id=None
         self.generation=0;self.events=queue.Queue();self.progress=queue.Queue(maxsize=1);self.debounce=None;self.dead=False
@@ -18,6 +22,7 @@ class SlicePanel(ttk.Frame):
         self.threshold=tk.StringVar(value='0');self.first_layer=tk.StringVar(value='1')
         self.polarity=tk.StringVar(value='흰색');self.numbering=tk.StringVar(value='파일명 숫자')
         self.live=tk.StringVar(value='실행 중 층 데이터: 연결 전')
+        self.active=tk.StringVar(value='실행 중 이미지: 연결 전')
         self.summary=tk.StringVar(value='중앙 반경 n mm를 입력하고 ZIP 또는 이미지 파일을 선택하세요.')
         self.selected=tk.StringVar(value='선택한 파일 없음')
         self.configuration_widgets=[]
@@ -45,6 +50,7 @@ class SlicePanel(ttk.Frame):
         widget=ttk.Button(row,text='다시 분석',command=self.start);widget.pack(side='left');self.configuration_widgets.append((widget,'normal'))
         ttk.Label(self,text='이미지 중앙의 원형 영역을 분석합니다. 센서 실제 위치·도포 실행·건조 완료를 확정하는 데이터가 아닙니다.\n파일명 숫자 배정은 누락 층을 미확인으로 남깁니다. 정렬순 연속은 사용자가 실제 층 순서를 확인한 경우에만 선택하세요.',wraplength=1000,foreground='#836118').pack(fill='x')
         ttk.Label(self,textvariable=self.summary,wraplength=1000).pack(fill='x',pady=7)
+        ttk.Label(self,textvariable=self.active,wraplength=1000).pack(fill='x')
         ttk.Label(self,textvariable=self.live,wraplength=1000).pack(fill='x',pady=(0,6))
         self.table=ttk.Treeview(self,columns=('layer','name','center','mean','whole'),show='headings',height=8)
         for key,label,width in [('layer','층',75),('name','이미지',260),('center','중앙 도포율 %',130),('mean','중앙 평균강도 %',130),('whole','전체 도포율 %',130)]:
@@ -52,7 +58,34 @@ class SlicePanel(ttk.Frame):
         self.table.pack(fill='both',expand=True)
         row=ttk.Frame(self);row.pack(fill='x',pady=8)
         ttk.Button(row,text='전체 분석 CSV 저장',command=self.export_csv).pack(side='left',padx=(0,8))
-        ttk.Button(row,text='수동 계산시트 저장 / 사용',command=self.export_workbook).pack(side='left')
+        self.workbook_button=ttk.Button(row,text='수동 계산시트 저장 / 사용',command=self.export_workbook);self.workbook_button.pack(side='left')
+
+    def set_locked(self, locked):
+        for widget, state in self.configuration_widgets:
+            widget.configure(state='disabled' if locked else state)
+        self.workbook_button.configure(state='disabled' if locked or self.workbook_busy() else 'normal')
+
+    def _active_text(self):
+        if self.active_epoch is None:
+            text='실행 중 이미지: 연결 전'
+        elif self.active_dataset is None:
+            text='실행 중 이미지: 없음'
+        else:
+            text='실행 중 이미지: '+self.active_dataset.fingerprint[:16]
+        if self.pending_epoch is not None:text+=' · 새 이미지 적용 대기 중'
+        self.active.set(text)
+
+    def mark_session_active(self, dataset, epoch):
+        self.active_dataset=dataset;self.active_epoch=epoch
+        if self.pending_epoch == epoch:self.pending_epoch=None
+        self._active_text()
+
+    def mark_pending(self, epoch):
+        self.pending_epoch=epoch;self._active_text()
+
+    def clear_session(self):
+        self.active_dataset=None;self.active_epoch=None;self.pending_epoch=None
+        self._active_text();self.live.set('실행 중 층 데이터: 연결 전')
 
     def load_zip(self):
         if self.busy():return
@@ -93,8 +126,8 @@ class SlicePanel(ttk.Frame):
             self.debounce=self.after(100,self.start)
             return
         self.cancel_event.set();self.cancel_event=threading.Event();cancel=self.cancel_event
-        self.generation+=1;generation=self.generation;paths=self.paths
-        self.dataset=None;self.running=True;self.summary.set('분석 중… 운전 중 이미지 디코딩은 수행하지 않습니다.')
+        self.generation+=1;generation=self.generation;paths=self.paths;context=self.context_token()
+        self.dataset=None;self.running=True;self.summary.set('이미지 분석 중… 기존 실행 이미지는 유지됩니다.')
         def progress(done,total):
             try:self.progress.get_nowait()
             except queue.Empty:pass
@@ -103,7 +136,7 @@ class SlicePanel(ttk.Frame):
         def work():
             try:value=analyze(paths,config,cancel=cancel,progress=progress);error=None
             except Exception as exc:value=None;error=str(exc)
-            self.events.put((generation,value,error))
+            self.events.put((generation,context,value,error))
         self.worker=threading.Thread(target=work,name='IR-slice-analysis',daemon=True)
         self.worker.start()
 
@@ -114,7 +147,7 @@ class SlicePanel(ttk.Frame):
             if generation==self.generation:self.summary.set(f'슬라이싱 분석 {done}/{total}')
         except queue.Empty:pass
         while True:
-            try:generation,value,error=self.events.get_nowait()
+            try:generation,context,value,error=self.events.get_nowait()
             except queue.Empty:break
             if generation!=self.generation:continue
             self.running=False
@@ -123,17 +156,19 @@ class SlicePanel(ttk.Frame):
             for r in value.records[:1000]:self.table.insert('', 'end',values=(r.layer,r.name,f'{r.center_coverage_pct:.3f}',f'{r.center_intensity_pct:.3f}',f'{r.whole_coverage_pct:.3f}'))
             first,last=value.records[0],value.records[-1]
             self.summary.set(f'{len(value.records)}개 분석 완료 · {first.layer}~{last.layer}층 · 원형 영역 {first.roi_pixels}픽셀 · SHA256 {value.fingerprint[:16]}'+(' · 표는 처음 1000개, CSV에는 전체 저장' if len(value.records)>1000 else ''))
+            self.publish_dataset(value,context)
         self.pump_id=self.after(100,self._pump)
 
     def cancel(self):
         if self.busy():return
         if self.debounce is not None:self.after_cancel(self.debounce);self.debounce=None
-        self.cancel_event.set();self.generation+=1;self.running=False;self.dataset=None;self.summary.set('분석 취소됨 · 적용할 이미지 데이터 없음')
+        self.cancel_event.set();self.generation+=1;self.running=False;self.dataset=None;self.summary.set('분석 취소됨 · 실행 중 이미지는 유지됩니다.')
 
     def clear(self):
         if self.busy():return
         self.cancel();self.paths=();self.selected.set('선택한 파일 없음');self.table.delete(*self.table.get_children())
         if self.debounce is not None:self.after_cancel(self.debounce);self.debounce=None
+        self.publish_dataset(None,self.context_token())
 
     def export_csv(self):
         if self.dataset is None:messagebox.showinfo('슬라이싱 분석','분석을 먼저 완료하세요.',parent=self);return
@@ -143,7 +178,7 @@ class SlicePanel(ttk.Frame):
             except OSError as error:messagebox.showerror('저장 실패',str(error),parent=self)
 
     def export_workbook(self):
-        if self.busy() or self.running:return
+        if self.busy() or self.workbook_busy() or self.running:return
         if self.paths and self.dataset is None:messagebox.showinfo('수동 계산시트','분석을 완료하거나 선택을 지우세요.',parent=self);return
         path=filedialog.asksaveasfilename(parent=self,defaultextension='.xlsx',initialfile='IR_슬라이싱_수동계산.xlsx',filetypes=[('Excel','*.xlsx')])
         if path:

@@ -18,6 +18,8 @@ MAX_IMAGE_BYTES = 256 * 1024 * 1024
 MAX_IMAGE_PIXELS = 120_000_000
 MAX_FILES = 100_000
 MAX_ARCHIVE_BYTES = 16 * 1024**3
+# Each entry holds only a digest and six numeric results, never image bytes.
+MAX_MEASUREMENT_CACHE_ENTRIES = 256
 
 @dataclass(frozen=True)
 class SliceConfig:
@@ -170,7 +172,7 @@ def _measure(data, config, geometry=None):
             rgba = image.convert('RGBA')
             signal, alpha = rgba.convert('L'), rgba.getchannel('A')
         else:
-            signal = image.convert('L')
+            signal = image if image.mode == 'L' else image.convert('L')
         if not config.white_ink:
             signal = ImageOps.invert(signal)
         if alpha is not None:
@@ -225,20 +227,30 @@ def analyze(paths, config, *, cancel=None, progress=None):
                     return stream.read(MAX_IMAGE_BYTES + 1)
         mapped = _mapping(names, config)
         records = []; geometry = None; previous_layer = None; powder_run = 0
+        measurements = {}
         digest = hashlib.sha256(json.dumps(vars(config), sort_keys=True).encode())
         for index, (layer, name) in enumerate(mapped):
             _cancel(cancel)
-            data = read(name); values, geometry = _measure(data, config, geometry)
+            data = read(name)
+            if len(data) > MAX_IMAGE_BYTES:
+                raise ValueError('개별 이미지가 256 MiB를 초과했습니다.')
+            file_hash = hashlib.sha256(data).hexdigest()
+            values = measurements.get(file_hash)
+            if values is None:
+                values, geometry = _measure(data, config, geometry)
+                if len(measurements) >= MAX_MEASUREMENT_CACHE_ENTRIES:
+                    del measurements[next(iter(measurements))]
+                measurements[file_hash] = values
             _cancel(cancel)
             if layer != (previous_layer or 0) + 1:
                 powder_run = 0
             powder_run = powder_run + 1 if values[2] == 0 else 0
-            file_hash = hashlib.sha256(data).hexdigest()
             digest.update(json.dumps([layer, PurePosixPath(name.replace('\\', '/')).name, file_hash]).encode())
             records.append(SliceRecord(layer, PurePosixPath(name.replace('\\', '/')).name, *values, file_hash, powder_run))
             previous_layer = layer
             if progress:
                 progress(index + 1, len(mapped))
+        _cancel(cancel)
         return SliceDataset(config, tuple(records), digest.hexdigest())
     except zipfile.BadZipFile as exc:
         raise ValueError('손상된 ZIP 파일입니다.') from exc
