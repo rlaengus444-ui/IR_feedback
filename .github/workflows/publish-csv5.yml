@@ -17,7 +17,7 @@ jobs:
           $dest = Join-Path $env:RUNNER_TEMP 'IRFeedback'
           Expand-Archive -Path $zip -DestinationPath $dest
           if (!(Test-Path "$dest\IRFeedback.exe") -or !(Test-Path "$dest\runtime\pythonw.exe")) { throw 'Missing launcher or runtime' }
-          if ((Get-FileHash "$dest\app\layer_charts.py" -Algorithm SHA256).Hash -ne (Get-FileHash 'app\layer_charts.py' -Algorithm SHA256).Hash) { throw 'Graph source mismatch' }
+          if ((git hash-object --no-filters "$dest\app\layer_charts.py") -ne (git rev-parse HEAD:app/layer_charts.py)) { throw 'Graph source mismatch' }
           Copy-Item 'app\test_layer_charts.py' "$dest\app\test_layer_charts.py"
           Push-Location "$dest\app"
           & "$dest\runtime\python.exe" -m unittest -v test_layer_charts
