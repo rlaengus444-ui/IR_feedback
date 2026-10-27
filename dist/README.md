@@ -1,9 +1,9 @@
 # 무설치 실행판
 
-[IRFeedback-2026.10.27-csv.4.zip 다운로드](https://drive.google.com/file/d/1aOazW0PM1LQN6KvjQQ5aH8GDXMeK9tlb/view)
+[IRFeedback-2026.10.27-csv.5.zip (GitHub 릴리스)](https://github.com/rlaengus444-ui/IR_feedback/releases/tag/2026.10.27-csv.5) — 저장소 접근 권한이 있는 GitHub 계정으로 로그인하세요.
+
+[팀드라이브 파일](https://drive.google.com/file/d/1-uYsXv8mHEoRB_8UxQUmthwf1Jj5gBWs/view)은 Google Drive에서 악성코드 또는 스팸으로 분류되어 다운로드가 차단되어 있습니다.
 
 압축을 전체 해제한 뒤 IRFeedback.exe를 실행하세요. EXE 단독으로는 동작하지 않습니다. 정상 범위의 오래된 센서값은 감지할 수 없으며 실제 S3 출력은 미검증입니다.
 
-SHA-256: 19091c07323be471b11ec47283aeab866638a23abb546f4d8e1a6aeecbe2bfe8
-
-**배포 상태:** Google Drive에서 이 ZIP의 다운로드가 악성코드 또는 스팸 분류로 차단됩니다. Drive 링크는 저장 위치이며 현재 다운로드 가능 여부가 확인되지 않았습니다.
+SHA-256: a92df3e1a831b9fee5c0727e1147685049c0042cdbdc9a62fe0fae4cac5cd8a7
