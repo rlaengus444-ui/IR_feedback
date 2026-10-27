@@ -7,9 +7,13 @@ measurement of heater power. Only successful Save calls create save markers.
 from collections import OrderedDict
 from bisect import bisect_left
 from dataclasses import dataclass
+import csv
 import math
+import os
+from pathlib import Path
+import tempfile
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog, messagebox
 
 
 def _number(value):
@@ -22,6 +26,31 @@ def _number(value):
 def _power(value):
     value = _number(value)
     return value if value is not None and 0 <= value <= 100 else None
+
+
+def _write_csv(path, points):
+    """Atomically export a snapshot of all recorded observations for Excel."""
+    destination = Path(path)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8-sig", newline="",
+                                         dir=destination.parent, prefix=".ir-export-",
+                                         suffix=".tmp", delete=False) as stream:
+            temporary = stream.name
+            writer = csv.writer(stream)
+            writer.writerow(("층", "T_recoating (°C)", "IR 1 또는 공통 설정 (%)", "IR 2 설정 (%)",
+                             "IR 1 또는 공통 Save 성공값 (%)", "IR 2 Save 성공값 (%)", "IR 공통 설정"))
+            for point in points:
+                writer.writerow((point.layer, point.temperature, point.ir1_observed, point.ir2_observed,
+                                 point.ir1_saved, point.ir2_saved, "예" if point.coupled else "아니오"))
+        os.replace(temporary, destination)
+        temporary = None
+    finally:
+        if temporary is not None:
+            try:
+                os.unlink(temporary)
+            except FileNotFoundError:
+                pass
 
 
 class _HoverIndex:
@@ -124,6 +153,8 @@ class LayerCharts(ttk.Frame):
         self._target_temperature = None
         self._hover_indexes = {}
         self._redraw_pending = False
+        self._redraw_id = None
+        self.bind("<Destroy>", self._on_destroy, add="+")
         self._full_window = None
         self._full_canvases = None
         self.columnconfigure(0, weight=1)
@@ -144,7 +175,10 @@ class LayerCharts(ttk.Frame):
             canvas.bind("<Leave>", self._hide_tooltip)
         ttk.Label(self, text="최근 100층 표시 · IR 선: 확인된 설정 · 점: Save 성공값 (램프 실측값 아님)",
                   foreground="#536173", wraplength=750).grid(row=1, column=0, sticky="w", pady=(3, 0))
-        ttk.Button(self, text="전체보기", command=self.show_all).grid(row=1, column=1, sticky="e", pady=(3, 0))
+        buttons = ttk.Frame(self)
+        buttons.grid(row=1, column=1, sticky="e", pady=(3, 0))
+        ttk.Button(buttons, text="CSV 저장", command=self.export_csv).pack(side="left", padx=(0, 5))
+        ttk.Button(buttons, text="전체보기", command=self.show_all).pack(side="left")
         self._schedule_redraw()
 
     def reset(self):
@@ -168,9 +202,16 @@ class LayerCharts(ttk.Frame):
     def _schedule_redraw(self, _event=None):
         if not self._redraw_pending:
             self._redraw_pending = True
-            self.after_idle(self._redraw)
+            self._redraw_id = self.after_idle(self._redraw)
+
+    def _on_destroy(self, event):
+        if event.widget is self and self._redraw_id is not None:
+            self.after_cancel(self._redraw_id)
+            self._redraw_id = None
+            self._redraw_pending = False
 
     def _redraw(self):
+        self._redraw_id = None
         self._redraw_pending = False
         points = self.history.points
         recent = points[-100:]
@@ -182,6 +223,23 @@ class LayerCharts(ttk.Frame):
             temperature, power = self._full_canvases
             self._hover_indexes[temperature] = self._draw(temperature, points, False, self._target_temperature)
             self._hover_indexes[power] = self._draw(power, points, True)
+
+    def export_csv(self):
+        """Save all recorded layers, including those outside the recent view."""
+        if not self.history.points:
+            messagebox.showinfo("CSV 저장", "저장할 층 데이터가 없습니다.", parent=self.winfo_toplevel())
+            return
+        path = filedialog.asksaveasfilename(parent=self.winfo_toplevel(), title="층별 데이터 CSV 저장",
+                                           defaultextension=".csv", initialfile="층별_IR_온도.csv",
+                                           filetypes=(("CSV 파일", "*.csv"),))
+        if not path:
+            return
+        try:
+            _write_csv(path, self.history.points)
+        except (OSError, csv.Error) as error:
+            messagebox.showerror("CSV 저장 실패", str(error), parent=self.winfo_toplevel())
+            return
+        messagebox.showinfo("CSV 저장", "층별 데이터 전체를 저장했습니다.", parent=self.winfo_toplevel())
 
     def show_all(self):
         """Show the complete current-run history, updating as observations arrive."""

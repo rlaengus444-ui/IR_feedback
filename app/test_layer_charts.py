@@ -1,11 +1,14 @@
 """Read-only graph histories and plotting, without a device or Tk display."""
 
 from dataclasses import replace
+import csv
+from pathlib import Path
+import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from adapter_contracts import MachineWindow, UiSnapshot
-from layer_charts import LayerCharts, LayerHistory, _HoverIndex
+from layer_charts import LayerCharts, LayerHistory, _HoverIndex, _write_csv
 
 
 TARGET = MachineWindow("M1", 123, 456, "fixture", "C:/fixture.exe")
@@ -236,6 +239,45 @@ class TkHoverTests(unittest.TestCase):
         self.graph.show_all()
         self.root.update()
         self.assertEqual(2106, len(self.graph._hover_indexes[self.graph._full_canvases[0]].points))
+
+    def test_csv_saves_all_layers_and_distinguishes_settings_and_successful_saves(self):
+        for layer in range(2, 205):
+            self.graph.record(dict(snapshot=frame(str(layer), layer, coupled_output=False,
+                                                  heater1_setting_percent=0,
+                                                  heater2_setting_percent=44), applied={1: 12, 2: 13}))
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "층별 결과.csv"
+            with patch("layer_charts.filedialog.asksaveasfilename", return_value=str(path)), \
+                 patch("layer_charts.messagebox.showinfo") as success:
+                self.graph.export_csv()
+            success.assert_called_once()
+            self.assertEqual(b"\xef\xbb\xbf", path.read_bytes()[:3])
+            with path.open(encoding="utf-8-sig", newline="") as stream:
+                rows = list(csv.reader(stream))
+            self.assertEqual(206, len(rows))
+            self.assertEqual(["1", "64.25", "57.0", "", "57.0", "", "예"], rows[1])
+            self.assertEqual(["205", "64.0", "0.0", "44.0", "12.0", "13.0", "아니오"], rows[-1])
+            self.assertEqual(205, len(self.graph.history.points))
+
+    def test_cancel_and_save_failure_do_not_delete_history_or_existing_file(self):
+        with patch("layer_charts.filedialog.asksaveasfilename", return_value=""), \
+             patch("layer_charts.messagebox.showinfo") as success:
+            self.graph.export_csv()
+            success.assert_not_called()
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "existing.csv"
+            path.write_bytes(b"original")
+            with patch("layer_charts.os.replace", side_effect=OSError("blocked")):
+                with self.assertRaises(OSError):
+                    _write_csv(path, self.graph.history.points)
+            self.assertEqual(b"original", path.read_bytes())
+            self.assertEqual([path], list(Path(folder).iterdir()))
+            with patch("layer_charts.filedialog.asksaveasfilename", return_value=str(path)), \
+                 patch("layer_charts._write_csv", side_effect=OSError("blocked")), \
+                 patch("layer_charts.messagebox.showerror") as error:
+                self.graph.export_csv()
+                error.assert_called_once()
+            self.assertEqual(2, len(self.graph.history.points))
 
     def test_motion_and_leave_show_correct_temperature_and_overlapping_ir(self):
         for canvas, needle, expected in (
