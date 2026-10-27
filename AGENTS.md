@@ -43,3 +43,13 @@
 - Protect binary release artifacts under `dist/`, `IRFeedback.exe` and
   validation evidence; do not replace binaries or rewrite evidence during
   routine coding.
+
+## Required review evidence and failure handling
+
+- Follow [CODEX_REVIEW_PROTOCOL.md](CODEX_REVIEW_PROTOCOL.md) for actual invocation, evidence and authentication failures.
+- For escalated changes, invoke sol_reviewer with requested model gpt-6.1-sol and reasoning effort max, inspect the real diff/tests, wait for the final review response, resolve findings and re-review material fixes.
+- A model configuration, queued/running invocation, parent self-review or failed CLI request is not a completed independent review. Record the actual tool route, requested configuration, target revision/diff, findings, executed tests and untested limits.
+- Treat 401/451, token refresh failure, inaccessible model/effort, timeout or missing final response as review incomplete. Do not silently lower the model/effort or label another reviewer as Sol Max.
+- Preserve code and test evidence before authentication diagnosis. An authorized native collaboration route may supply a real Sol Max review while CLI authentication remains broken; report these states separately.
+- Ordinary coding and offline/mock checks may continue when review is unavailable. Keep final approval, deployment/distribution of mandatory-review changes and equipment application on hold until the required review is complete and any explicit user hold is lifted.
+- Release-critical and security-sensitive changes also require independent Sol review. A code review never establishes real equipment or experimental validation.
