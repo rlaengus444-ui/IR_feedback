@@ -1,4 +1,4 @@
-"""Bounded, read-only plots of completed-layer observations.
+"""Read-only plots of completed-layer observations.
 
 IR curves are settings observed when the CSV record was received, not a
 measurement of heater power. Only successful Save calls create save markers.
@@ -62,10 +62,10 @@ class LayerPoint:
 
 
 class LayerHistory:
-    """One point per observed layer, bounded and scoped to a production run."""
+    """One point per observed layer, scoped to a production run."""
 
-    def __init__(self, capacity=2000):
-        if not isinstance(capacity, int) or isinstance(capacity, bool) or capacity < 1:
+    def __init__(self, capacity=None):
+        if capacity is not None and (not isinstance(capacity, int) or isinstance(capacity, bool) or capacity < 1):
             raise ValueError("capacity must be a positive integer")
         self.capacity = capacity
         self.reset()
@@ -105,7 +105,7 @@ class LayerHistory:
         self._points[layer] = point
         self._points.move_to_end(layer)
         self._keys[layer] = key
-        while len(self._points) > self.capacity:
+        while self.capacity is not None and len(self._points) > self.capacity:
             removed, _ = self._points.popitem(last=False)
             del self._keys[removed]
         return True
@@ -118,12 +118,14 @@ class LayerHistory:
 class LayerCharts(ttk.Frame):
     """Two lightweight Tk canvases; call record(payload) on the Tk thread."""
 
-    def __init__(self, parent, capacity=2000, **kwargs):
+    def __init__(self, parent, capacity=None, **kwargs):
         super().__init__(parent, **kwargs)
         self.history = LayerHistory(capacity)
         self._target_temperature = None
         self._hover_indexes = {}
         self._redraw_pending = False
+        self._full_window = None
+        self._full_canvases = None
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.rowconfigure(0, weight=1)
@@ -140,8 +142,9 @@ class LayerCharts(ttk.Frame):
         for canvas in (self.temperature_canvas, self.power_canvas):
             canvas.bind("<Motion>", self._hover)
             canvas.bind("<Leave>", self._hide_tooltip)
-        ttk.Label(self, text="연결 후 수신한 층부터 표시 · IR 선: 확인된 설정 · 점: Save 성공값 (램프 실측값 아님)",
-                  foreground="#536173", wraplength=900).grid(row=1, column=0, columnspan=2, sticky="w", pady=(3, 0))
+        ttk.Label(self, text="최근 100층 표시 · IR 선: 확인된 설정 · 점: Save 성공값 (램프 실측값 아님)",
+                  foreground="#536173", wraplength=750).grid(row=1, column=0, sticky="w", pady=(3, 0))
+        ttk.Button(self, text="전체보기", command=self.show_all).grid(row=1, column=1, sticky="e", pady=(3, 0))
         self._schedule_redraw()
 
     def reset(self):
@@ -170,10 +173,51 @@ class LayerCharts(ttk.Frame):
     def _redraw(self):
         self._redraw_pending = False
         points = self.history.points
+        recent = points[-100:]
         self._hover_indexes = {
-            self.temperature_canvas: self._draw(self.temperature_canvas, points, False, self._target_temperature),
-            self.power_canvas: self._draw(self.power_canvas, points, True),
+            self.temperature_canvas: self._draw(self.temperature_canvas, recent, False, self._target_temperature),
+            self.power_canvas: self._draw(self.power_canvas, recent, True),
         }
+        if self._full_canvases is not None:
+            temperature, power = self._full_canvases
+            self._hover_indexes[temperature] = self._draw(temperature, points, False, self._target_temperature)
+            self._hover_indexes[power] = self._draw(power, points, True)
+
+    def show_all(self):
+        """Show the complete current-run history, updating as observations arrive."""
+        if self._full_window is not None:
+            self._full_window.deiconify()
+            self._full_window.lift()
+            return
+        window = tk.Toplevel(self)
+        self._full_window = window
+        window.title("층별 그래프 전체보기")
+        window.geometry("1100x650")
+        window.columnconfigure(0, weight=1)
+        for row, title in enumerate(("층별 T_recoating (°C)", "층별 IR 설정 (%)")):
+            window.rowconfigure(row, weight=1)
+            frame = ttk.LabelFrame(window, text=title)
+            frame.grid(row=row, column=0, sticky="nsew", padx=8, pady=4)
+            canvas = tk.Canvas(frame, background="white", highlightthickness=0)
+            canvas.pack(fill="both", expand=True)
+            canvas.bind("<Configure>", self._schedule_redraw)
+            canvas.bind("<Motion>", self._hover)
+            canvas.bind("<Leave>", self._hide_tooltip)
+            if row == 0:
+                temperature = canvas
+            else:
+                power = canvas
+        self._full_canvases = (temperature, power)
+        window.protocol("WM_DELETE_WINDOW", self._close_all)
+        self._schedule_redraw()
+
+    def _close_all(self):
+        window = self._full_window
+        self._full_window = None
+        self._full_canvases = None
+        if window is not None:
+            window.destroy()
+        self._schedule_redraw()
 
     def _hide_tooltip(self, event):
         event.widget.delete("hover-tooltip")

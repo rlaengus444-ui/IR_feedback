@@ -192,6 +192,51 @@ class TkHoverTests(unittest.TestCase):
     def tearDown(self):
         self.root.destroy()
 
+    def test_recent_window_boundary(self):
+        for layer in range(2, 100):
+            self.graph.record(dict(snapshot=frame(str(layer), layer)))
+        self.root.update()
+        self.assertEqual(100, len(self.graph._hover_indexes[self.graph.temperature_canvas].points))
+        self.assertTrue(self.graph._hover_indexes[self.graph.temperature_canvas].points[0][2].startswith("1층"))
+        self.graph.record(dict(snapshot=frame("100", 100)))
+        self.root.update()
+        self.assertEqual(101, len(self.graph.history.points))
+        self.assertEqual(100, len(self.graph._hover_indexes[self.graph.temperature_canvas].points))
+        self.assertTrue(self.graph._hover_indexes[self.graph.temperature_canvas].points[0][2].startswith("2층"))
+
+    def test_recent_100_and_live_full_window_preserve_all_received_layers(self):
+        for layer in range(2, 2105):
+            self.graph.record(dict(snapshot=frame(str(layer), layer,
+                                                  t_recoating_c=60 + layer % 5),
+                                   applied={1: 58}))
+        self.root.update()
+        self.assertEqual(2105, len(self.graph.history.points))
+        recent = self.graph._hover_indexes[self.graph.temperature_canvas].points
+        self.assertEqual(100, len(recent))
+        self.assertTrue(recent[0][2].startswith("2006층"))
+        self.assertTrue(recent[-1][2].startswith("2105층"))
+        self.graph.show_all()
+        self.root.update()
+        window = self.graph._full_window
+        full_temperature, full_power = self.graph._full_canvases
+        full = self.graph._hover_indexes[full_temperature].points
+        self.assertEqual(2105, len(full))
+        self.assertTrue(full[0][2].startswith("1층"))
+        self.assertTrue(full[-1][2].startswith("2105층"))
+        self.assertTrue(any(item[2].startswith("1층") for item in self.graph._hover_indexes[full_power].points))
+        self.graph.show_all()
+        self.assertIs(window, self.graph._full_window)
+        self.graph.record(dict(snapshot=frame("next", 2105)))
+        self.root.update()
+        self.assertEqual(2106, len(self.graph._hover_indexes[full_temperature].points))
+        self.assertTrue(self.graph._hover_indexes[self.graph.temperature_canvas].points[0][2].startswith("2007층"))
+        self.graph._close_all()
+        self.root.update()
+        self.assertEqual(2106, len(self.graph.history.points))
+        self.graph.show_all()
+        self.root.update()
+        self.assertEqual(2106, len(self.graph._hover_indexes[self.graph._full_canvases[0]].points))
+
     def test_motion_and_leave_show_correct_temperature_and_overlapping_ir(self):
         for canvas, needle, expected in (
             (self.graph.temperature_canvas, "64.25", ("1층", "64.25 °C")),

@@ -8,6 +8,8 @@
 
 자세한 조작 방법은 app/README.ko.md를 참고하세요.
 
+저장소의 그래프 소스에는 최근 100층 표시와 전체보기 기능이 추가되어 있습니다. 아래 기존 ZIP에는 아직 반영되지 않았습니다. 기존 압축을 푼 폴더의 `app/layer_charts.py`를 저장소의 최신 파일로 교체하면 적용됩니다.
+
 [전체 ZIP 다운로드 (팀 드라이브)](https://drive.google.com/file/d/1aOazW0PM1LQN6KvjQQ5aH8GDXMeK9tlb/view)
 
 SHA-256: `19091c07323be471b11ec47283aeab866638a23abb546f4d8e1a6aeecbe2bfe8`
