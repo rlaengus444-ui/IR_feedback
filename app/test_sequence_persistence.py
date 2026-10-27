@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -78,6 +79,25 @@ class SequencePersistenceTests(unittest.TestCase):
             self.save("71")
             return result
         with patch.object(persistence, "_read_shared", replacing):
+            with self.assertRaises(persistence.PersistenceUnavailable):
+                persistence.capture(self.target)
+
+    def test_earlier_owner_mutation_during_later_owner_read_is_detected(self):
+        self.save()
+        second = self.path.parent / 'Z.parameters.json'
+        second.write_text('[]')
+        original = persistence._read_shared
+        changed = False
+        def mutate(path):
+            nonlocal changed
+            data = original(path)
+            if path == second and not changed:
+                changed = True
+                stat = self.path.stat()
+                self.path.write_bytes(self.path.read_bytes().replace(b'"70"', b'"71"'))
+                os.utime(self.path, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+            return data
+        with patch.object(persistence, '_read_shared', mutate):
             with self.assertRaises(persistence.PersistenceUnavailable):
                 persistence.capture(self.target)
 

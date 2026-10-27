@@ -1,4 +1,6 @@
+from contextlib import contextmanager
 import csv
+import hashlib
 from datetime import datetime, timedelta
 import io
 import os
@@ -6,6 +8,9 @@ from pathlib import Path
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
+
+import csv_source
 
 from adapter_contracts import MachineWindow
 from csv_source import CsvSourceError, JobContext, JobLog, MonitoringCsvReader, log_timestamp
@@ -145,6 +150,54 @@ class CsvSourceTests(unittest.TestCase):
         self.assertFalse(result.is_new)
         self.assertNotEqual(first.sample.key,result.sample.key)
 
+    def test_same_size_rewrite_with_restored_mtime_rejects_invalid_sensor(self):
+        self.reader.read()
+        stat = self.path.stat()
+        original = self.path.read_bytes()
+        changed = original.replace(b',42,', b',-1,')
+        self.assertNotEqual(original, changed)
+        self.assertEqual(len(original), len(changed))
+        self.path.write_bytes(changed)
+        os.utime(self.path, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+        with self.assertRaisesRegex(CsvSourceError, '-1'):
+            self.reader.read()
+
+    def test_unstable_same_size_snapshot_is_not_accepted(self):
+        self.reader.read()
+        original = csv_source.shared_binary
+        path = self.path
+        @contextmanager
+        def changing(target):
+            with original(target) as stream:
+                class Wrapped:
+                    reads = 0
+                    def fileno(self): return stream.fileno()
+                    def seek(self, position): return stream.seek(position)
+                    def read(self, size):
+                        data = stream.read(size)
+                        self.reads += 1
+                        if self.reads == 1:
+                            stat = path.stat()
+                            path.write_bytes(data.replace(b',42,', b',41,'))
+                            os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+                        return data
+                yield Wrapped()
+        with patch.object(csv_source, 'shared_binary', changing):
+            result = self.reader.read()
+        self.assertFalse(result.is_new)
+        self.assertIsNone(result.token)
+
+    def test_rewritten_prefix_and_fresh_append_are_rebaselined(self):
+        baseline = self.reader.read()
+        stat = self.path.stat()
+        self.path.write_bytes(self.path.read_bytes().replace(b',42,', b',41,') + encode_rows([self.row(2, 43, self.now)]))
+        os.utime(self.path, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+        result = self.reader.read()
+        self.assertFalse(result.is_new)
+        self.assertNotEqual(baseline.sample.key, result.sample.key)
+        self.assertEqual(hashlib.sha256(self.path.read_bytes()).hexdigest(), result.token['sha256'])
+        self.assertFalse(self.reader.read().is_new)
+
     def test_job_change_clears_selected_path_and_old_observation(self):
         self.reader.read()
         self.log.context = JobContext("job-2",0,self.now,0,"AUTO")
@@ -195,6 +248,17 @@ class JobLogTests(unittest.TestCase):
             self.assertEqual(1059,second.current_layer)
             with path.open("a",encoding="utf-8") as stream:stream.write("2026-10-27오전060300...[BJT - AUTO]: AutoPrint finished!\n")
             self.assertEqual("IDLE",reader.read().state)
+
+    def test_same_size_log_rewrite_with_preserved_mtime_rebaselines(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory); (base / 'Logs').mkdir()
+            path = base / 'Logs/job_M1.log'
+            path.write_bytes(b'2026-10-27 AM060139...[BJT - AUTO]: AutoPrint started!\n2026-10-27 AM060143...[BJT - AUTO]: Layer: 1058 -> Current Z = 1.23\n')
+            reader = JobLog(MachineWindow('M1', 1, 2, 'fixture', str(base / 'Operator.exe')))
+            self.assertEqual(1058, reader.read().current_layer)
+            stat = path.stat(); data = path.read_bytes().replace(b'1058', b'1059')
+            path.write_bytes(data); os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+            self.assertEqual(1059, reader.read().current_layer)
 
     def test_other_machine_log_is_not_used(self):
         with tempfile.TemporaryDirectory() as directory:

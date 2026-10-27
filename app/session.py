@@ -12,6 +12,7 @@ from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavaila
 from layer_algorithm import LayerAdaptiveController, LayerSettings
 from target_temperature import TargetTemperatureSetting
 from excel_workbook import WorkbookController, WorkbookSpec
+from slice_data import SliceDataset
 
 
 def finite(value):
@@ -25,6 +26,7 @@ class SessionOptions:
     target_temperature_c: float = 65.0
     settings_path: Path | None = None
     workbook_spec: WorkbookSpec | None = None
+    slice_dataset: SliceDataset | None = None
     _target_temperature_setting: TargetTemperatureSetting = field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
@@ -36,6 +38,8 @@ class SessionOptions:
             raise ValueError("장비 자동 식별이 안 된 창은 조회 또는 미리보기로만 연결할 수 있습니다.")
         if self.workbook_spec is not None:
             self.workbook_spec.validate()
+        if self.slice_dataset is not None and not isinstance(self.slice_dataset, SliceDataset):
+            raise ValueError("검증된 슬라이싱 분석 데이터가 필요합니다.")
         object.__setattr__(self, "_target_temperature_setting",
                            TargetTemperatureSetting(self.target_temperature_c))
 
@@ -174,8 +178,12 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                             for controller in controllers.values():
                                 controller.reset()
                         for heater in heaters:
+                            extra = {}
+                            if options.workbook_spec is not None and options.workbook_spec.slice_start_cell:
+                                extra['slice_features'] = (options.slice_dataset.features(snapshot.layer_index + 1)
+                                    if options.slice_dataset is not None else None)
                             result = controllers[heater].process(snapshot.layer_index + 1,
-                                snapshot.t_recoating_c, values[heater])
+                                snapshot.t_recoating_c, values[heater], **extra)
                             held[heater] = result.power_percent
                             reasons[heater] = result.reason
                         last_layer = snapshot.layer_index
@@ -204,7 +212,9 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             display_target = options._target_temperature_setting.get() if options.mode == "monitor" else effective_target
             emit("snapshot", dict(snapshot=snapshot, effective_mode=effective_mode,
                                   proposed=dict(held), reasons=dict(reasons), applied=applied, status=status,
-                                  display_target_c=display_target))
+                                  display_target_c=display_target,
+                                  slice_features=(options.slice_dataset.features(snapshot.layer_index + 1)
+                                      if options.slice_dataset is not None and valid else None)))
             interval = snapshot.minimum_poll_seconds
             if not finite(interval):
                 interval = 1.0

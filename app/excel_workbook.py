@@ -23,6 +23,7 @@ import zipfile
 from xml.etree import ElementTree as ET
 
 from layer_algorithm import LayerRecommendation, number
+from slice_data import FEATURE_NAMES
 
 _CELL = re.compile(r"^\$?([A-Za-z]{1,3})\$?([1-9][0-9]{0,6})$")
 _SAFE_FUNCTIONS = frozenset("IF IFERROR IFNA AND OR NOT TRUE FALSE ABS MIN MAX SUM AVERAGE COUNT COUNTA COUNTIF COUNTIFS SUMIF SUMIFS AVERAGEIF AVERAGEIFS INT ROUND ROUNDUP ROUNDDOWN SIGN MOD POWER SQRT ISNUMBER ISBLANK ISTEXT ISERROR ISNA CHOOSE MATCH INDEX LOOKUP VLOOKUP HLOOKUP XLOOKUP SUMPRODUCT MEDIAN LARGE SMALL FLOOR CEILING TRUNC EXACT LEN LEFT RIGHT MID CONCAT CONCATENATE TEXT VALUE N NA".split())
@@ -55,6 +56,23 @@ class WorkbookSpec:
     recommendation_cell: str
     target_cell: str
     layer_cell: str | None = None
+    slice_start_cell: str | None = None
+
+    def slice_cells(self):
+        if not self.slice_start_cell:
+            return ()
+        column, row = _address(self.slice_start_cell)
+        result = []
+        for name in FEATURE_NAMES:
+            value, letters = column, ""
+            if column > 16384:
+                raise ValueError("슬라이싱 입력 열이 Excel 범위를 벗어났습니다.")
+            while value:
+                value, rem = divmod(value - 1, 26)
+                letters = chr(65 + rem) + letters
+            result.append((name, letters + str(row)))
+            column += 1
+        return tuple(result)
 
     def validate(self):
         if not self.path or Path(self.path).suffix.lower() != ".xlsx":
@@ -64,6 +82,7 @@ class WorkbookSpec:
         cells = [self.temperature_cell, self.actual_power_cell, self.recommendation_cell]
         if self.layer_cell:
             cells.append(self.layer_cell)
+        cells.extend(address for _, address in self.slice_cells())
         coords = [_address(cell) for cell in cells]
         target = _address(self.target_cell)
         if len({col for col, _ in coords}) != len(coords):
@@ -190,7 +209,8 @@ def inspect_workbook(spec: WorkbookSpec, data: bytes, stop_event=None):
             rec = element_at(spec.recommendation_cell)
             if rec is None or rec.find("m:f", _NS) is None:
                 raise ValueError("권장 IR 시작 셀에 수식이 있어야 합니다.")
-            for address in (spec.temperature_cell, spec.actual_power_cell, spec.layer_cell, spec.target_cell):
+            for address in (spec.temperature_cell, spec.actual_power_cell, spec.layer_cell, spec.target_cell,
+                            *(address for _, address in spec.slice_cells())):
                 if address:
                     c = element_at(address)
                     if c is not None and c.find("m:f", _NS) is not None:
@@ -296,7 +316,7 @@ class WorkbookController:
                            temperature=spec.temperature_cell, actual=spec.actual_power_cell,
                            recommendation=spec.recommendation_cell, target=spec.target_cell,
                            layer=spec.layer_cell, first=self.metadata["first_row"], last=self.metadata["last_row"],
-                           max_column=self.metadata["max_column"])
+                           max_column=self.metadata["max_column"], slice_inputs=dict(spec.slice_cells()))
             self._call(request, max(30.0, self.timeout))
         except Exception:
             self.close(force=True)
@@ -375,7 +395,7 @@ class WorkbookController:
         self._count = 0
         self._last_layer = None
 
-    def process(self, layer, temperature_c, previous_actual_power, restart=False):
+    def process(self, layer, temperature_c, previous_actual_power, restart=False, *, slice_features=None):
         if not isinstance(layer, int) or isinstance(layer, bool) or layer < 1:
             raise ValueError("층 번호는 양의 정수여야 합니다.")
         if not number(temperature_c) or not number(previous_actual_power) or not 0 <= previous_actual_power <= 100:
@@ -384,8 +404,36 @@ class WorkbookController:
             self.reset()
         if self.metadata["first_row"] + self._count > self.metadata["last_row"]:
             raise ValueError("Excel 수식이 준비된 층 수를 초과했습니다.")
-        response = self._call(dict(op="step", index=self._count, layer=layer,
-                                   temperature=temperature_c, actual=previous_actual_power, target=self.target))
+        request = dict(op="step", index=self._count, layer=layer,
+                       temperature=temperature_c, actual=previous_actual_power, target=self.target)
+        spec = getattr(self, 'spec', None)
+        if spec is not None and spec.slice_start_cell:
+            values = dict.fromkeys(FEATURE_NAMES)
+            values.update(image_valid=0, previous_image_valid=0, previous_powder_layers=0)
+            if slice_features is not None:
+                if set(slice_features) != set(FEATURE_NAMES):
+                    raise ValueError("슬라이싱 입력 항목이 일치하지 않습니다.")
+                values.update(slice_features)
+            for name, value in values.items():
+                if value is not None and not number(value):
+                    raise ValueError("슬라이싱 입력값이 올바르지 않습니다: " + name)
+                if value is None:
+                    continue
+                if name.endswith('_pct') and not 0 <= value <= 100:
+                    raise ValueError("슬라이싱 비율은 0~100이어야 합니다.")
+                if name in ('image_valid', 'previous_image_valid') and value not in (0, 1):
+                    raise ValueError("이미지 유효성은 0 또는 1이어야 합니다.")
+                if name == 'previous_powder_layers' and (type(value) is not int or value < 0):
+                    raise ValueError("무분사 참고 층 수가 올바르지 않습니다.")
+                if name in ('radius_mm', 'dpi_x', 'dpi_y') and value <= 0:
+                    raise ValueError("반경과 DPI는 양수여야 합니다.")
+            for prefix in ('', 'previous_'):
+                fields = ('center_coverage_pct', 'center_intensity_pct', 'whole_coverage_pct')
+                present = [values[prefix + name] is not None for name in fields]
+                if values[prefix + 'image_valid'] not in (0, 1) or (all(present) != bool(values[prefix + 'image_valid'])) or (any(present) and not all(present)):
+                    raise ValueError("누락 이미지와 수치의 유효성이 일치하지 않습니다.")
+            request['image'] = values
+        response = self._call(request)
         value = response.get("value")
         if not number(value) or not 0 <= value <= 100:
             raise ValueError("권장 IR 수식의 결과가 0~100 범위의 숫자가 아닙니다.")
