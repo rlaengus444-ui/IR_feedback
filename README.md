@@ -8,6 +8,7 @@
 
 - [전체 조작 방법](app/README.ko.md)
 - [슬라이싱 이미지와 수동시트](docs/SLICE_INPUT.ko.md)
+- [최신 수동 계산시트 두 종류와 선택 방법](docs/MANUAL_SHEETS.ko.md)
 - [이미지 기반 급락 억제와 검증 범위](docs/IMAGE_GUARD.ko.md)
 - [다운로드 DLL 로딩 수정과 검증 상태](docs/BRIDGE_VALIDATION.ko.md)
 - [이전 후보의 검증 상태](docs/SLICE_VALIDATION.ko.md)
