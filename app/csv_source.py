@@ -116,6 +116,8 @@ class JobLog:
         self.offset = 0
         self.pending = b""
         self.last_stat = None
+        self.window_start = 0
+        self.window_hash = None
 
     def read(self) -> JobContext:
         if self.target.machine not in {"M1", "S3"} or not self.target.image_path:
@@ -132,17 +134,39 @@ class JobLog:
                 stat = os.fstat(stream.fileno())
                 identity = (stat.st_dev, stat.st_ino)
                 signature = (identity, stat.st_size, stat.st_mtime_ns)
-                if signature == self.last_stat and self.offset >= stat.st_size:
-                    return self.context
                 reset = path != self.path or identity != self.identity or stat.st_size < self.offset
+                # Recheck the previously inspected window even when metadata is unchanged.
+                old = None
+                old_start = self.window_start
+                if not reset and self.window_hash is not None:
+                    stream.seek(self.window_start)
+                    old = stream.read(self.offset - self.window_start)
+                    if hashlib.sha256(old).digest() != self.window_hash:
+                        reset = True
                 if reset:
-                    if path == self.path:
-                        self.context = JobContext()
+                    self.context = JobContext()
                     self.offset = max(0, stat.st_size - self.MAX_INITIAL_BYTES)
                     self.pending = b""
-                stream.seek(self.offset)
-                raw = stream.read(self.MAX_INITIAL_BYTES if reset else self.MAX_APPEND_BYTES)
-                self.offset += len(raw)
+                    self.window_start = self.offset
+                end = min(stat.st_size, self.offset + (self.MAX_INITIAL_BYTES if reset else self.MAX_APPEND_BYTES))
+                # At most the last 8 MiB of consumed log is retained as identity.
+                start = max(self.window_start, end - self.MAX_INITIAL_BYTES)
+                stream.seek(start)
+                first = stream.read(end - start)
+                stream.seek(start)
+                second = stream.read(end - start)
+                after = os.fstat(stream.fileno())
+                current = path.stat()
+                overlap_changed = old is not None and not reset and first[:self.offset - start] != old[start - old_start:]
+                if (overlap_changed or first != second or
+                    (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns) != (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns) or
+                    (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns) != (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)):
+                    self.context = JobContext()
+                    self.path, self.identity, self.window_hash = None, None, None
+                    return self.context
+                raw = first[self.offset - start:]
+                self.offset = end
+                self.window_start, self.window_hash = start, hashlib.sha256(first).digest()
                 self.path, self.identity, self.last_stat = path, identity, signature
             lines = (self.pending + raw).split(b"\n")
             self.pending = lines.pop()
@@ -169,6 +193,8 @@ class JobLog:
                     self.context = replace(self.context, state="IDLE")
             return self.context
         except (OSError, UnicodeError):
+            self.context = JobContext()
+            self.path, self.identity, self.window_hash = None, None, None
             return self.context
 
 
@@ -222,6 +248,8 @@ class MonitoringCsvReader:
         self.latest = None
         self.last_signature = None
         self._last_scan = 0.0
+        self.generation = 0
+        self.prefix_hash = None
 
     def _select(self, context: JobContext):
         if context.first_started is None or context.first_layer is None:
@@ -245,6 +273,7 @@ class MonitoringCsvReader:
     def _clear_file(self):
         self.identity, self.header, self.latest, self.last_signature = None, None, None, None
         self.offset, self.pending = 0, b""
+        self.prefix_hash = None
 
     def _sample(self, row: list[str], context: JobContext) -> CsvSample | None:
         if len(row) != len(self.header):
@@ -269,7 +298,7 @@ class MonitoringCsvReader:
             raise CsvSourceError("CSV 행이 현재 작업의 시작 시점/층과 일치하지 않습니다.")
         recoating = record_time(data["TimeRecoatingFinished"])
         delay = (finish - recoating).total_seconds() if recoating and start <= recoating <= finish else None
-        identity = [str(self.path), self.identity, context.run_key, index, data["TimeStart"], temperature]
+        identity = [str(self.path), self.identity, self.generation, context.run_key, index, data["TimeStart"], temperature]
         key = hashlib.sha256(repr(identity).encode()).hexdigest()
         return CsvSample(index, temperature, data["TimeStart"], finish, delay, key)
 
@@ -293,15 +322,25 @@ class MonitoringCsvReader:
                     raise CsvSourceError("Monitoring CSV가 32 MiB 읽기 상한을 초과했습니다.")
                 identity = (before.st_dev, before.st_ino)
                 signature = (identity, before.st_size, before.st_mtime_ns)
-                reset = self.identity != identity or before.st_size < self.offset or (
-                    self.last_signature is not None and before.st_size == self.offset and signature != self.last_signature)
-                if reset: self._clear_file()
-                initial = self.header is None
-                stream.seek(self.offset)
-                raw = stream.read(self.MAX_FILE_BYTES if initial else 1024 * 1024)
+                # Two complete reads on the same shared handle detect in-place writes
+                # even when size and timestamps are restored by the writer.
+                stream.seek(0)
+                first = stream.read(self.MAX_FILE_BYTES + 1)
+                stream.seek(0)
+                second = stream.read(self.MAX_FILE_BYTES + 1)
                 after = os.fstat(stream.fileno())
-                if ((after.st_dev, after.st_ino), after.st_size, after.st_mtime_ns) != signature:
+                current = self.path.stat()
+                if (len(first) != before.st_size or first != second or
+                    ((after.st_dev, after.st_ino), after.st_size, after.st_mtime_ns) != signature or
+                    ((current.st_dev, current.st_ino), current.st_size, current.st_mtime_ns) != signature):
                     return CsvSnapshot(self.latest, context, None, False, "CSV 기록 중 · 완전한 행을 기다립니다.")
+                reset = self.identity is not None and (self.identity != identity or before.st_size < self.offset or
+                    self.prefix_hash != hashlib.sha256(first[:self.offset]).digest())
+                if reset:
+                    self.generation += 1
+                    self._clear_file()
+                initial = self.header is None
+                raw = first[self.offset:self.offset + (self.MAX_FILE_BYTES if initial else 1024 * 1024)]
             self.identity = identity
             combined = self.pending + raw
             quoted = False
@@ -333,13 +372,15 @@ class MonitoringCsvReader:
             self.pending = combined[start:]
             self.offset += len(raw)
             self.latest, self.last_signature = latest, signature
+            self.prefix_hash = hashlib.sha256(first[:self.offset]).digest()
             token = None
             if not self.pending and self.offset == before.st_size:
                 token = {"path":str(self.path), "size":before.st_size,
-                         "mtime_ticks":before.st_mtime_ns // 100 + 621355968000000000}
+                         "mtime_ticks":before.st_mtime_ns // 100 + 621355968000000000,
+                         "sha256":hashlib.sha256(first).hexdigest()}
             fresh = latest is not None and -2 <= self.clock() - latest.finished.timestamp() <= self.MAX_NEW_AGE_SECONDS
             after_connection = latest is not None and latest.finished.timestamp() >= self.connected_at
-            is_new = bool(changed and (not initial or after_connection) and token is not None and fresh)
+            is_new = bool(not reset and changed and (not initial or after_connection) and token is not None and fresh)
             return CsvSnapshot(latest, context, token, is_new,
                 "CSV 저장된 완료 층을 읽습니다. 측정부터 층 인쇄 완료까지의 지연이 있습니다.")
         except (OSError, UnicodeError, csv.Error) as exc:

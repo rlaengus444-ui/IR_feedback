@@ -133,8 +133,10 @@ def _read(path: Path) -> SequencePersistenceSnapshot:
         power = None
         ir_raw = None
         ir_stat = None
+        raw_by_name = {}
         for file_name, (owner_path, _) in inventory.items():
             entries, parameters, raw, stat = _read_entries(owner_path)
+            raw_by_name[file_name] = raw
             values[file_name + "\x1f__file__"] = True
             for identity, value in parameters.items():
                 if owner_path == path and identity == IR_SCOPE + "\x1f" + IR_NAME:
@@ -146,6 +148,16 @@ def _read(path: Path) -> SequencePersistenceSnapshot:
             power = _ir_value(entries)
         after_inventory = _inventory(path.parent)
         if inventory != after_inventory:
+            raise PersistenceUnavailable("Owner parameter files changed during the aggregate read.")
+        # A second aggregate pass detects mutation of an earlier owner while a
+        # later owner was read, including same-size writes with restored mtime.
+        first_hashes = {name: hashlib.sha256(raw_data).digest() for name, raw_data in raw_by_name.items()}
+        second_hashes = {}
+        for file_name, (owner_path, _) in after_inventory.items():
+            _, _, data, _ = _read_entries(owner_path)
+            second_hashes[file_name] = hashlib.sha256(data).digest()
+        final_inventory = _inventory(path.parent)
+        if after_inventory != final_inventory or first_hashes != second_hashes:
             raise PersistenceUnavailable("Owner parameter files changed during the aggregate read.")
     except OSError as exc:
         raise PersistenceUnavailable("Owner parameter files could not be inspected reliably.") from exc
