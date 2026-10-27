@@ -1,0 +1,254 @@
+{
+  "reviewed_at_utc": "2026-10-27 19:20:59 UTC",
+  "reviewer_route": {
+    "actual_route": "Native collaboration child /root/sol_reviewer; completed independent source/diff/test review",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "configuration_source": ".codex/agents/sol_reviewer.toml and explicit delegated request",
+    "provider_model_identity_independently_verified": false,
+    "cli_authentication_restored": false,
+    "note": "Native review completion does not establish restoration of the earlier failed CLI authentication."
+  },
+  "scope": {
+    "base_release_source": "4e9936ad6934b2efdbc73982fc33744e96375d55",
+    "reviewed_head": "20301b6e7d0e30fc4d85a43f3a3dbf825070b33a",
+    "working_tree_additions": "Previously reviewed powder workbook/reference/builder/tests, delivery script/guide and README clarifications are now committed in20301b6. Exact artifact hashes below are unchanged; no additional algorithm changes.",
+    "delivery": "Two evaluation XLSX files and 300-layer synthetic comparison; existing released slice.2 EXE unchanged. No new executable distribution reviewed or requested.",
+    "released_2_zip_sha256": "2c779dec24542d6b8ceb9fd3e85f7265a477f1720ea0be487314b5399a4b5dba",
+    "source_edits_by_reviewer": false,
+    "equipment_actions_by_reviewer": false,
+    "external_writes_by_reviewer": false,
+    "reviewed_core_parent": "2c9b2103c221e665783d407bec7ab36db9c805d0",
+    "prior_review_evidence_preserved_at": "/workspace/ir-image-guard-review/sol-final-review.precommit-2c9b210.json"
+  },
+  "disposition": {
+    "independent_post_review_complete": true,
+    "unresolved_P1_or_P2_code_defects_found": false,
+    "conclusion": "No unresolved P1/P2 defects found in the two exact workbook artifacts. Suitable for explicitly requested offline evaluation delivery with the unchanged released .2 program and the reviewed instructions. This is not final control-algorithm approval, equipment approval, or a claim of complete experimental validation.",
+    "excel_com_validated": false,
+    "final_algorithm_approval": "ON HOLD",
+    "real_equipment_application": "ON HOLD",
+    "stable_release_gate": "CLOSED; Windows readiness.json correctly remains false because Excel COM is unavailable."
+  },
+  "reviewed_implementation": [
+    "Absolute recovery: app/layer_algorithm.py:145-214 validates and classifies prior-image corroboration; 233-310 cancels/quarantines learning; 319-358 uses fixed prior actual-IR median R, entry min(2,beta/G), median temperature and two-layer rising trend, previous integral, final-command antiwindup, bounded slew, raw-hot positive block and finite 120+12 handoff. Workbook builder:161-182 mirrors final D and learning bookkeeping.",
+    "No-event/disabled/no-image legacy behavior retained. Missing image during an existing recovery does not cancel it. Current-image powder alone does not stop recovery; measured exit/deadline governs exit.",
+    "Powder reference:31-70 and builder:25-43 implement current planned-image phase. Known powder runs original control; binder and unknown return actual C. Phase boundaries cancel unfinished learning and restart fresh powder history while carrying last eligible G/alpha/beta. Continuous-powder manual steps retain original learning. Restart/gap uses configured initial gains. Manual hold changes adopt actual C and clear verified continuity.",
+    "Exact released .2 WorkbookSpec/inspect_workbook accepted both files with A13/B13/C13/D13/B5 and BL13:BW13. Recovery metadata: rows13..3012, max_column123(DS). Powder metadata: rows13..3012, max_column89(CK). Released .2 worker bytes equal reviewed worker; Calculate then freezes the full completed row through max_column. These were source/Python compatibility checks, not Microsoft Excel execution."
+  ],
+  "resolved_findings": [
+    {
+      "severity": "P2",
+      "finding": "Windows full test step failed in fc53ee4 in addition to Excel COM; two fixture reads used default CP1252 and raised UnicodeDecodeError.",
+      "resolution": "Explicit UTF-8 in the two tests; actual rerun 40564628004 at 2c9b210 shows182/182 PASS. Numerical sources and recovery XLSX unchanged."
+    },
+    {
+      "severity": "P2",
+      "finding": "Old .2 template-save button exports advisory-only workbook; instructions initially directed users there.",
+      "resolution": "Guide now directs browsing downloaded NEW XLSX and specifies all input/output mappings including BL13; warns against old export button."
+    },
+    {
+      "severity": "P2",
+      "finding": "Delivery table implied recovery stops at powder boundary.",
+      "resolution": "Table now explicitly states active recovery continues through powder until measured exit; actual delivered filenames used."
+    },
+    {
+      "severity": "P2 evidence",
+      "finding": "Generic ABS diagnostic names collided with powder helper CH/CI, falsely reporting trigger_count150 and age0.2.",
+      "resolution": "Raw copies preserved; sanitized CSV keeps core trajectory and clearly named phase/anchor fields; metrics remove ABS trigger/protection/timeout semantics. Independently verified corrected CSV and unchanged numerical trajectory."
+    },
+    {
+      "severity": "scientific interpretation",
+      "finding": "Low powder-hold peak in nominal model could be overgeneralized.",
+      "resolution": "Guide now states IR60 initially balances65C and stays60 throughout this example; ranking is conditional. Slower recovery/undershoot and model-only limitations are disclosed."
+    }
+  ],
+  "checks_executed_independently": [
+    {
+      "check": "Focused app tests: test_image_guard, test_layer_algorithm, test_slice_data, test_slice_excel",
+      "result": "42/42 PASS in81.417s; same numerical source/template as final"
+    },
+    {
+      "check": "Powder tests: release_tools/test_powder_hold.py",
+      "result": "4/4 PASS, including original80/67 fixture diagnostics and boundary/invalid cases"
+    },
+    {
+      "check": "No-event equality against original source loaded from git4e9936a",
+      "result": "55,000 diagnostic equalities over1,000 randomized observations, valid/missing images, manual actual powers and target changes; PASS"
+    },
+    {
+      "check": "Absolute-state numerical/output/antiwindup/hot invariants",
+      "result": "24,000 randomized observations across24 runs;24 qualified episodes; bounded output and age, fixed reference/gain, finite states, integral bounds and raw-hot nonincrease; PASS"
+    },
+    {
+      "check": "Independent causal recurrence, not simulation helper, versus preserved nominal CSV",
+      "result": "Four trajectories x300rows x4 sensor/physical/actual/command scalars =4,800 exact matches"
+    },
+    {
+      "check": "Streamed actual LibreOffice recalculated recovery/noimage/research books versus Python diagnostics",
+      "result": "83,700 matches; max_difference5.684341886080802e-14; every worksheet zero error cells; future A/B/C/image inputs blank"
+    },
+    {
+      "check": "Fresh108 cases reexecuted with released baseline/current source",
+      "result": "3,240 scalar metric comparisons exactly match preserved results; no tuning performed"
+    },
+    {
+      "check": "Powder wrapper versus independent original released-controller oracle",
+      "result": "12,000 mixed-phase observations:8,007 powder,3,993 holds;440,385 original diagnostic equalities PASS; manual/target changes, restart and gap included"
+    },
+    {
+      "check": "Streamed actual powder LibreOffice workbook versus recomputed reference from its input cells",
+      "result": "18,900 matches; max_difference5.684341886080802e-14; every worksheet zero error cells; future inputs blank"
+    },
+    {
+      "check": "Released .2 validator and request-contract compatibility",
+      "result": "Old modules verified byte-for-byte against original ZIP; both new workbooks accepted; all12 image mappings, actual absolute layer, target payload and gap reset/index checked without launching Excel"
+    },
+    {
+      "check": "Independent powder closed-loop causal recurrence and sanitized metadata",
+      "result": "2,100 core trajectory scalars exactly match; phase/anchor metadata correct; command60 throughout all300 in this model"
+    },
+    {
+      "check": "Combined comparison CSV and plot",
+      "result": "6,300 combined core scalars equal original/recovery/hold source CSVs; final PNG visually inspected, legend/curves/synthetic and untested limits consistent"
+    },
+    {
+      "check": "Exact delivery artifacts",
+      "result": "XLSX hashes match reviewed templates; both CRC checks pass; compressed and uncompressed sizes below old16MiB/128MiB limits"
+    }
+  ],
+  "evidence_inspected_not_executed_on_this_host": [
+    {
+      "path": "/workspace/ir-image-guard-review/windows-2c9b210",
+      "result": "Run40564628004 exact2c9b210: actual packaged Windows app182/182 PASS in78.761s; launcher normal close PASS; marked-DLL actual discover/init and9 checks PASS;6 native CSV guards PASS; build/reverify PASS; Excel COM not registered. New powder release_tools tests are not part of that182-test app suite."
+    },
+    {
+      "path": "/workspace/ir-image-guard-review/staged-v4/results.json",
+      "result": "Parent staged LibreOffice frozen-row target/manual/gap parity2,790 fields, zero errors; script and results inspected, separate from independent83,700/18,900 streams."
+    },
+    {
+      "path": "/workspace/ir-image-guard-review/all-app-v4.log",
+      "result": "Linux full suite182 with180pass and2 known Windows-specific platform failures; actual Windows182 subsequently allpass."
+    }
+  ],
+  "scientific_results_and_tradeoffs": {
+    "nominal_sensor_maximum_C": {
+      "original": 69.37301720240039,
+      "absolute_recovery": 66.34020144169988,
+      "powder_hold": 65.4370793699011
+    },
+    "nominal_sensor_MAE_C": {
+      "original": 1.6447393295311432,
+      "absolute_recovery": 1.069321474512625,
+      "powder_hold": 1.2974129059764483
+    },
+    "nominal_sensor_minimum_C": {
+      "original": 59.024039099011716,
+      "absolute_recovery": 59.024039099011716,
+      "powder_hold": 58.86600689866805
+    },
+    "absolute_recovery_fresh108": "73 triggered cases reduce sensor overshoot;35 unchanged no-trigger cases. No sensor or physical overshoot regressions in this finite grid; sensor MAE regresses3(max+0.05184385C), sensor undershoot27(max+0.44900504C); physical MAE3(max+0.07242970C), physical undershoot24(max+0.49433465C).",
+    "recovery_time_tradeoff": "Nominal first five consecutive sensor samples within+-0.5C occur72/74 layers after starts for absolute recovery, versus null/18 original and61/62 powder hold. Lower overshoot does not establish faster recovery.",
+    "bounded_load_stress": "Finite constant printed-block cooling: sensor overshoot7.90812->4.91083C; permanent bounded cooling4.79075->1.14938C. No unbounded accumulating-binder physical claim.",
+    "phase_and_model": "Measurement precedes current binder; current planned demand affects next sample. Cold-start zero hidden warmup. Prior image corroborates abrupt-drop recovery; current image is only the operational hold selector in powder policy. Model gains/lags/cooling/noise are assumed, not identified on equipment."
+  },
+  "remaining_limits": [
+    "Microsoft Excel COM unavailable on tested runner/user hardware. LibreOffice parity, old-source validator acceptance and Windows mocks do not establish actual Excel opening/recalculation/freeze timing or end-to-end .2 Excel operation.",
+    "No real S3/PLC/lamp writes or long-duration thermal/equipment validation. Final algorithm approval and real equipment use remain on hold. This review does not bypass existing manual approval or device guards.",
+    "Normal-looking stale sensor values and emissivity/bias cannot be independently resolved from CSV/slice plans. Images do not prove actual binder deposition, sensor ROI alignment or physical dryness. Missing means unknown.",
+    "Abrupt-drop guard does not improve cases without qualified detector evidence (e.g. gradual/shifted/missing-plan cases remain legacy). Finite model-grid results are not universal robustness guarantees.",
+    "Powder-hold policy deliberately gives D=C during binder/unknown even when hot. It cannot correct such temperature disturbances until a known-powder interval. Nominal constant-IR performance depends on initially balanced plant.",
+    "Existing .2 EXE must browse the downloaded new XLSX with correct sheet/cell/image mapping; its old template-save button still produces advisory-only files."
+  ],
+  "artifacts": [
+    {
+      "path": "/workspace/ir-image-guard-review/delivery/01_IR_이미지기반_회복제어_2026.10.28.xlsx",
+      "sha256": "eb34cd39d364011015bee1a03cc1c024a1bb41911df35ed5aeac41b299941c20",
+      "bytes": 11523470,
+      "uncompressed_bytes": 101607110,
+      "crc_pass": true
+    },
+    {
+      "path": "/workspace/ir-image-guard-review/delivery/02_IR_파우더층제어_분사층출력고정_2026.10.28.xlsx",
+      "sha256": "46fe77b0eaf57352ffffaa3bcc06d2e3e9a45dd3c339885961ca7922aaf7d7db",
+      "bytes": 5311848,
+      "uncompressed_bytes": 61985247,
+      "crc_pass": true
+    },
+    {
+      "path": "/workspace/ir-image-guard-review/delivery/IR_300층_두시트_비교.csv",
+      "sha256": "5ef7bce982c11a47a9115e25077c1aacaa765c0191c3848ec5b4cb1d7f79761f",
+      "bytes": 65000
+    },
+    {
+      "path": "/workspace/ir-image-guard-review/delivery/IR_300층_두시트_비교.png",
+      "sha256": "284bc5677acb1e9f79663a0142e782741e7589b2e3384ed6680d0619404ec2ca",
+      "bytes": 291180
+    },
+    {
+      "path": "/workspace/ir-image-guard-review/delivery/IR_300층_두시트_비교.pdf",
+      "sha256": "2539636a9ad6b1d6a7e667579f74b20b5fdf2d1a03706649ab29285fe1c2d80b",
+      "bytes": 56675
+    },
+    {
+      "path": "/workspace/ir-image-guard-review/delivery/두_계산시트_사용방법.md",
+      "sha256": "15092503025aa0144c8a71a12c9ff20cccdce67971a3869da44f2178cad1c0a6",
+      "bytes": 4758
+    },
+    {
+      "path": "/workspace/ir-image-guard-review/delivery/powder_hold_closed_loop_300.csv",
+      "sha256": "0d743b45df5c602b4b336e154088f2acea37196c3d3f873371b34a90da1a2be1",
+      "bytes": 21501
+    },
+    {
+      "path": "/workspace/ir-image-guard-review/delivery/powder_hold_closed_loop_metrics.json",
+      "sha256": "b2b38fae0af2680cf16db8e7643ff1d660981374be0a3d4c2991d7c6895ad9eb",
+      "bytes": 971
+    },
+    {
+      "path": "/workspace/IR_feedback/app/layer_algorithm.py",
+      "sha256": "caeb4ac9a5a679b5f6f019240694a38c51366f89cbf10f7b701d264a6c259298",
+      "bytes": 23641
+    },
+    {
+      "path": "/workspace/IR_feedback/app/image_guard.py",
+      "sha256": "b5b79b15e894dd6aaf620b71329ff5347e1fdeff32bca1d1456a3e7f08b7428b",
+      "bytes": 3712
+    },
+    {
+      "path": "/workspace/IR_feedback/app/workbook-replay.settings.json",
+      "sha256": "a8e9b91011e569085a20cd3c0f29cc4fe7d334eda4545f9ec4c04ce8a9c752fd",
+      "bytes": 1586
+    },
+    {
+      "path": "/workspace/IR_feedback/release_tools/build_image_guard_workbook.py",
+      "sha256": "38a155b4ed6e970ce43630fa5d0a543c042e5aed9d78adfd00aeef17fd06c23b",
+      "bytes": 18577
+    },
+    {
+      "path": "/workspace/IR_feedback/release_tools/powder_hold_reference.py",
+      "sha256": "ac1369def3a7839bac5ddd5e0d2a3f54b86e8c65128c6a064ff439ace4828112",
+      "bytes": 3520
+    },
+    {
+      "path": "/workspace/IR_feedback/release_tools/build_powder_hold_workbook.py",
+      "sha256": "729495571e621849916775080b1252439f0dd43bdf0630ad1a4876e51c5e7f5d",
+      "bytes": 5366
+    },
+    {
+      "path": "/workspace/IR_feedback/release_tools/test_powder_hold.py",
+      "sha256": "e41e8084d031b63fdc5d1ea32d3f41cc92e29dfe00ee7ddd112326d094aa79c9",
+      "bytes": 9516
+    },
+    {
+      "path": "/workspace/IR_feedback/release_tools/prepare_manual_sheet_delivery.py",
+      "sha256": "4895006b05106380b2d2ab220905cca2dba76992e1a639077a43140fc0e94322",
+      "bytes": 5499
+    },
+    {
+      "path": "/workspace/IR_feedback/docs/MANUAL_SHEETS.ko.md",
+      "sha256": "15092503025aa0144c8a71a12c9ff20cccdce67971a3869da44f2178cad1c0a6",
+      "bytes": 4758
+    }
+  ]
+}
