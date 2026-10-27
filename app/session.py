@@ -220,10 +220,12 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 if valid and image_baseline_layer is None:
                     image_baseline_layer = snapshot.layer_index
                 elif (valid and snapshot.observation_is_new is True and
-                      snapshot.layer_index != image_baseline_layer and snapshot.observation_key != last_key):
+                      snapshot.layer_index != image_baseline_layer and snapshot.observation_key != last_key and
+                      can_calculate and all(finite(values[heater]) for heater in heaters)):
                     image_waiting = False
                     image_hold = False
                 if image_hold and valid:
+                    image_baseline_layer = snapshot.layer_index
                     baseline_seen = True
                     last_key = snapshot.observation_key
                     known_run_key = snapshot.run_key

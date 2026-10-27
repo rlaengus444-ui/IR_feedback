@@ -201,6 +201,32 @@ class HandoffTests(unittest.TestCase):
         excel.process.assert_called_once()
         self.assertEqual(7, excel.process.call_args.args[0])
 
+    def test_unavailable_control_rows_never_replay_after_admission_returns(self):
+        options=SessionOptions(TARGET,mode='control',workbook_spec=SPEC,slice_dataset=A)
+        options._slice_dataset_setting.request(B)
+        excel=self.excel()
+        frames=[snapshot('base',0,observation_is_new=False,control_available=False),
+                snapshot('new',1,observation_is_new=True,control_available=False),
+                self.frame('new',1,False),self.frame('same-layer-edit',1),self.frame('future',2)]
+        adapter,reports,_=self.run_case(frames,options,excel)
+        excel.process.assert_called_once()
+        self.assertEqual(3,excel.process.call_args.args[0])
+        adapter.apply_ir_power.assert_called_once()
+        self.assertEqual('future',adapter.apply_ir_power.call_args.args[2])
+        self.assertTrue(all(not row['applied'] for row in reports[:-1]))
+
+    def test_missing_actual_setting_rows_never_replay_when_value_returns(self):
+        options=SessionOptions(TARGET,mode='preview',workbook_spec=SPEC,slice_dataset=A)
+        options._slice_dataset_setting.request(B)
+        excel=self.excel()
+        frames=[self.frame('base',0,False),self.frame('new',1,heater1_setting_percent=None),
+                self.frame('new',1,False),self.frame('same-layer-edit',1),self.frame('future',2)]
+        adapter,reports,_=self.run_case(frames,options,excel)
+        excel.process.assert_called_once()
+        self.assertEqual(3,excel.process.call_args.args[0])
+        self.assertTrue(all(not row['proposed'] for row in reports[:-1]))
+        adapter.apply_ir_power.assert_not_called()
+
     def test_builtin_math_and_history_are_unchanged_by_image_replacement(self):
         frames = [self.frame(str(i), i) for i in range(7)]
         first = SessionOptions(TARGET, mode='preview', slice_dataset=A)
