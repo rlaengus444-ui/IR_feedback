@@ -1,0 +1,53 @@
+{
+  "version": "2026.10.29-reconnect.2",
+  "candidate_commit": "82056bb2fda4c434a38505071ac0803421afc9c9",
+  "candidate_zip_sha256": "2fe4557e1397199d81e1f3a965c8017f932eeaccb2151585862b8cc73544ded8",
+  "candidate_zip_bytes": 35336760,
+  "entries": 3647,
+  "windows_run": 40819525731,
+  "windows_artifact": 12873823062,
+  "windows_artifact_outer_sha256": "sha256:f43d948a70bcd64cc34f4cd4716f69fec129522deda043fbec22bb24ffa99490",
+  "windows_artifact_outer_bytes": 34834274,
+  "actual_test_count": 227,
+  "actual_test_seconds": 55.438,
+  "windows_checks": {
+    "build": "success",
+    "tests": "success",
+    "smoke": "success",
+    "bridge": "success",
+    "csv_guard": "success",
+    "native_discovery": "success",
+    "slice_perf": "success",
+    "excel": "failure",
+    "reverify": "success"
+  },
+  "full_automated_gate_passed": false,
+  "excel": {
+    "excel_com_tested": false,
+    "release_ready": false,
+    "reason": "Excel COM is not registered"
+  },
+  "release_ready": false,
+  "equipment_application_approved": false,
+  "final_control_algorithm_approval": "ON HOLD",
+  "real_data_replay_completed": true,
+  "real_csv_files": 3,
+  "real_csv_rows": 1122,
+  "actual_m1_log_examined": false,
+  "replay_context_source": "screenshot first layer500/start09:50:38 + original CSV filenames/timestamps; simulated clock",
+  "real_csv_originals_unchanged": true,
+  "real_csvs_published": false,
+  "source_and_exact_packaged_app_replay_completed": true,
+  "required_json_files_parsed": [
+    "app/workbook-replay.settings.json",
+    "docs/validation/csv-resume-anchor-2026.10.29-review.json",
+    "docs/validation/csv-resume-anchor-2026.10.29-offline.json",
+    "docs/validation/csv-resume-real-data-2026.10.29.json"
+  ],
+  "direct_artifact_template_sha256": "8ca79120655954263c0f41a70f705d46f28338daccdc45449870261f14fad7c3",
+  "initial_disconnect_cause_confirmed": false,
+  "independent_release_review": "complete; evaluation prerelease only",
+  "delivery_published": false,
+  "independent_release_review_sha256": "940bbbeec948690e7967e72ccad909a7293293c042a18745394506fd2cc9c12b",
+  "evaluation_distribution_allowed": true
+}

@@ -1,0 +1,352 @@
+{
+  "reviewed_at_utc": "2026-10-29 04:57:57 UTC",
+  "timestamp_source": "clock__curr_time",
+  "review_phase": "FINAL independent evaluation-release POST review",
+  "candidate_commit": "82056bb2fda4c434a38505071ac0803421afc9c9",
+  "candidate_zip_sha256": "2fe4557e1397199d81e1f3a965c8017f932eeaccb2151585862b8cc73544ded8",
+  "candidate_version": "2026.10.29-reconnect.2",
+  "evaluation_distribution_allowed": true,
+  "independent_post_review_complete": true,
+  "equipment_application_approved": false,
+  "stable_release_approved": false,
+  "final_control_algorithm_approval": "ON HOLD",
+  "actual_excel_com_tested": false,
+  "review_route": {
+    "tool_route": "Native collaboration /root/sol_reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_verified": false,
+    "cli_authentication_restored": false
+  },
+  "disposition": {
+    "summary": "No unresolved P1/P2 findings remain in the reviewed parser fix, exact package or delivery workflow. The supplied real CSVs reproduce the reported reconnect error in the released parser and pass with the exact packaged fix. The exact new ZIP is eligible for authorized evaluation prerelease delivery only.",
+    "unresolved_findings": [],
+    "source_tree_clean": true,
+    "reported_reconnect_mechanism_confirmed_with_supplied_context": true,
+    "actual_user_csv_replay_completed": true,
+    "matching_M1_log_provided": false,
+    "initial_disconnect_cause_confirmed": false,
+    "user_site_new_exe_reconnect_tested": false,
+    "conditions": [
+      "Publish only the unchanged ZIP with SHA-256 2fe4557e1397199d81e1f3a965c8017f932eeaccb2151585862b8cc73544ded8; do not rebuild or substitute another artifact after review.",
+      "Use exact run40819525731 artifact12873823062 and pinned outer archive size/hash.",
+      "Evaluation prerelease with make_latest=false only; preserve expected Excel-unavailable evidence and stable/equipment false status.",
+      "Render only __PUBLISH_SOURCE__ in the reviewed direct-delivery template to an immutable commit containing this unaltered review JSON and the unchanged publisher/packaged SOURCES.",
+      "Keep raw user CSVs private/out of source and package. Do not claim actual M1 log inspection, initial-drop diagnosis, live equipment/Excel COM validation or final algorithm approval."
+    ],
+    "supersedes_only_prior_data_and_windows_blockers": "The old offline2d review remains unchanged as historical evidence. Its missing-user-CSV and missing-new-Windows-package blockers are now addressed for this specific replayed parser failure and exact candidate; its hardware/COM/final-approval limitations remain."
+  },
+  "scope_and_invariance": {
+    "program_fix_commit": "2d2c4af9253032dac237bb9cdbc2166aef27e02d",
+    "parser_sha256": "883e3cc2f143f42bcaefa107096f36f735025a33f757bcf1191120d9e6391d1c",
+    "parser_byte_identical_to_reviewed_fix": true,
+    "program_scope": "Strict exact-layer/±2s resume identity may be established by an unmeasured first row; that row never supplies temperature/key/token. A persistent latch makes the first valid stable-token batch baseline-only. Sentinel, numeric, chronology, duplicate, historical-boundary, content/hash, freshness and Save protections remain.",
+    "unchanged_core_components": [
+      "app/layer_algorithm.py",
+      "app/session.py",
+      "app/standalone_ir.py",
+      "app/windows_ui_adapter.py",
+      "app/layer_charts.py",
+      "app/plot_archive.py",
+      "app/excel_workbook.py",
+      "app/excel_worker.ps1",
+      "app/native_helper.ps1",
+      "app/UiaBridge.dll",
+      "app/sequence_persistence.py",
+      "app/slice_data.py",
+      "app/slice_panel.py",
+      "app/workbook-replay.settings.json"
+    ],
+    "preserved_user_features": [
+      "Control-only UI still requires explicit Connect",
+      "Editable/clearable BL13 default",
+      "Connected immutable image handoff",
+      "Full-history asynchronous CSV archive and fixed termination cutoff",
+      "No automatic image import; canceled task remains canceled"
+    ],
+    "release_only_changes": "Version/docs, actual-structure regression and mandatory linked evidence JSON packaging. Publisher changes only VERSION/release prose; critical publication gates are unchanged."
+  },
+  "real_csv_findings": {
+    "original_sha256": {
+      "1-LayerDatasheet_20261028_113356.csv": "89a3ee661e6f06ddb376bacdbc9e8a1989590dcf0b52c82f1714635f370bc167",
+      "2-LayerDatasheet_20261028_114628.csv": "72767c167001863e0a56cdd7d2954a88316a40c5f411bbb103b3db4d7d2cd0ba",
+      "3-LayerDatasheet_20261029_095038.csv": "ae29d11c0d4ad0667ff978a6a65df1dfc1b9954c379fb6b0a9ac4d36570c5dda"
+    },
+    "rows_per_file": [
+      4,
+      478,
+      640
+    ],
+    "total_rows": 1122,
+    "specific_cause": "Third CSV Id501/internal500 exists with TimeStart09:50:38 matching the screenshot context, TimePrintingFinished09:51:25, TemperaturePostRecoating0 and TimeRecoatingFinished DateTime.MinValue. It is completed but unmeasured. The released parser skipped it before anchor recognition, then rejected Id502/internal501 at09:51:25–09:52:33 exactly as shown.",
+    "retained_history": "File3 begins with the entire file2 byte sequence. Id479–500 are22 unstarted defaults. The candidate excludes477 prior valid completed temperatures; it does not turn0 into a physical reading.",
+    "released_vs_fixed": "First two files pass both parsers. Released c6a/reconnect.1 produces the exact screenshot error on file3; candidate accepts all three whole files as baselines through Id4/478/640.",
+    "context_limitation": "Context/clock were reconstructed from screenshot values, CSV filenames and row times. No actual M1 job log was supplied or inspected.",
+    "independent_exact_zip_parser_stream": "140 original-byte frames: Id501 metadata only without sample/token; Id502 baseline only; Id503–640 produce138 new observations once each; repeated reads produce0 new observations; final replay file equals the original bytes.",
+    "mock_session_evidence": "Parent executed a real-CSV/actual-packaged-code mocked session and reviewer inspected the report: history/Id501/Id502 cause0 calculations/Saves, Id503 first calculation and one mock Save, physical Saves0. This is gating evidence, not measured control performance."
+  },
+  "independent_checks_executed": [
+    {
+      "check": "Source BEFORE/POST and resolved boundary finding",
+      "passed": true,
+      "historical_review": "/workspace/ir-anchor-review/sol-incomplete-anchor-post-review.json",
+      "historical_sha256": "4ca122cb5fd3bebe1314abbffee9670983ee03e285562945d850f1ed2d089fc3",
+      "resolved": "Post-anchor older timestamp-completed rows at temperature0 previously bypassed the boundary check. Fixed in2d and independently retested same-batch/after-metadata/after-baseline variants. Sticky first-baseline/partial/chunk/whitelist probes also passed."
+    },
+    {
+      "check": "Final code focused tests",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python -m unittest test_csv_source test_csv_reconnect test_csv_resume_anchor test_session.WorkerTests -q",
+      "passed": true,
+      "tests": 66,
+      "seconds": 7.061,
+      "execution_target": "bde192a application/test bytes; byte-identical application/test code in final82056bb (later changes are only docs/SOURCES)."
+    },
+    {
+      "check": "Package verifier unit tests",
+      "passed": true,
+      "tests": 3,
+      "seconds": 0.023,
+      "working_directory": "/workspace/IR_feedback_anchor_fix/release_tools",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python -m unittest test_verify_package -q"
+    },
+    {
+      "check": "Explicit omission negatives",
+      "passed": true,
+      "cases": 5,
+      "files": [
+        "docs/CSV_RESUME_ANCHOR.ko.md",
+        "app/workbook-replay.settings.json",
+        "docs/validation/csv-resume-anchor-2026.10.29-review.json",
+        "docs/validation/csv-resume-anchor-2026.10.29-offline.json",
+        "docs/validation/csv-resume-real-data-2026.10.29.json"
+      ],
+      "note": "Synthetic package fixture removes each independently; every omission raises missing required file. The runtime settings JSON was already mandatory; this does not claim it was missing from the old release."
+    },
+    {
+      "check": "Full exact ZIP verification",
+      "passed": true,
+      "zip_entries": 3647,
+      "checks": [
+        "ZIP CRC",
+        "safe unique/case-insensitive paths",
+        "required runtime/Pillow/license files",
+        "all packaged source bytes",
+        "complete manifest and every file hash",
+        "version",
+        "exact full ZIP SHA-256"
+      ]
+    },
+    {
+      "check": "Actual JSON files in final ZIP",
+      "passed": true,
+      "files": [
+        "app/workbook-replay.settings.json",
+        "docs/validation/csv-resume-anchor-2026.10.29-review.json",
+        "docs/validation/csv-resume-anchor-2026.10.29-offline.json",
+        "docs/validation/csv-resume-real-data-2026.10.29.json"
+      ],
+      "assertions": [
+        "present",
+        "valid JSON",
+        "exact source bytes",
+        "hashes covered by verified manifest"
+      ]
+    },
+    {
+      "check": "Exact ZIP parser real-data replay",
+      "passed": true,
+      "method": "Loaded csv_source.py directly from the approved ZIP into an isolated module; replayed private original byte copies with explicit screenshot-derived context and simulated clock.",
+      "whole_file_rows": [
+        4,
+        478,
+        640
+      ],
+      "stream_frames": 140,
+      "metadata_only_id": 501,
+      "baseline_id": 502,
+      "new_count": 138,
+      "new_ids_first_last": [
+        503,
+        640
+      ],
+      "duplicate_new_count": 0,
+      "final_stream_bytes_equal_original": true,
+      "actual_device_actions": 0
+    },
+    {
+      "check": "Source/package component byte comparisons",
+      "passed": true,
+      "critical_packaged_files_match": 15,
+      "other_core_components_unchanged_vs_c6a": 14,
+      "raw_user_csvs_not_packaged_or_git_tracked": true
+    },
+    {
+      "check": "Direct downloader exact embedded code",
+      "passed": true,
+      "scenario_count": 12,
+      "scenarios": [
+        "success",
+        "wrong_id",
+        "wrong_digest",
+        "expired",
+        "wrong_run",
+        "wrong_source",
+        "wrong_repository",
+        "wrong_size",
+        "download_wrong_size",
+        "download_wrong_digest",
+        "metadata403",
+        "existing_download"
+      ],
+      "method": "Fully mocked gh subprocesses, real approved outer artifact bytes, private TEMP directories. Wrong metadata/403 never download; corrupt bytes never extract; existing file preserved. Successful extraction inner SHA matches approved ZIP.",
+      "actual_external_calls": 0
+    },
+    {
+      "check": "Publisher final exact ZIP offline tests",
+      "passed": true,
+      "scenarios": [
+        "success",
+        "wrong_review_zip",
+        "existing_tag",
+        "bad_asset_digest"
+      ],
+      "actual_complete_package_verifier_used": true,
+      "actual_external_calls": 0,
+      "assertions": [
+        "wrong review rejected before any API mock call",
+        "existing tag never overwritten",
+        "bad asset digest remains draft",
+        "success draft->verified assets->evaluation publish latest=false",
+        "original Actions checksum file unchanged"
+      ]
+    }
+  ],
+  "windows_evidence_inspected": {
+    "execution_route": "Actual GitHub Actions Windows packaged Python3.14.5/Pillow13.0.0. Reviewer independently inspected reports/metadata and verified exact artifacts locally; not a claim of running Windows on the Linux review host.",
+    "run_id": 40819525731,
+    "artifact_id": 12873823062,
+    "artifact_name": "slice-candidate-82056bb2fda4c434a38505071ac0803421afc9c9",
+    "directory": "/workspace/ir-anchor-review/windows-82056bb",
+    "outer_size_bytes": 34834274,
+    "outer_sha256": "f43d948a70bcd64cc34f4cd4716f69fec129522deda043fbec22bb24ffa99490",
+    "inner_size_bytes": 35336760,
+    "inner_sha256": "2fe4557e1397199d81e1f3a965c8017f932eeaccb2151585862b8cc73544ded8",
+    "application_tests": {
+      "passed": 227,
+      "failed": 0,
+      "seconds": 55.438
+    },
+    "checks": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "excel": "failure",
+      "reverify": "success"
+    },
+    "native_discovery_checks": 14,
+    "motw_bridge_checks": 9,
+    "native_csv_guard_checks": 6,
+    "launcher": "Actual launcher PID7336, packaged pythonw PID7196 and expected window observed; owned application closed normally after WM_CLOSE.",
+    "slice_analysis": "Detailed report passed; exact parity/fingerprints in all three synthetic ZIPs. Not a real equipment latency test.",
+    "excel": {
+      "excel_com_tested": false,
+      "release_ready": false,
+      "reason": "Excel COM is not registered"
+    },
+    "original_readiness_preserved": {
+      "automated_checks_passed": false,
+      "release_ready": false,
+      "device_application_approved": false,
+      "final_sol_review": "pending"
+    },
+    "report_sha256": {
+      "candidate.json": "0c6896529c899bfbbc6857c3be95d59eac25d183f1a8e5ad7f71a60bb288a833",
+      "readiness.json": "5dfb2f5a4b4b7eb66bf2e98d6cbda1538d3f3ee802433c52ec894d6e967ff42d",
+      "tests.txt": "d0d27b502fa4623fb7533b314b94548fab0cd4446789b071e5dbb6811e38b8f4",
+      "smoke.txt": "a02723ac715fd93da3a5b0bc4809e3c856084b285c7372243a043d59f200ebff",
+      "bridge.json": "4e298b7327578cf641b965af1f98bae046112196045fc17d5574800bb90353fd",
+      "csv-guard.json": "ee1e03d8997a096cbbcdc5d96bc27921c8bd8e13cb6125241b6aa04d4e151b6d",
+      "discovery.json": "339fd33348bbbf2cdcf4a74588bc429b9a7a119717ef013d4d1a9fc5544ce507",
+      "slice-performance.json": "e903739650b1724556e7481f353dc5e06301b90f13739192f9b0e51595fc3257",
+      "excel.json": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03",
+      "SHA256.txt": "f01a1765e56b752795f005551c58a5ef3d32142362f0eebaf38f6a245366a03f"
+    },
+    "artifact_metadata_sha256": "b098102a56d4a165e179dc79ac7cb6e4523979195b4c6f553d9c3f8ccad8d2e8",
+    "transfer_note": "Parent reports ordinary official GitHub artifact-connector download after a CLI Azure redirect403, without proxy/credential-policy override. Reviewer did not refetch or bypass access controls; independently verified the obtained full outer size/SHA against recorded artifact metadata."
+  },
+  "other_evidence_inspected": {
+    "linux_suite": {
+      "path": "/workspace/ir-anchor-review/linux-suite.json",
+      "sha256": "466d7e2316e8c16e9455811950202f088afb4698ea830b73ce4d9884a5f283ef",
+      "tests": 225,
+      "passed": true,
+      "seconds": 44.892,
+      "platform_exclusions": [
+        "test_session.SingleInstanceTests.test_actual_private_mutex_prevents_a_second_owner_and_can_be_reacquired",
+        "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed"
+      ],
+      "note": "Parent executed on the same application/test bytes before final doc/SOURCES additions; reviewer read the report. Tk repeated-root teardown warnings remain, not warning-free. Final actual Windows suite includes both excluded checks."
+    },
+    "private_real_data_reports_sha256": {
+      "real-csv-released-reconnect.1.json": "475f32368afe27cd66b8605f05833368aa29b3a5c2f81064d3b43ff7b7564fa2",
+      "real-csv-candidate-2d2c4af.json": "b5e865e5054cebe39b817178de5c298c16c82e0c82817a34c8385ad17e72ece8",
+      "real-csv-packaged-82056bb.json": "ef6b2018a49a560c00ec4d7a426e24bcaecd5915b0180efce56ba70fa3e87ac4",
+      "real-csv-extra-probes.json": "faa5d30b8ff475c603090d3da6c4c43cd2aa543a1ad0252d32722675a32e2e6e"
+    },
+    "extra_probe_note": "Terra/helper executed and reviewer inspected: all three files coexisting with reversed mtime still select exact context filename; -1,±3s anchor, malformed finish, historical completion after anchor and missing anchor reject. Not claimed as reviewer execution."
+  },
+  "delivery_review": {
+    "template_path": "/workspace/ir-anchor-review/publish-reconnect2-direct-workflow.template.yml",
+    "template_sha256": "8ca79120655954263c0f41a70f705d46f28338daccdc45449870261f14fad7c3",
+    "embedded_python_sha256": "1e40bee7a74dd06a34b4c1c9d99c31bd3cf8b3e5d19cd5112865014177ee85a0",
+    "publisher_sha256": "cb0a52abdd1def88c739e20d3fff0c058fff2e8bc3c0cc1cf03cc62dee5c1a83",
+    "verifier_sha256": "b69e321324a7717c74ef35b009447b683373003489fd8111d9e01e1f8ed8a857",
+    "exact_pins": {
+      "repository": "rlaengus444-ui/IR_feedback",
+      "artifact_id": 12873823062,
+      "run_id": 40819525731,
+      "source_commit": "82056bb2fda4c434a38505071ac0803421afc9c9",
+      "outer_size_bytes": 34834274,
+      "outer_sha256": "f43d948a70bcd64cc34f4cd4716f69fec129522deda043fbec22bb24ffa99490",
+      "inner_sha256": "2fe4557e1397199d81e1f3a965c8017f932eeaccb2151585862b8cc73544ded8",
+      "repository_id": 1434868115,
+      "head_repository_id": 1434868115
+    },
+    "transport": "Exact direct API metadata and binary ZIP GET using job GITHUB_TOKEN only,30s/60s timeouts, exclusive output, complete outer identity/size/SHA before bounded safe CRC-checked extraction. No name/latest lookup, PAT, signed-URL logging or auth fallback.",
+    "publication_gates": "Unchanged completed-review commit/ZIP binding, eight non-Excel outcomes and detailed native reports, expected COM gap/equipment false, full package/source verifier and passing test summary before mutations. Refuses existing tag/release, creates pinned lightweight tag and draft prerelease, checks asset state/size/server SHA, publishes latest=false and verifies readback before URL.",
+    "live_workflow_GITHUB_TOKEN_access_tested_for_this_artifact": false,
+    "failure_policy": "Any runtime auth403, metadata/hash/CRC/path mismatch, timeout or publisher validation failure stops delivery; no permission bypass is authorized.",
+    "external_publication_performed_by_reviewer": false
+  },
+  "source_sha256": {
+    "app/csv_source.py": "883e3cc2f143f42bcaefa107096f36f735025a33f757bcf1191120d9e6391d1c",
+    "app/layer_algorithm.py": "c58716206a14dab21239df024746a596828205084676b537fef47a0edf7ffc19",
+    "app/session.py": "23a66f27315222082594043787b638bb2a608d87f84f2e5b807a3f6eb03efcb9",
+    "app/standalone_ir.py": "5eea58d28a6841f72ec69db0799bd8711bb89405930805ebdf0c812434193292",
+    "app/windows_ui_adapter.py": "cf4265a2133790f7138f21ccad1b193dc77262c30f0b60b2568d9f34edc7c0d7",
+    "app/layer_charts.py": "379195c5f64dfbd04ab89ca149b8910669e56601c2bb93a8ec06f6acd939e59c",
+    "app/plot_archive.py": "1f12d53a8b3b26701a6bb07b73625471fe6f0d3696e85c76366a0935f6effdc5",
+    "app/excel_workbook.py": "aa4ff1cdb4769ff3f5043b3f1e9727fccf77aac8b6066baa1a4a023318b80df1",
+    "app/excel_worker.ps1": "8da89bce68691fff1b438e1a71c9b5ab9313b3a96bcb2572dd2b5b0070f64075",
+    "app/native_helper.ps1": "937acdce7bfd76605451ab63a62f1bb49c5fcb69b98d192166a5077ba6e571f3",
+    "app/UiaBridge.dll": "181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f",
+    "app/sequence_persistence.py": "f56f9a18043746eb1c71027b32d0588b3848fcc83867d610bd85b507e0f090a6",
+    "app/slice_data.py": "acbe9f4bd9825e4667b32f3fbcd38f5db5b81a18bf00806f589ed3b045bb6875",
+    "app/slice_panel.py": "fe16747b9115f632fa741ce615a0595288fd50e74f067127f0b9badbda0b56c1",
+    "app/workbook-replay.settings.json": "3453c5f1911f484ced847505ce30c5f94367eb168f8f5402f5ec96ac31d3a8e6"
+  },
+  "limitations": [
+    "No actual M1 log was supplied. Screenshot context and recorded file data suffice to reproduce this specific parser error; job-log IO/freshness on the user machine has not been independently validated.",
+    "The original connection drop and live user-site reconnection with this new EXE remain unverified.",
+    "No actual Excel COM, M1/S3 sensor, PLC, heater/lamp or production Sequence Save was operated. Mock Save counts verify admission flow, not actual power or thermal performance.",
+    "CSV timestamps/hashes cannot independently prove freshness of normal-looking physical sensor values.",
+    "Old offline review JSON/readiness records remain historical and unchanged; their pending/blocked fields must not be relabeled as having passed at the earlier time.",
+    "Raw CSVs remain private; only sanitized summary/hash evidence and synthetic-structure regression are committed.",
+    "Windows full tests pass, but Tk teardown warnings are preserved; do not claim warning-free operation or absolute perfection.",
+    "Final algorithm approval and real equipment application remain explicitly on hold."
+  ]
+}

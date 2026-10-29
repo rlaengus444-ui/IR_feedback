@@ -1,0 +1,75 @@
+{
+  "scope": "Linux offline temporary copies; simulated job contexts; actual machine log unavailable",
+  "original_sha256_before": {
+    "1-LayerDatasheet_20261028_113356.csv": "89a3ee661e6f06ddb376bacdbc9e8a1989590dcf0b52c82f1714635f370bc167",
+    "2-LayerDatasheet_20261028_114628.csv": "72767c167001863e0a56cdd7d2954a88316a40c5f411bbb103b3db4d7d2cd0ba",
+    "3-LayerDatasheet_20261029_095038.csv": "ae29d11c0d4ad0667ff978a6a65df1dfc1b9954c379fb6b0a9ac4d36570c5dda"
+  },
+  "original_sha256_after": {
+    "1-LayerDatasheet_20261028_113356.csv": "89a3ee661e6f06ddb376bacdbc9e8a1989590dcf0b52c82f1714635f370bc167",
+    "2-LayerDatasheet_20261028_114628.csv": "72767c167001863e0a56cdd7d2954a88316a40c5f411bbb103b3db4d7d2cd0ba",
+    "3-LayerDatasheet_20261029_095038.csv": "ae29d11c0d4ad0667ff978a6a65df1dfc1b9954c379fb6b0a9ac4d36570c5dda"
+  },
+  "originals_unchanged": true,
+  "all_three_coexisting_selection": [
+    {
+      "source": "1-LayerDatasheet_20261028_113356.csv",
+      "selected": "LayerDatasheet_20261028_113356.csv",
+      "correct_repeated": true,
+      "sample_id": 4,
+      "new": false,
+      "selected_sha256": "89a3ee661e6f06ddb376bacdbc9e8a1989590dcf0b52c82f1714635f370bc167"
+    },
+    {
+      "source": "2-LayerDatasheet_20261028_114628.csv",
+      "selected": "LayerDatasheet_20261028_114628.csv",
+      "correct_repeated": true,
+      "sample_id": 478,
+      "new": false,
+      "selected_sha256": "72767c167001863e0a56cdd7d2954a88316a40c5f411bbb103b3db4d7d2cd0ba"
+    },
+    {
+      "source": "3-LayerDatasheet_20261029_095038.csv",
+      "selected": "LayerDatasheet_20261029_095038.csv",
+      "correct_repeated": true,
+      "sample_id": 640,
+      "new": false,
+      "selected_sha256": "ae29d11c0d4ad0667ff978a6a65df1dfc1b9954c379fb6b0a9ac4d36570c5dda"
+    }
+  ],
+  "mtime_order": "reverse chronological, first file newest",
+  "adversarial_third_file": [
+    {
+      "name": "anchor_minus_one",
+      "rejected": true,
+      "error": "온도계 비활성 값(-1°C)이 기록되어 IR 제어를 중단합니다."
+    },
+    {
+      "name": "anchor_start_minus_3s",
+      "rejected": true,
+      "error": "CSV 행이 현재 작업의 시작 시점/층과 일치하지 않습니다. [원인=재시작 시작 행의 시각이 없거나 일치하지 않음; CSV Id=501(내부 층=500); 작업 시작 내부 층=500; 행 시작=2026-10-29 09:50:35; 행 완료=2026-10-29 09:51:25; 로그 시작=2026-10-29 09:50:38]"
+    },
+    {
+      "name": "anchor_start_plus_3s",
+      "rejected": true,
+      "error": "CSV 행이 현재 작업의 시작 시점/층과 일치하지 않습니다. [원인=재시작 시작 행의 시각이 없거나 일치하지 않음; CSV Id=501(내부 층=500); 작업 시작 내부 층=500; 행 시작=2026-10-29 09:50:41; 행 완료=2026-10-29 09:51:25; 로그 시작=2026-10-29 09:50:38]"
+    },
+    {
+      "name": "anchor_bad_finish",
+      "rejected": true,
+      "error": "CSV 행이 현재 작업의 시작 시점/층과 일치하지 않습니다. [원인=재시작 시작 행의 시각이 없거나 일치하지 않음; CSV Id=501(내부 층=500); 작업 시작 내부 층=500; 행 시작=2026-10-29 09:50:38; 행 완료=미기록/해석 불가; 로그 시작=2026-10-29 09:50:38]"
+    },
+    {
+      "name": "history_after_anchor",
+      "rejected": true,
+      "error": "CSV 행이 현재 작업의 시작 시점/층과 일치하지 않습니다. [원인=재시작 시작 행 뒤에 이전 완료 층이 나타남; CSV Id=1(내부 층=0); 작업 시작 내부 층=500; 행 시작=2026-10-28 11:46:28; 행 완료=2026-10-28 11:47:09; 로그 시작=2026-10-29 09:50:38]"
+    },
+    {
+      "name": "missing_anchor",
+      "rejected": true,
+      "error": "CSV 행이 현재 작업의 시작 시점/층과 일치하지 않습니다. [원인=재시작 기준 층/시각을 확인할 수 없음; CSV Id=502(내부 층=501); 작업 시작 내부 층=500; 행 시작=2026-10-29 09:51:25; 행 완료=2026-10-29 09:52:33; 로그 시작=2026-10-29 09:50:38]"
+    }
+  ],
+  "hardware_excel_or_save": false,
+  "image_analysis_accessed": false
+}
