@@ -2,6 +2,7 @@
 """Standalone BinderJet UI extension. Does not modify the original application."""
 
 from pathlib import Path
+import math
 import queue
 import sys
 import threading
@@ -54,6 +55,7 @@ class ThermalFeedbackWindow:
         self.archive = archive if archive is not None else PlotArchive()
         self._history_generation = 0
         self._history_machine = "M1"
+        self._history_target_temperature = None
         self._closing_archive_started = False
         self._closing_charts_finalized = False
         self.discoverer = discoverer
@@ -314,6 +316,7 @@ class ThermalFeedbackWindow:
                 self.archive.submit(retry_failed=True)
                 self._history_generation = self.controller.generation
                 self._history_machine = options.target.machine
+                self._history_target_temperature = options.target_temperature_c
                 self.charts.set_target_temperature(options.target_temperature_c)
                 self.status.set("연결 중…")
                 self.capability.set("CSV 저장 후 자동 적용 · 다른 탭/최소화 가능 · 수동 편집/원본 UI 응답 실패 시 적용 정지"
@@ -379,7 +382,8 @@ class ThermalFeedbackWindow:
             panel._active_text()
 
     def _capture_plot_segment(self, segment, points):
-        self.archive.capture((self._history_generation, segment), points, self._history_machine)
+        self.archive.capture((self._history_generation, segment), points, self._history_machine,
+                             target_temperature=self._history_target_temperature)
 
     def _capture_current_plot(self):
         self._capture_plot_segment(self.charts.history.segment_id, self.charts.history.points)
@@ -387,13 +391,24 @@ class ThermalFeedbackWindow:
     def _record_chart_payload(self, payload):
         if self.charts.record(payload):
             self._history_machine = payload["snapshot"].target.machine
+            target = payload.get("display_target_c")
+            if isinstance(target, (int, float)) and not isinstance(target, bool) and math.isfinite(target):
+                # record() can retire the old run; update its target only AFTER
+                # that callback captured the outgoing segment's metadata.
+                self._history_target_temperature = target
 
     def _poll_archives(self):
         for event in self.archive.poll():
             if event["kind"] == "saved":
-                self._append_log(f"CSV 자동 저장 완료 · {event['row_count']}행 · {event['path']}")
+                self._append_log(f"CSV·플롯 자동 저장 완료 · {event['row_count']}행 · {event['path']}")
+                for name, path in event.get("plot_paths", {}).items():
+                    self._append_log(f"{'온도' if name == 'temperature' else 'IR'} 플롯 PNG · {path}")
             else:
-                message = f"CSV 자동 저장 실패 · {event['row_count']}행 메모리에 보존 · {event['error']}"
+                message = f"CSV·플롯 저장 미완료 · {event['row_count']}행 메모리에 보존 · {event['error']}"
+                completed = [event.get("path")] + list(event.get("plot_paths", {}).values())
+                for path in completed:
+                    if path:
+                        self._append_log(f"저장 완료된 파일 보존 · {path}")
                 self._append_log(message)
                 write_error_log(message)
 
@@ -415,11 +430,11 @@ class ThermalFeedbackWindow:
         self.temperature.set("—" if snapshot.t_recoating_c is None else f"{snapshot.t_recoating_c:.1f} °C")
         self.process_state.set(snapshot.machine_state)
         unavailable = not snapshot.control_available
-        self.capability.set(("제어 불가 · " + snapshot.control_unavailable_reason) if unavailable else
+        self.capability.set((("설정 확인 중 · " if snapshot.control_recoverable else "제어 불가 · ") + snapshot.control_unavailable_reason) if unavailable else
             "CSV 자동 적용 중 · Process 표 접근 없음 · 다른 탭/최소화 가능"
             if payload["effective_mode"] == "control" else "기존 Sequences IR + Save 경로 확인됨")
         self.status.set("연결됨 · 제어 불가" if payload["effective_mode"] == "control-unavailable" else
-                        "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기"}[payload["effective_mode"]])
+                        "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기", "control-waiting": "설정 확인·IR 적용 대기"}[payload["effective_mode"]])
         for heater, value in ((1, snapshot.heater1_setting_percent), (2, snapshot.heater2_setting_percent)):
             proposed = payload["proposed"].get(1 if snapshot.coupled_output else heater)
             self.outputs.item(f"heater{heater}", values=("—" if value is None else value,
@@ -445,17 +460,17 @@ class ThermalFeedbackWindow:
                 if self._closing_charts_finalized:
                     self.archive.submit(retry_failed=True)
                     self._closing_archive_started = True
-                    self.status.set("CSV 자동 저장 중…")
+                    self.status.set("CSV·플롯 자동 저장 중…")
             if self._closing_archive_started and not self.archive.busy:
                 if self.archive.failed:
                     folder = filedialog.askdirectory(parent=self.root,
-                        title="CSV 자동 저장 실패 · 다른 저장 폴더 선택 (취소하면 기록과 창 유지)")
+                        title="CSV·플롯 저장 미완료 · 다른 폴더 선택 (취소하면 기록과 창 유지)")
                     if folder:
                         self.archive.submit(retry_failed=True, directory=folder)
                     else:
                         self.closing = False
                         self._closing_archive_started = False
-                        self.status.set(f"CSV 미저장 · {self.archive.retained_rows}행 메모리에 보존 중")
+                        self.status.set(f"CSV·플롯 저장 미완료 · {self.archive.retained_rows}행 메모리에 보존 중")
                         self._refresh_buttons()
                 else:
                     self.archive.close()

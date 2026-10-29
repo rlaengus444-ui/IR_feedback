@@ -52,19 +52,24 @@ function NativeMachine($root, $pidExpected, $handles) {
 }
 
 function CheckMachine($root, $pidExpected, $handles) {
+    $script:controlWait = $true
     $machine = NativeMachine $root $pidExpected $handles
     if ($request.machine -and $machine -ne 'unknown' -and $machine -cne [string]$request.machine) {
+        $script:identityFailure = $true
         throw 'The selected native machine identity changed.'
     }
+    $script:controlWait = $false
     return $machine
 }
 
 function AssertAutomatic($root, $pidExpected, $handles) {
+    $script:controlWait = $true
     $stateHandle = HandleOf $handles 'state'
     if (-not (Owned $root $stateHandle $pidExpected)) { throw 'A verified task-state label is required before an IR edit or Save.' }
     $state = ([BinderJetNativeProcess]::ReadText($root, $stateHandle, $pidExpected)).Trim()
     if ($state -notin @('AUTO','RUNNING')) { throw 'Automatic recipe updates require a fresh AUTO/RUNNING state.' }
     if ([BinderJetQueuedNavigation]::IsUserEditing($root, $pidExpected)) { throw 'The user is editing a target field; automatic Save is suspended.' }
+    $script:controlWait = $false
 }
 
 function ClickNavigation($root, $pidExpected, $handles, [string]$name) {
@@ -244,6 +249,53 @@ function ImportBundledBridge([string]$path) {
     [void][Reflection.Assembly]::Load([byte[]]$bytes)
 }
 
+
+function SequenceMetadata($root, $pidExpected) {
+    $script:controlWait = $true
+    $saveVisible = $false
+    foreach ($control in @([BinderJetNativeProcess]::Enumerate($root, $pidExpected))) {
+        if ($control.visible -and [string]$control.class_name -match '(?i)BUTTON' -and
+            ([string]$control.text).Trim() -ieq 'Save') { $saveVisible = $true }
+    }
+    if (-not $saveVisible) { throw 'The Sequence Save button is not visible; leaf metadata was not collected.' }
+    return @([BinderJetLeafMetadata]::Collect($root, $pidExpected))
+}
+
+function PreparedControl($root, $pidExpected, $records) {
+    $script:controlWait = $true
+    if ($records.Count -eq 0 -or $records.Count -gt 900) { throw 'A bounded native leaf metadata snapshot is required.' }
+    $irRecord = UniqueVisibleRecord $records 'textBoxHeatingOutput' $true
+    $saveRecord = UniqueVisibleRecord $records 'btnSave' $true
+    $ir = [IntPtr][long]$irRecord.hwnd; $save = [IntPtr][long]$saveRecord.hwnd
+    $scope = [BinderJetLeafMetadata]::CommonAncestor($root, $ir, $save, $pidExpected)
+    if ($scope -eq $root) { throw 'IR and Save do not belong to an isolated Sequence view.' }
+    $map = @{}
+    foreach ($record in $records) {
+        if (-not $record.visible) { continue }
+        $window = [IntPtr][long]$record.hwnd
+        if (-not [BinderJetLeafMetadata]::IsDescendant($root, $scope, $window, $pidExpected)) { continue }
+        $kind = [BinderJetNativeFields]::Kind($root, $window, $pidExpected)
+        if ($kind -notin @('text','toggle')) { continue }
+        $id = [string]$record.id
+        if ([string]::IsNullOrWhiteSpace($id) -or $map.ContainsKey($id)) { throw 'A visible Sequence input has a blank or duplicate AutomationId.' }
+        $map[$id] = @{hwnd=$window.ToInt64();kind=$kind}
+    }
+    if (-not $map.ContainsKey('textBoxHeatingOutput')) { throw 'The native Sequence IR field is missing.' }
+    [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
+    $fields = ReadFields $root $pidExpected $map $scope
+    $newHandles = @{scope=$scope.ToInt64();save=$save.ToInt64();ir=$ir.ToInt64()}
+    foreach ($pair in @(@('machine','labelMachineName'),@('state','labelTaskStatus'),@('sequences','btnSequences'))) {
+        $record = UniqueVisibleRecord $records $pair[1] $true
+        if ($null -ne $record) { $newHandles[$pair[0]] = [long]$record.hwnd }
+    }
+    $verifiedMachine = NativeMachine $root $pidExpected $newHandles
+    if ($verifiedMachine -notin @('M1','S3') -or ($request.machine -and $verifiedMachine -cne [string]$request.machine)) { if ($verifiedMachine -in @('M1','S3')) { $script:identityFailure = $true }; throw 'Control requires a verified exact M1/S3 native machine label.' }
+    return @{success=$true;machine=$verifiedMachine;fields=$fields;field_map=$map;handles=$newHandles;setting=$fields['textBoxHeatingOutput']}
+}
+
+$script:identityFailure = $false
+$script:controlWait = $false
+
 try {
     $request = [Console]::In.ReadToEnd() | ConvertFrom-Json
     ImportBundledBridge ([string]$request.bridge_path)
@@ -275,13 +327,21 @@ try {
     } else {
         $root = [IntPtr][long]$request.hwnd; $pidExpected = [int]$request.pid; $handles = $request.handles
         # Identity validation does not enter the target window procedure.
+        $script:identityFailure = $true
         [BinderJetNativeProcess]::ValidateWindow($root, $pidExpected)
-        $machine = if ($request.operation -eq 'validate') { [string]$request.machine } else { CheckMachine $root $pidExpected $handles }
+        $script:identityFailure = $false
+        $machine = if ($request.operation -eq 'validate') { [string]$request.machine } elseif ($request.operation -eq 'recover_control') {
+            try { CheckMachine $root $pidExpected $handles } catch {
+                if ($script:identityFailure) { throw }
+                CheckMachine $root $pidExpected @{}
+            }
+        } else { CheckMachine $root $pidExpected $handles }
         switch ([string]$request.operation) {
             'validate' {
                 $response = @{success=$true;machine=$machine;handles=@{}}
             }
             'read_status' {
+                $script:controlWait = $true
                 $stateHandle = HandleOf $handles 'state'
                 if (-not (Owned $root $stateHandle $pidExpected)) { throw 'The audited task-state label is unavailable.' }
                 $state = ([BinderJetNativeProcess]::ReadText($root, $stateHandle, $pidExpected)).Trim()
@@ -294,49 +354,28 @@ try {
                 $response = @{success=$true;machine=$machine;entered=$true}
             }
             'metadata' {
-                $saveVisible = $false
-                foreach ($control in @([BinderJetNativeProcess]::Enumerate($root, $pidExpected))) {
-                    if ($control.visible -and [string]$control.class_name -match '(?i)BUTTON' -and
-                        ([string]$control.text).Trim() -ieq 'Save') { $saveVisible = $true }
-                }
-                if (-not $saveVisible) { throw 'The Sequence Save button is not visible; leaf metadata was not collected.' }
-                $response = @{success=$true;records=@([BinderJetLeafMetadata]::Collect($root, $pidExpected))}
+                $response = @{success=$true;records=@(SequenceMetadata $root $pidExpected)}
             }
             'prepare_control' {
                 $records = @($request.metadata | Where-Object { $null -ne $_ })
                 if ($records.Count -eq 0) { $records = @($request.records | Where-Object { $null -ne $_ }) }
-                if ($records.Count -eq 0 -or $records.Count -gt 900) { throw 'A bounded native leaf metadata snapshot is required.' }
-                $irRecord = UniqueVisibleRecord $records 'textBoxHeatingOutput' $true
-                $saveRecord = UniqueVisibleRecord $records 'btnSave' $true
-                $ir = [IntPtr][long]$irRecord.hwnd; $save = [IntPtr][long]$saveRecord.hwnd
-                $scope = [BinderJetLeafMetadata]::CommonAncestor($root, $ir, $save, $pidExpected)
-                if ($scope -eq $root) { throw 'IR and Save do not belong to an isolated Sequence view.' }
-                $map = @{}
-                foreach ($record in $records) {
-                    if (-not $record.visible) { continue }
-                    $window = [IntPtr][long]$record.hwnd
-                    if (-not [BinderJetLeafMetadata]::IsDescendant($root, $scope, $window, $pidExpected)) { continue }
-                    $kind = [BinderJetNativeFields]::Kind($root, $window, $pidExpected)
-                    if ($kind -notin @('text','toggle')) { continue }
-                    $id = [string]$record.id
-                    if ([string]::IsNullOrWhiteSpace($id) -or $map.ContainsKey($id)) { throw 'A visible Sequence input has a blank or duplicate AutomationId.' }
-                    $map[$id] = @{hwnd=$window.ToInt64();kind=$kind}
-                }
-                if (-not $map.ContainsKey('textBoxHeatingOutput')) { throw 'The native Sequence IR field is missing.' }
-                [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
-                $fields = ReadFields $root $pidExpected $map $scope
-                $newHandles = @{scope=$scope.ToInt64();save=$save.ToInt64();ir=$ir.ToInt64()}
-                foreach ($pair in @(@('machine','labelMachineName'),@('state','labelTaskStatus'),@('sequences','btnSequences'))) {
-                    $record = UniqueVisibleRecord $records $pair[1] $true
-                    if ($null -ne $record) { $newHandles[$pair[0]] = [long]$record.hwnd }
-                }
-                $verifiedMachine = NativeMachine $root $pidExpected $newHandles
-                if ($verifiedMachine -notin @('M1','S3') -or ($request.machine -and $verifiedMachine -cne [string]$request.machine)) { throw 'Control requires a verified exact M1/S3 native machine label.' }
-                $response = @{success=$true;machine=$verifiedMachine;fields=$fields;field_map=$map;handles=$newHandles;setting=$fields['textBoxHeatingOutput']}
+                $response = PreparedControl $root $pidExpected $records
+            }
+            'recover_control' {
+                # A single bounded READ-ONLY operation; no navigation, IR edit or Save.
+                $script:controlWait = $true
+                if ([BinderJetQueuedNavigation]::IsUserEditing($root, $pidExpected)) { throw 'The user is editing a target field; automatic Save is suspended.' }
+                # Adoption always inventories the current visible input set.
+                # Cached HWNDs cannot reveal an in-place new/duplicate control.
+                $records = @(SequenceMetadata $root $pidExpected)
+                $response = PreparedControl $root $pidExpected $records
+                AssertAutomatic $root $pidExpected $response.handles
+                $response.state = ([BinderJetNativeProcess]::ReadText($root, (HandleOf $response.handles 'state'), $pidExpected)).Trim()
             }
             'verify_control' {
                 AssertAutomatic $root $pidExpected $handles
                 AssertCsvFile $request.csv_token $request.observation
+                $script:controlWait = $true
                 $scope = HandleOf $handles 'scope'
                 if (-not (Owned $root $scope $pidExpected)) { throw 'The audited Sequence view identity changed.' }
                 $fields = ReadFields $root $pidExpected $request.field_map $scope
@@ -344,6 +383,7 @@ try {
             }
             'apply' {
                 AssertAutomatic $root $pidExpected $handles
+                $script:controlWait = $true
                 $scope = HandleOf $handles 'scope'; $ir = HandleOf $handles 'ir'; $save = HandleOf $handles 'save'
                 if (-not (Owned $root $scope $pidExpected)) { throw 'The controlled Sequence view identity changed.' }
                 if (-not [BinderJetLeafMetadata]::IsDescendant($root, $scope, $ir, $pidExpected) -or
@@ -353,11 +393,14 @@ try {
                 $before = ReadFields $root $pidExpected $request.field_map $scope
                 AssertOtherFields $before $request.baseline
                 if (-not $before.ContainsKey('textBoxHeatingOutput') -or [string]$before['textBoxHeatingOutput'] -cne [string]$request.expected_ir) { throw 'The IR setting changed outside this module; no settings were saved.' }
+                $script:controlWait = $false
                 $desired = FiniteNumber ([string]$request.power)
                 if ($desired -lt 0 -or $desired -gt 100) { throw 'IR recipe power must be in 0..100.' }
                 if ([string]::IsNullOrWhiteSpace([string]$request.edit_marker) -or [string]::IsNullOrWhiteSpace([string]$request.save_marker)) { throw 'Write-ahead edit/Save markers are required.' }
+                $script:controlWait = $true
                 [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
                 AssertAutomatic $root $pidExpected $handles
+                $script:controlWait = $false
                 AssertCsvFile $request.csv_token $request.observation
                 [IO.File]::WriteAllText([string]$request.edit_marker, 'edit-may-have-started')
                 [BinderJetNativeFields]::SetIr($root, $ir, $pidExpected, [string]$request.power)
@@ -382,6 +425,7 @@ try {
     }
     $response | ConvertTo-Json -Depth 10 -Compress
 } catch {
-    @{success=$false;error=$_.Exception.Message} | ConvertTo-Json -Depth 3 -Compress
+    $kind = if ($script:identityFailure) { 'identity' } elseif ($script:controlWait) { 'control_wait' } else { 'operation' }
+    @{success=$false;error=$_.Exception.Message;error_kind=$kind} | ConvertTo-Json -Depth 3 -Compress
     exit 1
 }

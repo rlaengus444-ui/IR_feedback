@@ -1,0 +1,97 @@
+{
+  "recorded_at_utc": "2026-10-29T12:44:13.686596+00:00",
+  "version": "2026.10.29-reconnect.3",
+  "candidate_commit": "6c54f52abdea3f478524bdf9fbeaf3892541dd71",
+  "evidence_commit": "74116a91ca995f98a39da24d5033fb2c0de7c27d",
+  "delivery_workflow_commit": "ba7a698f2065ed84204d6229cdc7b5657466076c",
+  "windows_validation_run": 40873442620,
+  "windows_tests": 251,
+  "all_nine_non_excel_checks_passed": true,
+  "review": {
+    "path": "docs/validation/live-settings-plots-2026.10.29-release-review.json",
+    "sha256": "1510ae69b6797cdfbdfd00fda54daddf566e1f2bbe0c9fc274825994552117e1",
+    "actual_native_sol_reviewer_final_received": true,
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_verified": false,
+    "cli_authentication_restored": false,
+    "evaluation_distribution_allowed": true
+  },
+  "github": {
+    "release_id": 427850841,
+    "release_url": "https://github.com/rlaengus444-ui/IR_feedback/releases/tag/2026.10.29-reconnect.3",
+    "publish_run": 40875191491,
+    "publish_run_conclusion": "success",
+    "immutable_tag_source": "6c54f52abdea3f478524bdf9fbeaf3892541dd71",
+    "prerelease": true,
+    "make_latest": "false",
+    "zip_asset_id": 688526734,
+    "zip_download": "https://github.com/rlaengus444-ui/IR_feedback/releases/download/2026.10.29-reconnect.3/IRFeedback-2026.10.29-reconnect.3.zip",
+    "zip_bytes": 35344829,
+    "zip_sha256": "bba933dad8b4692118b7b62acb93fd03190a6c0f6140054b2db36a7602c975b0",
+    "public_static_download_http": 200,
+    "readback": {
+      "release_id": 427850841,
+      "zip_asset_id": 688526734,
+      "zip_bytes": 35344829,
+      "zip_sha256": "bba933dad8b4692118b7b62acb93fd03190a6c0f6140054b2db36a7602c975b0",
+      "full_package_readback_verified": true,
+      "publish_run": 40875191491,
+      "prerelease": true,
+      "equipment_application_approved": false
+    },
+    "no_rebuild": true
+  },
+  "drive": {
+    "folder_id": "1Fd_1vA4HLd2NpzHmsO7KMK1lrk5Dx3_5",
+    "zip_url": "https://drive.google.com/file/d/15NLQbyuhduQEwn77DzLBODhPhuqRBY8D/view",
+    "zip_readback": {
+      "file_id": "15NLQbyuhduQEwn77DzLBODhPhuqRBY8D",
+      "raw_download_succeeded": true,
+      "bytes": 35344829,
+      "sha256": "bba933dad8b4692118b7b62acb93fd03190a6c0f6140054b2db36a7602c975b0",
+      "matches_reviewed_zip": true
+    },
+    "guide_url": "https://drive.google.com/file/d/1R7KmZW_mJ2qOy2w0DS7h94bNb1ZNvY6x/view",
+    "guide_readback": {
+      "bytes": 4271,
+      "sha256": "44ea47f57030cb41103c8d312263bb8cba8c1e4fce7da8093db25d0b4a2693a9",
+      "readback_matches": true,
+      "file_id": "1R7KmZW_mJ2qOy2w0DS7h94bNb1ZNvY6x"
+    },
+    "guide_updated_in_place": true,
+    "prior_unusable_reconnect2_zip_removed_in_previous_delivery": true
+  },
+  "notion": {
+    "page_id": "3f105e94-a225-801c-9cd6-c70784c2d9ec",
+    "url": "https://app.notion.com/p/3f105e94a225801c9cd6c70784c2d9ec",
+    "latest_toggle_updated": true,
+    "old_reconnect2_appended_as_collapsed_toggle": true,
+    "targeted_update_commands_succeeded_without_warnings": true,
+    "native_media_references_preserved": 11,
+    "existing_workbook_attachments_unchanged": true,
+    "drive_and_github_static_zip_links_added": true
+  },
+  "unchanged": {
+    "control_algorithm": true,
+    "external_xlsx_files": true,
+    "image_analysis": true,
+    "csv_parser": true,
+    "critical_invalid_minus_one_and_csv_identity_save_guards": true,
+    "original_device_source_and_configuration": true
+  },
+  "scope": {
+    "settings_ui_changes": "connected read-only HOLD; coherent full UI and saved settings twice; baseline then fresh different layer",
+    "disconnect_archive": "full-history CSV plus temperature and IR PNG; preserve completed components and retry missing ones",
+    "physical_device_saves": 0,
+    "actual_equipment_tests": false,
+    "excel_com_tested": false,
+    "excel_reason": "Excel COM is not registered",
+    "initial_disconnect_cause_known": false,
+    "equipment_application_approved": false,
+    "final_control_algorithm_approved": false,
+    "stable_release_approved": false
+  },
+  "main_branch_merged": false,
+  "draft_pr": "https://github.com/rlaengus444-ui/IR_feedback/pull/7"
+}

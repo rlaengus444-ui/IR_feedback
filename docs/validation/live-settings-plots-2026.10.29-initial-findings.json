@@ -1,0 +1,103 @@
+{
+  "reviewed_at_utc": "2026-10-29 11:56:26 UTC",
+  "scope": "Initial independent POST review; not final release review",
+  "source_commit": "239e2b92a53ce7a51b1c0fdf788e867c15816426",
+  "later_font_only_commit": "f15efb8d88d5aa177c26c9d40056199acff0c954",
+  "base_commit": "186e29dceb9b7c9dd9afe6e3acbd2013b932988e",
+  "review_route": {
+    "route": "Native collaboration sol_reviewer follow-up",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_verified": false,
+    "cli_authentication_restored": false
+  },
+  "findings": [
+    {
+      "id": "P1-recovery-cached-row-after-nonautomatic",
+      "severity": "P1",
+      "status": "Reported; awaiting fix/re-review",
+      "file": "app/session.py",
+      "lines": [
+        187,
+        198,
+        287,
+        299
+      ],
+      "reproduction": "old layer1,E0 -> HOLD layer2,E0 -> adopted baseline layer2,E1 -> new valid layer3 while machine_state=unknown -> exact same cached layer3/key with AUTO and observation_is_new=True. This boolean is realistic because WindowsUiAdapter retains the last new key for its freshness window.",
+      "observed": {
+        "modes": [
+          "control",
+          "control-waiting",
+          "control",
+          "waiting",
+          "control"
+        ],
+        "saved_keys": [
+          "waiting-observation"
+        ],
+        "fresh_layer_after_auto_restored": false
+      },
+      "risk": "The recovery layer barrier can admit a row already observed while control was unavailable.",
+      "recommendation": "Preserve/consume the recovery barrier during nonautomatic/readiness loss, including current layer/key; restored readiness must wait for a future fresh different layer/key."
+    },
+    {
+      "id": "P2-pre-edit-persistence-error-disconnect",
+      "severity": "P2",
+      "status": "Reported; parent fix in progress",
+      "file": "app/windows_ui_adapter.py",
+      "lines": [
+        464,
+        476
+      ],
+      "reproduction": "After a valid fresh snapshot, patch pre-edit sequence_persistence.capture to raise PersistenceUnavailable as during a transient operator configuration Save.",
+      "observed": {
+        "exception_type": "PersistenceUnavailable",
+        "recoverable": false,
+        "hold_reason": null,
+        "native_apply_called": false,
+        "save_count": 0
+      },
+      "risk": "A legitimate pre-edit settings-file transition still disconnects the module.",
+      "recommendation": "Convert only PRE-edit PersistenceUnavailable at both capture boundaries to typed ControlSuspended. Post-edit verify_after failure remains terminal/ambiguous."
+    },
+    {
+      "id": "recovery-cached-map-inventory-gap",
+      "severity": "P1",
+      "status": "Source finding; native in-place regression requested, not independently executed on Windows",
+      "file": "app/native_helper.ps1",
+      "lines": [
+        364,
+        381
+      ],
+      "description": "The cached recover_control path reads only the old field_map; adding a duplicate or unknown input within the still-owned scope does not invalidate existing HWNDs and is not inventoried. Existing fixture duplicate command replaces the panel, so it exercises fallback rather than this case.",
+      "recommendation": "Establish complete bounded current inventory/uniqueness for adoption, including in-place duplicate/new-unknown input and invalid Save handle regressions. If inventory cannot be established after HOLD, continue HOLD; preserve normal previously verified hidden/minimized operation."
+    }
+  ],
+  "executed_tests": [
+    {
+      "command": "DISPLAY=:95 python -m unittest -v test_live_settings test_plot_archive test_plot_images test_auto_archive_ui",
+      "cwd": "/workspace/IR_feedback_live_hold/app",
+      "tests": 37,
+      "passed": 37,
+      "elapsed_seconds": 6.42,
+      "warnings": [
+        "Pillow Image.getdata deprecation in a test"
+      ]
+    }
+  ],
+  "inspected_invariants": [
+    "No diff from base in CSV parser, control formula, Excel worker/controller, UiaBridge.dll, image analyzer or JSON settings",
+    "Pre-edit native control_wait remains distinguished from CSV errors",
+    "Either edit/Save marker forces ambiguous terminal outcome",
+    "Committed CSV/PNG preservation, missing-component-only retries and immutable full-history points",
+    "Outgoing segment target capture and persistent failed-close cutoff"
+  ],
+  "evaluation_distribution_allowed": false,
+  "independent_post_review_complete": false,
+  "equipment_application_approved": false,
+  "limits": [
+    "No actual Windows recovery probe run by reviewer yet",
+    "Exact final candidate/ZIP not yet supplied",
+    "Excel COM and real hardware untested; final algorithm/equipment hold persists"
+  ]
+}

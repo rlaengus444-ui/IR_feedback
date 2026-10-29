@@ -1,0 +1,251 @@
+{
+  "reviewed_at_utc": "2026-10-29 12:34:04 UTC",
+  "review_stage": "Supplemental independent POST and replacement exact-artifact evaluation-delivery review",
+  "candidate_commit": "6c54f52abdea3f478524bdf9fbeaf3892541dd71",
+  "candidate_version": "2026.10.29-reconnect.3",
+  "candidate_zip_sha256": "bba933dad8b4692118b7b62acb93fd03190a6c0f6140054b2db36a7602c975b0",
+  "candidate_zip_bytes": 35344829,
+  "candidate_zip_entries": 3649,
+  "evaluation_distribution_allowed": true,
+  "independent_post_review_complete": true,
+  "equipment_application_approved": false,
+  "final_control_algorithm_approved": false,
+  "stable_release_approved": false,
+  "disposition": "No unresolved P1/P2 findings remain in the reviewed changes. Only this exact replacement ZIP may be delivered as the user-authorized evaluation prerelease with latest=false and no rebuild. Earlier DDB delivery approval is superseded; do not deliver that superseded candidate.",
+  "supersedes": {
+    "candidate_commit": "ddb0474fac7495624d30e3bf22a4ea5c0879693d",
+    "candidate_zip_sha256": "8fc66bbc8c2c78f52beb4803a697ed703caa191606a63fdccff44c0d07406352",
+    "previous_review": "/workspace/ir-live-hold-review/sol-live-settings-plots-final-review.json",
+    "previous_review_sha256": "01f742365085f62dbfaa7cf60ede71010182c37028aad47bd946462ec4aa36c2",
+    "previous_review_preserved_unchanged": true,
+    "previous_candidate_distribution_allowed": false,
+    "reason": "After that review, the parent reproduced an archive startup-failure/retry race missed by the reviewer. This supplemental review verifies the correction and replacement artifact.",
+    "carried_forward_scope": "Prior full control/session/native/renderer/packaging/publisher design and POST review remains applicable to byte-identical files. This supplemental record replaces its candidate delivery binding."
+  },
+  "review_route": {
+    "route": "Actual native collaboration sol_reviewer follow-up with real narrow diff, adversarial execution and replacement artifact review",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "configuration": "/workspace/IR_feedback_live_hold/.codex/agents/sol_reviewer.toml",
+    "provider_identity_independently_verified": false,
+    "cli_authentication_restored": false
+  },
+  "scope": {
+    "source_diff_base": "ddb0474fac7495624d30e3bf22a4ea5c0879693d",
+    "source_changes": [
+      "app/plot_archive.py",
+      "app/test_plot_archive.py"
+    ],
+    "package_uncompressed_entries_changed": [
+      "MANIFEST.json",
+      "app/plot_archive.py"
+    ],
+    "unchanged": "All control/session/native helper/renderer/UI/docs/publisher/runtime/config/Excel/CSV/image-analysis bytes are identical to the prior exact reviewed ZIP. No source or equipment edits were performed by the reviewer.",
+    "archive_source_sha256": "e3023d6352355d1031c17632a334b720a1daffe2ffbbeb38cd326d0f2df39cb4",
+    "archive_regression_test_sha256": "cde076b5c611125c1d763ad5a35fe74b5c3d0e90872ab7d115feff13fe8b060d",
+    "external_publication_calls": 0,
+    "equipment_actions": 0
+  },
+  "findings": [
+    {
+      "id": "P2-archive-startup-error-races-retry",
+      "severity": "P2",
+      "status": "Resolved in6c54f52abdea3f478524bdf9fbeaf3892541dd71; independently reproduced before fix and rechecked after fix",
+      "references": [
+        "app/plot_archive.py:53",
+        "app/plot_archive.py:146",
+        "app/test_plot_archive.py:41"
+      ],
+      "original_sequence": "Thread startup fails and queues an error while record state is already failed; immediate retry starts a blocked writer before the GUI polls that old error. Polling the old error marks the live record failed/busy=false, permitting duplicate work or early close.",
+      "independent_old_result": {
+        "busy_before": true,
+        "busy_after_stale_error": false,
+        "csv_writes": 2,
+        "csv_files": 2,
+        "png_files": 4
+      },
+      "fix": "Each eligible submission increments a per-record attempt. Every work item and result carries its attempt. poll discards stale attempts before changing paths, state or retained points.",
+      "independent_fixed_results": "With1,2,3 consecutive startup failures followed by retry, busy remained true while the writer was blocked; no stale event was delivered; the row remained retained; extra retry did not queue duplicate work; each run finished exactly1 CSV and2 PNGs, then released points.",
+      "retention_and_fallback_review": "Current-attempt partial failures still preserve committed CSV/PNG paths and immutable points/target. Retrying missing components and close-cutoff behavior are unchanged. Stale startup errors cannot clear a newer attempt's state or saved paths.",
+      "evidence": "/workspace/ir-live-hold-review/sol-archive-retry-probes-6c54f52.json",
+      "evidence_sha256": "bc76f6a13d059c49a3099321d4272c1d5345ea0fd5d7c6ba2dd4183e85244da2"
+    }
+  ],
+  "unresolved_findings": [],
+  "independently_executed_checks": [
+    {
+      "check": "Narrow source diff and complete archive state transitions",
+      "result": "Only per-record attempt fields, submission increments, work/result propagation and pre-mutation stale-result rejection changed"
+    },
+    {
+      "check": "Old-versus-fixed adversarial retry execution",
+      "result": "Original defect independently reproduced from git DDB source; all1/2/3-startup-failure fixed cases passed, with worker drained before temporary cleanup"
+    },
+    {
+      "check": "Archive and Tk lifecycle tests",
+      "command": "DISPLAY=:95 python -m unittest -v test_plot_archive test_auto_archive_ui",
+      "cwd": "/workspace/IR_feedback_live_hold/app",
+      "tests": 23,
+      "passed": 23,
+      "seconds": 5.043,
+      "result": "Includes committed component preservation, fallback, no-overwrite, full history, outgoing target, retry-before-old-error, failed-close cutoff and reconnect behavior"
+    },
+    {
+      "check": "Invocation correction",
+      "result": "A first unittest invocation used repository cwd without the needed import path and produced two import errors. Immediately corrected to app cwd;23 tests passed. This was reviewer invocation error, not a repository defect."
+    },
+    {
+      "check": "Replacement full-package verification",
+      "command": "python release_tools/verify_package.py windows-6c54f52/IRFeedback-2026.10.29-reconnect.3.zip 2026.10.29-reconnect.3",
+      "result": "Passed full source/manifest hashes, CRC, safe paths/case collisions/no symlinks, runtime/Pillow/licenses, new PNG module and required JSON/docs"
+    },
+    {
+      "check": "Archive digests and package delta",
+      "result": "Independently recomputed both outer and inner exact size/SHA. Compared all3649 uncompressed entries against the previous reviewed ZIP: only app/plot_archive.py and MANIFEST.json differ"
+    },
+    {
+      "check": "Pinned replacement direct-download workflow",
+      "result": "Only source/run/artifact ID/outer size+SHA/inner SHA changed from the previously reviewed template; immutable review-source placeholder and all validation guards preserved"
+    },
+    {
+      "check": "Replacement template offline execution",
+      "result": "Real outer archive success; wrong artifact ID rejected before binary download; wrong outer digest rejected before extraction. No external commands/API calls executed",
+      "evidence": "sol-delivery-offline-checks-6c54f52.json",
+      "evidence_sha256": "212313641e1a7b70dcad4254b4e195b15d430d19d14011cd66ae275c9a67de3a"
+    },
+    {
+      "check": "Old review binding rejection",
+      "result": "Unchanged publisher rejected the prior DDB review when given6c source/newZIP pins before any API call"
+    },
+    {
+      "check": "Earlier publisher guards carried forward",
+      "result": "Publisher bytes unchanged; prior independent real-ZIP fake-API success/wrong-review/existing-tag/bad-uploaded-digest tests and9th-gate negative tests remain applicable. Replacement actual ZIP passes its full source verifier. No live publication was performed by reviewer."
+    }
+  ],
+  "actual_windows_evidence_inspected": {
+    "run_id": 40873442620,
+    "artifact_id": 12897750622,
+    "source_commit": "6c54f52abdea3f478524bdf9fbeaf3892541dd71",
+    "tests": 251,
+    "passed": 251,
+    "seconds": 44.877,
+    "new_regression_present_and_passed": "test_retry_before_old_failure_is_polled_stays_busy_and_writes_once",
+    "required_non_excel_checks": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "settings_recovery": "success",
+      "reverify": "success"
+    },
+    "raw_report_passed": {
+      "bridge": true,
+      "csv_guard": true,
+      "native_discovery": true,
+      "slice_perf": true,
+      "settings_recovery": true
+    },
+    "native_check_counts": {
+      "bridge": 9,
+      "csv_guard": 6,
+      "native_discovery": 14,
+      "settings_recovery": 20
+    },
+    "smoke": {
+      "launcher_pid": 2708,
+      "packaged_pythonw_pid": 1084,
+      "expected_window_observed": true,
+      "normal_wm_close": true,
+      "forced_cleanup_required": false
+    },
+    "full_synthetic_profiles": {
+      "M1": {
+        "bound_fields": 73,
+        "epochs": [
+          0,
+          1
+        ],
+        "recovery_seconds": [
+          0.6621744,
+          0.6571641
+        ],
+        "passed": true
+      },
+      "S3": {
+        "bound_fields": 74,
+        "epochs": [
+          0,
+          1
+        ],
+        "recovery_seconds": [
+          0.6729569,
+          0.6597945
+        ],
+        "passed": true
+      },
+      "production_helper_deadline_seconds": 3,
+      "settings_unchanged": true,
+      "zero_save_and_navigation": true,
+      "process_panel_not_probed": true
+    },
+    "excel": {
+      "excel_com_tested": false,
+      "reason": "Excel COM is not registered"
+    },
+    "original_readiness": {
+      "automated_checks_passed": false,
+      "release_ready": false,
+      "device_application_approved": false,
+      "final_sol_review": "pending"
+    },
+    "note": "Raw CI readiness and prior evidence were not rewritten. Windows tests were run by CI; reviewer inspected actual local reports, not a Windows/hardware execution performed by reviewer."
+  },
+  "recorded_csv_compatibility": {
+    "source_unchanged": true,
+    "prior_independent_packaged_replay": "sol-real-csv-packaged-ddb0474.json",
+    "parent_replacement_packaged_replay_inspected": "real-csv-packaged-6c54f52.json",
+    "parent_replacement_report_sha256": "22f4a7cba9ab69f1ee2560d948952407f099bc6694b89aa248319e55af7028f9",
+    "result": "All3 original CSVs/1122 rows accepted;140 streamed frames, metadata501/baseline502,138 new records exactly once; no duplicate new flags; first mock calculation/Save at503. Physical Saves0.",
+    "actual_m1_job_log_provided": false,
+    "initial_disconnection_cause_known": false
+  },
+  "artifact_provenance": {
+    "outer_file": "/workspace/ir-live-hold-review/windows-6c54f52-evidence.zip",
+    "outer_sha256": "4a3499407a858d18874fef86fc0688bef5bb5c03b5acb2fdd7d65b2b94113864",
+    "outer_bytes": 34847456,
+    "metadata": "/workspace/ir-live-hold-review/windows-6c54f52-artifact.json",
+    "metadata_repository_id": 1434868115,
+    "metadata_head_repository_id": 1434868115,
+    "metadata_expired": false,
+    "candidate_file": "/workspace/ir-live-hold-review/windows-6c54f52/IRFeedback-2026.10.29-reconnect.3.zip",
+    "note": "Parent transferred the official GitHub artifact. Reviewer independently checked local metadata, exact size/hash and contents; no authentication bypass or credential change."
+  },
+  "delivery_review": {
+    "template": "/workspace/ir-live-hold-review/publish-reconnect3-retry-final-workflow.template.yml",
+    "template_sha256": "b745b49df56dbc48e6cb1d2670d691e3f35545cbe96dc37c90a40fd39d87a697",
+    "embedded_python_sha256": "43d64705256481018535df0ed4b7ee191fc1b7e538cff8239ed735ccf352fc77",
+    "publisher_sha256": "c6f434d220b31f48ab243f4d09c948e417989fa6a9f3300ee4b7e7462a7678be",
+    "permitted_template_substitution": "Only __PUBLISH_SOURCE__ to an immutable evidence commit containing this unchanged replacement review at docs/validation/live-settings-plots-2026.10.29-release-review.json and unchanged reviewed packaged SOURCES/publisher.",
+    "constraints": [
+      "Exact artifact12897750622/run40873442620/source6c and both archive digests",
+      "Standard GITHUB_TOKEN only; bounded metadata/download, safe extraction and stop on access/verification failure",
+      "Exact reviewed source/manifest/ZIP plus all9 required non-Excel gates/raw reports and completed replacement review binding",
+      "New immutable tag, draft prerelease, uploaded asset state/size/server SHA validation before and after publication, latest=false",
+      "No rebuilding, old-artifact substitution, stable approval or equipment approval"
+    ]
+  },
+  "continuing_limits": [
+    "Actual Excel COM is unavailable and untested. Its expected failure remains visible; this is not an all-platform/stable validation claim.",
+    "No real BJT settings changes, sensors, PLCs, lamps or long printing experiments were exercised. Full M1/S3 cases use synthetic UI and temporary settings.",
+    "Final control algorithm approval and real equipment application remain explicitly on hold.",
+    "Settings/UI recovery still requires complete visible Sequence inventory, coherent saved/UI agreement and a new baseline followed by a fresh different layer. Unsaved/ambiguous/unavailable controls may remain in connected HOLD.",
+    "Possible IR edit/Save or uncertain apply outcome remains terminal; no automatic retry/rollback.",
+    "Normal-looking CSV values do not independently prove physical sensor freshness; planned images do not prove actual binder/drying/sensor alignment.",
+    "Original initial disconnect cause remains unknown; actual M1 log was not supplied for recorded-CSV replay.",
+    "Earlier known Tk teardown and Pillow test deprecation warnings are retained as limitations; no warning-free claim.",
+    "The earlier nonblocking Toolhelp smoke-harness notes in the preserved review remain unchanged; successful CI does not establish exhaustive platform behavior."
+  ]
+}
