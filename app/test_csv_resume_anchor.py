@@ -58,6 +58,27 @@ class ResumeAnchorTests(unittest.TestCase):
         self.append(encode([self.row(1060, self.started + timedelta(seconds=32), self.now, 44)]))
         self.assertTrue(self.reader.read().is_new)
 
+    def test_resumed_layer_500_with_unstarted_gap_and_zero_first_temperature(self):
+        # Reproduces the supplied file's structure without publishing its paths
+        # or full production history. CSV Id is one-based; job layers are not.
+        reader = self.make_reader()
+        reader.log = Mock(read=Mock(return_value=JobContext('resume500', 500, self.started, 503, 'AUTO')))
+        old = self.row(477, self.started - timedelta(hours=14), self.started - timedelta(hours=13), 83.3)
+        unset = '01/01/0001 00:00:00'
+        gap = [[str(index + 1), unset, unset, unset, '0'] for index in range(478, 500)]
+        first = self.row(500, self.started, self.started + timedelta(seconds=47), 0)
+        first[2] = unset
+        measured = self.row(501, self.started + timedelta(seconds=47), self.started + timedelta(seconds=115), 65.6)
+        self.write([old] + gap + [first, measured])
+        baseline = reader.read()
+        self.assertEqual((501, 65.6, False),
+                         (baseline.sample.layer_index, baseline.sample.temperature, baseline.is_new))
+        self.assertIsNotNone(baseline.token)
+        self.append(encode([self.row(502, self.started + timedelta(seconds=115), self.now, 65.2)]))
+        fresh = reader.read()
+        self.assertEqual((502, 65.2, True), (fresh.sample.layer_index, fresh.sample.temperature, fresh.is_new))
+        self.assertFalse(reader.read().is_new)
+
     def test_malformed_or_contradictory_anchor_is_rejected(self):
         cases = [
             [self.old, self.metadata('nonsense')],
