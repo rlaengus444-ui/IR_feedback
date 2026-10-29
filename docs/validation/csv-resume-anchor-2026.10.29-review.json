@@ -1,0 +1,230 @@
+{
+  "reviewed_at_utc": "2026-10-29 03:57:07 UTC",
+  "timestamp_source": "clock__curr_time",
+  "review_phase": "POST offline source and test review",
+  "candidate_commit": "2d2c4af9253032dac237bb9cdbc2166aef27e02d",
+  "base_commit": "c6a6268186c05d53141026fd90cbdf2a44cf79c5",
+  "initial_reviewed_candidate": "b1a5d93256098c62a263757306520d326ec61b4d",
+  "candidate_zip_sha256": null,
+  "independent_post_review_complete": true,
+  "offline_source_review_passed": true,
+  "evaluation_distribution_allowed": false,
+  "distribution_allowed": false,
+  "actual_user_csvs_received": false,
+  "actual_user_csv_replay_completed": false,
+  "actual_user_cause_confirmed": false,
+  "windows_exe_validation_completed": false,
+  "actual_excel_com_tested": false,
+  "equipment_application_approved": false,
+  "final_control_algorithm_approval": "ON HOLD",
+  "automatic_image_import_canceled": true,
+  "review_route": {
+    "tool_route": "Native collaboration /root/sol_reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_verified": false,
+    "cli_authentication_restored": false
+  },
+  "disposition": {
+    "summary": "The narrow incomplete-anchor source change passes offline POST review after the reproduced P2 boundary bypass was fixed and independently retested. No unresolved P1/P2 source findings remain in this scope. This is not permission to distribute a new EXE or claim the user-site cause is fixed.",
+    "unresolved_source_findings": [],
+    "distribution_blockers": [
+      "The three real Monitoring CSVs and matching job log have not been supplied or replayed. The screenshot can arise from several distinct cases.",
+      "No new packaged Windows runtime, EXE/native or Excel COM validation has been performed for this changed parser. Prior216-test release evidence is not validation of this new candidate.",
+      "Final algorithm approval and real equipment application remain explicitly on hold."
+    ],
+    "required_next_evidence": [
+      "Original three CSV files, filenames and parent-directory identities; selected CSV path and corresponding M1 job start/first-layer/subsequent-layer log around09:50–09:53.",
+      "Replay the real files unchanged against the released parser and this candidate; identify which case actually occurs before claiming field resolution.",
+      "If distribution is subsequently proposed, build/test the new exact Windows package and complete the required release review without weakening current hash/freshness/Save gates."
+    ],
+    "source_tree_clean": true
+  },
+  "actual_diff_reviewed": {
+    "changed_files": [
+      "app/csv_source.py",
+      "app/test_csv_resume_anchor.py",
+      "docs/CSV_RESUME_ANCHOR.ko.md"
+    ],
+    "identity_contract": "After a strictly old completed prefix, only the exact context.first_layer with a parsed TimeStart within inclusive±2s confirms the resume anchor. Temperature0 or unfinished status supplies identity metadata only, never a measurement/key/actionable token.",
+    "unset_finish_contract": "Only blank or exact DateTime.MinValue, parsed through the existing four formats, is an allowed unset finish. Nonzero MinValue fractions, other ancient dates, arbitrary text and unsupported timestamp spellings do not qualify.",
+    "validation": "Numeric/range and -1 guards run before metadata acceptance. Valid start/finish chronology is checked even at temperature0. Recorded anchor start and known finish reject conflicting duplicate timestamps. No layer+1 allowance or47-second tolerance was added.",
+    "baseline_contract": "The resume-baseline latch survives separate reads, partial tails and1MiB parser chunks. It suppresses is_new for the whole first usable batch and is consumed only with a valid sample and complete stable file token. Only a following genuinely new eligible record can become actionable.",
+    "reset_contract": "Job change, replacement, truncation or consumed-prefix rewrite clears anchor/baseline state through _clear_file. Existing generation, exact CSV selection, two-read content/hash, bounds, freshness, duplicate/reverse-layer and Save verification paths remain.",
+    "other_components": "Fourteen algorithm/UI/Excel/native/persistence/image/config components are byte-identical to released base. Control-only UI, editableBL13, image mapping, chart-only terminal events and full-history CSV archival are unchanged."
+  },
+  "resolved_findings": [
+    {
+      "id": "P2-post-anchor-old-zero-row",
+      "severity": "P2",
+      "found_in_commit": "b1a5d93256098c62a263757306520d326ec61b4d",
+      "target": "app/csv_source.py:_sample, placeholder early return before old-row position guard",
+      "reproduction": "[strictly old valid prefix, exact unfinished metadata anchor, older row with valid start/finish timestamps and temperature0, later valid row] was accepted with a stable token/baseline. The same older row at temperature41 correctly raised. Thus temperature0 bypassed the agreed post-anchor completed-history boundary.",
+      "resolution_commit": "2d2c4af9253032dac237bb9cdbc2166aef27e02d",
+      "resolution": "Before returning placeholders, any lower layer with valid start+finish after anchor confirmation now raises regardless of temperature0. Unstarted MinValue placeholders and current-only valid flow retain their existing handling.",
+      "independent_retests": [
+        "Same batch rejects",
+        "Later append after metadata-only confirmation rejects",
+        "Later append after first baseline rejects"
+      ],
+      "regression_test": "ResumeAnchorTests.test_zero_temperature_completed_history_after_anchor_is_rejected"
+    }
+  ],
+  "independent_checks_executed": [
+    {
+      "check": "Initial candidate focused CSV/Worker suite",
+      "commit": "b1a5d93256098c62a263757306520d326ec61b4d",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python -m unittest test_csv_source test_csv_reconnect test_csv_resume_anchor test_session.WorkerTests -q",
+      "passed": true,
+      "tests": 64,
+      "seconds": 7.026,
+      "note": "Passing existing tests did not cover the independently reproduced P2 bypass."
+    },
+    {
+      "check": "Final focused CSV/Worker suite",
+      "commit": "2d2c4af9253032dac237bb9cdbc2166aef27e02d",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python -m unittest test_csv_source test_csv_reconnect test_csv_resume_anchor test_session.WorkerTests -q",
+      "passed": true,
+      "tests": 65,
+      "seconds": 7.01,
+      "breakdown": {
+        "existing_csv": 24,
+        "existing_reconnect": 11,
+        "new_resume_anchor": 10,
+        "worker": 20
+      }
+    },
+    {
+      "check": "Original P2 adversarial reproduction",
+      "passed_after_fix": true,
+      "variants": [
+        "same batch",
+        "after metadata confirmation",
+        "after returned baseline"
+      ],
+      "equipment_calls": 0
+    },
+    {
+      "check": "Changed valid row behind partial tail",
+      "passed": true,
+      "assertions": [
+        "Metadata-only row returns no observation",
+        "First valid row plus partial following valid row returns no token and no new observation",
+        "Completing the second valid row returns that entire latest batch as baseline only",
+        "Only the following appended eligible row is_new true"
+      ]
+    },
+    {
+      "check": "Unset finish whitelist boundaries",
+      "passed": true,
+      "cases": 10,
+      "accepted": [
+        "blank/whitespace",
+        "M/d/yyyy exact MinValue",
+        "ISO supported-format exact MinValue",
+        "all-zero fractional MinValue"
+      ],
+      "rejected": [
+        "nonzero fractional MinValue",
+        "different year1 day",
+        "unsupported T separator",
+        "arbitrary text",
+        "normal completed time as unset"
+      ]
+    },
+    {
+      "check": "Exact screenshot-time synthetic probes on final candidate",
+      "passed": true,
+      "context_first_layer": 500,
+      "context_first_started": "2026-10-29 09:50:38",
+      "next_id": 502,
+      "next_start": "2026-10-29 09:51:25",
+      "next_finish": "2026-10-29 09:52:33",
+      "outcomes": {
+        "exact_anchor_temperature0": "Accepted only as identity; later layer501 returns baseline, is_new false",
+        "exact_anchor_MinValue_finish": "Accepted only as identity; later layer501 returns baseline, is_new false",
+        "missing_anchor": "Still blocked",
+        "wrong_start_zero_temperature_anchor": "Still blocked"
+      },
+      "actual_user_csvs_examined": 0
+    },
+    {
+      "check": "Critical component byte comparison",
+      "passed": true,
+      "components": 14,
+      "unchanged": [
+        "app/layer_algorithm.py",
+        "app/standalone_ir.py",
+        "app/session.py",
+        "app/windows_ui_adapter.py",
+        "app/layer_charts.py",
+        "app/plot_archive.py",
+        "app/excel_workbook.py",
+        "app/excel_worker.ps1",
+        "app/native_helper.ps1",
+        "app/UiaBridge.dll",
+        "app/sequence_persistence.py",
+        "app/slice_data.py",
+        "app/slice_panel.py",
+        "app/workbook-replay.settings.json"
+      ]
+    },
+    {
+      "check": "Original writer contract inspection",
+      "source": "/workspace/ir-auto-slice-research/printheadcon-source/ProcessStatus.cs",
+      "observed": "LayerInfo defaults TimeStart/TimePrintingFinished to DateTime.MinValue and temperatures to0 (lines32–42); SerializeToCsv writes with CsvWriter InvariantCulture (lines337–352).",
+      "limitation": "This inspected source supports the placeholder hypothesis, but does not establish the user-site files or executable state."
+    }
+  ],
+  "parent_execution_evidence_inspected": {
+    "route": "Parent-executed Linux offline/mock/Tk full suite; reviewer independently read JSON/log summary. Not claimed as reviewer execution or Windows validation.",
+    "tests": 224,
+    "passed": true,
+    "seconds": 47.878,
+    "failures": [],
+    "errors": [],
+    "unittest_skips": [],
+    "platform_exclusions": [
+      "test_session.SingleInstanceTests.test_actual_private_mutex_prevents_a_second_owner_and_can_be_reacquired",
+      "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed"
+    ],
+    "paths_sha256": {
+      "linux-suite.json": "9614eaa3b1618020b328e63e9fc1c2fbb4deac25e09a83b3f5febed542dd80d0",
+      "linux-suite.log": "b2b739497184f27fd5a1546436544864c3c72f7fee815a816b0c020ce548c044",
+      "linux-native-stderr-2d2c4af.log": "09843cffab9c74a446cc9c7e675c286df80b97b6897520d6cd15ffad3a277003",
+      "linux-suite-b1a5d93.json": "3526c7415107b690e8dda2bf2bea1d8c97675ce8d757c1fc606a3d50d9fa37b7",
+      "linux-suite-b1a5d93.log": "5c53244269bbfa78ebd5050ec844d2e7d2456bf2b1b659ac31e79b644db98b1f",
+      "candidate-validation-b1a5d93.json": "700251e0063cd00e9d86f788d3652e96cfac85eb4b9ac21d4cdac2e3dfb43795"
+    },
+    "warnings": "Tcl C-level stale after/_pump teardown warnings were observed and preserved separately. Passing unittest output is not a warning-free claim."
+  },
+  "source_sha256": {
+    "app/csv_source.py": "883e3cc2f143f42bcaefa107096f36f735025a33f757bcf1191120d9e6391d1c",
+    "app/test_csv_resume_anchor.py": "c59aef421173d975bd59642c8f89c013c4c05a9e2aa6941be97dff71bc0c63f3",
+    "docs/CSV_RESUME_ANCHOR.ko.md": "b5bd672f6807060741b14d26434b4fb37139e02200522263df838c58ed1533d3"
+  },
+  "unchanged_component_sha256": {
+    "app/layer_algorithm.py": "c58716206a14dab21239df024746a596828205084676b537fef47a0edf7ffc19",
+    "app/standalone_ir.py": "5eea58d28a6841f72ec69db0799bd8711bb89405930805ebdf0c812434193292",
+    "app/session.py": "23a66f27315222082594043787b638bb2a608d87f84f2e5b807a3f6eb03efcb9",
+    "app/windows_ui_adapter.py": "cf4265a2133790f7138f21ccad1b193dc77262c30f0b60b2568d9f34edc7c0d7",
+    "app/layer_charts.py": "379195c5f64dfbd04ab89ca149b8910669e56601c2bb93a8ec06f6acd939e59c",
+    "app/plot_archive.py": "1f12d53a8b3b26701a6bb07b73625471fe6f0d3696e85c76366a0935f6effdc5",
+    "app/excel_workbook.py": "aa4ff1cdb4769ff3f5043b3f1e9727fccf77aac8b6066baa1a4a023318b80df1",
+    "app/excel_worker.ps1": "8da89bce68691fff1b438e1a71c9b5ab9313b3a96bcb2572dd2b5b0070f64075",
+    "app/native_helper.ps1": "937acdce7bfd76605451ab63a62f1bb49c5fcb69b98d192166a5077ba6e571f3",
+    "app/UiaBridge.dll": "181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f",
+    "app/sequence_persistence.py": "f56f9a18043746eb1c71027b32d0588b3848fcc83867d610bd85b507e0f090a6",
+    "app/slice_data.py": "acbe9f4bd9825e4667b32f3fbcd38f5db5b81a18bf00806f589ed3b045bb6875",
+    "app/slice_panel.py": "fe16747b9115f632fa741ce615a0595288fd50e74f067127f0b9badbda0b56c1",
+    "app/workbook-replay.settings.json": "3453c5f1911f484ced847505ce30c5f94367eb168f8f5402f5ec96ac31d3a8e6"
+  },
+  "limitations": [
+    "No real three-file CSV analysis occurred. Missing anchor, wrong start and incomplete anchor can all produce the same screenshot, so the actual cause is unconfirmed.",
+    "All new tests used synthetic files and mocked transport/controller behaviour. No live M1/S3, real Sequence Save, sensor, PLC or lamp was accessed.",
+    "No new EXE was built, Windows runtime exercised or distribution performed for this candidate. No Excel COM test was performed.",
+    "Normal-looking stale sensor values cannot independently be proven physically fresh from CSV timestamps/hashes or planned images.",
+    "Existing unsupported timestamp formats were not broadened or guessed. The fix does not recover a missing identity anchor or authorize arbitrary initial-layer correction.",
+    "No external publication, main-branch update, Notion/Drive write or hardware application was performed by the reviewer. Source review completion does not lift the user-data/distribution/final-approval holds."
+  ]
+}
