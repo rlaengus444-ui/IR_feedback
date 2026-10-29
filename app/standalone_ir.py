@@ -19,6 +19,8 @@ from plot_archive import PlotArchive
 from target_temperature import parse_target_temperature
 from excel_workbook import WorkbookSpec
 from slice_panel import SlicePanel
+from auto_slice_source import AutoSliceSource
+from windows_slice_source import WindowsPathReader
 
 
 MODE_LABELS = {"UI 자동 적용": "control"}
@@ -64,6 +66,8 @@ class ThermalFeedbackWindow:
         self.discovery_queue = queue.Queue(maxsize=1)
         self.searching = False
         self.discovery_thread = None
+        self._source_binding = None; self._auto_source = None
+        self._binding_serial = 0; self._binding_queue = queue.Queue()
         self.closing = False
         self.close_deadline = None
         self.configuration_widgets = []
@@ -203,8 +207,80 @@ class ThermalFeedbackWindow:
             workbook_busy=lambda: self.controller.thread is not None,
             use_workbook=self._use_slice_workbook,
             publish_dataset=self._publish_slice_dataset,
-            context_token=lambda: self.controller.generation)
+            context_token=lambda: self.controller.generation,
+            bind_source=self._bind_source, auto_changed=self._sync_auto_source,
+            auto_refresh=self._refresh_auto_source, auto_cancel=self._cancel_auto_source,
+            confirm_reload=self._confirm_auto_reload)
         notebook.add(self.slice_panel, text="슬라이싱 이미지")
+
+    def _sync_auto_source(self):
+        try:
+            config = self.slice_panel.read_auto_config()
+        except ValueError as error:
+            config = None
+            self.slice_panel.auto_status.set(str(error))
+        if self._auto_source is not None:
+            self._auto_source.configure(config)
+
+    def _refresh_auto_source(self):
+        self._sync_auto_source()
+        if self._auto_source is not None:
+            self._auto_source.refresh()
+        else:
+            self.slice_panel.auto_status.set('경로를 지정하고 연결하면 자동 분석을 시작합니다.')
+
+    def _cancel_auto_source(self):
+        if self._auto_source is not None:self._auto_source.cancel_analysis()
+
+    def _confirm_auto_reload(self):
+        try:
+            if self._auto_source is not None:self._auto_source.confirm_reload()
+        except ValueError as error:
+            self._append_log(str(error))
+
+    def _bind_source(self):
+        target = self.target_map.get(self.host.get())
+        if target is None or self.closing:
+            self._append_log('BJT 실행 창을 먼저 검색하고 선택하세요.');return
+        self._binding_serial += 1; serial = self._binding_serial
+        context = self.controller.generation
+        if self._auto_source is not None:self._auto_source.pause_binding()
+        def countdown(left):
+            if self.closing or serial != self._binding_serial:return
+            if left:
+                self.slice_panel.auto_status.set(f'{left}초 안에 BJT 첫 탭의 슬라이싱 경로 텍스트 위로 마우스를 옮기세요. 클릭하지 않아도 됩니다.')
+                self.root.after(1000,lambda:countdown(left-1));return
+            def capture():
+                try:
+                    reader=WindowsPathReader(); x,y=reader.cursor()
+                    binding,source=reader.bind_at(target,x,y); error=None
+                except Exception as exc:
+                    binding=source=None;error=str(exc)
+                self._binding_queue.put((serial,context,target,binding,source,error))
+            threading.Thread(target=capture,name='IR-bind-image-path',daemon=True).start()
+        countdown(5)
+
+    def _poll_source_binding(self):
+        while True:
+            try:serial,context,target,binding,source,error=self._binding_queue.get_nowait()
+            except queue.Empty:break
+            if (self.closing or serial != self._binding_serial or context != self.controller.generation
+                    or target != self.target_map.get(self.host.get())):continue
+            accept = False
+            if not error:
+                accept=messagebox.askyesno('슬라이싱 경로 지정',
+                    f'{target.machine}의 이 표시 칸을 슬라이싱 경로로 사용할까요?\n\n표시 내용: {source.raw_text}\n\n가져올 폴더: {source.directory}\n이 폴더 안의 이미지 전체를 불러옵니다.',parent=self.root)
+            if accept:
+                self._source_binding=binding
+                self.slice_panel.auto_path.set('지정한 경로: '+source.directory)
+                self.slice_panel.auto_status.set('경로 지정 완료 · 연결하면 자동으로 분석합니다.')
+                if self.controller.thread is None:
+                    self.slice_panel.auto_enabled.set(True);self.slice_panel._mode_changed()
+                if self._auto_source is not None:self._auto_source.rebind(binding)
+            else:
+                self.slice_panel.auto_status.set(error or '경로 지정 취소됨')
+                if self._auto_source is not None and self._source_binding is not None:
+                    self._auto_source.rebind(self._source_binding)
 
     def _publish_slice_dataset(self, dataset, token):
         if (self.closing or token != self.controller.generation or self.controller.thread is None
@@ -290,9 +366,10 @@ class ThermalFeedbackWindow:
             self._append_log("실행 중인 프로그램을 검색하고 창을 선택하세요.")
             return
         try:
-            if self.slice_panel.running:
+            auto_mode = self.slice_panel.auto_enabled.get()
+            if self.slice_panel.running and not auto_mode:
                 raise ValueError("슬라이싱 이미지 분석 완료 후 연결하세요.")
-            if self.slice_panel.paths and self.slice_panel.dataset is None:
+            if self.slice_panel.paths and self.slice_panel.dataset is None and not auto_mode:
                 raise ValueError("선택한 이미지 분석을 완료하거나 선택을 지운 후 연결하세요.")
             workbook = None
             settings = None
@@ -307,10 +384,17 @@ class ThermalFeedbackWindow:
                 workbook.validate()
             elif self.settings_path.get().strip():
                 settings = Path(self.settings_path.get().strip())
+            auto_source = None
+            if auto_mode:
+                if self._source_binding is None or self._source_binding.target != target:
+                    raise ValueError('선택한 BJT 첫 탭의 경로 표시 칸을 먼저 지정하세요.')
+                auto_source = AutoSliceSource(target,self.slice_panel.read_auto_config(),self._source_binding)
             options = SessionOptions(target=target, mode=MODE_LABELS[self.mode.get()],
                 target_temperature_c=parse_target_temperature(self.target_temperature.get()),
-                settings_path=settings, workbook_spec=workbook, slice_dataset=self.slice_panel.dataset)
+                settings_path=settings, workbook_spec=workbook,
+                slice_dataset=None if auto_mode else self.slice_panel.dataset,auto_source=auto_source)
             if self.controller.connect(options):
+                self._auto_source=auto_source
                 self.charts.reset()
                 self._closing_charts_finalized = False
                 self.archive.submit(retry_failed=True)
@@ -482,6 +566,8 @@ class ThermalFeedbackWindow:
             # A canceled failed-export close leaves a read-only recovery window.
             self.root.after(50, self._pump)
             return
+        self._poll_source_binding()
+        if self._auto_source is not None:self.slice_panel.show_auto_view(self._auto_source.view())
         try:
             targets, error = self.discovery_queue.get_nowait()
         except queue.Empty:
@@ -522,6 +608,8 @@ class ThermalFeedbackWindow:
                 self._capture_current_plot()
                 self.archive.submit()
                 self.slice_panel.clear_session()
+                if self._auto_source is not None:self._auto_source.stop()
+                self._auto_source=None
                 self.status.set("연결 오류" if self.controller.error else "연결 해제됨")
                 self._append_log("외부 모듈 연결 종료. 원본 프로그램의 가열 ON/OFF는 변경하지 않습니다.")
         self._reconcile_slice_state()

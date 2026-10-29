@@ -1,5 +1,6 @@
 """Offline, cancellable slicing-image analysis panel. UI owns no device I/O."""
 from pathlib import Path
+from dataclasses import replace
 import queue
 import threading
 import tkinter as tk
@@ -10,10 +11,14 @@ from slice_workbook import save_workbook
 class SlicePanel(ttk.Frame):
     def __init__(self, parent, busy=lambda:False, use_workbook=lambda path:None,
                  workbook_busy=lambda:False, publish_dataset=lambda dataset, token:None,
-                 context_token=lambda:None):
+                 context_token=lambda:None, bind_source=lambda:None,
+                 auto_changed=lambda:None, auto_refresh=lambda:None, auto_cancel=lambda:None, confirm_reload=lambda:None):
         super().__init__(parent, padding=8)
         self.busy=busy;self.use_workbook=use_workbook
         self.workbook_busy=workbook_busy;self.publish_dataset=publish_dataset;self.context_token=context_token
+        self.bind_source=bind_source;self.auto_changed=auto_changed;self.auto_refresh=auto_refresh
+        self.auto_cancel=auto_cancel
+        self.confirm_reload=confirm_reload
         self.active_dataset=None;self.active_epoch=None;self.pending_epoch=None
         self.paths=();self.dataset=None;self.running=False;self.cancel_event=threading.Event()
         self.worker=None;self.pump_id=None
@@ -25,17 +30,34 @@ class SlicePanel(ttk.Frame):
         self.active=tk.StringVar(value='실행 중 이미지: 연결 전')
         self.summary=tk.StringVar(value='중앙 반경 n mm를 입력하고 ZIP 또는 이미지 파일을 선택하세요.')
         self.selected=tk.StringVar(value='선택한 파일 없음')
+        self.auto_enabled=tk.BooleanVar(value=False);self.auto_origin=tk.StringVar(value='1')
+        self.auto_path=tk.StringVar(value='자동 경로: 지정 전')
+        self.auto_status=tk.StringVar(value='첫 탭의 경로 표시 칸을 한 번 지정한 뒤 자동 불러오기를 선택하세요.')
         self.configuration_widgets=[]
         self._build()
         for variable in (self.radius,self.dpi_x,self.dpi_y,self.threshold,self.first_layer,self.polarity,self.numbering):
             variable.trace_add('write', self._changed)
+        self.auto_origin.trace_add('write',lambda *_: self._changed() if self.auto_enabled.get() else None)
         self.bind('<Destroy>',self._destroy,add='+')
         self.pump_id=self.after(100,self._pump)
 
     def _build(self):
+        auto=ttk.Frame(self);auto.pack(fill='x',pady=(0,5))
+        self.auto_box=ttk.Checkbutton(auto,text='첫 탭 경로에서 자동 불러오기',variable=self.auto_enabled,command=self._mode_changed)
+        self.auto_box.pack(side='left',padx=(0,8))
+        self.bind_button=ttk.Button(auto,text='첫 탭 경로 지정 (5초)',command=self.bind_source)
+        self.bind_button.pack(side='left',padx=(0,8))
+        ttk.Label(auto,text='파일명 기준 번호').pack(side='left')
+        self.origin_entry=ttk.Entry(auto,textvariable=self.auto_origin,width=7);self.origin_entry.pack(side='left',padx=5)
+        self.reload_button=ttk.Button(auto,text='같은 경로 재불러오기 확인',command=self.confirm_reload,state='disabled')
+        self.reload_button.pack(side='left',padx=8)
+        ttk.Label(self,textvariable=self.auto_path,wraplength=1000).pack(fill='x')
+        ttk.Label(self,textvariable=self.auto_status,wraplength=1000,foreground='#536173').pack(fill='x',pady=(0,5))
         row=ttk.Frame(self);row.pack(fill='x')
+        self.manual_widgets=[]
         for text,command in [('ZIP 불러오기',self.load_zip),('이미지 전체 선택',self.load_files),('선택 지우기',self.clear)]:
             widget=ttk.Button(row,text=text,command=command);widget.pack(side='left',padx=(0,7));self.configuration_widgets.append((widget,'normal'))
+            self.manual_widgets.append(widget)
         ttk.Button(row,text='분석 취소',command=self.cancel).pack(side='left')
         ttk.Label(self,textvariable=self.selected,wraplength=1000).pack(fill='x',pady=6)
         settings=ttk.Frame(self);settings.pack(fill='x')
@@ -47,6 +69,7 @@ class SlicePanel(ttk.Frame):
         for label,var,values in [('분사 색상',self.polarity,('흰색','검정색')),('층 번호 배정',self.numbering,('파일명 숫자','정렬순 연속'))]:
             ttk.Label(row,text=label).pack(side='left')
             widget=ttk.Combobox(row,textvariable=var,values=values,width=15,state='readonly');widget.pack(side='left',padx=(5,16));self.configuration_widgets.append((widget,'readonly'))
+            if var is self.numbering:self.numbering_widget=widget
         widget=ttk.Button(row,text='다시 분석',command=self.start);widget.pack(side='left');self.configuration_widgets.append((widget,'normal'))
         ttk.Label(self,text='이미지 중앙의 원형 영역을 분석합니다. 센서 실제 위치·도포 실행·건조 완료를 확정하는 데이터가 아닙니다.\n파일명 숫자 배정은 누락 층을 미확인으로 남깁니다. 정렬순 연속은 사용자가 실제 층 순서를 확인한 경우에만 선택하세요.',wraplength=1000,foreground='#836118').pack(fill='x')
         ttk.Label(self,textvariable=self.summary,wraplength=1000).pack(fill='x',pady=7)
@@ -64,6 +87,31 @@ class SlicePanel(ttk.Frame):
         for widget, state in self.configuration_widgets:
             widget.configure(state='disabled' if locked else state)
         self.workbook_button.configure(state='disabled' if locked or self.workbook_busy() else 'normal')
+        self.auto_box.configure(state='disabled' if locked or self.workbook_busy() else 'normal')
+        self.bind_button.configure(state='disabled' if locked or (self.workbook_busy() and not self.auto_enabled.get()) else 'normal')
+        self.origin_entry.configure(state='disabled' if locked or not self.auto_enabled.get() else 'normal')
+        if self.auto_enabled.get():
+            for widget in self.manual_widgets:widget.configure(state='disabled')
+            self.numbering_widget.configure(state='disabled')
+
+    def _mode_changed(self):
+        self._changed()
+        self.set_locked(self.busy())
+
+    def read_auto_config(self):
+        try:
+            return replace(self.read_config(),numbering='filename',filename_origin=int(self.auto_origin.get()))
+        except ValueError as error:
+            raise ValueError('파일명 기준 번호와 대응 층을 확인하세요. '+str(error)) from error
+
+    def show_auto_view(self, view):
+        self.auto_path.set('자동 경로: '+(view['path'] or '확인 대기'))
+        self.auto_status.set(view['status'])
+        self.reload_button.configure(state='normal' if view['needs_reload'] and view['epoch'] is not None else 'disabled')
+        if view['epoch'] is not None and view['dataset'] is not None and self.dataset is not view['dataset']:
+            self._display_dataset(view['dataset'])
+        elif view['epoch'] is None and self.dataset is not None:
+            self.dataset=None;self.table.delete(*self.table.get_children())
 
     def _active_text(self):
         if self.active_epoch is None:
@@ -98,7 +146,7 @@ class SlicePanel(ttk.Frame):
         if paths:self.set_paths(paths)
 
     def set_paths(self,paths):
-        if self.busy():return
+        if self.busy() or self.auto_enabled.get():return
         self.paths=tuple(paths)
         self.selected.set((Path(paths[0]).name if len(paths)==1 else f'이미지 {len(paths)}개 선택') if paths else '선택한 파일 없음')
         self._changed()
@@ -108,6 +156,8 @@ class SlicePanel(ttk.Frame):
         self.table.delete(*self.table.get_children())
         self.summary.set('설정 변경됨 · 분석값 없음. 반경/DPI/층 대응을 확인하세요.')
         if self.debounce is not None:self.after_cancel(self.debounce);self.debounce=None
+        if self.auto_enabled.get():
+            self.auto_changed();return
         if self.paths and not self.busy():self.debounce=self.after(450,self.start)
 
     def read_config(self):
@@ -118,6 +168,7 @@ class SlicePanel(ttk.Frame):
 
     def start(self):
         self.debounce=None
+        if self.auto_enabled.get():self.auto_refresh();return
         if self.busy() or not self.paths:return
         try:config=self.read_config()
         except ValueError as error:self.summary.set(str(error));return
@@ -152,20 +203,24 @@ class SlicePanel(ttk.Frame):
             if generation!=self.generation:continue
             self.running=False
             if error:self.summary.set('분석 실패: '+error);continue
-            self.dataset=value;self.table.delete(*self.table.get_children())
-            for r in value.records[:1000]:self.table.insert('', 'end',values=(r.layer,r.name,f'{r.center_coverage_pct:.3f}',f'{r.center_intensity_pct:.3f}',f'{r.whole_coverage_pct:.3f}'))
-            first,last=value.records[0],value.records[-1]
-            self.summary.set(f'{len(value.records)}개 분석 완료 · {first.layer}~{last.layer}층 · 원형 영역 {first.roi_pixels}픽셀 · SHA256 {value.fingerprint[:16]}'+(' · 표는 처음 1000개, CSV에는 전체 저장' if len(value.records)>1000 else ''))
+            self._display_dataset(value)
             self.publish_dataset(value,context)
         self.pump_id=self.after(100,self._pump)
 
+    def _display_dataset(self,value):
+        self.dataset=value;self.table.delete(*self.table.get_children())
+        for r in value.records[:1000]:self.table.insert('', 'end',values=(r.layer,r.name,f'{r.center_coverage_pct:.3f}',f'{r.center_intensity_pct:.3f}',f'{r.whole_coverage_pct:.3f}'))
+        first,last=value.records[0],value.records[-1]
+        self.summary.set(f'{len(value.records)}개 분석 완료 · {first.layer}~{last.layer}층 · 원형 영역 {first.roi_pixels}픽셀 · SHA256 {value.fingerprint[:16]}'+(' · 표는 처음 1000개, CSV에는 전체 저장' if len(value.records)>1000 else ''))
+
     def cancel(self):
         if self.busy():return
+        if self.auto_enabled.get():self.auto_cancel();return
         if self.debounce is not None:self.after_cancel(self.debounce);self.debounce=None
         self.cancel_event.set();self.generation+=1;self.running=False;self.dataset=None;self.summary.set('분석 취소됨 · 실행 중 이미지는 유지됩니다.')
 
     def clear(self):
-        if self.busy():return
+        if self.busy() or self.auto_enabled.get():return
         self.cancel();self.paths=();self.selected.set('선택한 파일 없음');self.table.delete(*self.table.get_children())
         if self.debounce is not None:self.after_cancel(self.debounce);self.debounce=None
         self.publish_dataset(None,self.context_token())

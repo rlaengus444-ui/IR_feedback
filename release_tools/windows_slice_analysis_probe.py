@@ -43,6 +43,7 @@ def main():
                       candidate_source_sha256=hashlib.sha256((app/'slice_data.py').read_bytes()).hexdigest(),
                       timing_method='Paired interleaved runs; median, same ZIP bytes and configuration')
         config = candidate.SliceConfig(5, 400, 400)
+        baseline_config = baseline.SliceConfig(5, 400, 400)
         for name, layers, unique in (('duplicate', 96, 3), ('unique', 48, 48), ('palette', 24, 4)):
             path = SOURCE_ROOT / 'validation/slice-analysis-benchmark' / (name+'.zip')
             timings = {'baseline': [], 'candidate': []}
@@ -52,7 +53,7 @@ def main():
                 for implementation in order:
                     module = baseline if implementation == 'baseline' else candidate
                     started = time.perf_counter()
-                    result = module.analyze([path], config)
+                    result = module.analyze([path], baseline_config if implementation == 'baseline' else config)
                     timings[implementation].append(time.perf_counter()-started)
                     value = {'fingerprint': result.fingerprint, 'records': [asdict(r) for r in result.records]}
                     if reference is None:

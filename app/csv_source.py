@@ -230,6 +230,9 @@ class CsvSample:
     finished: datetime
     delay_seconds: float | None
     key: str
+    slicing_image_path: str = ""
+    recoating_finished: datetime | None = None
+    slice_lineage: str = ""
 
 
 @dataclass(frozen=True)
@@ -376,7 +379,12 @@ class MonitoringCsvReader:
         delay = (finish - recoating).total_seconds() if recoating and start <= recoating <= finish else None
         identity = [str(self.path), self.identity, self.generation, context.run_key, index, data["TimeStart"], temperature]
         key = hashlib.sha256(repr(identity).encode()).hexdigest()
-        return CsvSample(index, temperature, data["TimeStart"], finish, delay, key)
+        # Optional lineage never relaxes ordinary CSV temperature/job validation.
+        # Its separate token is checked only by explicitly enabled auto images.
+        image_path = data.get("ImgSlicing", "")
+        lineage = hashlib.sha256(repr((image_path, data["TimeRecoatingFinished"])).encode()).hexdigest()
+        return CsvSample(index, temperature, data["TimeStart"], finish, delay, key,
+                         image_path, recoating if delay is not None else None, lineage)
 
     def read(self) -> CsvSnapshot:
         context = self.log.read()
