@@ -38,6 +38,33 @@ class ArchiveTests(unittest.TestCase):
         self.archives.append(archive)
         return archive
 
+    def test_retry_before_old_failure_is_polled_stays_busy_and_writes_once(self):
+        entered, release = threading.Event(), threading.Event()
+        self.addCleanup(release.set)
+        def blocked(path, points):
+            entered.set()
+            if not release.wait(5):
+                raise RuntimeError('writer timed out')
+            _write_csv(path, points)
+        def failed_thread(**kwargs):
+            raise RuntimeError('first thread startup failed')
+        archive = self.archive(writer=blocked, thread_factory=failed_thread)
+        archive.capture((1, 1), [point(1)])
+        archive.submit()
+        archive.thread_factory = threading.Thread
+        archive.submit(retry_failed=True)
+        self.assertTrue(entered.wait(2))
+        self.assertEqual([], archive.poll())
+        self.assertTrue(archive.busy)
+        self.assertEqual(1, archive.retained_rows)
+        archive.submit(retry_failed=True)
+        release.set()
+        self.assertEqual('saved', wait(archive)[0]['kind'])
+        self.assertFalse(archive.busy)
+        self.assertEqual(0, archive.retained_rows)
+        self.assertEqual(1, len(list(self.root.glob('*.csv'))))
+        self.assertEqual(2, len(list(self.root.glob('*.png'))))
+
     def test_all_rows_and_fields_with_bom(self):
         archive = self.archive()
         points = [point(i) for i in range(2501)]

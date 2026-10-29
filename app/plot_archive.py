@@ -43,7 +43,7 @@ class PlotArchive:
             return False
         self._records[key] = {"points": points, "machine": str(machine), "state": "captured",
                               "target_temperature": target_temperature, "path": None,
-                              "plot_paths": {"temperature": None, "ir": None}}
+                              "plot_paths": {"temperature": None, "ir": None}, "attempt": 0}
         return True
 
     def submit(self, retry_failed=False, directory=None):
@@ -53,6 +53,8 @@ class PlotArchive:
                     if record["state"] == "captured" or (retry_failed and record["state"] == "failed")]
         if not eligible:
             return
+        for _, record in eligible:
+            record["attempt"] += 1
         if self._thread is None:
             try:
                 self._thread = self.thread_factory(target=self._run, daemon=True)
@@ -63,20 +65,20 @@ class PlotArchive:
                     record["state"] = "failed"
                     self._results.put({"kind": "error", "key": key, "path": record["path"],
                                        "row_count": len(record["points"]), "error": str(error),
-                                       "plot_paths": dict(record["plot_paths"])})
+                                       "plot_paths": dict(record["plot_paths"]), "attempt": record["attempt"]})
                 return
         destinations = (Path(directory),) if directory is not None else self.directories
         for key, record in eligible:
             record["state"] = "queued"
             self._work.put((key, record["points"], record["machine"], destinations,
-                            record["target_temperature"], record["path"], dict(record["plot_paths"])))
+                            record["target_temperature"], record["path"], dict(record["plot_paths"]), record["attempt"]))
 
     def _run(self):
         while True:
             item = self._work.get()
             if item is None:
                 return
-            key, points, machine, directories, target, csv_path, plots = item
+            key, points, machine, directories, target, csv_path, plots, attempt = item
             errors = []
             safe_machine = re.sub(r"[^A-Za-z0-9_-]", "_", machine)[:40] or "machine"
             safe_key = "-".join(re.sub(r"[^A-Za-z0-9_-]", "_", str(part))[:40] for part in key)
@@ -132,7 +134,8 @@ class PlotArchive:
             complete = csv_path is not None and all(plots.values())
             self._results.put({"kind": "saved" if complete else "error", "key": key,
                                "path": csv_path, "plot_paths": plots, "row_count": len(points),
-                               "error": None if complete else "; ".join(errors) or "No archive directory configured"})
+                               "error": None if complete else "; ".join(errors) or "No archive directory configured",
+                               "attempt": attempt})
             del item, points
 
     def poll(self):
@@ -143,6 +146,10 @@ class PlotArchive:
             except queue.Empty:
                 break
             record = self._records[event["key"]]
+            if event["attempt"] != record["attempt"]:
+                # A retry can start before the GUI has consumed a thread-start
+                # failure. Its old result must not mark the new writer idle.
+                continue
             record["path"] = event["path"]
             record["plot_paths"] = dict(event["plot_paths"])
             if event["kind"] == "saved":
