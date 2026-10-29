@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 import ntpath
 import os
+from pathlib import PureWindowsPath
 import re
 import time
 
@@ -21,8 +22,40 @@ def canonical(path):
     return ntpath.normcase(ntpath.normpath(str(path)))
 
 
-def parse_path_text(text):
-    """Same strict grammar as native_helper's SourceContainer; no shell expansion."""
+def same_source_path(recorded, expected):
+    """Compare complete paths; resolve aliases of the authorized image only.
+
+    CSV text never causes filesystem access to a different path. Windows long/
+    short names may mix at individual components, but no component is dropped.
+    """
+    recorded=canonical(recorded);expected=str(expected)
+    if recorded==canonical(expected):return True
+    real=os.path.realpath(expected,strict=True)
+    if recorded==canonical(real):return True
+    if os.name!='nt':return False
+    import ctypes as c
+    from ctypes import wintypes as w
+    api=c.WinDLL('kernel32',use_last_error=True)
+    pairs=[];forms=[]
+    for value in dict.fromkeys((expected,real)):
+        names=[]
+        for name in ('GetLongPathNameW','GetShortPathNameW'):
+            fn=getattr(api,name);fn.argtypes=[w.LPCWSTR,w.LPWSTR,w.DWORD];fn.restype=w.DWORD
+            result=c.create_unicode_buffer(32768);count=fn(value,result,len(result))
+            if not 0<count<len(result):names.append(None)
+            else:names.append(canonical(result.value));forms.append(canonical(result.value))
+        if all(names):pairs.append(tuple(names))
+    if recorded in forms:return True
+    parts=PureWindowsPath(recorded).parts
+    for long_name,short_name in pairs:
+        long_parts=PureWindowsPath(long_name).parts;short_parts=PureWindowsPath(short_name).parts
+        if (len(parts)==len(long_parts)==len(short_parts)
+                and all(p in (a,b) for p,a,b in zip(parts,long_parts,short_parts))):
+            return True
+    return False
+
+
+def _raw_path(text):
     text = str(text).strip()
     if not text or len(text) > 4095 or any(c in text for c in ('\0', '\r', '\n', '…')):
         raise SourceReadError('경로가 비어 있거나 전체 경로를 읽을 수 없습니다.')
@@ -41,10 +74,16 @@ def parse_path_text(text):
         raise SourceReadError('잘못된 경로 또는 생략된 경로입니다.')
     if path.startswith(('\\\\.\\', '\\\\?\\')) or '...' in path:
         raise SourceReadError('장치 경로나 생략된 경로는 자동으로 사용하지 않습니다.')
+    return ntpath.normpath(path)
+
+
+def parse_path_text(text, directory_field=False):
+    """Same strict grammar as native_helper's SourceContainer; no shell expansion."""
+    path = _raw_path(text)
     suffix = ntpath.splitext(path)[1].lower()
-    if suffix == '.zip':
+    if suffix == '.zip' and not directory_field:
         raise SourceReadError('자동 입력은 이미지 폴더/이미지 파일 경로를 사용하세요. ZIP은 수동 불러오기를 사용합니다.')
-    folder = ntpath.dirname(path) if suffix in EXTENSIONS else path
+    folder = ntpath.dirname(path) if suffix in EXTENSIONS and not directory_field else path
     return ntpath.normpath(folder)
 
 
@@ -55,10 +94,12 @@ class PathBinding:
     home: int
     chain: tuple
     home_caption: str
+    directory_field: bool = False
 
     def token(self, directory):
         return {'hwnd': self.leaf, 'home': self.home, 'home_caption': self.home_caption,
-                'directory': canonical(directory), 'chain': self.chain}
+                'directory': canonical(directory), 'chain': self.chain,
+                'directory_field': self.directory_field}
 
 
 @dataclass(frozen=True)
@@ -201,7 +242,11 @@ class WindowsPathReader:
             raise SourceReadError('경로 칸의 부모 구조를 확인할 수 없습니다.')
         if home is None:
             raise SourceReadError('BJT 첫 탭(Home)의 경로 표시 칸을 지정하세요.')
-        binding = PathBinding(target, int(handle), home, tuple(chain), caption)
+        # Resolve folder-versus-file once when the user explicitly binds it.
+        # Polling itself does no filesystem I/O; extension-named directories
+        # (e.g. layers.png) must never be mistaken for an image filename.
+        directory_field = os.path.isdir(_raw_path(self._text(target,handle)))
+        binding = PathBinding(target, int(handle), home, tuple(chain), caption,directory_field)
         return binding, self.read(binding)
 
     def read(self, binding):
@@ -214,4 +259,4 @@ class WindowsPathReader:
         if self._caption(target, binding.home).strip() != binding.home_caption:
             raise BindingLost('지정한 첫 탭이 바뀌었습니다. 경로 칸을 다시 지정하세요.')
         raw = self._text(target, binding.leaf)
-        return SourceSelection(parse_path_text(raw), raw, binding)
+        return SourceSelection(parse_path_text(raw,binding.directory_field), raw, binding)

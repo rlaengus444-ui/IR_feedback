@@ -33,7 +33,13 @@ function Owned($root, $window, $pidExpected) {
     return $window -ne [IntPtr]::Zero -and [BinderJetQueuedNavigation]::IsOwned($root, $window, $pidExpected)
 }
 
-function SourceContainer([string]$text) {
+function NormalizeSourceDirectory([string]$folder) {
+    $folder = [IO.Path]::GetFullPath($folder)
+    if ($folder.Length -gt [IO.Path]::GetPathRoot($folder).Length) { $folder = $folder.TrimEnd([char[]]@('\','/')) }
+    return $folder
+}
+
+function SourceContainer([string]$text, [bool]$directoryField=$false) {
     $text = $text.Trim()
     if (-not $text -or $text.Length -gt 4095 -or $text.IndexOfAny([char[]]@([char]0,[char]10,[char]13,[char]0x2026)) -ge 0) { throw 'Incomplete image source path.' }
     $matchesPath = [regex]::Matches($text, '[A-Za-z]:[\\/]|\\\\')
@@ -44,11 +50,9 @@ function SourceContainer([string]$text) {
     $path = $text.Substring($start).Trim().TrimEnd([char[]]@('"',"'")).Trim()
     if ($path.IndexOfAny([char[]]@('*','?','<','>','|','"')) -ge 0 -or $path.Contains('...') -or $path.StartsWith('\\.\') -or $path.StartsWith('\\?\')) { throw 'Unsupported image source path.' }
     $extension = [IO.Path]::GetExtension($path).ToLowerInvariant()
-    if ($extension -eq '.zip') { throw 'Automatic ZIP source lineage is not supported.' }
-    $folder = if ($extension -in @('.png','.bmp','.tif','.tiff','.jpg','.jpeg')) { [IO.Path]::GetDirectoryName($path) } else { $path }
-    $folder = [IO.Path]::GetFullPath($folder)
-    if ($folder.Length -gt [IO.Path]::GetPathRoot($folder).Length) { $folder = $folder.TrimEnd([char[]]@('\','/')) }
-    return $folder
+    if ($extension -eq '.zip' -and -not $directoryField) { throw 'Automatic ZIP source lineage is not supported.' }
+    $folder = if (-not $directoryField -and $extension -in @('.png','.bmp','.tif','.tiff','.jpg','.jpeg')) { [IO.Path]::GetDirectoryName($path) } else { $path }
+    return NormalizeSourceDirectory $folder
 }
 
 function AssertBoundSourceChain($root, $pidExpected, $proof) {
@@ -101,10 +105,10 @@ function AssertSliceSource($root, $pidExpected, $proof) {
         -not [BinderJetLeafMetadata]::IsDescendant($root,$sourceView,$leaf,$pidExpected)) { throw 'The bound Home image-path field was recreated; rebind it.' }
     $caption = ([BinderJetNativeProcess]::ReadText($root,$sourceView,$pidExpected)).Trim()
     if ($caption -cne [string]$proof.home_caption -or $caption.ToLowerInvariant() -notin @('home','홈')) { throw 'The bound Home view changed.' }
-    $folder = SourceContainer ([BinderJetNativeProcess]::ReadText($root,$leaf,$pidExpected))
+    $folder = SourceContainer ([BinderJetNativeProcess]::ReadText($root,$leaf,$pidExpected)) ([bool]$proof.directory_field)
     # .NET Framework may expand Windows8.3 names in GetFullPath. Normalize both
     # the displayed value and the pinned expected directory using the same path.
-    $expectedFolder = SourceContainer ([string]$proof.directory)
+    $expectedFolder = NormalizeSourceDirectory ([string]$proof.directory)
     if (-not [string]::Equals($folder,$expectedFolder,[StringComparison]::OrdinalIgnoreCase)) { throw 'The current image source folder changed.' }
     $files = @($proof.files)
     if ($files.Count -lt 1 -or $files.Count -gt 2) { throw 'Current/prior image proofs are required.' }
@@ -133,7 +137,7 @@ function AssertSliceSource($root, $pidExpected, $proof) {
         }
     }
     AssertBoundSourceChain $root $pidExpected $proof
-    if (-not [string]::Equals((SourceContainer ([BinderJetNativeProcess]::ReadText($root,$leaf,$pidExpected))),$folder,[StringComparison]::OrdinalIgnoreCase)) { throw 'The image source folder changed during content verification.' }
+    if (-not [string]::Equals((SourceContainer ([BinderJetNativeProcess]::ReadText($root,$leaf,$pidExpected)) ([bool]$proof.directory_field)),$folder,[StringComparison]::OrdinalIgnoreCase)) { throw 'The image source folder changed during content verification.' }
     $script:sourceProofMillis = $timer.ElapsedMilliseconds
     $script:sourceWait = $false
 }

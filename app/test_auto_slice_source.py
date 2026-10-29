@@ -21,7 +21,7 @@ from excel_workbook import WorkbookSpec
 from layer_algorithm import LayerRecommendation
 from session import SessionOptions, SliceDatasetSetting, run_ui_session
 from slice_data import SliceConfig, analyze
-from windows_slice_source import BindingLost, PathBinding, SourceReadError, SourceSelection, canonical, parse_path_text
+from windows_slice_source import BindingLost, PathBinding, SourceReadError, SourceSelection, canonical, parse_path_text, same_source_path
 from windows_ui_adapter import WindowsUiAdapter
 
 
@@ -39,6 +39,18 @@ class FakeReader:
 
 
 class PathTextTests(unittest.TestCase):
+    def test_full_path_comparison_does_not_access_an_unrelated_csv_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            expected=Path(directory)/'bound'/'001.bmp';expected.parent.mkdir();expected.write_bytes(b'owned')
+            recorded=str(Path(directory)/'unrelated'/'001.bmp')
+            original=os.path.realpath
+            with patch('windows_slice_source.os.path.realpath',wraps=original) as resolve:
+                self.assertFalse(same_source_path(recorded,expected))
+            self.assertTrue(all(str(call.args[0])==str(expected) for call in resolve.call_args_list))
+    def test_explicit_directory_field_does_not_strip_image_extension_folder_name(self):
+        self.assertEqual('c:\\layers.png',canonical(parse_path_text('C:\\layers.png',True)))
+        self.assertEqual('c:\\layers.png',canonical(parse_path_text('C:\\layers.png\\001.bmp')))
+        self.assertEqual('c:\\layers.zip',canonical(parse_path_text('C:\\layers.zip',True)))
     def test_strict_folder_and_current_filename_normalize_without_role_guessing(self):
         for text in ('C:\\작업 폴더\\slices','"C:\\작업 폴더\\slices\\001.png"',
                      'Image path: C:/작업 폴더/slices/002.PNG'):
@@ -158,6 +170,19 @@ class AutoSourceTests(unittest.TestCase):
         self.service.analyze_job(work)
         self.assertEqual(100,self.service.view()['dataset'].records[0].whole_coverage_pct)
         self.assertTrue(self.service.view()['needs_reload']);self.assertFalse(self.service.view()['ready'])
+
+    def test_backward_wall_clock_at_reload_cannot_admit_pre_change_measurement(self):
+        epoch,data=self.prime()
+        while self.tick<12:
+            self.tick+=.5;self.service.poll_once()
+        self.service.clock=lambda:self.now+timedelta(seconds=5)  # Wall steps back7s; monotonic does not.
+        self.service._needs_reload=True;self.service._ready=False
+        self.service.confirm_reload()
+        self.assertGreaterEqual(self.service._cutoff,self.now+timedelta(seconds=13))
+        old=self.frame(2,stamp=self.now+timedelta(seconds=10))
+        self.assertIsNone(self.service.frame(old,epoch,data)[0])
+        fresh=self.frame(2,stamp=self.now+timedelta(seconds=14))
+        self.assertIsNotNone(self.service.frame(fresh,epoch,data)[0])
 
     def test_path_field_loss_requires_explicit_rebind(self):
         self.prime();self.reader.error=BindingLost('recreated');self.service.poll_once()

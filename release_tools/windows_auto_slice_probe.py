@@ -3,6 +3,8 @@ import argparse
 from contextlib import contextmanager
 import ctypes
 from dataclasses import replace
+from datetime import datetime,timedelta
+import csv
 import hashlib
 import json
 import os
@@ -41,7 +43,8 @@ def main():
             raise ValueError('Run using the packaged Windows runtime')
         sys.path.insert(0,str(root/'app'))
         from PIL import Image
-        from adapter_contracts import MachineWindow,SourceSuspended
+        from adapter_contracts import MachineWindow,SourceSuspended,UiSnapshot
+        from csv_source import JobContext,MonitoringCsvReader
         from auto_slice_source import AutoSliceSource
         from session import SliceDatasetSetting
         from slice_data import SliceConfig
@@ -132,13 +135,38 @@ def main():
             checks['current_filename_change_preserves_folder']=canonical(reader.read(binding).directory)==canonical(a)
             checks['native_path_grammar_matches_python']=verify(good_a)['success']
             source=AutoSliceSource(target,SliceConfig(1,25.4,25.4,filename_origin=1),binding,
-                reader=reader,poll_seconds=.05,stable_seconds=.05,scan_seconds=.05)
+                reader=reader,poll_seconds=.05,stable_seconds=.05,scan_seconds=.05,
+                clock=lambda:datetime.now()-timedelta(seconds=60))
             setting=SliceDatasetSetting();source.start(setting)
             wait(lambda:source.view()['ready'])
             first_epoch=source.view()['epoch']
             checks['automatic_import_without_csv']=len(source.view()['dataset'].records)==8
             command('path:'+str(a/'003.bmp'));time.sleep(.2)
             checks['current_filename_does_not_reanalyze_set']=source.view()['epoch']==first_epoch
+            # A real parsed CSV uses a long name while UI/import may use8.3.
+            monitor=folder/'Monitoring';monitor.mkdir();stamp=datetime.now().replace(microsecond=0)
+            started=stamp-timedelta(minutes=1)
+            context=JobContext('synthetic-alias',0,started,0,'AUTO')
+            class FixedLog:
+                def read(self):return context
+            job=monitor/(started.strftime('%Y%m%d_%H%M%S')+'_8-layer');job.mkdir()
+            csv_path=job/('LayerDatasheet_'+started.strftime('%Y%m%d_%H%M%S')+'.csv')
+            with csv_path.open('w',encoding='utf-8-sig',newline='') as stream:
+                writer=csv.writer(stream);writer.writerow(list(MonitoringCsvReader.REQUIRED)+['ImgSlicing'])
+                writer.writerow(['1',started.strftime('%m/%d/%Y %H:%M:%S'),
+                    (stamp-timedelta(seconds=20)).strftime('%m/%d/%Y %H:%M:%S'),
+                    stamp.strftime('%m/%d/%Y %H:%M:%S'),'65',str(Path(long_name.value)/'001.bmp')])
+            csv_reader=MonitoringCsvReader(target,roots=[monitor],log=FixedLog())
+            parsed=csv_reader.read().sample
+            view=source.view();setting.activate(view['epoch'])
+            row=UiSnapshot(target,layer_index=parsed.layer_index,observation_key=parsed.key,t_recoating_c=parsed.temperature,
+                slicing_image_path=parsed.slicing_image_path,recoating_finished=parsed.recoating_finished,
+                slice_lineage=parsed.slice_lineage,csv_generation=parsed.source_generation)
+            def verify_lineage():
+                fresh=csv_reader.read().sample
+                return fresh.key==parsed.key and fresh.slice_lineage==parsed.slice_lineage
+            admitted,reason=source.frame(row,view['epoch'],view['dataset'],verify_lineage=verify_lineage)
+            checks['parsed_csv_long_alias_matches_imported_full_path']=(admitted is not None and admitted.guard is not None and source.admit(admitted))
             command('b')
             wait(lambda:source.view()['path']==canonical(b))
             wait(lambda:source.view()['ready'] and source.view()['epoch']!=first_epoch)
@@ -172,6 +200,15 @@ def main():
             report['two_image_content_proof_ms']={'median':statistics.median(sample),'samples':sample,
                 'total_bytes':sum(p.stat().st_size for p in bench.glob('*.bmp'))}
             checks['content_proof_within_production_budget']=max(sample)<=750
+            extension_directory=folder/'layers.png';extension_directory.mkdir()
+            for n in (1,2):Image.new('L',(32,32),n*70).save(extension_directory/f'{n:03}.bmp')
+            command('path:'+str(extension_directory/'001.bmp'))
+            checks['extension_named_parent_folder_supported']=verify(proof(extension_directory,binding))['success']
+            command('path:'+str(extension_directory))
+            directory_binding,directory_selection=reader.bind_handle(target,new_box)
+            checks['extension_named_directory_field_supported']=(directory_binding.directory_field and
+                canonical(directory_selection.directory)==canonical(extension_directory) and
+                verify(proof(extension_directory,directory_binding))['success'])
             heartbeat=Path(str(marker)+'.heartbeat')
             ticks,saves,navs=heartbeat.read_text().split(',');time.sleep(.25)
             next_ticks,next_saves,next_navs=heartbeat.read_text().split(',')

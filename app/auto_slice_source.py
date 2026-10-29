@@ -10,7 +10,7 @@ import time
 
 from csv_source import shared_binary
 from slice_data import EXTENSIONS, MAX_FILES, MAX_IMAGE_BYTES, SliceConfig, _mapping, analyze
-from windows_slice_source import BindingLost, SourceReadError, WindowsPathReader, canonical
+from windows_slice_source import BindingLost, SourceReadError, WindowsPathReader, canonical, same_source_path
 
 
 @dataclass(frozen=True)
@@ -89,6 +89,8 @@ class AutoSliceSource:
         self.target = target; self.reader = reader or WindowsPathReader()
         self.config = config; self.binding = binding; self.analyzer = analyzer
         self.clock = clock; self.monotonic = monotonic
+        self._wall_anchor = clock();self._mono_anchor = monotonic()
+        self._wall_floor = self._wall_anchor
         self.poll_seconds = poll_seconds; self.stable_seconds = stable_seconds
         self.scan_seconds = scan_seconds
         self._lock = threading.Lock(); self._stop = threading.Event()
@@ -110,7 +112,13 @@ class AutoSliceSource:
 
     def _new_cutoff(self):
         # CSVs may have only whole seconds. Never admit the ambiguous second.
-        return self.clock().replace(microsecond=0) + timedelta(seconds=1)
+        actual=self.clock();tick=self.monotonic()
+        predicted=self._wall_anchor+timedelta(seconds=max(0,tick-self._mono_anchor))
+        safe=max(actual,predicted,self._wall_floor)
+        self._wall_floor=safe
+        if actual>predicted:
+            self._wall_anchor=actual;self._mono_anchor=tick
+        return safe.replace(microsecond=0)+timedelta(seconds=1)
 
     def _invalidate_locked(self, reason, *, reload=False):
         self._cancel.set(); self._cancel = threading.Event()
@@ -365,7 +373,8 @@ class AutoSliceSource:
                 if changed:
                     return None, '작업/CSV 구간 변경 · 새로운 측정 기준 확인 대기'
             layer = snapshot.layer_index + 1 if isinstance(snapshot.layer_index, int) else None
-            observed = (snapshot.observation_key,snapshot.slice_lineage)
+            observed = (snapshot.observation_key,snapshot.slice_lineage,
+                        canonical(snapshot.slicing_image_path),stamp)
             if layer in self._observed_rows and self._observed_rows[layer] != observed:
                 self._known_powder.clear();self._rejected_layers.add(layer)
             if layer in self._rejected_layers:
@@ -373,8 +382,7 @@ class AutoSliceSource:
             if not isinstance(stamp, datetime) or stamp.tzinfo is not None or stamp < self._cutoff:
                 return None, '이미지 교체 이후 리코팅 측정 대기 · 지연된 CSV는 기록만 유지'
             record = dataset._by_layer.get(layer)
-            if (record is None or not snapshot.slice_lineage or not snapshot.slicing_image_path
-                    or canonical(snapshot.slicing_image_path) != canonical(self._source_paths[record.layer])):
+            if record is None or not snapshot.slice_lineage or not snapshot.slicing_image_path:
                 return None, '현재 이미지셋과 CSV 층·이미지 경로 일치 대기'
             features = dataset.features(layer)
             if layer - 1 not in self._known_powder:
@@ -397,7 +405,8 @@ class AutoSliceSource:
         if candidate is None or candidate.guard is None:
             return candidate,reason
         key = (candidate.version,epoch,snapshot.run_key,snapshot.csv_generation,
-               snapshot.observation_key,snapshot.slice_lineage)
+               snapshot.observation_key,snapshot.slice_lineage,
+               canonical(snapshot.slicing_image_path),snapshot.recoating_finished)
         with self._lock:
             if candidate.version != self._version or not self._ready:
                 return None,'이미지 확인 중 경로 변경'
@@ -406,6 +415,8 @@ class AutoSliceSource:
             self._frame_ticket += 1;ticket=self._frame_ticket
             binding=self.binding;cancel=self._cancel
         try:
+            if not same_source_path(snapshot.slicing_image_path,candidate.guard['files'][0]['path']):
+                return None,'현재 이미지셋과 CSV 층·전체 이미지 경로 일치 대기'
             # Before any Excel row/baseline/powder-history promotion, including
             # recommendations that will HOLD and never invoke native apply.
             current=self.reader.read(binding)
@@ -433,7 +444,8 @@ class AutoSliceSource:
                     or self.monotonic()-self._heartbeat>2):
                 return None,'이미지 확인 중 새 경로/설정 도착 · 이전 결과 보류'
             layer=snapshot.layer_index+1
-            self._observed_rows[layer]=(snapshot.observation_key,snapshot.slice_lineage)
+            self._observed_rows[layer]=(snapshot.observation_key,snapshot.slice_lineage,
+                                        canonical(snapshot.slicing_image_path),snapshot.recoating_finished)
             record=dataset._by_layer[layer]
             self._known_powder[layer]=(self._known_powder.get(layer-1,0)+1
                                       if record.whole_coverage_pct==0 else 0)
