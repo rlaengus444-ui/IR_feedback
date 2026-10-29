@@ -1,0 +1,244 @@
+{
+  "reviewed_at_utc": "2026-10-29T16:09:40Z",
+  "reviewer": "sol_reviewer",
+  "invocation": {
+    "route": "native collaboration follow-up to existing designated reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_verified": false,
+    "cli_authentication_restored": false
+  },
+  "candidate_commit": "6ee48f34c39a18d290aab6391a587769ce913e96",
+  "candidate_zip_sha256": "148f3a3c71cc1c8b73565bb1c94726040a311038df7615353b21fdd8b71ae4ab",
+  "candidate_version": "2026.10.29-auto-slice.1",
+  "candidate_zip_bytes": 35370734,
+  "candidate_zip_entries": 3653,
+  "independent_post_review_complete": true,
+  "evaluation_distribution_allowed": true,
+  "equipment_application_approved": false,
+  "final_control_algorithm_approved": false,
+  "stable_release_approved": false,
+  "actual_bjt_path_binding_tested": false,
+  "excel_com_tested": false,
+  "disposition": "No unresolved release blocker identified for evaluation-only prerelease delivery of this exact unchanged ZIP. This review does not approve stable release, actual equipment application, final control algorithm, actual BJT path producer, or Excel COM.",
+  "scope": {
+    "base_commit": "4e8698788d9c3dad09ee1bb362313ee08fefd585",
+    "core_review": "/workspace/ir-auto-slice-20261029-review/sol-corrected-post-review.json",
+    "core_review_sha256": "0134e40d435e774421047d67c15c46d0e8674f042bf260a7f1291a29c334e483",
+    "artifact_directory": "/workspace/ir-auto-slice-20261029-review/windows-6ee48f3",
+    "publication_template": "/workspace/ir-auto-slice-20261029-review/publish-auto-slice-6ee-final-workflow.template.yml",
+    "publication_template_sha256": "16bd0501a65f3bf6c37020403a36a4e8fd542288cc6aaef81d16cd3b9a897575",
+    "publisher": "/workspace/IR_feedback_auto_slice/release_tools/publish_auto_slice_candidate.py",
+    "reviewed_publisher_commit": "6ee48f34c39a18d290aab6391a587769ce913e96"
+  },
+  "artifact_provenance": {
+    "workflow_run_id": 40901581109,
+    "artifact_id": 12909557635,
+    "artifact_name": "slice-candidate-6ee48f34c39a18d290aab6391a587769ce913e96",
+    "repository_id": 1434868115,
+    "head_repository_id": 1434868115,
+    "outer_bytes": 34876787,
+    "outer_sha256": "e2b62ec8a73bf647d54490dc1c4fef76ecf05075e6df6f7f1882da1ab9131fdd",
+    "outer_entries": 17,
+    "metadata_file": "/workspace/ir-auto-slice-20261029-review/windows-6ee48f3-artifacts.json",
+    "reviewer_independently_refetched_from_network": false,
+    "local_outer_hash_and_metadata_verified": true,
+    "all_17_extracted_evidence_files_exactly_match_outer": true
+  },
+  "findings": {
+    "unresolved": [],
+    "resolved": "Original P1/P2 core findings and added normalization, full-path alias, idle and clock concerns are addressed; see immutable corrected core review. Fresh native positives/negatives now confirm the previously pending Windows guard behavior on this exact candidate.",
+    "prior_failure_preserved": "fce3759 had283 passing unit tests but a failed native source guard. Its raw readiness/report and the initial changes-requested review are preserved; they were not relabeled as successful."
+  },
+  "reviewer_executed_checks": [
+    {
+      "check": "Outer and inner exact digest/size/entry provenance",
+      "result": "passed",
+      "details": "Outer SHA/size matched API metadata; CRC passed; all17 extracted files match outer archive; inner byte content equals the pinned ZIP."
+    },
+    {
+      "check": "Full package verification",
+      "command": "python release_tools/verify_package.py IRFeedback-2026.10.29-auto-slice.1.zip 2026.10.29-auto-slice.1",
+      "result": "passed",
+      "details": "All3653 entries: safe paths/case collisions/no symlinks, CRC, complete SHA manifest, source bytes against clean6ee tree, required runtime/Pillow licenses/modules, settings and required linked JSONs."
+    },
+    {
+      "check": "Original immutable CSV replay against exact packaged app",
+      "report": "/workspace/ir-auto-slice-20261029-review/sol-real-csv-packaged-6ee48f3.json",
+      "result": "passed",
+      "details": "All3 files/1122 rows accepted;140-frame append replay with metadata501/baseline502/138 distinct new observations503..640, no duplicate actionable row; mocked session one calculation and one mock Save, zero physical Saves; originals unchanged. Context/clock simulated from screenshot/recorded rows; actual M1 log not provided."
+    },
+    {
+      "check": "Publisher offline adversarial checks",
+      "report": "/workspace/ir-auto-slice-20261029-review/sol-auto-delivery-offline-checks.json",
+      "result": "7 scenarios passed",
+      "details": "Successful ordered tag/draft/upload/server-digest-check/prerelease/latest=false under fake API; wrong review digest, failed auto gate, false native report and missing test summary rejected before API; existing tag rejected without mutation; bad uploaded digest stayed draft."
+    },
+    {
+      "check": "Exact direct-download workflow inline code",
+      "result": "6 scenarios passed",
+      "details": "Actual inline Python executed with all gh subprocesses mocked and real outer archive bytes. Success extracts exact inner digest; wrong artifact ID/run/repository/digest rejects before download; corrupt download rejects before extraction. Real external calls=0."
+    },
+    {
+      "check": "Core regression checks carried forward on exact6ee git archive",
+      "result": "75/75 focused tests passed in5.079s plus13 independent probe groups",
+      "details": "Same-stat publication, UNKNOWN/missing-IR cached-row barriers, monotonic leases, provenance, equal-power pre-learning proof, critical CSV error propagation, normal idle, ancestor token, directory kind, alias mock and backward-clock cutoff."
+    }
+  ],
+  "inspected_windows_evidence": {
+    "workflow_run_id": 40901581109,
+    "source_commit": "6ee48f34c39a18d290aab6391a587769ce913e96",
+    "actual_packaged_runtime_tests": {
+      "passed": 286,
+      "failed": 0,
+      "seconds": 73.001,
+      "report": "tests.txt"
+    },
+    "required_non_excel_gates": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "settings_recovery": "success",
+      "auto_slice": "success",
+      "reverify": "success"
+    },
+    "auto_slice_native": {
+      "passed": true,
+      "checks": {
+        "explicit_pointed_edit_bound": true,
+        "explicit_pointed_static_bound": true,
+        "wrong_pid_rejected": true,
+        "process_view_rejected": true,
+        "hidden_home_remains_readable": true,
+        "cached_path_read_is_bounded": true,
+        "production_helper_hidden_source_and_two_hashes": true,
+        "long_and_short_native_path_forms_match": true,
+        "same_home_native_reparent_holds": true,
+        "native_control_id_change_holds": true,
+        "native_class_mismatch_holds": true,
+        "current_filename_change_preserves_folder": true,
+        "native_path_grammar_matches_python": true,
+        "automatic_import_without_csv": true,
+        "current_filename_does_not_reanalyze_set": true,
+        "parsed_csv_long_alias_matches_imported_full_path": true,
+        "ui_change_refreshes_set_without_csv": true,
+        "pre_edit_folder_mismatch_holds": true,
+        "same_size_mtime_collision_fixture": true,
+        "content_hash_rejects_same_stat_change": true,
+        "same_path_reanalyzes_but_waits_reload_ack": true,
+        "explicit_reload_ack_reopens_source_gate": true,
+        "recreated_field_needs_rebind": true,
+        "explicit_rebind_recovers_without_reconnecting": true,
+        "content_proof_within_production_budget": true,
+        "extension_named_parent_folder_supported": true,
+        "extension_named_directory_field_supported": true,
+        "target_heartbeat_responsive": true,
+        "zero_save_or_navigation": true,
+        "no_process_grid_messages": true
+      },
+      "count": 30,
+      "fixture_short_alias_differs": true,
+      "native_path_read_ms": {
+        "median": 0.1607499999920492,
+        "maximum": 0.6467000000043299,
+        "samples": 100
+      },
+      "two_image_content_proof_ms": {
+        "median": 33,
+        "samples": [
+          33,
+          32,
+          33
+        ],
+        "total_bytes": 8390764
+      },
+      "physical_equipment_actions": 0,
+      "actual_bjt_path_binding_tested": false
+    },
+    "other_native_reports": {
+      "bridge": "9/9 passed",
+      "csv_guard": "passed",
+      "native_discovery": "14/14 passed",
+      "settings_recovery": "20/20 passed",
+      "slice_performance": "passed"
+    },
+    "launcher_smoke": {
+      "launcher_pid": 780,
+      "packaged_pythonw_pid": 7568,
+      "expected_window_observed": true,
+      "normal_wm_close": true
+    },
+    "excel": {
+      "excel_com_tested": false,
+      "release_ready": false,
+      "reason": "Excel COM is not registered"
+    },
+    "raw_readiness": {
+      "checks": {
+        "build": "success",
+        "tests": "success",
+        "smoke": "success",
+        "bridge": "success",
+        "csv_guard": "success",
+        "native_discovery": "success",
+        "slice_perf": "success",
+        "settings_recovery": "success",
+        "auto_slice": "success",
+        "excel": "failure",
+        "reverify": "success"
+      },
+      "release_ready": false,
+      "automated_checks_passed": false,
+      "source_commit": "6ee48f34c39a18d290aab6391a587769ce913e96",
+      "device_application_approved": false,
+      "final_sol_review": "pending"
+    },
+    "interpretation": "Windows unit/native/packaging checks are successful, but overall workflow/stable readiness remains false because Excel COM is not registered. Synthetic owned fixtures are not live BJT/equipment validation. Reviewer inspected preserved execution evidence; reviewer did not run a Windows machine."
+  },
+  "publication_boundary": {
+    "allowed": "Existing user-authorized evaluation prerelease only, with this exact unchanged candidate ZIP and checksum companion; latest=false.",
+    "required_evidence_checkout": "Only __PUBLISH_SOURCE__ may be replaced with an immutable evidence commit containing this unchanged review and publisher; packaged SOURCES must remain exactly6ee, enforced again by verify_package.",
+    "direct_download": "Pinned artifact12909557635/run40901581109/source6ee, both repository IDs, expiry/size/digest; GITHUB_TOKEN with actions:read; binary GET with30/60s timeouts; exact outer SHA/size, bounded safe fresh extraction.",
+    "publisher_guards": "Requires exact source/ZIP review, all10 non-Excel outcomes and native passed flags, explicit unavailable-Excel state, stable/device flags false, full source/ZIP verification and actual OK test summary before any API; refuses existing tag/release reuse; creates tag at candidate, then draft prerelease, verifies asset state/size/server SHA before and after publishing with make_latest=false.",
+    "source_or_archive_rebuild_allowed": false,
+    "external_actions_by_reviewer": 0,
+    "original_actions_checksum_unchanged": true
+  },
+  "remaining_limits_and_holds": [
+    "Actual original BJT first-tab ProductionControl/LayerMonitoring path producer and semantic correctness of a user-selected field are not validated. The default-off product requires explicit owned Home field binding and preview; destroyed binding requires explicit rebind.",
+    "Same-path source bytes and CSV lineage cannot prove BJT discarded cached images; explicit product reload acknowledgment remains necessary. UI detection is primary; CSV is delayed corroboration and cannot independently prove physical sensor freshness.",
+    "Actual Microsoft Excel COM was not available. No claim that the new feature ran with a real Excel engine/COM integration or live BJT process is made.",
+    "No real sensors, PLCs, lamps, printer outputs, long printing run or hardware timing were tested. Final control algorithm and actual equipment application remain on hold.",
+    "Measured read/content-proof timings are for the synthetic Windows fixture/runner only. File/OS time budgets do not prove hard real-time behavior or eliminate every UI/filesystem TOCTOU race.",
+    "Actual M1 JobLog remains unavailable; original initial disconnect cause is unknown. Real CSV replay establishes the recorded parser compatibility case under reconstructed context, not field-resolution of every disconnect."
+  ],
+  "preservation": "PRE, initial changes-requested core review, corrected core review, failed fce Windows evidence and all previous release evidence remain unmodified. Review evidence written only outside the source repository.",
+  "evidence_sha256": {
+    "sol-design-review.json": "2668f6e3d021dd1761b6170b7f45ef64818cd683494215071f75aa7a4f3efe9c",
+    "sol-post-core-review.json": "0f8d725aa3294facbfad7056d5be533f6eb21edfa21ef7251c7dc5d03a22f63b",
+    "sol-corrected-post-review.json": "0134e40d435e774421047d67c15c46d0e8674f042bf260a7f1291a29c334e483",
+    "sol-6ee-adversarial-probes.json": "5b47dbbd35389f772392179dc6d321da6c7e9b32e12c435ba0bb37f4f6a794ee",
+    "sol-6ee-focused.log": "f86686f669daa75876d184096960f36d4774d62ee472aa8343ae4aaeaeb117a9",
+    "sol-auto-delivery-offline-checks.json": "d714e722f340527c051a94d66ff0d80b2bd9a838fdb7eed6fd417e2235d2f6ed",
+    "sol-real-csv-packaged-6ee48f3.json": "b58b302de40a30cab275910a2b8317fbdb9bdc42747ebcdad293e72562c4485e",
+    "sol_check_auto_delivery.py": "a354ec31ee9782ef66cf9a7db4dea81af690f25fa63e4c9d9e2ec9b78822fdf4",
+    "publish-auto-slice-6ee-final-workflow.template.yml": "16bd0501a65f3bf6c37020403a36a4e8fd542288cc6aaef81d16cd3b9a897575",
+    "windows-6ee48f3-artifacts.json": "678f18659a7390c34fe9378b6ef0f7bd34ba794ca15d2f9f4acd2e8869088bb2",
+    "windows-6ee48f3/candidate.json": "58c68dca58ea34ec78f4843dc6fb6fb51d14a9767604266234756d7a9cc03b09",
+    "windows-6ee48f3/readiness.json": "5514317c29f7901d56fd297e4709a96b664ff3cce2f055ad3426ae8a1bdff6b0",
+    "windows-6ee48f3/tests.txt": "fc91e73c7cb94c316ec0c744d5f9c30f5b2dd2fbcfbc65975bbc539c489dc402",
+    "windows-6ee48f3/smoke.txt": "852ae92f796b282e26fe9dfc492f2650293cddaf78931e7cc410835f4733bbd8",
+    "windows-6ee48f3/auto-slice.json": "535234829890ebdf34d2e7617bc349c2ad4985ecdeea289b1165bb2013796656",
+    "windows-6ee48f3/bridge.json": "b9c080a8ed543b71fe8d5128e37cc679c947ee6b3775737f52e232254076f4f5",
+    "windows-6ee48f3/csv-guard.json": "1b2d080e7a7730cb5a95490273ef2278198482d1bcaa3e0f327a7aba8f366b07",
+    "windows-6ee48f3/discovery.json": "91557586363676162391005a9df083c437feeeac56b4f51ff07fbfbd6ecf3bdd",
+    "windows-6ee48f3/slice-performance.json": "1acd606e7a2bd2924ab9539cd77e623ac68700b65c51c631a29b4879d4cfe9e7",
+    "windows-6ee48f3/settings-recovery.json": "2128f0c6adf0d8c342ba038e27df0afd5c8ff4b3df4563f646c49afd8cc3a42e",
+    "windows-6ee48f3/excel.json": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03"
+  },
+  "publisher_sha256": "898deca4465369f7f866bc24d9bdc8503e6026f130bffdf7405889b8fbbfacd6"
+}

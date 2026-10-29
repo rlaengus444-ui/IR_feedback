@@ -1,0 +1,218 @@
+{
+  "reviewed_at_utc": "2026-10-29 14:39:24 UTC",
+  "stage": "Initial actual POST core implementation review; changes requested",
+  "source_commit": "bbd46c7435710ac76f95779c2243f88f0f9c49ad",
+  "base_commit": "4e8698788d9c3dad09ee1bb362313ee08fefd585",
+  "core_review_completed": true,
+  "independent_post_review_complete": false,
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "final_control_algorithm_approved": false,
+  "disposition": "Changes requested. The supplied tests pass, but the immutable reviewed core has five P1 findings and one P2 provenance finding. Parent is implementing corrections; no uncommitted correction is marked reviewed/resolved in this record. A corrected immutable diff and actual Windows evidence require independent follow-up before distribution.",
+  "review_route": {
+    "route": "Actual native collaboration sol_reviewer follow-up; real source/diff and offline adversarial execution",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "configuration": ".codex/agents/sol_reviewer.toml",
+    "provider_identity_independently_verified": false,
+    "cli_authentication_restored": false
+  },
+  "pre_design_review": {
+    "path": "/workspace/ir-auto-slice-20261029-review/sol-design-review.json",
+    "sha256": "2668f6e3d021dd1761b6170b7f45ef64818cd683494215071f75aa7a4f3efe9c",
+    "preserved_unchanged": true
+  },
+  "review_scope": {
+    "files": [
+      "app/auto_slice_source.py",
+      "app/windows_slice_source.py",
+      "app/session.py",
+      "app/csv_source.py",
+      "app/windows_ui_adapter.py",
+      "app/native_helper.ps1",
+      "app/adapter_contracts.py",
+      "app/slice_data.py",
+      "app/slice_panel.py",
+      "app/standalone_ir.py",
+      "app/test_auto_slice_source.py",
+      "app/test_auto_slice_ui.py",
+      "validation/AutoSliceSourceFixture.cs",
+      "release_tools/windows_slice_analysis_probe.py"
+    ],
+    "snapshot": "/workspace/ir-auto-slice-20261029-review/preserved-bbd46c7/app",
+    "snapshot_origin": "git archive of exact bbd46c7 app tree, extracted outside production repository for stable reproduction while parent fixes the worktree",
+    "production_edits_by_reviewer": 0,
+    "hardware_actions": 0,
+    "external_publication_actions": 0,
+    "no_full_baseline_suite_rerun": true
+  },
+  "findings": [
+    {
+      "id": "P1-native-binding-chain-omitted",
+      "severity": "P1",
+      "status": "Changes requested; parent implementing, not yet independently re-reviewed",
+      "references": [
+        "app/windows_slice_source.py:59",
+        "app/native_helper.ps1:54"
+      ],
+      "finding": "The watcher pins the full HWND/class/control-ID/parent chain, but PathBinding.token sends only hwnd/home/caption/directory. Final AssertSliceSource checks ownership/descendant/caption/path without checking the pinned topology and IDs.",
+      "evidence": "Token fields are directory, home, home_caption, hwnd; chain is absent. This is a direct source/token finding, not a Windows execution claim.",
+      "risk": "A leaf reparented within the same Home, or a reused handle of a different field, can pass the final source guard after watcher validation.",
+      "required_fix": "Serialize and validate the complete pinned chain at both native checkpoints: exact first leaf, last selected root, PID/root membership, class, control ID, immediate parent and chain adjacency. Do not query arbitrary ancestor/grid WndProc.",
+      "required_regression": "Actual Windows guard rejects same-Home reparent and class/control-ID mismatch before edit; post-edit failure remains terminal ambiguity."
+    },
+    {
+      "id": "P1-same-stat-reanalysis-bypasses-reload",
+      "severity": "P1",
+      "status": "Independently reproduced; changes requested",
+      "references": [
+        "app/auto_slice_source.py:263",
+        "app/auto_slice_source.py:278"
+      ],
+      "reproduction": "Publish folderA, refresh/queue new analysis, change001.bmp from0 to100percent ink while restoring size/mtime, then run that queued analysis.",
+      "observed": {
+        "new_sha_differs": true,
+        "ready_without_reload_ack": true,
+        "needs_reload": false
+      },
+      "risk": "A new same-path byte revision becomes ready without the promised BJT reload acknowledgment. Subsequent digest checks compare against the new dataset and cannot discover the missed transition.",
+      "required_fix": "Compare the new exact canonical path-to-SHA inventory against the last acknowledged same-directory byte version before ready. Do not advance acknowledged bytes automatically while reload is pending; config-only reanalysis with identical source bytes may remain ready.",
+      "required_regression": "Same-stat mutation during config refresh/analysis is detected before publication readiness and requires acknowledgment plus a fresh cutoff/barriers."
+    },
+    {
+      "id": "P1-auto-baseline-readiness-cache-replay",
+      "severity": "P1",
+      "status": "Independently reproduced for UNKNOWN and missing actual IR; changes requested",
+      "references": [
+        "app/session.py:270",
+        "app/session.py:280"
+      ],
+      "reproduction": "After initial handoff completes, a mismatched-source row4 enters a new auto baseline wait without image_waiting. Row5 is valid baseline. New row6 arrives with UNKNOWN state or missing actual IR; then exactly the same cached row6 becomes ready.",
+      "observed": {
+        "mock_saved_key": "row-6",
+        "calculated_layers": [
+          3,
+          6,
+          7
+        ]
+      },
+      "risk": "The automatic baseline layer is cleared without can_calculate/finite-C eligibility; restoring readiness turns a held cached sample into a new calculation/Save.",
+      "required_fix": "Require full calculation readiness and finite actual settings before releasing the auto barrier. Consume valid source-consistent key/layer observations while unready, including cached different layers and same-layer rewrites. Require a future fresh different layer after readiness returns.",
+      "required_regression": "Both UNKNOWN and missing-C row6 cases must produce no calculation/Save on restored cached row6; only a future row7 may proceed."
+    },
+    {
+      "id": "P1-expired-source-admission-revives",
+      "severity": "P1",
+      "status": "Independently reproduced; changes requested",
+      "references": [
+        "app/auto_slice_source.py:198",
+        "app/auto_slice_source.py:328",
+        "app/auto_slice_source.py:362"
+      ],
+      "reproduction": "Obtain admission at version1; advance heartbeat age beyond2seconds; admit returns false while ready remains true. poll_once refreshes heartbeat without invalidation, after which the identical old admission returns true at the same version.",
+      "observed": {
+        "expired_admit": false,
+        "old_admission_revived": true,
+        "version_before": 1,
+        "version_after": 1
+      },
+      "risk": "A watcher gap during calculation can reject a write and then revive an old epoch/proposal without new analysis, cutoff or baseline.",
+      "required_fix": "Lease expiry must be a monotonic invalidation in frame, admit and watcher recovery before heartbeat refresh. Require a new publication/epoch and baseline; returning health must not revive prior admissions.",
+      "required_regression": "Expiry during calculation and heartbeat-first recovery both keep old admission permanently rejected and cannot resume from a cached observation."
+    },
+    {
+      "id": "P1-image-proof-after-learning-only",
+      "severity": "P1",
+      "status": "Independently reproduced at the learning boundary; changes requested",
+      "references": [
+        "app/auto_slice_source.py:344",
+        "app/session.py:382",
+        "app/session.py:409"
+      ],
+      "reproduction": "After baseline, change003.bmp from0 to100percent ink with identical metadata before row3. Controller recommends holding50, so apply is skipped.",
+      "observed": {
+        "excel_process_calls": 1,
+        "whole_coverage_passed": 0,
+        "actual_file_whole_coverage_pct": 100,
+        "native_apply_calls": 0
+      },
+      "risk": "Unverified stale image features enter Excel and observed blank-run history whenever no Save is needed. By a later real Save the changed layer may no longer be current/prior, so the final two-file guard cannot detect contaminated earlier state. A large-set round-robin background digest is not timely admission proof.",
+      "required_fix": "Obtain bounded read-only current/prior content and CSV-lineage proof before every image-dependent calculation/history promotion, including baseline and equal-power recommendations. Perform I/O outside the gate lock, then compare-and-commit version/epoch/lineage before promoting history. Keep final pre-edit/pre-Save proofs.",
+      "required_regression": "Same-stat mutation on a no-Save/held row must not enter Excel or known powder history. Test change during proof and superseded lineage, while watcher remains responsive."
+    },
+    {
+      "id": "P2-prior-history-crosses-run-or-correction",
+      "severity": "P2",
+      "status": "Independently reproduced; changes requested",
+      "references": [
+        "app/auto_slice_source.py:103",
+        "app/auto_slice_source.py:328"
+      ],
+      "reproduction": "A valid layer5 from jobA followed by layer6 from jobB reuses previous-valid1/powder1. Likewise, after layer5 is observed, a corrected layer5 from the wrong folder is rejected, but later layer6 still reuses its previous history.",
+      "observed": {
+        "cross_run_previous_valid": 1,
+        "cross_run_previous_powder_layers": 1,
+        "corrected_layer_previous_valid": 1
+      },
+      "risk": "Previous-image/blank-run provenance can be attributed to the wrong run or to a row whose later lineage was rejected.",
+      "required_fix": "Segment confirmed observed history by run and separate CSV file generation. Invalidate or quarantine corrected layer provenance; keep it unknown until a new consistent observation sequence. Preserve the ordinary CSV semantic key.",
+      "required_regression": "New run, same-path CSV rewrite/generation change and same-layer lineage correction cannot inherit old confirmed previous-image or powder-run history."
+    }
+  ],
+  "tests_and_evidence": {
+    "supplied_tests_independently_executed": {
+      "command": "DISPLAY=:95 python -m unittest -v test_auto_slice_source test_auto_slice_ui",
+      "cwd": "/workspace/ir-auto-slice-20261029-review/preserved-bbd46c7/app",
+      "tests": 22,
+      "passed": 22,
+      "seconds": 1.585,
+      "note": "Passing supplied tests did not detect the adversarial cases."
+    },
+    "adversarial_probes": {
+      "path": "/workspace/ir-auto-slice-20261029-review/sol-bbd-adversarial-probes.json",
+      "sha256": "c9108e8648c81c72e0a199d90a691e16d4a36229bbb4bdd19e3bf2412e285162",
+      "exact_snapshot": true,
+      "scenarios": [
+        "Same-stat replacement during refresh",
+        "UNKNOWN readiness cached row",
+        "Missing actual IR cached row",
+        "Expired admission revival",
+        "Cross-run previous history",
+        "Corrected previous-row history",
+        "Equal-power calculation without content proof",
+        "Native token chain omission"
+      ]
+    },
+    "parent_reported_native_issue": {
+      "finding": "PowerShell $home collides with automatic $HOME variable",
+      "status": "Parent reports fixing in worktree",
+      "independently_executed_on_windows": false
+    },
+    "already_sound_parts_inspected": [
+      "Default manual OFF and no import-time Windows probing",
+      "Explicit pointed leaf source selection; no whole-window path search",
+      "UI-primary watcher starts analysis without CSV",
+      "Explicit filename origin and preserved legacy manual fingerprints",
+      "Separate optional auto-lineage token and adapter rechecks",
+      "Distinct SourceSuspended versus Sequence settings HOLD",
+      "Final content proofs before native edit/Save and marker-based ambiguity priority, subject to native execution and chain fixes",
+      "No changes to control formula, Excel worker/source XLSXs, archive retry module or DLL binary"
+    ]
+  },
+  "required_followup": [
+    "Freeze a corrected immutable revision and independently rerun original reproductions plus meaningful regression tests; do not mark uncommitted fixes resolved.",
+    "Confirm ordinary5second fresh-key expiry during long inter-layer idle does not become a recurring source fault, controller reset or baseline starvation.",
+    "Exercise the actual native reader and final guard on Windows synthetic fixtures, including class/ID/parent changes and the production deadlines; no real equipment.",
+    "Check read-only proof failures separately from possible edit/Save outcomes. Unknown/parser/identity failures retain existing terminal handling; no blanket retry.",
+    "Verify source watcher remains responsive through slow directory scans as well as slow analysis; expiry must close admission rather than resurrecting a stale ready state.",
+    "Preserve manual/basic/non-image-consuming behavior, exact config/fingerprint parity, invalid -1/CSV hash/freshness/job guards and all supplied real CSV compatibility.",
+    "Package all new mandatory modules/docs/config and review an exact fresh Windows artifact before any evaluation delivery."
+  ],
+  "limits": [
+    "No actual Windows execution of the new native reader/guard, actual Excel COM, BJT equipment, PLC, sensor or lamp was performed by reviewer.",
+    "Missing ProductionControl/LayerMonitoring source means the live path field's semantic identity is not independently verified; explicit user binding remains necessary.",
+    "Automatic ZIP lineage is outside the initial scope; manual ZIP support must remain unchanged.",
+    "UI/CSV path and timestamps do not prove physical binder execution, drying, sensor alignment or BJT cached-byte revision.",
+    "No evaluation artifact or release is approved by this initial core report. Final algorithm approval and equipment application remain on hold."
+  ]
+}

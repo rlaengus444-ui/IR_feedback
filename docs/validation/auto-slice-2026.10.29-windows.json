@@ -1,0 +1,55 @@
+{
+  "version": "2026.10.29-auto-slice.1",
+  "candidate_commit": "6ee48f34c39a18d290aab6391a587769ce913e96",
+  "candidate_zip_sha256": "148f3a3c71cc1c8b73565bb1c94726040a311038df7615353b21fdd8b71ae4ab",
+  "candidate_zip_bytes": 35370734,
+  "zip_entries": 3653,
+  "windows_run": 40901581109,
+  "artifact_id": 12909557635,
+  "outer_bytes": 34876787,
+  "outer_sha256": "e2b62ec8a73bf647d54490dc1c4fef76ecf05075e6df6f7f1882da1ab9131fdd",
+  "tests": 286,
+  "test_seconds": 73.001,
+  "checks": {
+    "build": "success",
+    "tests": "success",
+    "smoke": "success",
+    "bridge": "success",
+    "csv_guard": "success",
+    "native_discovery": "success",
+    "slice_perf": "success",
+    "settings_recovery": "success",
+    "auto_slice": "success",
+    "excel": "failure",
+    "reverify": "success"
+  },
+  "ten_non_excel_checks_passed": true,
+  "native_auto_checks": 30,
+  "native_auto_all_passed": true,
+  "actual_bjt_path_binding_tested": false,
+  "native_read_ms": {
+    "median": 0.1607499999920492,
+    "maximum": 0.6467000000043299,
+    "samples": 100
+  },
+  "two_image_proof_ms": {
+    "median": 33,
+    "samples": [
+      33,
+      32,
+      33
+    ],
+    "total_bytes": 8390764
+  },
+  "excel": {
+    "excel_com_tested": false,
+    "release_ready": false,
+    "reason": "Excel COM is not registered"
+  },
+  "release_ready": false,
+  "equipment_application_approved": false,
+  "final_control_algorithm_approved": false,
+  "final_artifact_review": "completed actual native sol_reviewer final response",
+  "independent_review_sha256": "bada5824ceef32eb5d6e282b73a50e74c6ac5dec0a6e89881d2b84bff14dba70",
+  "evaluation_distribution_allowed": true
+}
