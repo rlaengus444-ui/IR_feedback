@@ -1,0 +1,138 @@
+{
+  "reviewed_at_utc": "2026-10-29 02:42:01 UTC",
+  "timestamp_source": "clock__curr_time",
+  "review_phase": "BEFORE and AFTER delivery-workflow-only review",
+  "candidate_commit": "8589696c10b1e8376bfbdf3f3e3f3ef8c373e153",
+  "candidate_zip_sha256": "a341d2d92db06ed79becd2f2bfa8095b6eacc0d5970adb57e09f6a833cc71c85",
+  "evaluation_distribution_allowed": true,
+  "independent_post_review_complete": true,
+  "independent_delivery_workflow_review_complete": true,
+  "workflow_dispatch_allowed": true,
+  "equipment_application_approved": false,
+  "stable_release_approved": false,
+  "final_control_algorithm_approval": "ON HOLD",
+  "actual_excel_com_tested": false,
+  "application_review_preserved": {
+    "path": "/workspace/ir-reconnect-review/sol-reconnect-ui-archive-final-review.json",
+    "sha256": "2d49197bccee8d4fa677114e300c7f8c16a999aafe98c1656ff57f622ff45796",
+    "committed_copy_sha256": "2d49197bccee8d4fa677114e300c7f8c16a999aafe98c1656ff57f622ff45796",
+    "unchanged": true
+  },
+  "review_route": {
+    "tool_route": "Native collaboration /root/sol_reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_verified": false,
+    "cli_authentication_restored": false
+  },
+  "scope": {
+    "summary": "Replace only the failed actions/download-artifact retrieval with direct authenticated REST GETs for the exact approved artifact ID. Application, publisher logic, successful Windows evidence and approved inner ZIP are unchanged.",
+    "publication_source_current_commit": "3fb4fdbf3d1c418e205aedb39481abddd68ad2bb",
+    "before_design_critique_completed": true,
+    "before_design_requirements": [
+      "Exact artifact ID/name/run/head SHA/provenance/expiry/size",
+      "Existing job-scoped GITHUB_TOKEN with actions:read, no alternate credential or signed-URL logging",
+      "Binary finite-timeout download, pinned complete outer SHA before archive parsing",
+      "Bounded safe unique archive paths, CRC and no symlinks, fresh owned extraction directory",
+      "Unchanged completed-review/inner-ZIP/source/publisher gates; 403 or mismatch stops before mutations"
+    ],
+    "unresolved_findings": [],
+    "approved_for": "Evaluation prerelease delivery only, latest=false, after all actual downloader and publisher guards succeed."
+  },
+  "reviewed_workflow": {
+    "template_path": "/workspace/ir-reconnect-review/publish-direct-artifact-workflow.template.yml",
+    "template_sha256": "1acde53bebd119e12ba7dbed9db9ddbcd3479d59f247a0760e060edaa5e591c8",
+    "embedded_python_sha256": "7ed14a9d053b320cbac51f1dd8c694077de90f9164f279a78862487d94c40313",
+    "only_permitted_substitution": "__PUBLISH_SOURCE__ -> immutable commit containing this unaltered addendum, original review JSON and reviewed publisher, without changing packaged application source.",
+    "exact_artifact": {
+      "repository": "rlaengus444-ui/IR_feedback",
+      "artifact_id": 12868042498,
+      "name": "slice-candidate-8589696c10b1e8376bfbdf3f3e3f3ef8c373e153",
+      "workflow_run_id": 40804955140,
+      "attempt": 2,
+      "head_sha": "8589696c10b1e8376bfbdf3f3e3f3ef8c373e153",
+      "repository_id": 1434868115,
+      "head_repository_id": 1434868115,
+      "expired": false,
+      "outer_size_bytes": 34820535,
+      "outer_sha256": "1ea7739bd6a99eec783fe0f5a985ccabe93a16ee662b125b1cacf66974f3e57e"
+    },
+    "transport": "gh api GET exact artifact metadata, then gh api GET its /zip endpoint. Job GH_TOKEN comes only from github.token; permissions remain actions:read and contents:write for the separately gated publisher.",
+    "timeouts_seconds": {
+      "metadata": 30,
+      "binary_download": 60,
+      "whole_job": 480
+    },
+    "archive_gates": [
+      "Metadata id/name/run/head SHA/both repository IDs/expired false/exact byte size/server digest equal expected",
+      "Exclusive binary download file; no PowerShell text redirect",
+      "Actual file size and entire pinned SHA before ZipFile parsing",
+      "At most64 entries and64MiB total uncompressed header sizes",
+      "No empty/absolute/backslash/parent/current/colon/trailing-dot-or-space paths",
+      "No symlink entries or duplicate/case-fold colliding paths",
+      "CRC test, then extraction into a newly created owned TEMP directory"
+    ],
+    "publisher": "Unchanged publish_reconnect_candidate.py verifies the completed independent review binding, approved inner ZIP/source/manifest, eight non-Excel gates, expected COM gap and false equipment/stable flags before any release/tag mutation. It creates a draft evaluation prerelease, verifies tag/assets/server SHA, and publishes latest=false only after checks.",
+    "live_workflow_token_artifact_access_tested_by_reviewer": false,
+    "auth_failure_policy": "No PAT, alternate user token, permission workaround or signed-URL bypass. Any403, metadata/hash mismatch, timeout or extraction failure stops before the publisher step."
+  },
+  "independent_checks_executed": {
+    "actual_inline_code_compiled_and_executed": true,
+    "method": "Extracted exact Python here-string from the reviewed template; executed it under fully mocked subprocess.check_output and subprocess.run with the real approved outer artifact bytes and private test TEMP directories. No external process/API was called by these tests.",
+    "passed_scenarios": [
+      "success",
+      "wrong_id",
+      "wrong_digest",
+      "expired",
+      "wrong_run",
+      "wrong_source",
+      "wrong_repository",
+      "wrong_size",
+      "download_wrong_size",
+      "download_wrong_digest",
+      "metadata403",
+      "existing_download"
+    ],
+    "scenario_count": 12,
+    "success_assertions": [
+      "Exact outer archive metadata, size/SHA, CRC and safe extraction all succeed",
+      "Extracted inner ZIP SHA equals approved a341d2d92db06ed79becd2f2bfa8095b6eacc0d5970adb57e09f6a833cc71c85",
+      "Actual full verify_package on the extracted inner ZIP passes against unchanged application source"
+    ],
+    "negative_assertions": [
+      "Metadata and simulated403 failures never invoke binary download",
+      "Corrupted/short downloaded bytes never create the extraction directory",
+      "Existing download file is not overwritten",
+      "No publisher or external mutation invoked"
+    ],
+    "source_integrity": "Every15 critical source-file hash matches the unchanged application review. Current repository differs from approved application commit only by the previously committed review JSON. Publisher file hash matches the original completed review.",
+    "actual_external_calls_in_offline_tests": 0,
+    "production_source_edits_by_reviewer": 0
+  },
+  "preserved_failed_publication": {
+    "run_id": 40806937411,
+    "log": "/workspace/ir-reconnect-review/publication-download-failure.log",
+    "log_sha256": "59d2f47ab3175bd3e70584b7dd67346a3ccfaa479fe8ce0d53c210fb09d24bb6",
+    "failure": "actions/download-artifact@v4 listed1 artifact for the cross-run request, then found none of the explicitly provided IDs. It failed before the publisher step.",
+    "note": "This is a retrieval/list-filter failure, not a change to approved application evidence. The failed run remains preserved and is not relabeled as successful. No release/tag was created by that skipped publisher."
+  },
+  "other_evidence_inspected": {
+    "root_three_mock_cases": {
+      "path": "/workspace/ir-reconnect-review/direct-download-offline-checks.json",
+      "sha256": "e19c1bd881c5d6b134dc17466d6ae7d1ce2f73721f998fc52a8a6998f60e0136",
+      "note": "Root executed; reviewer inspected separately from the12 independently executed scenarios."
+    },
+    "corrected_download_text": {
+      "path": "/workspace/ir-reconnect-review/IRFeedback-2026.10.29-reconnect.1_다운로드_최종.txt",
+      "sha256": "d68dbe9d4f738522eacc8535e9464134f59fa6a74eea131783da038b71d6f36c",
+      "checked": "Correct a341 inner ZIP digest, control-only UI/BL13/full-history CSV scope,216 Windows tests and explicit Excel/equipment limits. Old517f text is historical and must not be distributed."
+    }
+  },
+  "limitations": [
+    "Live artifact access using this workflow GITHUB_TOKEN has not yet run; offline tests cannot establish GitHub authorization or network availability. Those actual GETs must succeed at dispatch or delivery remains blocked.",
+    "No release, tag, upload or external message was performed by the reviewer. Publication is a subsequent authorized action with the existing runtime gates.",
+    "This addendum replaces only the earlier artifact-download template condition. The original application review and its successful216-test/native/launcher evidence remain unchanged.",
+    "No actual Excel COM, equipment, sensors, PLCs or lamp outputs were tested. Final control approval and real equipment application remain on hold.",
+    "The original real-world disconnect cause remains unknown. The independent provider-model identity was not verified and prior CLI authentication is not claimed restored."
+  ]
+}

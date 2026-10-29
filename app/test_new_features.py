@@ -81,7 +81,7 @@ class FeatureViewTests(unittest.TestCase):
         self.view.algorithm_type.set("Excel 수식 파일")
         self.view._algorithm_changed()
         self.view.settings_path.set("sample.xlsx")
-        self.view.mode.set("계산 미리보기")
+        self.view.mode.set("UI 자동 적용")
         self.view.workbook_result_cell.set("D13")
         self.view.connect()
         self.assertEqual("normal", str(self.view.target_apply_button["state"]))
@@ -92,7 +92,7 @@ class FeatureViewTests(unittest.TestCase):
 
     def test_default_session_uses_existing_algorithm_without_excel(self):
         self.assertEqual("기본 알고리즘", self.view.algorithm_type.get())
-        self.view.mode.set("계산 미리보기")
+        self.view.mode.set("UI 자동 적용")
         runner = Mock()
         self.controller.runner = runner
         self.view.connect()
@@ -113,7 +113,7 @@ class FeatureViewTests(unittest.TestCase):
         self.assertIn("유효한 숫자", self.view.log.get("1.0", "end"))
 
     def test_reference_line_follows_applied_target_not_just_requested_target(self):
-        self.view.mode.set("계산 미리보기")
+        self.view.mode.set("UI 자동 적용")
         self.view.connect()
         self.assertEqual(65, self.view.charts._target_temperature)
         self.view.target_temperature.set("72")

@@ -14,12 +14,13 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 from session import SessionController, SessionOptions, default_adapter_factory
 from single_instance import SingleInstance
 from layer_charts import LayerCharts
+from plot_archive import PlotArchive
 from target_temperature import parse_target_temperature
 from excel_workbook import WorkbookSpec
 from slice_panel import SlicePanel
 
 
-MODE_LABELS = {"조회": "monitor", "계산 미리보기": "preview", "UI 자동 적용": "control"}
+MODE_LABELS = {"UI 자동 적용": "control"}
 
 
 def write_error_log(message):
@@ -47,9 +48,14 @@ def discover_windows():
 class ThermalFeedbackWindow:
     CLOSE_GRACE_SECONDS = 4.0
 
-    def __init__(self, root, controller=None, discoverer=discover_windows, auto_discover=True):
+    def __init__(self, root, controller=None, discoverer=discover_windows, auto_discover=True, archive=None):
         self.root = root
         self.controller = controller or SessionController(error_logger=write_error_log)
+        self.archive = archive if archive is not None else PlotArchive()
+        self._history_generation = 0
+        self._history_machine = "M1"
+        self._closing_archive_started = False
+        self._closing_charts_finalized = False
         self.discoverer = discoverer
         self.targets = []
         self.target_map = {}
@@ -61,7 +67,7 @@ class ThermalFeedbackWindow:
         self.configuration_widgets = []
         self.machine = tk.StringVar(value="M1")
         self.host = tk.StringVar()
-        self.mode = tk.StringVar(value="조회")
+        self.mode = tk.StringVar(value="UI 자동 적용")
         self.target_temperature = tk.StringVar(value="65")
         self.settings_path = tk.StringVar()
         self.algorithm_type = tk.StringVar(value="기본 알고리즘")
@@ -72,9 +78,9 @@ class ThermalFeedbackWindow:
         self.workbook_power_cell = tk.StringVar(value="C13")
         self.workbook_target_cell = tk.StringVar(value="B5")
         self.workbook_layer_cell = tk.StringVar(value="A13")
-        self.workbook_slice_cell = tk.StringVar()
+        self.workbook_slice_cell = tk.StringVar(value="BL13")
         self.status = tk.StringVar(value="연결 안 됨")
-        self.capability = tk.StringVar(value="기존 프로그램 무수정 · UI 자동 적용은 선택 후 연결해야 시작됩니다.")
+        self.capability = tk.StringVar(value="기존 프로그램 무수정 · 연결 버튼을 누르면 UI 자동 적용 준비를 시작합니다.")
         self.layer = tk.StringVar(value="—")
         self.temperature = tk.StringVar(value="—")
         self.process_state = tk.StringVar(value="—")
@@ -120,15 +126,14 @@ class ThermalFeedbackWindow:
         options = ttk.Frame(connection)
         options.grid(row=2, column=0, columnspan=5, sticky="ew", pady=(12, 0))
         ttk.Label(options, text="모드").pack(side="left")
-        self.mode_box = ttk.Combobox(options, textvariable=self.mode, values=tuple(MODE_LABELS), state="readonly", width=16)
-        self.mode_box.pack(side="left", padx=(8, 20))
+        self.mode_label = ttk.Label(options, textvariable=self.mode, width=16)
+        self.mode_label.pack(side="left", padx=(8, 20))
         ttk.Label(options, text="목표 온도 °C").pack(side="left")
         self.temperature_entry = ttk.Entry(options, textvariable=self.target_temperature, width=9)
         self.temperature_entry.pack(side="left", padx=(8, 5))
         self.target_apply_button = ttk.Button(options, text="목표 적용", command=self.apply_target_temperature)
         self.target_apply_button.pack(side="left", padx=(0, 12))
         ttk.Label(options, text="연결 중 변경 시 다음 새 층부터 반영", foreground="#536173").pack(side="left")
-        self.configuration_widgets.append((self.mode_box, "readonly"))
         advanced = ttk.Frame(connection)
         advanced.grid(row=3, column=0, columnspan=5, sticky="ew", pady=(10, 0))
         ttk.Label(advanced, text="알고리즘").pack(side="left")
@@ -186,7 +191,7 @@ class ThermalFeedbackWindow:
         log_tab = ttk.Frame(notebook, padding=4)
         notebook.add(graph_tab, text="층별 그래프")
         notebook.add(log_tab, text="상태 기록")
-        self.charts = LayerCharts(graph_tab)
+        self.charts = LayerCharts(graph_tab, on_retire=self._capture_plot_segment)
         self.charts.set_target_temperature(parse_target_temperature(self.target_temperature.get()))
         self.charts.pack(fill="both", expand=True)
         self.log = scrolledtext.ScrolledText(log_tab, height=7, wrap="word", font=("Segoe UI", 9), state="disabled")
@@ -305,6 +310,10 @@ class ThermalFeedbackWindow:
                 settings_path=settings, workbook_spec=workbook, slice_dataset=self.slice_panel.dataset)
             if self.controller.connect(options):
                 self.charts.reset()
+                self._closing_charts_finalized = False
+                self.archive.submit(retry_failed=True)
+                self._history_generation = self.controller.generation
+                self._history_machine = options.target.machine
                 self.charts.set_target_temperature(options.target_temperature_c)
                 self.status.set("연결 중…")
                 self.capability.set("CSV 저장 후 자동 적용 · 다른 탭/최소화 가능 · 수동 편집/원본 UI 응답 실패 시 적용 정지"
@@ -328,17 +337,18 @@ class ThermalFeedbackWindow:
             self._append_log(str(error))
 
     def _refresh_buttons(self):
-        busy = self.controller.thread is not None or self.closing
+        closed = getattr(self.controller, "closed", False)
+        busy = self.controller.thread is not None or self.closing or closed
         for widget, idle_state in self.configuration_widgets:
             widget.configure(state="disabled" if busy else idle_state)
-        self.slice_panel.set_locked(self.closing or self.controller.state == "disconnecting")
+        self.slice_panel.set_locked(self.closing or closed or self.controller.state == "disconnecting")
         target_ready = (self.controller.thread is not None and not self.closing
                         and self.controller.state in ("connecting", "connected"))
-        self.temperature_entry.configure(state="disabled" if self.closing or self.controller.state == "disconnecting" else "normal")
+        self.temperature_entry.configure(state="disabled" if self.closing or closed or self.controller.state == "disconnecting" else "normal")
         self.target_apply_button.configure(state="normal" if target_ready else "disabled")
         self.search_button.configure(state="disabled" if busy or self.searching else "normal")
         self.connect_button.configure(state="disabled" if busy or self.searching or self.slice_panel.running or not self.target_map else "normal")
-        self.disconnect_button.configure(state="normal" if busy and not self.closing and self.controller.state != "disconnecting" else "disabled")
+        self.disconnect_button.configure(state="normal" if busy and not self.closing and not closed and self.controller.state != "disconnecting" else "disabled")
 
     def _append_log(self, message):
         value = str(message)[:4000]
@@ -368,11 +378,30 @@ class ThermalFeedbackWindow:
             panel.pending_epoch = None
             panel._active_text()
 
+    def _capture_plot_segment(self, segment, points):
+        self.archive.capture((self._history_generation, segment), points, self._history_machine)
+
+    def _capture_current_plot(self):
+        self._capture_plot_segment(self.charts.history.segment_id, self.charts.history.points)
+
+    def _record_chart_payload(self, payload):
+        if self.charts.record(payload):
+            self._history_machine = payload["snapshot"].target.machine
+
+    def _poll_archives(self):
+        for event in self.archive.poll():
+            if event["kind"] == "saved":
+                self._append_log(f"CSV 자동 저장 완료 · {event['row_count']}행 · {event['path']}")
+            else:
+                message = f"CSV 자동 저장 실패 · {event['row_count']}행 메모리에 보존 · {event['error']}"
+                self._append_log(message)
+                write_error_log(message)
+
     def _show_snapshot(self, payload):
         snapshot = payload["snapshot"]
         if "display_target_c" in payload:
             self.charts.set_target_temperature(payload["display_target_c"])
-        self.charts.record(payload)
+        self._record_chart_payload(payload)
         features = payload.get('slice_features')
         if features is None:
             self.slice_panel.live.set("실행 중 층 데이터: 이미지 미연결 또는 유효한 관찰 없음")
@@ -399,11 +428,43 @@ class ThermalFeedbackWindow:
         self.decision.set(reasons or (payload["status"] + (" · " + snapshot.details if snapshot.details else "")))
 
     def _pump(self):
+        self._poll_archives()
         if self.closing:
-            discovering = self.discovery_thread is not None and self.discovery_thread.is_alive()
-            if (not self.controller.worker_alive and not discovering) or time.monotonic() >= self.close_deadline:
-                self.root.destroy()
-                return
+            if not self._closing_archive_started:
+                if not self._closing_charts_finalized:
+                    for event in self.controller.drain_chart_events():
+                        self._record_chart_payload(event.payload)
+                    discovering = self.discovery_thread is not None and self.discovery_thread.is_alive()
+                    expired = time.monotonic() >= self.close_deadline
+                    if (not self.controller.worker_alive and not discovering and not self.controller.chart_events_pending) or expired:
+                        if expired:
+                            for event in self.controller.drain_chart_events(128):
+                                self._record_chart_payload(event.payload)
+                        self._capture_current_plot()
+                        self._closing_charts_finalized = True
+                if self._closing_charts_finalized:
+                    self.archive.submit(retry_failed=True)
+                    self._closing_archive_started = True
+                    self.status.set("CSV 자동 저장 중…")
+            if self._closing_archive_started and not self.archive.busy:
+                if self.archive.failed:
+                    folder = filedialog.askdirectory(parent=self.root,
+                        title="CSV 자동 저장 실패 · 다른 저장 폴더 선택 (취소하면 기록과 창 유지)")
+                    if folder:
+                        self.archive.submit(retry_failed=True, directory=folder)
+                    else:
+                        self.closing = False
+                        self._closing_archive_started = False
+                        self.status.set(f"CSV 미저장 · {self.archive.retained_rows}행 메모리에 보존 중")
+                        self._refresh_buttons()
+                else:
+                    self.archive.close()
+                    self.root.destroy()
+                    return
+            self.root.after(50, self._pump)
+            return
+        if getattr(self.controller, "closed", False):
+            # A canceled failed-export close leaves a read-only recovery window.
             self.root.after(50, self._pump)
             return
         try:
@@ -434,6 +495,8 @@ class ThermalFeedbackWindow:
                     self.slice_panel.mark_session_active(event.payload['dataset'], event.payload['epoch'])
             elif event.kind == "snapshot":
                 self._show_snapshot(event.payload)
+            elif event.kind == "chart_snapshot":
+                self._record_chart_payload(event.payload)
             elif event.kind == "log":
                 self._append_log(event.payload)
             elif event.kind == "error":
@@ -441,6 +504,8 @@ class ThermalFeedbackWindow:
                 self.capability.set(str(event.payload))
                 self._append_log(event.payload)
             elif event.kind == "finished":
+                self._capture_current_plot()
+                self.archive.submit()
                 self.slice_panel.clear_session()
                 self.status.set("연결 오류" if self.controller.error else "연결 해제됨")
                 self._append_log("외부 모듈 연결 종료. 원본 프로그램의 가열 ON/OFF는 변경하지 않습니다.")
@@ -452,6 +517,7 @@ class ThermalFeedbackWindow:
         if self.closing:
             return
         self.closing = True
+        self._closing_archive_started = False
         self.slice_panel.cancel_event.set()
         self.controller.close()
         self.close_deadline = time.monotonic() + self.CLOSE_GRACE_SECONDS

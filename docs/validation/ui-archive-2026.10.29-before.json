@@ -1,0 +1,26 @@
+{
+  "phase": "BEFORE",
+  "completed": true,
+  "route": "Native collaboration /root/sol_reviewer",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_identity_independently_verified": false,
+  "scope": [
+    "Control-only UI with explicit Connect and editable BL13 default",
+    "Automatic full-plot CSV archival on normal/error disconnection and close"
+  ],
+  "design_review": [
+    "Control mode display fixed; no startup/discovery/field editing starts a session; backend read-only test APIs preserved; unknown UI labels rejected.",
+    "BL13 editable/clearable, missing images remain unknown; original workbook/input validation and image handoff gates preserved.",
+    "Single background writer reuses seven-column atomic UTF8-BOM CSV; immutable full histories captured on Tk before reconnect/run reset; generation plus monotonic segment IDs.",
+    "Normal/error archive only after finished, preceding queued chart-only snapshots drained; close drain cannot restore proposals, state or actuation admission; deadline captures only confirmed records by cutoff.",
+    "Exclusive filenames, executable sibling records and LocalAppData fallback; failed batches retained across reconnect/reset; actual write failure on close keeps window/data or permits alternate folder."
+  ],
+  "required_after_review": true,
+  "original_disconnect_diagnosis_confirmed": false,
+  "automatic_image_import_canceled": true,
+  "actual_excel_com_tested": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approval": "ON HOLD",
+  "superseded_candidate": "9b00ce04ece86739dad4345b4f0ee5f4975fc8eb is historical evidence; not the final UI/archive delivery candidate"
+}

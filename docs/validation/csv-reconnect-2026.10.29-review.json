@@ -1,0 +1,343 @@
+{
+  "reviewed_at_utc": "2026-10-29 02:27:32 UTC",
+  "timestamp_source": "clock__curr_time",
+  "review_phase": "AFTER",
+  "candidate_commit": "8589696c10b1e8376bfbdf3f3e3f3ef8c373e153",
+  "candidate_zip_sha256": "a341d2d92db06ed79becd2f2bfa8095b6eacc0d5970adb57e09f6a833cc71c85",
+  "candidate_version": "2026.10.29-reconnect.1",
+  "base_commit": "cf56ef8cbb14e33c0f7a70ca4ed8ff4384211e53",
+  "evaluation_distribution_allowed": true,
+  "independent_post_review_complete": true,
+  "equipment_application_approved": false,
+  "stable_release_approved": false,
+  "final_control_algorithm_approval": "ON HOLD",
+  "actual_excel_com_tested": false,
+  "automatic_image_import_canceled": true,
+  "review_route": {
+    "tool_route": "Native collaboration /root/sol_reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "configuration_file": ".codex/agents/sol_reviewer.toml",
+    "provider_identity_independently_verified": false,
+    "cli_authentication_restored": false,
+    "note": "This is a completed actual independent source, diff, functional-test and exact-artifact review. Native route and requested configuration are recorded; provider identity is not independently measurable here. Earlier CLI authentication failure is not claimed repaired."
+  },
+  "disposition": {
+    "summary": "No unresolved P1/P2 findings remain in the reviewed reconnect, control-only UI, BL13 default, archive lifecycle or final publisher template. Only the exact successful attempt2 ZIP is eligible for evaluation prerelease delivery.",
+    "unresolved_findings": [],
+    "source_tree_clean_at_review": true,
+    "original_user_disconnection_cause_confirmed": false,
+    "reported_reconnect_error_reproduced_synthetically": true,
+    "actual_user_files_or_equipment_reproduction_performed": false,
+    "mandatory_before_review_records": [
+      "docs/validation/csv-reconnect-2026.10.29-before.json",
+      "docs/validation/ui-archive-2026.10.29-before.json"
+    ],
+    "conditions": [
+      "Deliver the unchanged successful attempt2 ZIP with SHA-256 a341d2d92db06ed79becd2f2bfa8095b6eacc0d5970adb57e09f6a833cc71c85; do not rebuild or substitute an earlier artifact.",
+      "Use run40804955140 attempt2 artifact12868042498, not name-only selection: that run has same-named artifacts from both attempts.",
+      "Publish as an evaluation prerelease only with make_latest=false. Stable readiness, final control algorithm approval and equipment application remain on hold.",
+      "Render only __PUBLISH_SOURCE__ in the reviewed workflow template to an immutable commit containing this unaltered completed review JSON and the reviewed publisher; application source must remain unchanged.",
+      "Do not claim actual Excel COM, real sensor/PLC/lamp operation, user-site reconnect success, universal data durability, or diagnosis of the initial disconnect."
+    ]
+  },
+  "resolved_findings": [
+    {
+      "id": "R1",
+      "severity": "P2",
+      "target": "app/test_new_features.py:84,95,116",
+      "finding": "Existing GUI tests selected the removed preview label. At7f3edd7 the independent25-test combined suite produced one failure and one error: disabled target Apply and None thread.complete().",
+      "resolution": "All three GUI setters now use the explicit control UI; backend monitor/preview tests and read-only rendering coverage remain.",
+      "verification": "Independent26-test suite passed3.009s; expanded108-test suite passed; final Windows216 passed."
+    },
+    {
+      "id": "R2",
+      "severity": "P2",
+      "target": "app/standalone_ir.py:_pump and PlotArchive.capture",
+      "finding": "Reproduced timed-out close -> write failure -> cancel -> late same-generation confirmed snapshot -> retry. Chart grew from layer2 to layers2,3, but the existing immutable archive key exported only layer2 and released all retained rows.",
+      "resolution": "Persistent _closing_charts_finalized separates the fixed terminal chart cutoff from each export attempt. Failed/canceled close retries do not drain or plot later events, so the visible chart and retained archive remain the same immutable snapshot. Documentation states this cutoff.",
+      "verification": "Original independent repro now yields chart[2], CSV[2], no late Save marker and controller still closed. New deterministic regression test_failed_close_retry_keeps_original_cutoff_after_late_snapshot passes locally and on the actual packaged Windows runtime."
+    },
+    {
+      "id": "R3",
+      "severity": "P2",
+      "target": "/workspace/ir-reconnect-review/publish-ui-archive-workflow.template.yml",
+      "finding": "artifact-ids selection without merge-multiple:true downloads under an artifact-name subdirectory in actions/download-artifact@v4, while the publisher expects evidence directly in the configured root.",
+      "resolution": "Single exact artifact ID12868042498 now has merge-multiple:true, with no name selector; source, run and ZIP digest pins remain exact.",
+      "verification": "Reviewer fetched the actual v4 implementation through the GitHub connector: isSingleArtifactDownload depends on name, and direct-root extraction requires that or mergeMultiple. Corrected template independently reread and hashed.",
+      "upstream_source": "https://github.com/actions/download-artifact/blob/v4/src/download-artifact.ts"
+    }
+  ],
+  "implementation_review": {
+    "csv_source": "Previously reviewed9b CSV fix is byte-identical (SHA4e6d90...). Only a leading completed old-layer/old-time prefix is excluded; schema/numeric/-1/chronology checks precede exclusion. Conditional exact layer/±2s resume anchor, no token while awaiting anchor, baseline confirmation and reset/rewrite guards remain.",
+    "ui": "Only UI automatic control is selectable/displayed. Startup, discovery and cell editing do not connect; explicit Connect remains necessary. Unknown UI labels and unknown machine control are not silently converted. BL13 is editable and clearable; missing images remain unknown.",
+    "archive": "One background writer reuses atomic seven-column UTF8-BOM export. Immutable full history is captured before run/reconnect resets, using generation plus monotonic segment IDs. No recent100 truncation. Exclusive filenames and app-sibling/LocalAppData fallback; failures retain points through reset/reconnect; success acknowledgement releases them.",
+    "lifecycle": "Normal/error disconnection archives only after finished. Disconnecting snapshots become chart-only events with snapshot/applied fields, preserving confirmed plotted Save markers without proposals or state/admission restoration. Closed-controller drains filter generation and snapshot type. Closing drains retained batches until quiescence or the existing deadline, fixes the cutoff once, waits responsively for the writer and retains a read-only recovery window if the alternate-folder choice is canceled.",
+    "control_invariance": "AST of run_ui_session, SessionOptions and SliceDatasetSetting is identical to base. Control law, Excel bridge, adapter, persistence, native helper/DLL and image-analysis bytes remain unchanged. Session changes are in the event/display facade, not the worker control loop.",
+    "new_import_packaging": "plot_archive.py is now a required source entry used by the package builder/verifier; missing it is rejected."
+  },
+  "independent_checks_executed": [
+    {
+      "check": "Final expanded relevant Python/Tk suite",
+      "command": "DISPLAY=:95 PYTHONDONTWRITEBYTECODE=1 python -m unittest test_csv_source test_csv_reconnect test_session.WorkerTests test_session.ControllerTests test_session.ViewTests test_new_features test_layer_charts test_plot_archive test_auto_archive_ui -q",
+      "passed": true,
+      "tests": 108,
+      "seconds": 10.318,
+      "note": "Executed on the exact bytes subsequently committed8589696. Tk after-callback teardown warnings were visible; this is not a warning-free claim."
+    },
+    {
+      "check": "Focused fixed archive/UI suites",
+      "passed": true,
+      "tests": 26,
+      "seconds": 3.009,
+      "coverage": [
+        "six archive I/O tests",
+        "ten archive lifecycle tests",
+        "five control-only/BL13 View tests",
+        "five FeatureView tests"
+      ]
+    },
+    {
+      "check": "Original late-snapshot data-loss repro",
+      "passed_after_fix": true,
+      "observations": "Chart and exported CSV both contain only the first fixed close-cutoff layer; post-cutoff late confirmed Save is not plotted or invented. Controller remains closed. All file operations used test temporary directories."
+    },
+    {
+      "check": "CSV and original-parser checks inherited from unchanged9b implementation",
+      "passed": true,
+      "review_evidence": "/workspace/ir-reconnect-review/sol-reconnect-final-review.json",
+      "coverage": [
+        "55 CSV/Worker tests,24+11+20",
+        "19 mocked adapter tests",
+        "greater-than1MiB appended historical prefix across parser chunks",
+        "conditional-anchor batch remains baseline",
+        "preserved-mtime contradictory-history rewrite rejected",
+        "21 normal-stream snapshots exactly match the original parser",
+        "M1 and S3 real-reader/mocked image-Excel mapping and no history/baseline Save"
+      ]
+    },
+    {
+      "check": "Actual successful package verification",
+      "passed": true,
+      "command": "python release_tools/verify_package.py /workspace/ir-reconnect-review/windows-8589696-attempt2/IRFeedback-2026.10.29-reconnect.1.zip 2026.10.29-reconnect.1",
+      "zip_entries": 3643,
+      "checks": [
+        "CRC",
+        "safe/unique/case-insensitive paths",
+        "required runtime/Pillow licensing",
+        "every source byte",
+        "complete manifest/all entry hashes",
+        "version",
+        "final ZIP SHA-256"
+      ]
+    },
+    {
+      "check": "New runtime import omission guard",
+      "passed": true,
+      "method": "Removed app/plot_archive.py from an isolated temporary copy of the858 package; verify rejected missing required file app/plot_archive.py. Original artifact was not changed."
+    },
+    {
+      "check": "Critical packaged source comparison",
+      "passed": true,
+      "files_checked": 15,
+      "all_match_reviewed_source": true,
+      "unchanged_control_component_files": 10,
+      "new_file": "app/plot_archive.py",
+      "modified_existing_files": [
+        "app/csv_source.py",
+        "app/session.py",
+        "app/layer_charts.py",
+        "app/standalone_ir.py"
+      ]
+    },
+    {
+      "check": "Worker control AST invariance",
+      "passed": true,
+      "unchanged_nodes": [
+        "run_ui_session",
+        "SessionOptions",
+        "SliceDatasetSetting"
+      ]
+    },
+    {
+      "check": "All successful/failed attempt ZIP entry bytes compared",
+      "passed": true,
+      "entries": 3643,
+      "result": "Every filename and uncompressed entry byte, including the manifest, is identical across the two same-source attempts. The ZIP container digests differ. The failed attempt is not relabeled or reused as passed."
+    },
+    {
+      "check": "Publisher logic review and offline tests",
+      "passed": true,
+      "independent_prior_gate_tests": [
+        "success",
+        "wrong_review_zip",
+        "native_failure",
+        "performance_failure",
+        "missing_tests_summary",
+        "existing_tag",
+        "bad_asset_digest",
+        "changed_tag"
+      ],
+      "note": "Those eight independently executed fully mocked tests targeted the same unchanged publication gate logic in9b; current publisher changes only release prose. Actual package verifier was executed separately on this exact final ZIP. Root additionally ran four fully mocked publisher scenarios with this real final ZIP; their script/results were independently inspected, not claimed as reviewer execution. No external mutations occurred."
+    },
+    {
+      "check": "Prior external workbook immutability",
+      "passed": true,
+      "sha256": {
+        "01_IR_이미지기반_회복제어_2026.10.28.xlsx": "eb34cd39d364011015bee1a03cc1c024a1bb41911df35ed5aeac41b299941c20",
+        "02_IR_파우더층제어_분사층출력고정_2026.10.28.xlsx": "46fe77b0eaf57352ffffaa3bcc06d2e3e9a45dd3c339885961ca7922aaf7d7db"
+      }
+    }
+  ],
+  "windows_evidence_inspected": {
+    "route": "Actual GitHub Actions packaged Python3.14.5/Pillow13.0.0 execution. Reviewer independently read downloaded reports and verified the ZIP locally; not a claim of executing Windows on this Linux host.",
+    "run_id": 40804955140,
+    "run_attempt": 2,
+    "artifact_id": 12868042498,
+    "artifact_name": "slice-candidate-8589696c10b1e8376bfbdf3f3e3f3ef8c373e153",
+    "directory": "/workspace/ir-reconnect-review/windows-8589696-attempt2",
+    "outer_artifact_zip_sha256": "1ea7739bd6a99eec783fe0f5a985ccabe93a16ee662b125b1cacf66974f3e57e",
+    "application_tests": {
+      "passed": 216,
+      "failed": 0,
+      "seconds": 41.159
+    },
+    "checks": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "excel": "failure",
+      "reverify": "success"
+    },
+    "native_discovery_checks": 14,
+    "motw_bridge_checks": 9,
+    "native_csv_guard_checks": 6,
+    "launcher_smoke": "Launcher PID2768, packaged pythonw PID4008 and exact expected window observed; owned application closed normally after WM_CLOSE.",
+    "slice_analysis": "All three synthetic ZIPs retain exact records/fingerprints versus the pinned baseline. No real device latency claim.",
+    "excel": {
+      "excel_com_tested": false,
+      "release_ready": false,
+      "reason": "Excel COM is not registered"
+    },
+    "original_readiness_preserved": {
+      "automated_checks_passed": false,
+      "final_sol_review": "pending",
+      "release_ready": false,
+      "device_application_approved": false
+    },
+    "file_sha256": {
+      "candidate.json": "bd2b996c184063e013e62182ea7ff48343dfdfc67a943af8c681bc7f054aea37",
+      "readiness.json": "ac1a99f1df5b54d0ba587f44628a136b34c56695084bad2b85cc6d218bf37a98",
+      "tests.txt": "35cf1fe2cda412d359cf129215a7068b8805222be3df3ccc7e48a3cac1977b1c",
+      "smoke.txt": "e37c7a206aa581fb5ab8f4c84e060f65c7dd1e93b16923b6068378de23183c62",
+      "bridge.json": "f8a5f31eeecbed2b00ccdc0025e30f7368dc6a120984ffd026689a47ecc4f41d",
+      "csv-guard.json": "3836e0d5cf008391077cdce14a17968d091decbb1ab3d83d9e53457706e39ed1",
+      "discovery.json": "0e5f66c64a3ed8de6f5e06e7af3623bd7ea10127b6b2d6f3b22adb6bc6be1349",
+      "slice-performance.json": "b20830f006b17f806b5006669cb436d043de895f654781b683b3c50c46480f65",
+      "excel.json": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03",
+      "SHA256.txt": "b391688334ca372ee7b26ec6e433d654e42f66c9afcdbd6653276c8dfd4a36e6"
+    }
+  },
+  "preserved_failures_and_superseded_evidence": {
+    "historical9b_review": {
+      "path": "/workspace/ir-reconnect-review/sol-reconnect-final-review.json",
+      "sha256": "5defbc9dc25b014eea54a5c39cbde262728d5ed79495355b3571e4c468cc0721",
+      "note": "Preserved unchanged; superseded by the expanded UI/archive scope and this final review."
+    },
+    "superseded7f_source": "7f3edd73ae499ab660ec94cc05cf355026aceaee had the two independently reproduced P2 issues; not eligible for delivery.",
+    "failed858_windows_attempt1": {
+      "run_id": 40804955140,
+      "attempt": 1,
+      "artifact_id": 12868181188,
+      "directory": "/workspace/ir-reconnect-review/windows-8589696",
+      "zip_sha256": "418e009fe07e6b08f963a505cd2fe7fab2bf050e314de983936233705739c17a",
+      "tests": "216 passed in47.072s",
+      "smoke_outcome": "failure",
+      "failure": "Get-CimInstance process enumeration timed out after10s at windows_smoke.py:49 before the expected window was established. Finally-block normal cleanup text was not counted as a smoke pass. Exact initial cause of that infrastructure query timeout is not independently proven.",
+      "readiness_preserved": true,
+      "outer_artifact_sha256": "979a208cbac017e5bcf7a2a22c85bc508c7d0deca5f671c430c2e10a3ba9573a",
+      "readiness_sha256": "f75bb6a0210b02f463f128ec71d7a6e2ea8ad6da5c9cc94a56cc20c86e344fa7",
+      "smoke_log_sha256": "f09d417cbdf42537c743b351fbb123aeaaab9d76b07e6801d3b9fca65d2d1d1a",
+      "note": "One full same-source fresh-runner validation retry subsequently passed. No source change, gate relaxation or rewriting of the failed result was used."
+    }
+  },
+  "additional_evidence_inspected": {
+    "root_linux_suite": {
+      "path": "/workspace/ir-reconnect-review/linux-suite-final.txt",
+      "sha256": "83cbb053835199d956eb9b1d31e63eb72a8692f773c165774bd250f47d53f53a",
+      "passed": 214,
+      "discovered": 216,
+      "seconds": 44.099,
+      "excluded": [
+        "test_session.SingleInstanceTests.test_actual_private_mutex_prevents_a_second_owner_and_can_be_reacquired",
+        "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed"
+      ],
+      "note": "Executed by root; reviewer read the log. Tk teardown warnings remain visible. Both excluded checks passed in the final actual Windows full suite."
+    },
+    "root_actual_zip_publisher_checks": {
+      "path": "/workspace/ir-reconnect-review/publisher-offline-checks.json",
+      "sha256": "e177c4765b18606bcee3a96a969291a90af4477365e55e219bf972b3a2834d96",
+      "scenarios": 4,
+      "external_mutations": 0
+    }
+  },
+  "publisher_review": {
+    "path": "release_tools/publish_reconnect_candidate.py",
+    "sha256": "d2273ab3ff25c7b52bfe9f97aa7f1e6c1d85a5fce8e6162970ab793b5f0f0a00",
+    "template_path": "/workspace/ir-reconnect-review/publish-ui-archive-workflow.template.yml",
+    "template_sha256": "c1f573cada5590091009608c8dfe448ded081b377103cb26e423a15854d27eaa",
+    "verified_pins": {
+      "run_id": 40804955140,
+      "artifact_id": 12868042498,
+      "artifact_selection": "single artifact-ids with merge-multiple:true; no name selector",
+      "candidate_commit": "8589696c10b1e8376bfbdf3f3e3f3ef8c373e153",
+      "zip_sha256": "a341d2d92db06ed79becd2f2bfa8095b6eacc0d5970adb57e09f6a833cc71c85",
+      "remaining_placeholder": "__PUBLISH_SOURCE__"
+    },
+    "gates": [
+      "Exact completed review commit+ZIP binding",
+      "Eight non-Excel outcomes and detailed native/performance reports passed",
+      "Expected unavailable Excel status; stable/equipment flags false",
+      "Full source/CRC/manifest verification",
+      "Passing Windows summary before any API mutation",
+      "Refuse existing tag/release; no overwrite",
+      "Exact new lightweight tag verified before/after",
+      "Draft prerelease with immutable ZIP and separate checksum",
+      "Asset name/state/size/server SHA verified before/after publishing",
+      "make_latest=false and public release/tag/assets readback before URL"
+    ],
+    "external_publication_performed_by_reviewer": false
+  },
+  "source_file_sha256": {
+    "app/csv_source.py": "4e6d90f922905df4e34af66d46493bbfccbfdde873ecb315050fb4f6ac35a27a",
+    "app/session.py": "23a66f27315222082594043787b638bb2a608d87f84f2e5b807a3f6eb03efcb9",
+    "app/layer_charts.py": "379195c5f64dfbd04ab89ca149b8910669e56601c2bb93a8ec06f6acd939e59c",
+    "app/standalone_ir.py": "5eea58d28a6841f72ec69db0799bd8711bb89405930805ebdf0c812434193292",
+    "app/plot_archive.py": "1f12d53a8b3b26701a6bb07b73625471fe6f0d3696e85c76366a0935f6effdc5",
+    "app/layer_algorithm.py": "c58716206a14dab21239df024746a596828205084676b537fef47a0edf7ffc19",
+    "app/excel_workbook.py": "aa4ff1cdb4769ff3f5043b3f1e9727fccf77aac8b6066baa1a4a023318b80df1",
+    "app/excel_worker.ps1": "8da89bce68691fff1b438e1a71c9b5ab9313b3a96bcb2572dd2b5b0070f64075",
+    "app/native_helper.ps1": "937acdce7bfd76605451ab63a62f1bb49c5fcb69b98d192166a5077ba6e571f3",
+    "app/UiaBridge.dll": "181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f",
+    "app/windows_ui_adapter.py": "cf4265a2133790f7138f21ccad1b193dc77262c30f0b60b2568d9f34edc7c0d7",
+    "app/sequence_persistence.py": "f56f9a18043746eb1c71027b32d0588b3848fcc83867d610bd85b507e0f090a6",
+    "app/slice_data.py": "acbe9f4bd9825e4667b32f3fbcd38f5db5b81a18bf00806f589ed3b045bb6875",
+    "app/slice_panel.py": "fe16747b9115f632fa741ce615a0595288fd50e74f067127f0b9badbda0b56c1",
+    "app/workbook-replay.settings.json": "3453c5f1911f484ced847505ce30c5f94367eb168f8f5402f5ec96ac31d3a8e6"
+  },
+  "limitations": [
+    "The initial real-world disconnect cause remains unknown; this fixes a synthetic reproduction of the reported reconnect membership error, not a demonstrated field diagnosis.",
+    "No actual user CSV/log files were supplied to the reviewer. Unsupported/localized CSV timestamp formats were not guessed or widened.",
+    "Actual Excel COM is unavailable and untested. Mocked sheet composition and previous offline numerical checks do not establish COM operation.",
+    "No live M1/S3, PLC, sensor, heater/lamp or production Sequence Save was operated. Windows native probes used owned synthetic windows/files.",
+    "Autosave covers all chart-model records and retained run segments through the fixed termination cutoff; it cannot recover observations dropped before plotting, data never received, an unconfirmed Save, forced process termination or power loss.",
+    "Both destination failures preserve immutable histories in memory and keep a read-only recovery window. Memory retention is not a disk-persistence guarantee if the process is forcibly killed.",
+    "Tk teardown after-callback warnings occurred in test logs despite passing unittest results; do not claim warning-free tests.",
+    "Normal-looking stale physical sensor readings cannot be independently proven fresh by CSV timestamps/hashes or planned slice images.",
+    "Final control algorithm approval and real equipment application remain explicitly on hold; this code/artifact review does not lift those holds."
+  ]
+}
