@@ -37,6 +37,6 @@
 
 기존 CSV/재연결/세션 회귀시험 55개는 수정 전과 초기 수정 후 모두 통과했습니다. 독립 `sol_reviewer` 사전·사후 검토를 완료했습니다. 사후 검토에서 발견한 온도 0 과거 완료 행의 위치 검사 누락도 보완했습니다. 최종 코드 `2d2c4af`에서 검토자가 집중 시험 65개를 통과시켰고 부모 에이전트의 Linux 오프라인·모의·Tk 전체 시험은 224개 통과했습니다. Windows 전용 두 시험은 제외했으며 Tk 반복 창 시험의 종료 콜백 경고가 있어 무경고 통과를 주장하지 않습니다.
 
-실제 호출 경로는 native collaboration의 `/root/sol_reviewer`, 요청 구성은 `gpt-6.1-sol/max`입니다. 제공 모델 신원을 별도로 검증하거나 이전 CLI 인증 오류가 복구됐다고 주장하지 않습니다. [독립 사후 검토 원본](validation/csv-resume-anchor-2026.10.29-review.json)과 [부모 시험·전달 상태 기록](validation/csv-resume-anchor-2026.10.29-offline.json)을 보존했습니다. 실제 파일 재현과 새 Windows ZIP 검증은 별도로 남아 있습니다.
+실제 호출 경로는 native collaboration의 `/root/sol_reviewer`, 요청 구성은 `gpt-6.1-sol/max`입니다. 제공 모델 신원을 별도로 검증하거나 이전 CLI 인증 오류가 복구됐다고 주장하지 않습니다. [독립 사후 검토 원본](validation/csv-resume-anchor-2026.10.29-review.json)과 [부모 시험·전달 상태 기록](validation/csv-resume-anchor-2026.10.29-offline.json)을 보존했습니다. 실제 파일 재현 결과는 [실제 CSV 비교 기록](validation/csv-resume-real-data-2026.10.29.json)에 보존했습니다. 새 Windows ZIP 검증은 해당 후보의 별도 배포 기록을 기준으로 확인합니다.
 
 실제 세 CSV의 오류 재현 및 수정 후 비교는 완료했습니다. 새 Windows 패키지 검증과 배포용 독립 최종 검토는 그 정확한 패키지의 별도 기록을 기준으로 확인합니다. 실제 Excel COM, M1/S3 센서·PLC·램프 출력과 장시간 프린팅은 시험하지 않았습니다. 제어 알고리즘 최종 승인과 실제 장비 적용 보류는 계속 유지합니다.
