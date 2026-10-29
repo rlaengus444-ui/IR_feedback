@@ -250,6 +250,8 @@ class MonitoringCsvReader:
         self._last_scan = 0.0
         self.generation = 0
         self.prefix_hash = None
+        self._history_prefix_open = True
+        self._skipped_history_rows = 0
 
     def _select(self, context: JobContext):
         if context.first_started is None or context.first_layer is None:
@@ -274,6 +276,16 @@ class MonitoringCsvReader:
         self.identity, self.header, self.latest, self.last_signature = None, None, None, None
         self.offset, self.pending = 0, b""
         self.prefix_hash = None
+        self._history_prefix_open = True
+        self._skipped_history_rows = 0
+
+    def _context_error(self, context, index, start, finish, reason):
+        return CsvSourceError(
+            "CSV 행이 현재 작업의 시작 시점/층과 일치하지 않습니다. "
+            f"[원인={reason}; CSV Id={index + 1}(내부 층={index}); "
+            f"작업 시작 내부 층={context.first_layer}; "
+            f"행 시작={start.isoformat(sep=' ')}; 행 완료={finish.isoformat(sep=' ')}; "
+            f"로그 시작={context.first_started.isoformat(sep=' ')}]")
 
     def _sample(self, row: list[str], context: JobContext) -> CsvSample | None:
         if len(row) != len(self.header):
@@ -294,8 +306,26 @@ class MonitoringCsvReader:
         # stop control, rather than be learned as a valid low temperature.
         if temperature == -1:
             raise CsvSourceError("온도계 비활성 값(-1°C)이 기록되어 IR 제어를 중단합니다.")
-        if index < context.first_layer or start < context.first_started - timedelta(seconds=2) or finish < start:
-            raise CsvSourceError("CSV 행이 현재 작업의 시작 시점/층과 일치하지 않습니다.")
+        if finish < start:
+            raise self._context_error(context, index, start, finish, "완료 시각이 시작 시각보다 빠름")
+        earliest = context.first_started - timedelta(seconds=2)
+        if index < context.first_layer:
+            # Resuming the original job can retain completed rows from its
+            # previous run. Only a leading, strictly older prefix is history.
+            # No such row supplies a measurement, token, or control proposal.
+            if self._history_prefix_open and start < earliest and finish < earliest:
+                self._skipped_history_rows += 1
+                return None
+            raise self._context_error(context, index, start, finish,
+                                      "이전 층 행의 시간대 또는 위치가 현재 작업과 충돌")
+        if start < earliest:
+            raise self._context_error(context, index, start, finish, "현재 층 행이 작업 시작보다 오래됨")
+        if self._history_prefix_open and self._skipped_history_rows:
+            # Skipping history adds an exception to normal membership checks;
+            # bind it to the exact resumed first layer/time before trusting it.
+            if index != context.first_layer or abs((start - context.first_started).total_seconds()) > 2:
+                raise self._context_error(context, index, start, finish, "재시작 기준 층/시각을 확인할 수 없음")
+        self._history_prefix_open = False
         recoating = record_time(data["TimeRecoatingFinished"])
         delay = (finish - recoating).total_seconds() if recoating and start <= recoating <= finish else None
         identity = [str(self.path), self.identity, self.generation, context.run_key, index, data["TimeStart"], temperature]
@@ -343,6 +373,7 @@ class MonitoringCsvReader:
                 raw = first[self.offset:self.offset + (self.MAX_FILE_BYTES if initial else 1024 * 1024)]
             self.identity = identity
             combined = self.pending + raw
+            active_before = not self._history_prefix_open
             quoted = False
             start = 0
             latest = self.latest
@@ -374,14 +405,21 @@ class MonitoringCsvReader:
             self.latest, self.last_signature = latest, signature
             self.prefix_hash = hashlib.sha256(first[:self.offset]).digest()
             token = None
-            if not self.pending and self.offset == before.st_size:
+            waiting_for_anchor = self._history_prefix_open and self._skipped_history_rows > 0
+            anchored_now = not active_before and not self._history_prefix_open and self._skipped_history_rows > 0
+            if not self.pending and self.offset == before.st_size and not waiting_for_anchor:
                 token = {"path":str(self.path), "size":before.st_size,
                          "mtime_ticks":before.st_mtime_ns // 100 + 621355968000000000,
                          "sha256":hashlib.sha256(first).hexdigest()}
             fresh = latest is not None and -2 <= self.clock() - latest.finished.timestamp() <= self.MAX_NEW_AGE_SECONDS
             after_connection = latest is not None and latest.finished.timestamp() >= self.connected_at
-            is_new = bool(not reset and changed and (not initial or after_connection) and token is not None and fresh)
-            return CsvSnapshot(latest, context, token, is_new,
-                "CSV 저장된 완료 층을 읽습니다. 측정부터 층 인쇄 완료까지의 지연이 있습니다.")
+            is_new = bool(not reset and not anchored_now and changed and (not initial or after_connection)
+                          and token is not None and fresh)
+            details = "CSV 저장된 완료 층을 읽습니다. 측정부터 층 인쇄 완료까지의 지연이 있습니다."
+            if waiting_for_anchor:
+                details = f"이전 실행 완료 기록 {self._skipped_history_rows}개 제외 · 현재 작업 시작 행을 기다립니다."
+            elif self._skipped_history_rows:
+                details += f" 이전 실행 완료 기록 {self._skipped_history_rows}개 제외 · 재시작 기준 행 확인."
+            return CsvSnapshot(latest, context, token, is_new, details)
         except (OSError, UnicodeError, csv.Error) as exc:
             raise CsvSourceError("Monitoring CSV를 안정적으로 읽을 수 없습니다.") from exc

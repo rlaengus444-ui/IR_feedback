@@ -1,0 +1,17 @@
+{
+  "review_phase": "BEFORE",
+  "reviewed_commit": "cf56ef8cbb14e33c0f7a70ca4ed8ff4384211e53",
+  "completed": true,
+  "route": "Native collaboration /root/sol_reviewer",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_identity_independently_verified": false,
+  "original_disconnection_cause_confirmed": false,
+  "reported_reconnect_error_reproduced": true,
+  "independent_existing_csv_tests_passed": 24,
+  "permitted_scope": "Only leading completed rows with lower index and both timestamps strictly older than first_started minus2s may be classified as previous-run history. All numeric/schema/-1/chronology guards remain. If skipped, require exact resumed first layer and TimeStart within±2s before trusting currentsegment; partial/prefix states clearonjob/file reset. Existing file identity/freshness/Save guards remain. Reconnect never retries an ambiguous Save.",
+  "required_after_review": true,
+  "automatic_image_import_canceled": true,
+  "equipment_application_approved": false,
+  "final_algorithm_approval": "ON HOLD"
+}
