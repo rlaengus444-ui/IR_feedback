@@ -181,7 +181,58 @@ class RecoveryAdapterTests(unittest.TestCase):
                 else:
                     self.assertTrue(adapter.read_snapshot(threading.Event()).control_recoverable)
 
+    def test_partial_settings_writes_at_both_preedit_captures_hold(self):
+        capture = sequence_persistence.capture
+        for boundary in (1, 2):
+            with self.subTest(boundary=boundary):
+                fresh = self.append(index=boundary)
+                count = [0]
+                def transient(target):
+                    count[0] += 1
+                    if count[0] == boundary:
+                        raise sequence_persistence.PersistenceUnavailable('partial settings write')
+                    return capture(target)
+                before = len(self.calls)
+                with patch('windows_ui_adapter.sequence_persistence.capture', side_effect=transient):
+                    with self.assertRaises(ControlSuspended):
+                        self.adapter.apply_ir_power(1, 67, fresh.observation_key, threading.Event())
+                self.assertEqual(0, self.state['saves'])
+                self.assertNotIn('apply', [r['operation'] for r in self.calls[before:]])
+                self.assertTrue(self.poll().control_recoverable)
+                self.assertTrue(self.poll().control_available)
+
 class RecoverySessionTests(unittest.TestCase):
+    def test_nonready_observations_are_consumed_before_auto_or_ir_returns(self):
+        for waiting_state in ('UNKNOWN', 'PAUSED', 'missing_ir'):
+            with self.subTest(waiting_state=waiting_state):
+                def frame(key, layer, **kw):
+                    return replace(test_session.snapshot(key, layer, control_available=True,
+                        observation_is_new=True), **kw)
+                waiting = ({'heater1_setting_percent': None, 'heater2_setting_percent': None}
+                           if waiting_state == 'missing_ir' else {'machine_state': waiting_state})
+                frames = [frame('old', 1, observation_is_new=False),
+                    frame('hold', 2, control_available=False, control_recoverable=True),
+                    frame('baseline', 2, control_epoch=1),
+                    frame('waiting-observation', 3, control_epoch=1, **waiting),
+                    frame('waiting-observation', 3, control_epoch=1),
+                    frame('same-layer-correction', 3, control_epoch=1),
+                    frame('genuinely-fresh', 4, control_epoch=1)]
+                adapter, controller, stop = Mock(), Mock(), threading.Event()
+                adapter.read_snapshot.side_effect = frames
+                controller.process.return_value = type('Result', (), {'power_percent':55, 'reason':'test'})()
+                reports = []
+                def emit(kind, payload):
+                    if kind == 'snapshot':
+                        reports.append(payload)
+                        if len(reports) < len(frames):
+                            adapter.apply_ir_power.assert_not_called()
+                        else:
+                            stop.set()
+                with patch('session.LayerAdaptiveController', return_value=controller):
+                    run_ui_session(SessionOptions(test_session.TARGET, mode='control'), stop, emit, lambda: adapter)
+                adapter.apply_ir_power.assert_called_once()
+                self.assertEqual('genuinely-fresh', adapter.apply_ir_power.call_args.args[2])
+
     def test_hold_resumes_only_after_baseline_and_fresh_different_layer(self):
         adapter = Mock()
         def make(key, layer, **kw):

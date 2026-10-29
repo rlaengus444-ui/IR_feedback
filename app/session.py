@@ -274,6 +274,13 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                     baseline_seen = True
                     last_key = snapshot.observation_key
                     known_run_key = snapshot.run_key
+            # Observations seen while readiness is absent are barriers too.
+            # Restored AUTO/current-IR must not turn a cached held row into Save.
+            if ((control_holding or recovery_baseline_pending or recovery_baseline_layer is not None)
+                    and effective_mode != "control" and valid):
+                recovery_baseline_layer = snapshot.layer_index
+                last_key = snapshot.observation_key
+                known_run_key = snapshot.run_key
             control_barrier = effective_mode == "control-waiting"
             if effective_mode == "control" and recovery_baseline_pending:
                 control_barrier = True

@@ -13,6 +13,9 @@ import sys
 import tempfile
 import time
 import traceback
+import threading
+
+_ADAPTER = None
 
 PS = Path(os.environ.get('SystemRoot', r'C:\Windows')) / 'System32/WindowsPowerShell/v1.0/powershell.exe'
 SOURCE = Path(__file__).resolve().parents[1] / 'validation' / 'SettingsRecoveryFixture.cs'
@@ -24,13 +27,19 @@ def helper(helper_path, dll, hwnd, pid, operation, handles=None, field_map=None,
                'machine': 'M1', 'handles': handles or {}, 'field_map': field_map or {}}
     if metadata is not None:
         request['metadata'] = metadata
-    proc = subprocess.run([str(PS), '-NoLogo', '-NoProfile', '-NonInteractive', '-Mta', '-File', str(helper_path)],
-        input=json.dumps(request), capture_output=True, text=True, encoding='utf-8', errors='replace',
-        timeout=12, creationflags=FLAGS)
+    # Exercise the shipped adapter transport/deadline, not an easier direct -File call.
+    from adapter_contracts import AdapterError, ControlSuspended, TargetIdentityError
+    started = time.monotonic()
     try:
-        return json.loads(proc.stdout.lstrip('\ufeff').strip())
-    except ValueError as exc:
-        raise RuntimeError('Invalid helper response: ' + proc.stdout[-1500:] + proc.stderr[-1500:]) from exc
+        result = _ADAPTER._request(request, threading.Event())
+    except AdapterError as error:
+        result = {'success': False, 'error': str(error), 'error_kind':
+                  'control_wait' if isinstance(error, ControlSuspended) else
+                  'identity' if isinstance(error, TargetIdentityError) else 'operation'}
+    result['transport_seconds'] = time.monotonic() - started
+    result['production_adapter_transport'] = True
+    return result
+
 
 
 def main(root, output):
@@ -42,6 +51,11 @@ def main(root, output):
     try:
         if os.name != 'nt':
             raise RuntimeError('Windows is required')
+        global _ADAPTER
+        sys.path.insert(0, str(root / 'app'))
+        from windows_ui_adapter import WindowsUiAdapter
+        _ADAPTER = WindowsUiAdapter()  # Default production deadline; no connect/navigation.
+        report['adapter_default_helper_timeout_seconds'] = _ADAPTER.helper_timeout
         dll, helper_path = root / 'app/UiaBridge.dll', root / 'app/native_helper.ps1'
         report['bridge_sha256'] = hashlib.sha256(dll.read_bytes()).hexdigest()
         report['helper_sha256'] = hashlib.sha256(helper_path.read_bytes()).hexdigest()
@@ -94,6 +108,16 @@ def main(root, output):
         command('set')
         responses['manual_values'] = call('recover_control', handles, mapping)
         checks['manual_fixture_changes_visible'] = responses['manual_values'].get('success') and str(responses['manual_values'].get('setting')) == '67' and str(responses['manual_values'].get('fields', {}).get('textBoxSpeed')) == '9'
+        command('duplicate_in_place')
+        responses['duplicate_in_place'] = call('recover_control', handles, mapping)
+        checks['in_place_duplicate_holds'] = not responses['duplicate_in_place'].get('success') and responses['duplicate_in_place'].get('error_kind') == 'control_wait'
+        command('remove_extra')
+        command('extra_in_place')
+        responses['extra_in_place'] = call('recover_control', handles, mapping)
+        checks['in_place_new_input_inventoried'] = (responses['extra_in_place'].get('success')
+            and 'textBoxUnexpected' in responses['extra_in_place'].get('field_map', {})
+            and 'textBoxUnexpected' in responses['extra_in_place'].get('fields', {}))
+        command('remove_extra')
         command('pause')
         responses['paused'] = call('recover_control', handles, mapping)
         checks['paused_holds'] = not responses['paused'].get('success') and responses['paused'].get('error_kind') == 'control_wait'
@@ -133,6 +157,7 @@ def main(root, output):
         checks['zero_save_and_navigation'] = second.split(',')[-2:] == ['0', '0']
         poison = Path(str(marker) + '.poison')
         checks['process_panel_not_probed'] = not poison.exists() or not poison.read_text()
+        checks['actual_default_transport_used'] = all(r.get('production_adapter_transport') for r in responses.values())
         report['fixture_heartbeat_final'] = second
         report['passed'] = all(checks.values())
         proc.terminate()

@@ -461,7 +461,10 @@ class WindowsUiAdapter:
             if not current_hint - 1 <= observation["row_index"] <= current_hint:
                 raise ControlUnavailable("계산 이후 생산 층이 진행되어 이전 관측값의 적용을 중단했습니다.")
             layer_hint = current_hint
-        current = sequence_persistence.capture(target)
+        try:
+            current = sequence_persistence.capture(target)
+        except sequence_persistence.PersistenceUnavailable as error:
+            raise ControlSuspended("설정 저장 중 · IR 입력 전 새 설정 확인 대기: " + str(error)) from error
         expected_number = _number(expected_ir)
         if current is None or expected_number is None or not math.isclose(current.power, expected_number, rel_tol=0, abs_tol=1e-9) or current.non_ir != persisted.non_ir:
             raise ControlSuspended("기존 IR 또는 다른 저장 설정이 변경되어 자동 적용을 중단했습니다.")
@@ -474,12 +477,15 @@ class WindowsUiAdapter:
         fresh_fields = fresh.get("fields")
         if not isinstance(fresh_fields, dict) or fresh_fields != dict(baseline, textBoxHeatingOutput=expected_ir):
             raise ControlSuspended("IR 또는 다른 Sequence 입력값이 변경되어 자동 저장을 중단했습니다.")
-        current = sequence_persistence.capture(target)
+        try:
+            current = sequence_persistence.capture(target)
+        except sequence_persistence.PersistenceUnavailable as error:
+            raise ControlSuspended("설정 저장 중 · IR 입력 전 새 설정 확인 대기: " + str(error)) from error
         if current is None or current.non_ir != persisted.non_ir or not math.isclose(current.power, expected_number, rel_tol=0, abs_tol=1e-9):
             raise ControlSuspended("IR 입력 전 기존 저장 설정이 변경되었습니다.")
         try:
             assert_fields_match_persisted(fresh_fields, current, target.machine)
-        except ValueError as exc:
+        except SequenceFieldAuditError as exc:
             raise ControlSuspended("IR 입력 전에 다른 설정의 미저장 변경을 발견했습니다. " + str(exc)) from exc
         if time.monotonic() - guarded_at > 3:
             raise ControlUnavailable("관측 확인 후 시간이 지나 이번 적용을 중단했습니다. 다시 연결해 새 관측을 확인하세요.")

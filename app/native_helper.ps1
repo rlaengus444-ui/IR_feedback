@@ -365,19 +365,11 @@ try {
                 # A single bounded READ-ONLY operation; no navigation, IR edit or Save.
                 $script:controlWait = $true
                 if ([BinderJetQueuedNavigation]::IsUserEditing($root, $pidExpected)) { throw 'The user is editing a target field; automatic Save is suspended.' }
-                $scope = HandleOf $handles 'scope'
-                try {
-                    AssertAutomatic $root $pidExpected $handles
-                    if (-not (Owned $root $scope $pidExpected)) { throw 'The Sequence scope needs to be rebound.' }
-                    $fields = ReadFields $root $pidExpected $request.field_map $scope
-                    $response = @{success=$true;machine=$machine;fields=$fields;setting=$fields['textBoxHeatingOutput'];handles=$handles;field_map=$request.field_map}
-                } catch {
-                    if ($script:identityFailure) { throw }
-                    # Metadata is bounded to known visible leaves. Never reopen a tab.
-                    $records = @(SequenceMetadata $root $pidExpected)
-                    $response = PreparedControl $root $pidExpected $records
-                    AssertAutomatic $root $pidExpected $response.handles
-                }
+                # Adoption always inventories the current visible input set.
+                # Cached HWNDs cannot reveal an in-place new/duplicate control.
+                $records = @(SequenceMetadata $root $pidExpected)
+                $response = PreparedControl $root $pidExpected $records
+                AssertAutomatic $root $pidExpected $response.handles
                 $response.state = ([BinderJetNativeProcess]::ReadText($root, (HandleOf $response.handles 'state'), $pidExpected)).Trim()
             }
             'verify_control' {

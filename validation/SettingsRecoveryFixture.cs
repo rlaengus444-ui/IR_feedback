@@ -27,7 +27,7 @@ internal static class SettingsRecoveryFixture {
         nav.Click += delegate { navs++; };
         root.Controls.Add(machine); root.Controls.Add(state); root.Controls.Add(nav);
         var outside = new Form();
-        Panel panel = null; TextBox ir = null, other = null; Button save = null;
+        Panel panel = null; TextBox ir = null, other = null, added = null; Button save = null;
         Action<bool> makePanel = delegate(bool duplicate) {
             panel = new Panel { Name="SequenceView", Left=10, Top=45, Width=400, Height=200 };
             ir = new TextBox { Name="textBoxHeatingOutput", Text="62", Left=5, Top=5 };
@@ -55,6 +55,11 @@ internal static class SettingsRecoveryFixture {
                 else if (action=="machine_m1") machine.Text="M1";
                 else if (action=="focus") { root.Activate(); SetForegroundWindow(root.Handle); ir.Focus(); }
                 else if (action=="clear") { nav.Focus(); }
+                else if (action=="duplicate_in_place" || action=="extra_in_place") {
+                    added = new TextBox { Name=action=="duplicate_in_place" ? "textBoxHeatingOutput" : "textBoxUnexpected", Text="1", Left=240, Top=5 };
+                    panel.Controls.Add(added); var addedHandle=added.Handle;
+                }
+                else if (action=="remove_extra") { if (added!=null) { added.Dispose(); added=null; } }
                 else if (action=="missing") { var old=panel; var h=outside.Handle; SetParent(old.Handle,h); }
                 else if (action=="recreate" || action=="duplicate") {
                     if (panel.Parent==root) { var old=panel; var h=outside.Handle; SetParent(old.Handle,h); }
