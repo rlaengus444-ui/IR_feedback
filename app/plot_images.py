@@ -83,7 +83,7 @@ def write_plot(path, points, kind, target_temperature=None):
             draw.line((xx, yy, min(xx+7, right), yy), fill='#27845b', width=2)
         draw.text((right - 300, top - 30), f'Target at capture: {target_temperature:g} C', fill='#27845b', font=font)
     if kind == 'ir':
-        draw.text((left, 820), 'Blue/Purple: observed IR 1/2     Orange/Magenta dots: confirmed Save 1/2', fill='#39485a', font=font)
+        draw.text((left, 820), 'Blue: IR 1/common   Purple: IR 2   Orange/Magenta dots: confirmed Save', fill='#39485a', font=font)
         for p in points:
             for field, color in (('ir1_saved', '#ef8b26'), ('ir2_saved', '#d52b92')):
                 value = getattr(p, field)
