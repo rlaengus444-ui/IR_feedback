@@ -231,6 +231,29 @@ class ArchiveViewTests(unittest.TestCase):
             self.pump_until(lambda: not self.archive.busy and self.archive.retained_rows == 0)
         self.assertEqual(2, len(list(alternate.glob('*.csv'))))
 
+    def test_failed_close_retry_keeps_original_cutoff_after_late_snapshot(self):
+        def broken(path, points):
+            raise OSError('disk failure')
+        self.archive.writer = broken
+        self.connect()
+        self.emit('snapshot', self.data(1))
+        self.view._pump()
+        self.view.close()
+        self.view.close_deadline = time.monotonic() - 1
+        with patch('standalone_ir.filedialog.askdirectory', return_value=''):
+            self.pump_until(lambda: not self.view.closing)
+        self.assertTrue(self.view._closing_charts_finalized)
+        self.emit('snapshot', self.data(2, saved=61))
+        self.view._pump()
+        self.archive.writer = _write_csv
+        self.view.close()
+        self.pump_until(lambda: not self.archive.busy and self.archive.retained_rows == 0)
+        rows = self.rows(self.files()[0])
+        self.assertEqual(['2'], [row[0] for row in rows[1:]])
+        self.assertEqual([2], [point.layer for point in self.view.charts.history.points])
+        self.assertEqual('', rows[1][4])
+        self.assertTrue(self.controller.closed)
+
 
 if __name__ == '__main__':
     unittest.main()

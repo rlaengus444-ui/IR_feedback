@@ -55,6 +55,7 @@ class ThermalFeedbackWindow:
         self._history_generation = 0
         self._history_machine = "M1"
         self._closing_archive_started = False
+        self._closing_charts_finalized = False
         self.discoverer = discoverer
         self.targets = []
         self.target_map = {}
@@ -309,6 +310,7 @@ class ThermalFeedbackWindow:
                 settings_path=settings, workbook_spec=workbook, slice_dataset=self.slice_panel.dataset)
             if self.controller.connect(options):
                 self.charts.reset()
+                self._closing_charts_finalized = False
                 self.archive.submit(retry_failed=True)
                 self._history_generation = self.controller.generation
                 self._history_machine = options.target.machine
@@ -429,15 +431,18 @@ class ThermalFeedbackWindow:
         self._poll_archives()
         if self.closing:
             if not self._closing_archive_started:
-                for event in self.controller.drain_chart_events():
-                    self._record_chart_payload(event.payload)
-                discovering = self.discovery_thread is not None and self.discovery_thread.is_alive()
-                expired = time.monotonic() >= self.close_deadline
-                if (not self.controller.worker_alive and not discovering and not self.controller.chart_events_pending) or expired:
-                    if expired:
-                        for event in self.controller.drain_chart_events(128):
-                            self._record_chart_payload(event.payload)
-                    self._capture_current_plot()
+                if not self._closing_charts_finalized:
+                    for event in self.controller.drain_chart_events():
+                        self._record_chart_payload(event.payload)
+                    discovering = self.discovery_thread is not None and self.discovery_thread.is_alive()
+                    expired = time.monotonic() >= self.close_deadline
+                    if (not self.controller.worker_alive and not discovering and not self.controller.chart_events_pending) or expired:
+                        if expired:
+                            for event in self.controller.drain_chart_events(128):
+                                self._record_chart_payload(event.payload)
+                        self._capture_current_plot()
+                        self._closing_charts_finalized = True
+                if self._closing_charts_finalized:
                     self.archive.submit(retry_failed=True)
                     self._closing_archive_started = True
                     self.status.set("CSV 자동 저장 중…")
