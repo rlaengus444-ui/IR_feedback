@@ -24,17 +24,22 @@ def _segments(points, field):
     return result
 
 
+def _font(size):
+    for name in ('segoeui.ttf', 'arial.ttf', 'DejaVuSans.ttf'):
+        try:
+            return ImageFont.truetype(name, size)
+        except OSError:
+            pass
+    return ImageFont.load_default(size=size)
+
+
 def write_plot(path, points, kind, target_temperature=None):
     if kind not in ('temperature', 'ir'):
         raise ValueError('unknown plot kind')
     points = tuple(points)
     image = Image.new('RGB', (1600, 900), 'white')
     draw = ImageDraw.Draw(image)
-    try:
-        title_font = ImageFont.truetype('DejaVuSans.ttf', 26)
-        font = ImageFont.truetype('DejaVuSans.ttf', 17)
-    except OSError:
-        title_font = font = ImageFont.load_default()
+    title_font, font = _font(26), _font(17)
     left, top, right, bottom = 115, 115, 1540, 790
     first, last = points[0].layer, points[-1].layer
     fields = ('temperature',) if kind == 'temperature' else ('ir1_observed', 'ir2_observed')
