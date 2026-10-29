@@ -1,0 +1,273 @@
+{
+  "reviewed_at_utc": "2026-10-29 12:20:46 UTC",
+  "review_stage": "Independent POST implementation and exact-artifact evaluation-delivery review",
+  "candidate_commit": "ddb0474fac7495624d30e3bf22a4ea5c0879693d",
+  "base_commit": "186e29dceb9b7c9dd9afe6e3acbd2013b932988e",
+  "candidate_version": "2026.10.29-reconnect.3",
+  "candidate_zip_sha256": "8fc66bbc8c2c78f52beb4803a697ed703caa191606a63fdccff44c0d07406352",
+  "candidate_zip_bytes": 35344690,
+  "candidate_zip_entries": 3649,
+  "evaluation_distribution_allowed": true,
+  "independent_post_review_complete": true,
+  "equipment_application_approved": false,
+  "final_control_algorithm_approved": false,
+  "stable_release_approved": false,
+  "disposition": "No unresolved P1/P2 findings in the reviewed changes. The exact pinned ZIP may be delivered only as an evaluation prerelease with latest=false under the user's existing authorization. This review does not approve equipment use, final control behavior, or an Excel COM claim.",
+  "review_route": {
+    "route": "Actual native collaboration sol_reviewer follow-up, with real source/diff/test/artifact inspection and this final response",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "configuration_read": "/workspace/IR_feedback_live_hold/.codex/agents/sol_reviewer.toml",
+    "protocol_read": [
+      "AGENTS.md",
+      "CODEX_REVIEW_PROTOCOL.md"
+    ],
+    "provider_model_identity_independently_verified": false,
+    "cli_authentication_restored": false,
+    "note": "The native review and historical CLI authentication failure are separate; no CLI repair or independently measured provider identity is asserted."
+  },
+  "scope": {
+    "changes": [
+      "Typed connected control HOLD for known pre-edit saved-settings/UI changes",
+      "Two coherent read-only confirmations and monotonic control epoch adoption",
+      "Private controller/history reset with baseline-only and future fresh different-layer admission",
+      "Fresh bounded Sequence inventory and read-only rebinding without recovery navigation or Save",
+      "Background full-history CSV plus temperature/IR PNG export with per-component preservation/retry",
+      "Packaging, validation workflow, native recovery fixture/probe, Toolhelp launcher smoke harness and evaluation publisher"
+    ],
+    "unchanged": [
+      "CSV parser and invalid -1/job/file/hash/freshness guards",
+      "Builtin control formula, gain settings and output bounds",
+      "Excel worker/controller source and original external workbook files",
+      "UiaBridge.dll and its pinned hash",
+      "Slice analysis and manual image import policy; automatic image import remains canceled"
+    ],
+    "production_files_edited_by_reviewer": [],
+    "actual_equipment_actions": 0,
+    "external_publication_actions": 0
+  },
+  "findings": [
+    {
+      "id": "P1-recovery-cached-row-after-nonautomatic",
+      "severity": "P1",
+      "status": "Resolved in d63d84e05605b5e73cc113d40e8bc26164782c2d; included in final candidate",
+      "reference": "app/session.py:274",
+      "original_reproduction": "After adopted layer2 baseline, a valid new layer3 arrived while state UNKNOWN; the identical cached layer3/key with AUTO restored could be calculated/Saved because the waiting branch cleared last_key without consuming the recovery barrier.",
+      "fix": "Valid observations during non-ready intervals are consumed as layer/key/run barriers; cached rows and same-layer rewrites cannot become a delayed recommendation.",
+      "independent_verification": "UNKNOWN, PAUSED and missing-current-IR probes each held layer3, its cache and same-layer rewrite; only fresh layer4 produced one mock Save. Recovery suite15/15 passed."
+    },
+    {
+      "id": "P2-pre-edit-persistence-error-disconnect",
+      "severity": "P2",
+      "status": "Resolved in d63d84e05605b5e73cc113d40e8bc26164782c2d; included in final candidate",
+      "reference": "app/windows_ui_adapter.py:464",
+      "original_reproduction": "PersistenceUnavailable during either pre-edit settings capture escaped as a terminal error instead of entering connected HOLD.",
+      "fix": "Only the two PRE-edit captures convert PersistenceUnavailable to ControlSuspended. Post-edit persistence verification remains terminal/ambiguous.",
+      "independent_verification": "Both capture-boundary probes entered HOLD with no native apply/Save. An injected post-edit persistence failure remained AmbiguousWriteError; a generic apply timeout remained terminal without recovery."
+    },
+    {
+      "id": "P1-recovery-cached-inventory",
+      "severity": "P1",
+      "status": "Resolved in d63d84e05605b5e73cc113d40e8bc26164782c2d; native regressions passed in exact Windows candidate",
+      "reference": "app/native_helper.ps1:364",
+      "original_finding": "Reading only the old field_map could miss a duplicate or new visible input added in-place while original HWNDs remained valid.",
+      "fix": "Every adoption candidate now collects a fresh bounded visible Sequence inventory and prepares/audits that complete map. Normal previously verified operation on other tabs is unchanged.",
+      "verification": "Exact Windows probe rejects in-place duplicate, inventories in-place unknown input, and rebinds recreated controls. Independent Python audit tests reject unknown/missing/duplicate mappings. Adoption waits if a complete visible Sequence inventory is unavailable."
+    },
+    {
+      "id": "native-recovery-test-transport-and-size",
+      "severity": "Validation gap",
+      "status": "Resolved",
+      "original_finding": "A direct powershell -File probe with12s deadline and two fields did not establish production default3s transport or full73/74-field usability.",
+      "fix": "Probe uses actual packaged WindowsUiAdapter._request. Separate full M1/S3 synthetic profiles exercise real temporary persistence, full field audit and two real _recover_control calls.",
+      "verification": "M1:73 fields, epochs[0,1],1.114822/1.077579s. S3:74 fields, epochs[0,1],1.1753084/1.1645164s. Settings unchanged, no Save/navigation, no Process-panel probe."
+    },
+    {
+      "id": "launcher-smoke-cim-timeout",
+      "severity": "Validation harness failure",
+      "status": "Resolved for exact candidate; failed historical evidence retained",
+      "original_finding": "Superseded f15efb8 Windows smoke failed on a10s Get-CimInstance subprocess timeout; its unit tests passing did not establish launcher smoke success.",
+      "fix": "Toolhelp PROCESSENTRY32W snapshot, direct-owned-parent and exact packaged pythonw path checks replace CIM. Retained live process handles filter window ownership. Expected-window and forced-cleanup rejection remain.",
+      "verification": "Final Windows smoke observed launcher2456/pythonw7040 and expected window, then normal WM_CLOSE. Historical f15 evidence was not relabeled.",
+      "nonblocking_notes": "The harness retains a narrow enumeration-to-WM_CLOSE race and does not separately diagnose unexpected WAIT_FAILED; no failure of these APIs was observed in the final run. These do not alter application actuation."
+    },
+    {
+      "id": "P3-ir-common-caption",
+      "severity": "P3",
+      "status": "Resolved in final ddb0474 caption",
+      "reference": "app/plot_images.py:86",
+      "fix": "IR legend identifies IR1/common consistently with CSV/UI semantics."
+    }
+  ],
+  "independent_checks_executed": [
+    {
+      "check": "Initial focused recovery/archive/PNG/Tk lifecycle suite",
+      "result": "37/37 passed6.420s; passing tests did not hide the independent P1/P2 repros",
+      "source": "Initial implementation under review"
+    },
+    {
+      "check": "Broader adapter/worker/recovery/archive suite",
+      "result": "76/76 passed12.206s; one Linux-inapplicable Windows helper transport test excluded",
+      "source": "Intermediate reviewed source; not represented as exact Windows validation"
+    },
+    {
+      "check": "Post-fix recovery suite",
+      "command": "DISPLAY=:95 python -m unittest -v test_live_settings",
+      "result": "15/15 passed3.344s",
+      "source": "d63d84e application recovery bytes unchanged in final candidate"
+    },
+    {
+      "check": "Complete field audit",
+      "command": "python -m unittest -v test_sequence_field_audit",
+      "result": "7/7 passed0.016s, including all73 M1/74 S3 bindings and dirty/missing/unknown/duplicate inputs"
+    },
+    {
+      "check": "Final PNG renderer tests",
+      "command": "DISPLAY=:95 python -m unittest -v test_plot_images",
+      "result": "2/2 passed0.195s;2,501 observations, extent/metadata/Save dots and missing-layer breaks"
+    },
+    {
+      "check": "Independent adversarial recovery probes",
+      "result": "7 scenarios passed: two pre-edit capture errors; UNKNOWN/PAUSED/missing-C cache+rewrite barriers; post-edit persistence ambiguity; generic apply-timeout terminal behavior"
+    },
+    {
+      "check": "Visual output inspection",
+      "result": "Generated and viewed synthetic full-history temperature/IR images with a two-layer gap; target-at-capture, full extent and confirmed Save dots are clear",
+      "artifacts": [
+        "independent-example-temperature.png",
+        "independent-example-ir-ddb0474.png"
+      ]
+    },
+    {
+      "check": "Exact full-package verifier",
+      "command": "python release_tools/verify_package.py windows-ddb0474/IRFeedback-2026.10.29-reconnect.3.zip 2026.10.29-reconnect.3",
+      "result": "Passed full CRC, safe/collision-free paths, no symlinks, complete manifest and source bytes, runtime/Pillow/licenses/settings/doc requirements"
+    },
+    {
+      "check": "Exact archive digests and extraction",
+      "result": "Outer and inner sizes/SHA-256 independently recomputed; all23 extracted app files matched ZIP bytes"
+    },
+    {
+      "check": "Required JSON files",
+      "result": "app/workbook-replay.settings.json and all3 linked docs/validation JSON files present, parseable, source-exact and manifest-hashed"
+    },
+    {
+      "check": "Original supplied CSV replay against exact packaged app",
+      "result": "All3 files1,122 rows accepted;140 streamed frames, Id501 metadata-only, Id502 baseline-only, Id503..640138 new records exactly once, zero duplicate new flags. Four-frame mocked session first calculation/mock Save atId503; zero physical Saves. Original hashes unchanged.",
+      "evidence": "sol-real-csv-packaged-ddb0474.json",
+      "evidence_sha256": "67d153be48cf179046c54403671d15f220bf9c15f4d9008453a09dc9c5bb6414"
+    },
+    {
+      "check": "New settings gate negative publisher tests",
+      "result": "Failed step and passed:false settings report each rejected before package/API mutation"
+    },
+    {
+      "check": "Pinned direct-download template offline execution",
+      "result": "Real outer archive success, wrong artifact ID rejection before download, and wrong outer digest rejection before extraction; no external processes/API calls"
+    },
+    {
+      "check": "Publisher offline execution with real candidate ZIP/evidence",
+      "result": "Ordered fake tag/draft/upload/verify/prerelease publication passed; wrong review digest rejected before API; existing tag rejected without create/upload; wrong uploaded digest retained draft. Actual Actions checksum file unchanged; zero external publication calls.",
+      "evidence": "sol-delivery-offline-checks-ddb0474.json",
+      "evidence_sha256": "df6c8ae97371f0be22e6da1573c2003b92d0886ae15464be4840ad15c92733ac"
+    }
+  ],
+  "parent_and_ci_evidence_inspected": {
+    "linux": {
+      "tests": 248,
+      "passed": 248,
+      "seconds": 50.182,
+      "scope": "Offline/mock/Tk",
+      "exclusions": [
+        "test_session.SingleInstanceTests.test_actual_private_mutex_prevents_a_second_owner_and_can_be_reacquired",
+        "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed"
+      ],
+      "warnings": "Known Tcl after-callback teardown warnings are retained separately; not claimed warning-free."
+    },
+    "windows": {
+      "run_id": 40870987858,
+      "artifact_id": 12895857849,
+      "source_commit": "ddb0474fac7495624d30e3bf22a4ea5c0879693d",
+      "tests": 250,
+      "passed": 250,
+      "seconds": 60.694,
+      "packaged_python": "3.14.5",
+      "packaged_pillow": "13.0.0",
+      "required_non_excel_checks": {
+        "build": "success",
+        "tests": "success",
+        "smoke": "success",
+        "bridge": "success",
+        "csv_guard": "success",
+        "native_discovery": "success",
+        "slice_perf": "success",
+        "settings_recovery": "success",
+        "reverify": "success"
+      },
+      "bridge_checks": 9,
+      "csv_guard_checks": 6,
+      "native_discovery_checks": 14,
+      "settings_recovery_checks": 20,
+      "scope": "Windows CI results inspected locally; reviewer did not run a Windows machine or real equipment."
+    },
+    "excel": {
+      "excel_com_tested": false,
+      "reason": "Excel COM is not registered",
+      "readiness_release_ready": false,
+      "readiness_device_application_approved": false,
+      "readiness_automated_checks_passed": false,
+      "note": "Original raw readiness JSON remains unchanged; its final_sol_review=pending is historical CI output, not overwritten."
+    },
+    "superseded_failure": {
+      "source_commit": "f15efb8d88d5aa177c26c9d40056199acff0c954",
+      "run_id": 40868718348,
+      "artifact_id": 12895101917,
+      "smoke": "failed Get-CimInstance10s timeout",
+      "retained_at": "windows-f15efb8",
+      "distribution_approved": false
+    }
+  },
+  "artifact_provenance": {
+    "outer_file": "/workspace/ir-live-hold-review/windows-ddb0474-evidence.zip",
+    "outer_sha256": "01cb385715562cf94fa2bb2e51773c1906915522519e7f3df125747183d16bf3",
+    "outer_bytes": 34847807,
+    "artifact_metadata": "/workspace/ir-live-hold-review/windows-ddb0474-artifact.json",
+    "metadata_repository_id": 1434868115,
+    "transfer": "Parent used official GitHub artifact connector; reviewer independently verified local bytes, metadata and hashes. Reviewer did not refetch or bypass authentication.",
+    "candidate_file": "/workspace/ir-live-hold-review/windows-ddb0474/IRFeedback-2026.10.29-reconnect.3.zip"
+  },
+  "delivery_review": {
+    "template": "/workspace/ir-live-hold-review/publish-reconnect3-direct-workflow.template.yml",
+    "template_sha256": "8c0e3e1189d45b7c604617e8a99c86eec606f016e88ce63b1ed8dfc6c11e7a63",
+    "embedded_download_python_sha256": "8de035804de2b18400cc9119522243fd749b612bbdda3a41db13b74e3ea9d73d",
+    "publisher_sha256": "c6f434d220b31f48ab243f4d09c948e417989fa6a9f3300ee4b7e7462a7678be",
+    "verifier_sha256": "97e79a69ea72d2117143a77d23f7bba22ccd4e75dd1c3daa27aea94461e3e16b",
+    "permitted_template_substitution": "Only __PUBLISH_SOURCE__ to an immutable commit containing this unchanged review JSON and unchanged reviewed packaged SOURCES/publisher. Any other material change requires re-review.",
+    "enforced": "Direct standard GITHUB_TOKEN API GET of exact artifact ID with repository/run/source/expiry/size/digest checks, bounded timeouts and safe extraction; exact inner ZIP source/manifest/digest; all9 non-Excel checks plus raw reports; completed review binding; new immutable candidate tag; draft prerelease; asset state/size/server SHA checks before and after publication; make_latest=false.",
+    "no_rebuild": true,
+    "no_credential_export_or_authentication_bypass": true,
+    "failure_policy": "Permission/download/verification failures stop before publication; do not substitute another run, artifact, credential, or ZIP."
+  },
+  "source_hashes": {
+    "app/csv_source.py": "883e3cc2f143f42bcaefa107096f36f735025a33f757bcf1191120d9e6391d1c",
+    "app/layer_algorithm.py": "c58716206a14dab21239df024746a596828205084676b537fef47a0edf7ffc19",
+    "app/UiaBridge.dll": "181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f",
+    "app/workbook-replay.settings.json": "3453c5f1911f484ced847505ce30c5f94367eb168f8f5402f5ec96ac31d3a8e6",
+    "app/windows_ui_adapter.py": "7c2369fb6aaa3c5b6de9536c15bab5cfbc7e0869a6c23a081a2f5340b6e7136b",
+    "app/native_helper.ps1": "e428e36877992a13c7be7c23c584df271cf27d3cb2dddf2505b06ad9e642f295",
+    "app/session.py": "193ec723eb1ec80191458514d064c2f5f88d6cab2c98bbf5c12ab4ba47e1ade0",
+    "app/plot_archive.py": "519fefb80e4d4d447d876bf393477b7e2f7202829c000057f5d962ce526b19d5",
+    "app/plot_images.py": "b50c114f565a917c81cf20bbad5f13cb3c259d8d38b43d29474b5464b48a4e9c"
+  },
+  "residual_limits": [
+    "Real BJT settings changes, real sensors/PLCs/lamps and long printing runs were not tested. Synthetic UI timing is not a real-equipment performance or safety guarantee.",
+    "Actual Excel COM was unavailable. Private Excel reset/integration behavior is covered by offline/mock tests and unchanged worker source, not a real Excel run.",
+    "Final control algorithm approval and equipment application remain explicitly on hold; this review does not lift them.",
+    "After settings/UI HOLD, a complete visible Sequence inventory and saved/UI agreement are required. Unsaved edits or unavailable/ambiguous controls can keep the connection in HOLD indefinitely; the module does not navigate, Save or revert automatically.",
+    "Any possible IR edit/Save, unknown apply failure or outcome uncertainty remains terminal; no automatic retry or rollback is authorized.",
+    "CSV timestamps and normal-looking values cannot independently establish physical sensor freshness. Image patterns do not prove binder execution, sensor location, drying or physical process state.",
+    "The actual M1 job log was not supplied for recorded-CSV replay; contexts/clock were reconstructed from the screenshot/filenames/row times. The original first disconnection cause remains unknown.",
+    "Read-only audit and preflight checks are bounded observations, not an atomic lock against all operator/device changes. Unsaved edits outside audited controls retain existing limitations.",
+    "Pillow getdata deprecation appears in a test; runtime is pinned to Pillow13. Known Tcl teardown warnings are not represented as warning-free execution."
+  ]
+}

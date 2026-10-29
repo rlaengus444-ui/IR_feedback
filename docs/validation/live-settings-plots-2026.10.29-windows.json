@@ -1,0 +1,112 @@
+{
+  "version": "2026.10.29-reconnect.3",
+  "candidate_commit": "6c54f52abdea3f478524bdf9fbeaf3892541dd71",
+  "candidate_zip_sha256": "bba933dad8b4692118b7b62acb93fd03190a6c0f6140054b2db36a7602c975b0",
+  "candidate_zip_bytes": 35344829,
+  "zip_entries": 3649,
+  "windows_run": 40873442620,
+  "artifact_id": 12897750622,
+  "artifact_outer_sha256": "4a3499407a858d18874fef86fc0688bef5bb5c03b5acb2fdd7d65b2b94113864",
+  "artifact_outer_bytes": 34847456,
+  "windows_tests": 251,
+  "windows_test_seconds": 44.877,
+  "checks": {
+    "build": "success",
+    "tests": "success",
+    "smoke": "success",
+    "bridge": "success",
+    "csv_guard": "success",
+    "native_discovery": "success",
+    "slice_perf": "success",
+    "settings_recovery": "success",
+    "excel": "failure",
+    "reverify": "success"
+  },
+  "all_nine_non_excel_checks_passed": true,
+  "excel": {
+    "excel_com_tested": false,
+    "release_ready": false,
+    "reason": "Excel COM is not registered"
+  },
+  "full_profiles": {
+    "M1": {
+      "machine": "M1",
+      "bound_fields": 73,
+      "passed": true,
+      "scope": "Full synthetic UI and temporary settings file; no physical equipment or Excel.",
+      "recovery_seconds": [
+        0.6621744000000263,
+        0.6571640999999886
+      ],
+      "epochs": [
+        0,
+        1
+      ],
+      "hold_reason": null,
+      "inventoried_fields": 73,
+      "settings_unchanged": true,
+      "zero_save_and_navigation": true,
+      "process_panel_not_probed": true
+    },
+    "S3": {
+      "machine": "S3",
+      "bound_fields": 74,
+      "passed": true,
+      "scope": "Full synthetic UI and temporary settings file; no physical equipment or Excel.",
+      "recovery_seconds": [
+        0.6729568999999742,
+        0.6597945000000323
+      ],
+      "epochs": [
+        0,
+        1
+      ],
+      "hold_reason": null,
+      "inventoried_fields": 74,
+      "settings_unchanged": true,
+      "zero_save_and_navigation": true,
+      "process_panel_not_probed": true
+    }
+  },
+  "full_profile_native_checks": {
+    "initial_fixture_prepared": true,
+    "cached_read_only_recovery": true,
+    "manual_fixture_changes_visible": true,
+    "in_place_duplicate_holds": true,
+    "in_place_new_input_inventoried": true,
+    "paused_holds": true,
+    "active_edit_holds": true,
+    "missing_sequence_holds": true,
+    "readonly_rebind": true,
+    "ambiguous_ir_holds": true,
+    "wrong_pid_identity_terminal": true,
+    "wrong_root_identity_terminal": true,
+    "fixture_restored": true,
+    "wrong_machine_identity_terminal": true,
+    "heartbeat_responsive": true,
+    "zero_save_and_navigation": true,
+    "process_panel_not_probed": true,
+    "actual_default_transport_used": true,
+    "full_m1_default_transport_and_audit": true,
+    "full_s3_default_transport_and_audit": true
+  },
+  "equipment_application_approved": false,
+  "final_control_algorithm_approval": "ON HOLD",
+  "release_ready": false,
+  "matching_actual_m1_log_provided": false,
+  "real_csv_files_replayed": 3,
+  "real_csv_rows_replayed": 1122,
+  "raw_real_csvs_published": false,
+  "archive_retry_old_failure_reproduced": true,
+  "archive_retry_new_regression_passed": true,
+  "plot_png_pixels": [
+    1600,
+    900
+  ],
+  "plot_png_dpi": 150,
+  "publication_template_sha256": "b745b49df56dbc48e6cb1d2670d691e3f35545cbe96dc37c90a40fd39d87a697",
+  "independent_replacement_release_review": "completed actual native sol_reviewer final response",
+  "independent_review_sha256": "1510ae69b6797cdfbdfd00fda54daddf566e1f2bbe0c9fc274825994552117e1",
+  "evaluation_distribution_allowed": true,
+  "raw_ci_readiness_unchanged": true
+}
