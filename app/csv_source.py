@@ -233,6 +233,7 @@ class CsvSample:
     slicing_image_path: str = ""
     recoating_finished: datetime | None = None
     slice_lineage: str = ""
+    source_generation: str = ""
 
 
 @dataclass(frozen=True)
@@ -384,7 +385,8 @@ class MonitoringCsvReader:
         image_path = data.get("ImgSlicing", "")
         lineage = hashlib.sha256(repr((image_path, data["TimeRecoatingFinished"])).encode()).hexdigest()
         return CsvSample(index, temperature, data["TimeStart"], finish, delay, key,
-                         image_path, recoating if delay is not None else None, lineage)
+                         image_path, recoating if delay is not None else None, lineage,
+                         hashlib.sha256(repr(identity[:4]).encode()).hexdigest())
 
     def read(self) -> CsvSnapshot:
         context = self.log.read()

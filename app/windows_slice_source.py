@@ -58,7 +58,7 @@ class PathBinding:
 
     def token(self, directory):
         return {'hwnd': self.leaf, 'home': self.home, 'home_caption': self.home_caption,
-                'directory': canonical(directory)}
+                'directory': canonical(directory), 'chain': self.chain}
 
 
 @dataclass(frozen=True)

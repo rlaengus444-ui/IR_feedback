@@ -402,7 +402,8 @@ class WindowsUiAdapter:
                 control_epoch=self._control_epoch,
                 slicing_image_path=getattr(sample, 'slicing_image_path', ''),
                 recoating_finished=getattr(sample, 'recoating_finished', None),
-                slice_lineage=getattr(sample, 'slice_lineage', ''))
+                slice_lineage=getattr(sample, 'slice_lineage', ''),
+                csv_generation=getattr(sample, 'source_generation', ''))
             self._csv_token = source.token
             self._layer_hint = source.context.current_layer
             self._observation_row = {"row_index": sample.layer_index, "temperature": sample.temperature,
@@ -419,6 +420,8 @@ class WindowsUiAdapter:
         with self._lock:
             if generation != self._generation:
                 raise AdapterError("연결이 변경되어 CSV 검증을 중단했습니다.")
+            if source.is_new and source.sample is not None and source.context.run_key == self._run_key:
+                self._new_sample_key = source.sample.key
         sample = source.sample
         if sample is None or source.token is None or sample.key != expected_key or source.context.run_key != self._run_key:
             raise ControlUnavailable("CSV의 현재 작업/완료 층이 변경되었거나 기록 중이어서 저장하지 않았습니다.")
@@ -431,6 +434,15 @@ class WindowsUiAdapter:
         if hint is None or not sample.layer_index <= hint <= sample.layer_index + 1:
             raise ControlUnavailable("CSV 완료 층과 현재 운전 로그의 층이 일치하지 않습니다.")
         return source.token
+
+    def verify_image_observation(self, key, lineage, stop_event):
+        """Read-only pre-learning check. Critical CSV parse failures still raise."""
+        self._check_stopped(stop_event)
+        try:
+            self._verify_csv_observation(key,lineage)
+        except ControlUnavailable:
+            return False  # A newer/different row needs a new baseline, no Save.
+        return True
 
     def apply_ir_power(self, heater: int, power_percent: int | float, expected_observation_key: str, stop_event, *, source_guard=None) -> None:
         try:

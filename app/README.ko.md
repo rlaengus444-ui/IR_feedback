@@ -1,6 +1,6 @@
 # IR 피드백 외부 모듈 · CSV
 
-버전: `2026.10.29-reconnect.3` 평가판. 설정·Sequence 화면 변경 시 연결을 유지하며 IR 적용을 대기하고 재확인 후 새 층부터 이어갑니다. 연결 종료 시 전체 CSV와 온도·IR PNG를 함께 저장합니다. 기존 CSV 재연결·S3 연결·이미지 교체·분석 속도 개선은 유지합니다. [재연결 처리와 검증 범위](../docs/SLICE_LIVE.ko.md)를 확인하세요. 원본 BinderJet 소스·실행 파일·설정을 추가로 바꾸지 않고, 기존 Monitoring CSV에 새 완료 행이 저장되면 `TemperaturePostRecoating`을 읽어 IR 설정을 계산합니다. Process 표 조회·접근성 객체·스크롤·Process 탭 전환은 사용하지 않습니다.
+버전: `2026.10.29-auto-slice.1` 평가판. [첫 탭 경로 자동 불러오기](../docs/AUTO_SLICE.ko.md)를 추가합니다. 기존 수동 이미지 입력, 설정 변경 시 연결 유지와 CSV·온도·IR PNG 자동 저장은 유지합니다. 원본 BinderJet 소스·실행 파일·설정을 추가로 바꾸지 않고, 기존 Monitoring CSV에 새 완료 행이 저장되면 `TemperaturePostRecoating`을 읽어 IR 설정을 계산합니다. Process 표 조회·접근성 객체·스크롤·Process 탭 전환은 사용하지 않습니다.
 
 **온도 신뢰성:** 온도계 비활성 상태를 나타내는 -1 값은 제어 입력으로 사용하지 않습니다. 정상 범위의 오래된 센서값은 CSV만으로 감지할 수 없습니다. 실제 S3 센서·PLC·램프 출력은 미검증이며 제어 알고리즘 최종 승인과 장비 적용은 보류 상태입니다.
 

@@ -51,13 +51,55 @@ function SourceContainer([string]$text) {
     return $folder
 }
 
+function AssertBoundSourceChain($root, $pidExpected, $proof) {
+    if (-not ('BinderJetBoundSourceIdentity' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+public static class BinderJetBoundSourceIdentity {
+    [DllImport("user32.dll")] static extern bool IsWindow(IntPtr w);
+    [DllImport("user32.dll")] static extern bool IsChild(IntPtr p, IntPtr c);
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr w, out uint p);
+    [DllImport("user32.dll")] static extern IntPtr GetParent(IntPtr w);
+    [DllImport("user32.dll")] static extern int GetDlgCtrlID(IntPtr w);
+    [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern int GetClassName(IntPtr w,StringBuilder s,int n);
+    public static void Check(IntPtr root,IntPtr node,int pid,IntPtr parent,int id,string expectedClass) {
+        uint actual,rootPid;
+        if(!IsWindow(root)||!IsWindow(node)||GetWindowThreadProcessId(root,out rootPid)==0||rootPid!=(uint)pid||
+            GetWindowThreadProcessId(node,out actual)==0||actual!=(uint)pid||
+            (node!=root&&!IsChild(root,node))||GetParent(node)!=parent||GetDlgCtrlID(node)!=id)
+            throw new InvalidOperationException("The bound image-path parent/control identity changed; rebind it.");
+        var text=new StringBuilder(256);
+        if(GetClassName(node,text,text.Capacity)==0||!String.Equals(text.ToString(),expectedClass,StringComparison.Ordinal))
+            throw new InvalidOperationException("The bound image-path control class changed; rebind it.");
+    }
+}
+'@
+    }
+    $nodes = @($proof.chain)
+    if ($nodes.Count -lt 2 -or $nodes.Count -gt 64 -or [long]$nodes[0][0] -ne [long]$proof.hwnd -or
+        [long]$nodes[-1][0] -ne $root.ToInt64()) { throw 'A complete pinned image-path chain is required.' }
+    for ($index=0; $index -lt $nodes.Count; $index++) {
+        $node = @($nodes[$index])
+        if ($node.Count -ne 4 -or ($index+1 -lt $nodes.Count -and [long]$node[3] -ne [long]$nodes[$index+1][0])) { throw 'The pinned image-path chain is inconsistent.' }
+        try {
+            [BinderJetBoundSourceIdentity]::Check($root,[IntPtr][long]$node[0],$pidExpected,[IntPtr][long]$node[3],[int]$node[2],[string]$node[1])
+        } catch {
+            if (-not (Owned $root $root $pidExpected)) { $script:identityFailure=$true }
+            throw
+        }
+    }
+}
+
 function AssertSliceSource($root, $pidExpected, $proof) {
     if ($null -eq $proof) { return }
     $script:sourceWait = $true
-    $home = [IntPtr][long]$proof.home; $leaf = [IntPtr][long]$proof.hwnd
-    if (-not (Owned $root $home $pidExpected) -or -not (Owned $root $leaf $pidExpected) -or
-        -not [BinderJetLeafMetadata]::IsDescendant($root,$home,$leaf,$pidExpected)) { throw 'The bound Home image-path field was recreated; rebind it.' }
-    $caption = ([BinderJetNativeProcess]::ReadText($root,$home,$pidExpected)).Trim()
+    AssertBoundSourceChain $root $pidExpected $proof
+    $sourceView = [IntPtr][long]$proof.home; $leaf = [IntPtr][long]$proof.hwnd
+    if (-not (Owned $root $sourceView $pidExpected) -or -not (Owned $root $leaf $pidExpected) -or
+        -not [BinderJetLeafMetadata]::IsDescendant($root,$sourceView,$leaf,$pidExpected)) { throw 'The bound Home image-path field was recreated; rebind it.' }
+    $caption = ([BinderJetNativeProcess]::ReadText($root,$sourceView,$pidExpected)).Trim()
     if ($caption -cne [string]$proof.home_caption -or $caption.ToLowerInvariant() -notin @('home','홈')) { throw 'The bound Home view changed.' }
     $folder = SourceContainer ([BinderJetNativeProcess]::ReadText($root,$leaf,$pidExpected))
     if (-not [string]::Equals($folder,[string]$proof.directory,[StringComparison]::OrdinalIgnoreCase)) { throw 'The current image source folder changed.' }
@@ -87,6 +129,9 @@ function AssertSliceSource($root, $pidExpected, $proof) {
             if ($null -ne $sha) { $sha.Dispose() }
         }
     }
+    AssertBoundSourceChain $root $pidExpected $proof
+    if (-not [string]::Equals((SourceContainer ([BinderJetNativeProcess]::ReadText($root,$leaf,$pidExpected))),$folder,[StringComparison]::OrdinalIgnoreCase)) { throw 'The image source folder changed during content verification.' }
+    $script:sourceProofMillis = $timer.ElapsedMilliseconds
     $script:sourceWait = $false
 }
 
@@ -431,8 +476,9 @@ try {
                 $response.state = ([BinderJetNativeProcess]::ReadText($root, (HandleOf $response.handles 'state'), $pidExpected)).Trim()
             }
             'verify_slice_source' {
+                if ($null -eq $request.source_guard) { $script:sourceWait=$true; throw 'An image source proof is required.' }
                 AssertSliceSource $root $pidExpected $request.source_guard
-                $response = @{success=$true}
+                $response = @{success=$true;source_proof_ms=$script:sourceProofMillis}
             }
             'verify_control' {
                 AssertAutomatic $root $pidExpected $handles

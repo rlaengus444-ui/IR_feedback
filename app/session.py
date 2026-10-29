@@ -125,6 +125,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
     auto_source = options.auto_source
     auto_baseline_pending = auto_source is not None and image_consuming
     auto_baseline_layer = None
+    auto_reset_pending = False
     def hold_feedback():
         nonlocal control_holding, recovery_baseline_pending, recovery_baseline_layer
         nonlocal baseline_seen, last_key, last_layer, known_run_key, wait_for_different_layer
@@ -253,6 +254,8 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 if slice_setting.activate(desired_epoch):
                     slice_epoch, slice_dataset = desired_epoch, desired_dataset
                     if image_consuming:
+                        if auto_source is not None:
+                            auto_baseline_pending = True;auto_baseline_layer = None
                         baseline_seen = valid and auto_source is None
                         last_key = snapshot.observation_key if valid else None
                         last_layer = None
@@ -269,11 +272,29 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             auto_admission = None
             auto_barrier = False
             if auto_source is not None and image_consuming:
-                auto_admission, auto_reason = auto_source.frame(snapshot, slice_epoch, slice_dataset)
+                verifier = getattr(adapter,'verify_image_observation',None)
+                auto_admission, auto_reason = auto_source.frame(snapshot, slice_epoch, slice_dataset,
+                    verify_lineage=(lambda: bool(verifier(snapshot.observation_key,snapshot.slice_lineage,stop_event)))
+                                   if verifier is not None else (lambda:False))
+                if auto_admission is not None and auto_reset_pending and (handoff_pending or
+                        (can_calculate and all(finite(values[heater]) for heater in heaters))):
+                    if not handoff_pending:
+                        for controller in controllers.values():controller.reset()
+                    auto_reset_pending = False
                 if auto_admission is None:
+                    if not auto_baseline_pending:auto_reset_pending = True
                     auto_barrier = True; auto_baseline_pending = True; auto_baseline_layer = None
                     held.clear(); reasons.clear()
                     status = '연결 유지 · 자동 이미지 대기: ' + auto_reason
+                elif not valid:
+                    auto_barrier = True
+                    status = '자동 이미지 확인됨 · 새 T_recoating 기록 대기'
+                elif not can_calculate or not all(finite(values[heater]) for heater in heaters):
+                    auto_barrier = True; auto_baseline_pending = False
+                    auto_baseline_layer = snapshot.layer_index
+                    if image_waiting:image_baseline_layer = snapshot.layer_index
+                    held.clear();reasons.clear()
+                    status = '자동 이미지 확인 · AUTO/RUNNING 및 현재 IR 확인 후 다음 새 층 대기'
                 elif auto_baseline_pending:
                     auto_barrier = True; auto_baseline_pending = False
                     auto_baseline_layer = snapshot.layer_index
@@ -282,6 +303,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                     status = '자동 이미지 확인 · 첫 새 측정을 기준으로 대기(저장 없음)'
                 elif auto_baseline_layer is not None:
                     if (valid and snapshot.observation_is_new is True
+                            and can_calculate and all(finite(values[heater]) for heater in heaters)
                             and snapshot.layer_index != auto_baseline_layer and snapshot.observation_key != last_key):
                         auto_baseline_layer = None
                     else:

@@ -10,7 +10,7 @@ import time
 
 from csv_source import shared_binary
 from slice_data import EXTENSIONS, MAX_FILES, MAX_IMAGE_BYTES, SliceConfig, _mapping, analyze
-from windows_slice_source import BindingLost, WindowsPathReader, canonical
+from windows_slice_source import BindingLost, SourceReadError, WindowsPathReader, canonical
 
 
 @dataclass(frozen=True)
@@ -69,8 +69,8 @@ def content_digest(path, cancel=None, budget=1.0):
 class AutoAdmission:
     version: int
     epoch: int
-    features: dict
-    guard: dict
+    features: dict | None
+    guard: dict | None
 
 
 class AutoSliceSource:
@@ -97,10 +97,13 @@ class AutoSliceSource:
         self._version = 0; self._ready = False; self._epoch = None
         self._dataset = None; self._source = None; self._manifest = None
         self._source_paths = {}
+        self._ack_directory = None; self._ack_hashes = {}; self._candidate_hashes = {}
         self._directory = None; self._last_directory = None; self._last_manifest = None
         self._stable_at = 0.; self._last_scan = -float('inf'); self._heartbeat = -float('inf')
         self._queued_version = None; self._retry_at = 0.; self._digest_index = 0
         self._needs_reload = False; self._known_powder = {}
+        self._observed_context = None; self._observed_rows = {}; self._rejected_layers = set()
+        self._proof_cache_key = None; self._frame_ticket = 0
         self._analysis_paused = False
         self._status = '첫 탭 경로 확인 대기'; self._raw = ''
         self._cutoff = self._new_cutoff()
@@ -113,6 +116,8 @@ class AutoSliceSource:
         self._cancel.set(); self._cancel = threading.Event()
         self._version += 1; self._ready = False; self._epoch = None
         self._queued_version = None; self._known_powder.clear()
+        self._observed_context = None; self._observed_rows.clear(); self._rejected_layers.clear()
+        self._proof_cache_key = None; self._frame_ticket += 1
         self._cutoff = self._new_cutoff(); self._status = reason
         self._needs_reload = self._needs_reload or reload
         self._stable_at = self.monotonic(); self._retry_at = 0.
@@ -180,7 +185,10 @@ class AutoSliceSource:
             if not self._needs_reload or self._dataset is None or self._epoch is None:
                 raise ValueError('새 이미지 분석 완료 후 재불러오기를 확인하세요.')
             self._needs_reload = False; self._cutoff = self._new_cutoff()
+            self._ack_directory = self._directory; self._ack_hashes = dict(self._candidate_hashes)
             self._known_powder.clear(); self._ready = True
+            self._observed_context = None; self._observed_rows.clear(); self._rejected_layers.clear()
+            self._proof_cache_key = None;self._frame_ticket += 1
             self._status = '재불러오기 확인 · 이후 리코팅 측정과 새 층 대기'
 
     def guard_failed(self, reason):
@@ -207,6 +215,9 @@ class AutoSliceSource:
             with self._lock:
                 if self._stop.is_set() or binding != self.binding or config != self.config:
                     return
+                if self._ready and now - self._heartbeat > 2:
+                    self._invalidate_locked('경로 감시 응답 지연 · 최신 이미지 다시 확인')
+                    self._directory = None; self._manifest = None
                 self._heartbeat = now; self._raw = source.raw_text
                 if self._directory != directory:
                     different = self._last_directory is not None and directory != self._last_directory
@@ -281,9 +292,15 @@ class AutoSliceSource:
                     self._manifest = None
                     return
                 # Lock order is gate -> setting; session never holds both locks.
+                hashes = {canonical(originals[r.layer]):r.sha256 for r in value.records}
+                if self._ack_directory == self._directory and hashes != self._ack_hashes:
+                    self._needs_reload = True
                 epoch = self._setting.request(value, force=True)
                 self._dataset = value; self._epoch = epoch
                 self._source_paths = originals
+                self._candidate_hashes = hashes
+                if not self._needs_reload:
+                    self._ack_directory = self._directory; self._ack_hashes = dict(hashes)
                 self._ready = not self._needs_reload
                 self._status = (f'{len(value.records)}개 자동 분석 완료 · 같은 경로 재불러오기 확인 필요'
                     if self._needs_reload else f'{len(value.records)}개 자동 분석 완료 · 새 측정 대기')
@@ -325,7 +342,7 @@ class AutoSliceSource:
                 if version == self._version:
                     self._invalidate_locked('이미지 읽기 대기 · ' + str(error))
 
-    def frame(self, snapshot, epoch, dataset):
+    def _candidate_frame(self, snapshot, epoch, dataset):
         with self._lock:
             if self._ready and self.monotonic() - self._heartbeat > 2:
                 self._invalidate_locked('경로 감시 응답 지연 · 최신 이미지 다시 확인')
@@ -334,9 +351,27 @@ class AutoSliceSource:
                     or dataset is not self._dataset or self.monotonic() - self._heartbeat > 2):
                 return None, self._status or '첫 탭 경로 확인 대기'
             stamp = snapshot.recoating_finished
+            if (snapshot.observation_key is None or not isinstance(snapshot.layer_index,int)
+                    or isinstance(snapshot.layer_index,bool)):
+                # Normal CSV polling has no fresh key between layers. This is
+                # not a source change and must not reset Excel every 5 seconds.
+                return AutoAdmission(self._version,epoch,None,None), ''
+            context = (snapshot.run_key,snapshot.csv_generation)
+            if self._observed_context != context:
+                changed = self._observed_context is not None
+                self._known_powder.clear();self._observed_rows.clear();self._rejected_layers.clear()
+                self._proof_cache_key = None;self._frame_ticket += 1
+                self._observed_context = context
+                if changed:
+                    return None, '작업/CSV 구간 변경 · 새로운 측정 기준 확인 대기'
+            layer = snapshot.layer_index + 1 if isinstance(snapshot.layer_index, int) else None
+            observed = (snapshot.observation_key,snapshot.slice_lineage)
+            if layer in self._observed_rows and self._observed_rows[layer] != observed:
+                self._known_powder.clear();self._rejected_layers.add(layer)
+            if layer in self._rejected_layers:
+                return None, '동일 층 기록 수정 · 다른 새 층의 이미지·측정 대기'
             if not isinstance(stamp, datetime) or stamp.tzinfo is not None or stamp < self._cutoff:
                 return None, '이미지 교체 이후 리코팅 측정 대기 · 지연된 CSV는 기록만 유지'
-            layer = snapshot.layer_index + 1 if isinstance(snapshot.layer_index, int) else None
             record = dataset._by_layer.get(layer)
             if (record is None or not snapshot.slice_lineage or not snapshot.slicing_image_path
                     or canonical(snapshot.slicing_image_path) != canonical(self._source_paths[record.layer])):
@@ -348,8 +383,6 @@ class AutoSliceSource:
                     previous_powder_layers=0)
             else:
                 features['previous_powder_layers'] = self._known_powder[layer - 1]
-            self._known_powder[layer] = (self._known_powder.get(layer - 1, 0) + 1
-                                        if record.whole_coverage_pct == 0 else 0)
             relevant = [record]
             previous = dataset._by_layer.get(layer - 1)
             if previous is not None and features['previous_image_valid']:
@@ -359,8 +392,59 @@ class AutoSliceSource:
             proof['lineage'] = snapshot.slice_lineage
             return AutoAdmission(self._version, epoch, features, proof), ''
 
+    def frame(self, snapshot, epoch, dataset, *, verify_lineage=None):
+        candidate,reason = self._candidate_frame(snapshot,epoch,dataset)
+        if candidate is None or candidate.guard is None:
+            return candidate,reason
+        key = (candidate.version,epoch,snapshot.run_key,snapshot.csv_generation,
+               snapshot.observation_key,snapshot.slice_lineage)
+        with self._lock:
+            if candidate.version != self._version or not self._ready:
+                return None,'이미지 확인 중 경로 변경'
+            if key == self._proof_cache_key:
+                return candidate,''  # Already-proven observation; no new learning.
+            self._frame_ticket += 1;ticket=self._frame_ticket
+            binding=self.binding;cancel=self._cancel
+        try:
+            # Before any Excel row/baseline/powder-history promotion, including
+            # recommendations that will HOLD and never invoke native apply.
+            current=self.reader.read(binding)
+            if canonical(current.directory) != candidate.guard['directory']:
+                raise SourceReadError('계산 전 이미지 경로가 변경되었습니다.')
+            deadline=time.monotonic()+.75
+            for file in candidate.guard['files']:
+                if content_digest(file['path'],cancel,budget=max(0,deadline-time.monotonic())) != file['sha256']:
+                    raise SourceReadError('계산 전 이미지 내용이 변경되었습니다.')
+            current=self.reader.read(binding)
+            if canonical(current.directory) != candidate.guard['directory']:
+                raise SourceReadError('내용 확인 중 이미지 경로가 변경되었습니다.')
+            if verify_lineage is not None and not verify_lineage():
+                return None,'CSV 행 갱신 중 · 최신 이미지·측정 대응 대기'
+        except InterruptedError:
+            return None,'이미지 확인 중 변경/취소'
+        except (SourceReadError,OSError,TimeoutError,ValueError) as error:
+            with self._lock:
+                if candidate.version == self._version and not self._stop.is_set():
+                    self._invalidate_locked('계산 전 이미지 확인 대기 · '+str(error),reload=True)
+            return None,str(error)
+        with self._lock:
+            if (ticket != self._frame_ticket or candidate.version != self._version
+                    or not self._ready or self._stop.is_set() or epoch != self._epoch
+                    or self.monotonic()-self._heartbeat>2):
+                return None,'이미지 확인 중 새 경로/설정 도착 · 이전 결과 보류'
+            layer=snapshot.layer_index+1
+            self._observed_rows[layer]=(snapshot.observation_key,snapshot.slice_lineage)
+            record=dataset._by_layer[layer]
+            self._known_powder[layer]=(self._known_powder.get(layer-1,0)+1
+                                      if record.whole_coverage_pct==0 else 0)
+            self._proof_cache_key=key
+            return candidate,''
+
     def admit(self, admission):
         with self._lock:
+            if self._ready and self.monotonic() - self._heartbeat > 2:
+                self._invalidate_locked('경로 감시 응답 지연 · 최신 이미지 다시 확인')
+                self._directory = None;self._manifest = None
             return (self._ready and not self._stop.is_set() and admission is not None
                     and admission.version == self._version and admission.epoch == self._epoch
                     and self.monotonic() - self._heartbeat <= 2)

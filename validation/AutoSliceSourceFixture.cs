@@ -3,9 +3,13 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 [assembly:System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8",FrameworkDisplayName=".NET Framework 4.8")]
 internal static class AutoSliceSourceFixture {
+    [DllImport("user32.dll")] static extern IntPtr SetParent(IntPtr child,IntPtr parent);
+    [DllImport("user32.dll")] static extern int GetDlgCtrlID(IntPtr window);
+    [DllImport("user32.dll",EntryPoint="SetWindowLongPtrW")] static extern IntPtr SetWindowLongPtr(IntPtr window,int index,IntPtr value);
     private sealed class PoisonPanel : Panel {
         public string Marker;
         protected override void WndProc(ref Message m) {
@@ -29,12 +33,12 @@ internal static class AutoSliceSourceFixture {
             Left=5,Top=50,Width=800,Height=240};
         root.Controls.Add(home);
         var production=new Panel {Name="ProductionControl",Dock=DockStyle.Fill};home.Controls.Add(production);
-        TextBox path=null;Label label=null;
+        TextBox path=null;Label label=null;Panel relocated=null;int originalId=0;
         Action makePath=delegate {
             path=new TextBox {Name="txtSlicingPath",Text=args[1],ReadOnly=true,Left=10,Top=20,Width=740};
             label=new Label {Name="lblSlicingPath",Text=args[1],Left=10,Top=65,Width=740,Height=25};
             production.Controls.Add(path);production.Controls.Add(label);
-            var h=path.Handle;var l=label.Handle;
+            var h=path.Handle;var l=label.Handle;originalId=GetDlgCtrlID(h);
         };
         makePath();
         var process=new Form {Text="Process",TopLevel=false,FormBorderStyle=FormBorderStyle.None,
@@ -58,6 +62,14 @@ internal static class AutoSliceSourceFixture {
                 else if(action=="hide")home.Hide();
                 else if(action=="show")home.Show();
                 else if(action=="recreate") {path.Dispose();label.Dispose();makePath();}
+                else if(action.StartsWith("path:")) {path.Text=action.Substring(5);label.Text=path.Text;}
+                else if(action=="reparent") {
+                    relocated=new Panel {Left=15,Top=110,Width=760,Height=100};home.Controls.Add(relocated);
+                    SetParent(path.Handle,relocated.Handle);
+                }
+                else if(action=="restore_parent")SetParent(path.Handle,production.Handle);
+                else if(action=="change_id")SetWindowLongPtr(path.Handle,-12,new IntPtr(originalId+1));
+                else if(action=="restore_id")SetWindowLongPtr(path.Handle,-12,new IntPtr(originalId));
                 report();File.WriteAllText(marker+".done",action);
             }
             File.WriteAllText(marker+".heartbeat",DateTime.UtcNow.Ticks+","+saves+","+navs);

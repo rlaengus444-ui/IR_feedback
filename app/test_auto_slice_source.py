@@ -151,6 +151,14 @@ class AutoSourceTests(unittest.TestCase):
         self.assertEqual(100,new_data.records[0].whole_coverage_pct)
         self.assertIsNone(self.service.frame(self.frame(2,stamp=self.now),new_epoch,new_data)[0])
 
+    def test_same_stat_rewrite_during_explicit_refresh_requires_reload_before_ready(self):
+        self.prime();self.service.refresh();self.tick+=.5;self.service.poll_once()
+        work=self.service._jobs.get_nowait();path=self.a/'001.bmp';before=path.stat()
+        Image.new('L',(16,16),255).save(path);os.utime(path,ns=(before.st_atime_ns,before.st_mtime_ns))
+        self.service.analyze_job(work)
+        self.assertEqual(100,self.service.view()['dataset'].records[0].whole_coverage_pct)
+        self.assertTrue(self.service.view()['needs_reload']);self.assertFalse(self.service.view()['ready'])
+
     def test_path_field_loss_requires_explicit_rebind(self):
         self.prime();self.reader.error=BindingLost('recreated');self.service.poll_once()
         self.reader.error=None;self.service.poll_once()
@@ -164,6 +172,39 @@ class AutoSourceTests(unittest.TestCase):
         self.assertIsNone(self.service.frame(self.frame(3),epoch,data)[0])
         self.assertFalse(self.service.view()['ready'])
 
+    def test_expired_admission_never_revives_after_watcher_reads_again(self):
+        epoch,data=self.prime();old,_=self.service.frame(self.frame(2),epoch,data)
+        self.tick+=3;self.assertFalse(self.service.admit(old));version=self.service.view()['version']
+        self.service.poll_once();self.assertFalse(self.service.admit(old))
+        self.assertGreaterEqual(self.service.view()['version'],version)
+        self.tick+=.5;self.service.poll_once();self.service.analyze_job(self.service._jobs.get_nowait())
+        self.assertTrue(self.service.view()['ready']);self.assertFalse(self.service.admit(old))
+
+    def test_watcher_itself_detects_missed_lease_before_refreshing_heartbeat(self):
+        epoch,data=self.prime();old,_=self.service.frame(self.frame(2),epoch,data)
+        self.tick+=3;self.service.poll_once()
+        self.assertFalse(self.service.admit(old));self.assertFalse(self.service.view()['ready'])
+
+    def test_source_history_does_not_cross_job_csv_generation_or_corrected_layer(self):
+        epoch,data=self.prime()
+        self.service.frame(replace(self.frame(5),run_key='A',csv_generation='file1'),epoch,data)
+        first_b=replace(self.frame(6),run_key='B',csv_generation='file2')
+        self.assertIsNone(self.service.frame(first_b,epoch,data)[0])
+        new,_=self.service.frame(first_b,epoch,data)
+        self.assertEqual(0,new.features['previous_image_valid'])
+        self.assertEqual(0,new.features['previous_powder_layers'])
+        corrected=replace(first_b,slice_lineage='corrected')
+        self.assertIsNone(self.service.frame(corrected,epoch,data)[0])
+        self.assertIsNone(self.service.frame(corrected,epoch,data)[0])
+        next_row=replace(self.frame(7),run_key='B',csv_generation='file2')
+        next_admission,_=self.service.frame(next_row,epoch,data)
+        self.assertEqual(0,next_admission.features['previous_image_valid'])
+        # Same job, replacement CSV still forms a new provenance boundary.
+        new_file=replace(self.frame(8),run_key='B',csv_generation='file3')
+        self.assertIsNone(self.service.frame(new_file,epoch,data)[0])
+        new,_=self.service.frame(new_file,epoch,data)
+        self.assertEqual(0,new.features['previous_image_valid'])
+
     def test_cancellation_keeps_watching_but_does_not_restart_same_analysis(self):
         self.prime();self.service.cancel_analysis();self.tick+=.5;self.service.poll_once()
         with self.assertRaises(queue.Empty):self.service._jobs.get_nowait()
@@ -175,14 +216,20 @@ class AutoSourceTests(unittest.TestCase):
         self.service.stop();self.service.analyze_job(job)
         self.assertIsNone(self.service._setting.desired()[1])
 
-    def run_session(self,frames,excel,apply_error=None):
+    def run_session(self,frames,excel,apply_error=None,before_read=None):
+        if self.service._setting is None:self.service._setting=SliceDatasetSetting()
         epoch,data=self.prime()
         options=SessionOptions(TARGET,mode='control',workbook_spec=SPEC,auto_source=self.service)
         def start(setting):
             self.service._setting=setting
             self.service._epoch=setting.request(data,force=True)
         self.service.start=start
-        adapter=Mock(spec=UiAdapter);adapter.read_snapshot.side_effect=frames
+        adapter=Mock(spec=UiAdapter);position=iter(enumerate(frames))
+        def read(_):
+            index,value=next(position)
+            if before_read:before_read(index,value)
+            return value
+        adapter.read_snapshot.side_effect=read
         if apply_error:adapter.apply_ir_power.side_effect=apply_error
         class FastStop(threading.Event):
             def wait(self,timeout=None):return self.is_set()
@@ -224,6 +271,76 @@ class AutoSourceTests(unittest.TestCase):
                                          SourceSuspended('image content changed'))
         adapter.apply_ir_power.assert_called_once();adapter.suspend_control.assert_not_called()
         self.assertIn('이미지',reports[1]['status']);self.assertEqual({},reports[1]['applied'])
+
+    def test_nonready_row_cannot_become_save_when_exact_cached_row_is_restored(self):
+        for variant in ('missing_ir','UNKNOWN'):
+            with self.subTest(variant=variant):
+                # Each scenario uses a new source, because session cleanup stops it.
+                self.service=AutoSliceSource(TARGET,CONFIG,self.binding,reader=self.reader,
+                    clock=lambda:self.now+timedelta(seconds=self.tick),monotonic=lambda:self.tick,
+                    stable_seconds=.2,scan_seconds=0)
+                bad=replace(self.frame(4),slicing_image_path=str(self.b/'004.bmp'))
+                nonready=replace(self.frame(6),**({'heater1_setting_percent':None} if variant=='missing_ir' else {'machine_state':'UNKNOWN'}))
+                restored=replace(self.frame(6),observation_is_new=False)
+                frames=[self.frame(2),self.frame(3),bad,self.frame(5),nonready,restored,self.frame(7)]
+                excel=Mock();excel.process.side_effect=lambda layer,*a,**k:LayerRecommendation(55 if layer==7 else 50,'fixture',{})
+                adapter,_=self.run_session(frames,excel)
+                self.assertNotIn(6,[c.args[0] for c in excel.process.call_args_list])
+                self.assertEqual([7],[c.args[0] for c in excel.process.call_args_list if c.args[0]>=5])
+                adapter.apply_ir_power.assert_called_once()
+                self.assertEqual('row-7',adapter.apply_ir_power.call_args.args[2])
+
+    def test_normal_idle_between_layers_does_not_reset_history_or_skip_each_layer(self):
+        idle=replace(self.frame(3),observation_key=None,observation_is_new=False)
+        frames=[self.frame(2),self.frame(3),idle,idle,self.frame(4)]
+        excel=Mock();excel.process.return_value=LayerRecommendation(50,'hold',{})
+        adapter,_=self.run_session(frames,excel)
+        self.assertEqual([3,4],[c.args[0] for c in excel.process.call_args_list])
+        self.assertEqual(1,excel.reset.call_count)  # Initial complete-set handoff only.
+        adapter.apply_ir_power.assert_not_called()
+
+    def test_equal_power_rows_cannot_learn_unverified_same_stat_image_data(self):
+        def mutate(index,frame):
+            if index==1:
+                path=self.a/'003.bmp';stat=path.stat()
+                Image.new('L',(16,16),255).save(path)
+                os.utime(path,ns=(stat.st_atime_ns,stat.st_mtime_ns))
+        excel=Mock();excel.process.return_value=LayerRecommendation(50,'hold',{})
+        adapter,_=self.run_session([self.frame(2),self.frame(3),self.frame(4)],excel,before_read=mutate)
+        excel.process.assert_not_called();adapter.apply_ir_power.assert_not_called()
+        self.assertTrue(self.service.view()['needs_reload'])
+        self.assertNotIn(3,self.service._known_powder)
+
+    def test_prelearning_lineage_change_does_not_promote_image_history(self):
+        epoch,data=self.prime()
+        candidate,_=self.service.frame(self.frame(3),epoch,data,verify_lineage=lambda:False)
+        self.assertIsNone(candidate);self.assertNotIn(3,self.service._known_powder)
+        self.assertNotIn(3,self.service._observed_rows)
+
+    def test_source_change_during_proof_prevents_compare_and_commit(self):
+        epoch,data=self.prime();expected=data._by_layer[3].sha256
+        def change(*args,**kwargs):
+            self.service.rebind(self.binding)
+            return expected
+        with patch('auto_slice_source.content_digest',side_effect=change):
+            candidate,_=self.service.frame(self.frame(3),epoch,data)
+        self.assertIsNone(candidate);self.assertEqual({},self.service._known_powder)
+
+    def test_calculation_time_expired_lease_cannot_save_or_revive_cached_row(self):
+        excel=Mock()
+        def calculate(layer,*args,**kwargs):
+            if layer==3:self.tick+=3
+            return LayerRecommendation(55,'fixture',{})
+        excel.process.side_effect=calculate
+        def restore(index,frame):
+            if index==2:
+                self.service.poll_once();self.tick+=.5;self.service.poll_once()
+                self.service.analyze_job(self.service._jobs.get_nowait())
+        frames=[self.frame(2),self.frame(3),replace(self.frame(3),observation_is_new=False),self.frame(4)]
+        adapter,reports=self.run_session(frames,excel,before_read=restore)
+        adapter.apply_ir_power.assert_called_once()
+        self.assertEqual('row-4',adapter.apply_ir_power.call_args.args[2])
+        self.assertEqual({},reports[1]['applied']);self.assertEqual({},reports[2]['applied'])
 
     def test_path_watcher_keeps_running_during_blocked_image_analysis(self):
         entered=threading.Event();release=threading.Event();calls=[]
