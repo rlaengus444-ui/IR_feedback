@@ -102,7 +102,10 @@ function AssertSliceSource($root, $pidExpected, $proof) {
     $caption = ([BinderJetNativeProcess]::ReadText($root,$sourceView,$pidExpected)).Trim()
     if ($caption -cne [string]$proof.home_caption -or $caption.ToLowerInvariant() -notin @('home','홈')) { throw 'The bound Home view changed.' }
     $folder = SourceContainer ([BinderJetNativeProcess]::ReadText($root,$leaf,$pidExpected))
-    if (-not [string]::Equals($folder,[string]$proof.directory,[StringComparison]::OrdinalIgnoreCase)) { throw 'The current image source folder changed.' }
+    # .NET Framework may expand Windows8.3 names in GetFullPath. Normalize both
+    # the displayed value and the pinned expected directory using the same path.
+    $expectedFolder = SourceContainer ([string]$proof.directory)
+    if (-not [string]::Equals($folder,$expectedFolder,[StringComparison]::OrdinalIgnoreCase)) { throw 'The current image source folder changed.' }
     $files = @($proof.files)
     if ($files.Count -lt 1 -or $files.Count -gt 2) { throw 'Current/prior image proofs are required.' }
     $timer = [Diagnostics.Stopwatch]::StartNew()

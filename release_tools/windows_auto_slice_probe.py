@@ -1,6 +1,7 @@
 """Packaged native, user-pointed Home reading and bounded content proofs; synthetic only."""
 import argparse
 from contextlib import contextmanager
+import ctypes
 from dataclasses import replace
 import hashlib
 import json
@@ -105,6 +106,16 @@ def main():
                     'machine':'M1','handles':{'machine':machine},'source_guard':value},threading.Event())
             good_a=proof(a)
             checks['production_helper_hidden_source_and_two_hashes']=verify(good_a)['success']
+            kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+            kernel.GetLongPathNameW.argtypes=[ctypes.c_wchar_p,ctypes.c_wchar_p,ctypes.c_uint]
+            kernel.GetLongPathNameW.restype=ctypes.c_uint
+            long_name=ctypes.create_unicode_buffer(32768)
+            if not kernel.GetLongPathNameW(str(a),long_name,len(long_name)):
+                raise OSError('Fixture long-path name could not be read')
+            report['fixture_short_alias_differs']=canonical(a)!=canonical(long_name.value)
+            command('path:'+str(Path(long_name.value)/'001.bmp'))
+            checks['long_and_short_native_path_forms_match']=verify(good_a)['success']
+            command('a')
             command('reparent')
             try:verify(good_a);checks['same_home_native_reparent_holds']=False
             except SourceSuspended:checks['same_home_native_reparent_holds']=True
