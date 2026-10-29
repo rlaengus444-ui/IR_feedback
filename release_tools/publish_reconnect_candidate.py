@@ -88,10 +88,13 @@ def main():
             '재연결이 실패하는 경로를 수정한 평가용 배포입니다. '
             '시작 층보다 낮고 시작·완료 시각이 충분히 오래된 앞부분의 완료 행만 제외합니다. '
             '현재 작업의 시작 층·시각과 일치하는 기준 행을 확인하고, 그 확인도 제어 기준으로만 사용합니다. '
+            '화면에는 UI 자동 적용만 표시하며 이미지 시작셀 기본값은 BL13입니다. '
             '과거 기록·기준 행에서 계산이나 Save를 재실행하지 않습니다.\n\n'
             '서로 충돌하는 층·시각, 비활성 온도 -1, 현재 구간 뒤의 과거 행은 계속 중단합니다. '
             '기존 작업/파일 선택·해시·신선도·Save 검증과 결과 불명확 시 재시도 금지는 유지합니다. '
             '작업 일치 오류에는 CSV와 로그의 기준 값을 남깁니다. '
+            '정상 해제·오류 종료·프로그램 닫기에서 누적 그래프 전체를 CSV로 자동 저장합니다. '
+            '파일은 records 폴더(권한 부족 시 LocalAppData)에 고유 이름으로 저장하고 실패한 기록은 보존합니다. '
             '사용자의 최초 연결 끊김 원인은 오류 기록이 없어 확정하지 않았습니다.\n\n'
             f'Windows 프로그램 {test_count}개 시험, S3 탐색·연결 준비 검사14개와 '
             'DLL 다운로드 표시·CSV 보호·이미지 분석 수치/성능 대조·전체 파일 검증을 통과했습니다.\n\n'
@@ -100,7 +103,7 @@ def main():
             f'검증 후보 소스: {args.candidate_commit}\nZIP SHA-256: {actual}')
     release = gh_json(f'repos/{REPOSITORY}/releases', data={
         'tag_name': VERSION, 'target_commitish': args.candidate_commit,
-        'name': 'IRFeedback CSV 재연결 수정 · 평가용', 'body': body,
+        'name': 'IRFeedback CSV 재연결·자동 저장 · 평가용', 'body': body,
         'draft': True, 'prerelease': True})
     def assert_release(value, draft):
         if value.get('tag_name') != VERSION or value.get('draft') is not draft or value.get('prerelease') is not True:

@@ -93,13 +93,19 @@ class LayerPoint:
 class LayerHistory:
     """One point per observed layer, scoped to a production run."""
 
-    def __init__(self, capacity=None):
+    def __init__(self, capacity=None, on_retire=None):
         if capacity is not None and (not isinstance(capacity, int) or isinstance(capacity, bool) or capacity < 1):
             raise ValueError("capacity must be a positive integer")
         self.capacity = capacity
+        self._on_retire = on_retire
+        self._segment_id = 0
         self.reset()
 
     def reset(self):
+        if getattr(self, "_points", None) and self._on_retire is not None:
+            # Capture data only. The supplied callback must not do file I/O.
+            self._on_retire(self._segment_id, self.points)
+        self._segment_id += 1
         self._run_key = None
         self._has_run = False
         self._points = OrderedDict()
@@ -143,13 +149,17 @@ class LayerHistory:
     def points(self):
         return tuple(self._points[layer] for layer in sorted(self._points))
 
+    @property
+    def segment_id(self):
+        return self._segment_id
+
 
 class LayerCharts(ttk.Frame):
     """Two lightweight Tk canvases; call record(payload) on the Tk thread."""
 
-    def __init__(self, parent, capacity=None, **kwargs):
+    def __init__(self, parent, capacity=None, on_retire=None, **kwargs):
         super().__init__(parent, **kwargs)
-        self.history = LayerHistory(capacity)
+        self.history = LayerHistory(capacity, on_retire=on_retire)
         self._target_temperature = None
         self._hover_indexes = {}
         self._redraw_pending = False
@@ -186,8 +196,10 @@ class LayerCharts(ttk.Frame):
         self._schedule_redraw()
 
     def record(self, payload):
-        if self.history.record(payload):
+        changed = self.history.record(payload)
+        if changed:
             self._schedule_redraw()
+        return changed
 
     def set_target_temperature(self, value):
         """Display the currently effective target; None removes the reference."""

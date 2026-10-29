@@ -448,8 +448,11 @@ class ViewTests(unittest.TestCase):
         except Exception:
             pass
 
-    def test_default_monitor_machine_selection_and_explicit_buttons(self):
-        self.assertEqual("조회", self.view.mode.get())
+    def test_default_control_machine_selection_and_explicit_buttons(self):
+        self.assertEqual("UI 자동 적용", self.view.mode.get())
+        self.assertEqual("TLabel", self.view.mode_label.winfo_class())
+        self.assertEqual("BL13", self.view.workbook_slice_cell.get())
+        self.assertIsNone(self.controller.thread)
         self.assertEqual(("M1", "S3"), self.view.machine_box["values"])
         self.assertEqual("normal", str(self.view.connect_button["state"]))
         self.view.machine.set("S3")
@@ -461,9 +464,7 @@ class ViewTests(unittest.TestCase):
         self.view.disconnect()
         self.assertTrue(self.controller.stop_event.is_set())
 
-    def test_control_requires_explicit_selection_and_connect(self):
-        self.assertIsNone(self.controller.thread)
-        self.view.mode.set("UI 자동 적용")
+    def test_control_requires_explicit_connect(self):
         self.assertIsNone(self.controller.thread)
         runner = Mock()
         self.controller.runner = runner
@@ -473,6 +474,31 @@ class ViewTests(unittest.TestCase):
         runner.assert_not_called()
         self.controller.thread.complete()
         self.assertEqual("control", runner.call_args.args[0].mode)
+
+    def test_excel_image_cell_default_propagates_and_can_be_cleared(self):
+        from standalone_ir import ThermalFeedbackWindow
+        for cell in ("BL13", ""):
+            with self.subTest(cell=cell):
+                controller = SessionController(Mock(), DeferredThread)
+                view = ThermalFeedbackWindow(self.root, controller=controller, discoverer=lambda: [], auto_discover=False)
+                view.targets = [TARGET]
+                view._populate_hosts()
+                view.algorithm_type.set("Excel 수식 파일")
+                view._algorithm_changed()
+                view.settings_path.set("algorithm.xlsx")
+                view.workbook_slice_cell.set(cell)
+                view.connect()
+                self.assertIsNotNone(controller.thread)
+                controller.runner.assert_not_called()
+                controller.thread.complete()
+                options = controller.runner.call_args.args[0]
+                self.assertEqual("control", options.mode)
+                self.assertEqual(cell or None, options.workbook_spec.slice_start_cell)
+
+    def test_unknown_mode_does_not_start_a_control_worker(self):
+        self.view.mode.set("알 수 없는 모드")
+        self.view.connect()
+        self.assertIsNone(self.controller.thread)
 
     def test_log_soft_limit_and_close_deadline(self):
         for number in range(300):

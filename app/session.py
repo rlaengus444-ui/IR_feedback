@@ -358,6 +358,11 @@ class BoundedEvents:
             count = min(maximum, len(self._items))
             return [self._items.popleft() for _ in range(count)]
 
+    @property
+    def pending(self):
+        with self._lock:
+            return bool(self._items)
+
 
 class SessionController:
     """Call connect/disconnect/poll only on the view thread; worker emits data only."""
@@ -455,6 +460,7 @@ class SessionController:
                 self.image_consuming = False
                 self.state = "error" if self.error else "disconnected"
             if event.kind == "snapshot" and self.state == "disconnecting":
+                result.append(self._chart_event(event))
                 continue
             if event.kind == "snapshot" and self.slice_dataset_setting is not None:
                 desired_epoch = self.slice_dataset_setting.desired()[0]
@@ -466,6 +472,23 @@ class SessionController:
                     event = WorkerEvent(event.generation, event.kind, payload)
             result.append(event)
         return result
+
+    @staticmethod
+    def _chart_event(event):
+        payload = event.payload
+        return WorkerEvent(event.generation, "chart_snapshot", {
+            "snapshot": payload.get("snapshot"), "applied": payload.get("applied", {})})
+
+    def drain_chart_events(self, maximum=64):
+        """Closing-only data drain. Never restores state, proposals or admission."""
+        if not self.closed:
+            raise ValueError("차트 전용 종료 처리는 프로그램을 닫는 동안에만 가능합니다.")
+        return [self._chart_event(event) for event in self.events.drain(maximum)
+                if event.generation == self.generation and event.kind == "snapshot"]
+
+    @property
+    def chart_events_pending(self):
+        return self.events.pending
 
     @property
     def worker_alive(self):
