@@ -41,6 +41,77 @@ def helper(helper_path, dll, hwnd, pid, operation, handles=None, field_map=None,
     return result
 
 
+def full_profile(executable, folder, machine):
+    """Real adapter transport, full schema and temporary owner file; never Save."""
+    from adapter_contracts import MachineWindow
+    from windows_ui_adapter import WindowsUiAdapter
+    from sequence_field_audit import field_bindings, assert_fields_match_persisted
+    import sequence_persistence
+    bindings = field_bindings(machine)
+    spec = folder / (machine + '.fields')
+    spec.write_text('\n'.join(name + '\t' + kind for name, (_, _, kind) in bindings.items()))
+    owner = folder / 'Machines' / machine / 'Configs' / 'BJT.parameters.json'
+    owner.parent.mkdir(parents=True)
+    entries = [{'Scope': scope, 'Name': name,
+                'Type': 'BoolParameter' if kind == 'toggle' else 'DoubleParameter',
+                'Value': '62' if field == 'textBoxHeatingOutput' else 'False' if kind == 'toggle' else '0'}
+               for field, (scope, name, kind) in bindings.items()]
+    owner.write_text(json.dumps(entries), encoding='utf-8')
+    original_sha = hashlib.sha256(owner.read_bytes()).hexdigest()
+    marker = folder / ('full-' + machine)
+    process = subprocess.Popen([str(executable), str(marker), str(spec), machine], creationflags=FLAGS)
+    adapter = WindowsUiAdapter(source_factory=lambda _target: None)
+    result = {'machine': machine, 'bound_fields': len(bindings), 'passed': False,
+              'scope': 'Full synthetic UI and temporary settings file; no physical equipment or Excel.'}
+    try:
+        ready = Path(str(marker) + '.ready')
+        deadline = time.monotonic() + 20
+        while not ready.exists() and time.monotonic() < deadline:
+            if process.poll() is not None:
+                raise RuntimeError('Full-profile fixture exited')
+            time.sleep(.05)
+        if not ready.exists():
+            raise TimeoutError('Full-profile fixture did not become ready')
+        pid, hwnd = map(int, ready.read_text().split(','))
+        if pid != process.pid:
+            raise RuntimeError('Full-profile PID mismatch')
+        target = MachineWindow(machine, pid, hwnd, 'Own full-profile fixture', str(executable))
+        stop = threading.Event()
+        adapter.connect(target, stop)  # Read-only validation, no prepare_mode/navigation.
+        adapter._mode = 'control'
+        adapter.suspend_control('Synthetic settings recovery')
+        durations, epochs = [], []
+        for _ in range(2):
+            before = time.monotonic()
+            adapter._recover_control(target, adapter._generation, stop)
+            durations.append(time.monotonic() - before)
+            epochs.append(adapter._control_epoch)
+            time.sleep(1.05)  # Two coherent confirmations, not a shortened test interval.
+        result.update(recovery_seconds=durations, epochs=epochs,
+                      hold_reason=adapter._control_hold_reason)
+        assert_fields_match_persisted(adapter._control_baseline, sequence_persistence.capture(target), machine)
+        heartbeat = Path(str(marker) + '.heartbeat').read_text().split(',')
+        poison = Path(str(marker) + '.poison')
+        result.update(recovery_seconds=durations, epochs=epochs,
+            inventoried_fields=len(adapter._native_fields), hold_reason=adapter._control_hold_reason,
+            settings_unchanged=hashlib.sha256(owner.read_bytes()).hexdigest() == original_sha,
+            zero_save_and_navigation=heartbeat[-2:] == ['0', '0'],
+            process_panel_not_probed=not poison.exists() or not poison.read_text())
+        result['passed'] = (epochs == [0, 1] and adapter._control_hold_reason is None
+            and len(adapter._native_fields) == len(bindings) and result['settings_unchanged']
+            and result['zero_save_and_navigation'] and result['process_panel_not_probed'])
+    except Exception as error:
+        result['error'] = str(error)
+    finally:
+        adapter.disconnect()
+        process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill(); process.wait(timeout=5)
+    return result
+
+
 
 def main(root, output):
     report = {'passed': False, 'checks': {}, 'responses': {}, 'no_equipment_writes': True,
@@ -166,6 +237,10 @@ def main(root, output):
         except subprocess.TimeoutExpired:
             proc.kill(); proc.wait(timeout=5)
         proc = None
+        report['full_profiles'] = {machine: full_profile(executable, folder, machine) for machine in ('M1', 'S3')}
+        checks['full_m1_default_transport_and_audit'] = report['full_profiles']['M1']['passed']
+        checks['full_s3_default_transport_and_audit'] = report['full_profiles']['S3']['passed']
+        report['passed'] = all(checks.values())
     except Exception as exc:
         report['error'] = str(exc)
         report['traceback'] = traceback.format_exc()

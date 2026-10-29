@@ -19,8 +19,9 @@ internal static class SettingsRecoveryFixture {
     [STAThread] private static void Main(string[] args) {
         string marker = args[0];
         Application.EnableVisualStyles();
-        var root = new Form { Text="Synthetic recovery fixture", Width=700, Height=500, ShowInTaskbar=false };
-        var machine = new Label { Name="labelMachineName", Text="M1", Left=5, Top=5 };
+        bool full = args.Length>1;
+        var root = new Form { Text="Synthetic recovery fixture", Width=full?1100:700, Height=full?850:500, ShowInTaskbar=false };
+        var machine = new Label { Name="labelMachineName", Text=args.Length>2?args[2]:"M1", Left=5, Top=5 };
         var state = new Label { Name="labelTaskStatus", Text="AUTO", Left=110, Top=5 };
         var nav = new Button { Name="btnSequences", Text="Sequences", Left=220, Top=5 };
         int saves=0, navs=0;
@@ -29,18 +30,34 @@ internal static class SettingsRecoveryFixture {
         var outside = new Form();
         Panel panel = null; TextBox ir = null, other = null, added = null; Button save = null;
         Action<bool> makePanel = delegate(bool duplicate) {
-            panel = new Panel { Name="SequenceView", Left=10, Top=45, Width=400, Height=200 };
-            ir = new TextBox { Name="textBoxHeatingOutput", Text="62", Left=5, Top=5 };
-            other = new TextBox { Name="textBoxSpeed", Text="5", Left=130, Top=5 };
-            save = new Button { Name="btnSave", Text="Save", Left=5, Top=40 };
+            panel = new Panel { Name="SequenceView", Left=10, Top=45, Width=full?1000:400, Height=full?740:200 };
+            if(full) {
+                int n=0; other=null;
+                foreach(string line in File.ReadAllLines(args[1])) {
+                    string[] parts=line.Split('\t');
+                    int x=5+(n%4)*235, y=5+(n/4)*30;
+                    if(parts[1]=="toggle") panel.Controls.Add(new CheckBox { Name=parts[0], Text=parts[0], Checked=false, Left=x, Top=y, Width=225 });
+                    else {
+                        var field=new TextBox { Name=parts[0], Text=parts[0]=="textBoxHeatingOutput"?"62":"0", Left=x, Top=y, Width=225 };
+                        panel.Controls.Add(field);
+                        if(parts[0]=="textBoxHeatingOutput") ir=field; else if(other==null) other=field;
+                    }
+                    n++;
+                }
+            } else {
+                ir = new TextBox { Name="textBoxHeatingOutput", Text="62", Left=5, Top=5 };
+                other = new TextBox { Name="textBoxSpeed", Text="5", Left=130, Top=5 };
+                panel.Controls.Add(ir); panel.Controls.Add(other);
+            }
+            save = new Button { Name="btnSave", Text="Save", Left=5, Top=full?650:40 };
             save.Click += delegate { saves++; };
-            panel.Controls.Add(ir); panel.Controls.Add(other); panel.Controls.Add(save);
+            panel.Controls.Add(save);
             if (duplicate) panel.Controls.Add(new TextBox { Name="textBoxHeatingOutput", Text="62", Left=240, Top=5 });
             root.Controls.Add(panel);
             foreach (Control c in panel.Controls) { var unused=c.Handle; }
         };
         makePanel(false);
-        var poison = new PoisonPanel { Name="SyntheticProcessGrid", Marker=marker+".poison", Left=500, Top=300, Width=100, Height=100 };
+        var poison = new PoisonPanel { Name="SyntheticProcessGrid", Marker=marker+".poison", Left=full?1020:500, Top=full?750:300, Width=30, Height=30 };
         root.Controls.Add(poison); var poisonHandle=poison.Handle;
         int ticks=0; bool ready=false;
         var timer = new Timer { Interval=200 };
