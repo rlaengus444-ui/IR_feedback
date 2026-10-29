@@ -21,14 +21,14 @@ from pathlib import Path
 from typing import Callable
 
 try:
-    from .adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, MachineWindow, UiSnapshot
+    from .adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
     from . import sequence_persistence
-    from .sequence_field_audit import assert_fields_match_persisted
+    from .sequence_field_audit import assert_fields_match_persisted, SequenceFieldAuditError
     from .csv_source import MonitoringCsvReader
 except ImportError:
-    from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, MachineWindow, UiSnapshot
+    from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
     import sequence_persistence
-    from sequence_field_audit import assert_fields_match_persisted
+    from sequence_field_audit import assert_fields_match_persisted, SequenceFieldAuditError
     from csv_source import MonitoringCsvReader
 
 
@@ -89,6 +89,7 @@ def _log_layer_hint(target: MachineWindow) -> tuple[int | None, str | None]:
 
 class WindowsUiAdapter:
     MINIMUM_POLL_SECONDS = 0.25
+    RECOVERY_INTERVAL_SECONDS = 1.0
 
     def __init__(self, helper_timeout: float = 3.0, *, runner: Callable | None = None, source_factory=MonitoringCsvReader):
         if not 0.1 <= helper_timeout <= 10:
@@ -118,6 +119,10 @@ class WindowsUiAdapter:
         self._expected_ir: str | None = None
         self._observation_row: dict | None = None
         self._control_fault: str | None = None
+        self._control_hold_reason: str | None = None
+        self._control_epoch = 0
+        self._recovery_at = 0.0
+        self._recovery_candidate = None
         self._run_key: str | None = None
         self._layer_hint: int | None = None
         self._native_handles: dict = {}
@@ -153,6 +158,10 @@ class WindowsUiAdapter:
             self._control_baseline = None
             self._persisted_baseline = None
             self._control_fault = None
+            self._control_hold_reason = None
+            self._control_epoch = 0
+            self._recovery_at = 0.0
+            self._recovery_candidate = None
             self._run_key = None
             self._native_handles = dict(response.get("handles") or {})
             self._native_fields = {}
@@ -221,6 +230,81 @@ class WindowsUiAdapter:
             self._last_settings = [before.power, before.power]
             self._last_snapshot = None
 
+    def suspend_control(self, reason: str) -> None:
+        """Enter connected HOLD. Never edit, Save, navigate or erase chart data."""
+        with self._lock:
+            if self._control_hold_reason is None:
+                self._recovery_candidate = None
+                self._recovery_at = 0.0
+            self._control_hold_reason = str(reason)
+            self._last_snapshot = None
+
+    def validate_control_epoch(self, expected: int) -> None:
+        with self._lock:
+            if self._target is None or self._control_fault is not None:
+                raise ControlUnavailable(self._control_fault or "연결된 제어 대상이 없습니다.")
+            if self._control_hold_reason is not None or expected != self._control_epoch:
+                raise ControlSuspended(self._control_hold_reason or "계산 후 제어 설정이 변경되어 적용을 대기합니다.")
+
+    def _recover_control(self, target, generation, stop_event):
+        now = time.monotonic()
+        if now - self._recovery_at < self.RECOVERY_INTERVAL_SECONDS:
+            return
+        self._recovery_at = now
+        try:
+            before = sequence_persistence.capture(target)
+            if before is None:
+                raise ControlSuspended("저장 설정을 확인할 수 없어 IR 적용을 대기합니다.")
+            with self._lock:
+                handles, fields = dict(self._native_handles), dict(self._native_fields)
+            response = self._request({"operation": "recover_control", "pid": target.pid,
+                "hwnd": target.hwnd, "machine": target.machine, "image_path": target.image_path,
+                "handles": handles, "field_map": fields, "_generation": generation}, stop_event)
+            if str(response.get("machine", "unknown")).upper() != target.machine:
+                raise TargetIdentityError("설정 확인 중 장비 식별값이 변경되었습니다.")
+            if str(response.get("state", "unknown")).upper() not in {"AUTO", "RUNNING"}:
+                raise ControlSuspended("AUTO/RUNNING 상태를 확인할 때까지 IR 적용을 대기합니다.")
+            values, mapping = response.get("fields"), response.get("field_map")
+            new_handles = response.get("handles")
+            if not isinstance(values, dict) or not isinstance(mapping, dict) or not mapping or not isinstance(new_handles, dict):
+                raise ControlSuspended("Sequence 입력 전체와 저장 경로를 다시 확인하는 중입니다.")
+            displayed = _number(response.get("setting"))
+            if displayed is None or not math.isclose(displayed, before.power, rel_tol=0, abs_tol=1e-9):
+                raise ControlSuspended("화면 IR 값과 저장 설정이 일치할 때까지 대기합니다.")
+            assert_fields_match_persisted(values, before, target.machine)
+            after = sequence_persistence.capture(target)
+            if (after is None or before.path != after.path or before.sha256 != after.sha256
+                    or before.non_ir != after.non_ir or before.power != after.power):
+                raise ControlSuspended("설정이 저장 중입니다. 일치하는 설정을 다시 확인합니다.")
+            self._check_stopped(stop_event)
+            signature = json.dumps({"identity": [target.machine, target.pid, target.hwnd, target.image_path],
+                "settings_path": after.path, "power": after.power, "non_ir": dict(after.non_ir), "fields": values,
+                "handles": new_handles, "field_map": mapping}, sort_keys=True, allow_nan=False)
+            with self._lock:
+                if self._generation != generation or self._target != target:
+                    raise TargetIdentityError("설정 확인 중 연결 대상이 변경되었습니다.")
+                previous = self._recovery_candidate
+                if previous is None or previous[0] != signature:
+                    self._recovery_candidate = (signature, time.monotonic())
+                    self._control_hold_reason = "새 설정 확인 중 · 안정된 설정을 한 번 더 확인합니다."
+                    return
+                if time.monotonic() - previous[1] < self.RECOVERY_INTERVAL_SECONDS:
+                    return
+                self._control_baseline = dict(values)
+                self._persisted_baseline = after
+                self._expected_ir = str(values["textBoxHeatingOutput"])
+                self._native_handles, self._native_fields = dict(new_handles), dict(mapping)
+                self._last_settings = [after.power, after.power]
+                self._machine_state = str(response["state"])
+                self._control_epoch += 1
+                self._control_hold_reason = None
+                self._recovery_candidate = None
+                self._last_snapshot = None
+        except (ControlSuspended, UiReadTimeout, sequence_persistence.PersistenceUnavailable, SequenceFieldAuditError) as error:
+            self._check_stopped(stop_event)
+            self._recovery_candidate = None
+            self.suspend_control(str(error))
+
     def _update_settings_locked(self, response: dict) -> None:
         displayed = _number(response.get("setting"))
         if displayed is not None and 0 <= displayed <= 100:
@@ -250,6 +334,10 @@ class WindowsUiAdapter:
                 status = self._request({"operation": "read_status", "pid": target.pid, "hwnd": target.hwnd,
                                         "machine": target.machine, "handles": handles, "_generation": generation}, stop_event)
                 self._machine_state = str(status.get("state", "unknown"))
+            except ControlSuspended as error:
+                self._check_stopped(stop_event)
+                self.suspend_control(str(error))
+                self._machine_state = "unknown"
             except AdapterError as error:
                 self._check_stopped(stop_event)
                 if not any(text in str(error) for text in ("WM_GETTEXT", "UI 응답 제한", "not responding")):
@@ -261,8 +349,25 @@ class WindowsUiAdapter:
         machine_state = self._machine_state if self._mode == "control" else source.context.state
         persisted = None
         if source.is_new or time.monotonic() - self._settings_at >= 1.0:
-            persisted = sequence_persistence.capture(target)
+            try:
+                persisted = sequence_persistence.capture(target)
+                if self._mode == "control" and self._persisted_baseline is not None:
+                    expected = _number(self._expected_ir)
+                    if (persisted is None or expected is None
+                            or not math.isclose(persisted.power, expected, rel_tol=0, abs_tol=1e-9)
+                            or persisted.non_ir != self._persisted_baseline.non_ir):
+                        self.suspend_control("BJT 저장 설정 변경 · 새 설정을 확인할 때까지 IR 적용 대기")
+            except sequence_persistence.PersistenceUnavailable as error:
+                if self._mode != "control" or self._persisted_baseline is None:
+                    raise
+                self.suspend_control(str(error))
             self._settings_at = time.monotonic()
+        if self._mode == "control" and self._control_hold_reason is not None and self._control_fault is None:
+            with self._lock:
+                self._last_settings = [persisted.power, persisted.power] if persisted is not None else [None, None]
+            self._recover_control(target, generation, stop_event)
+            persisted = None  # Do not overwrite an adopted baseline with the earlier read.
+            machine_state = self._machine_state
         with self._lock:
             if self._generation != generation or self._target != target:
                 raise AdapterError("관측 중 연결이 해제되거나 변경되었습니다.")
@@ -285,14 +390,16 @@ class WindowsUiAdapter:
                 details += " 원본 UI 응답 대기 · CSV 조회만 계속하며 IR 적용은 정지합니다."
             if sample and sample.delay_seconds is not None:
                 details += f" 리코팅 완료→인쇄 완료 기록 차이 {sample.delay_seconds:.1f}초."
-            ready = self._mode == "control" and self._control_baseline is not None and self._control_fault is None
+            ready = self._mode == "control" and self._control_baseline is not None and self._control_fault is None and self._control_hold_reason is None
             snapshot = UiSnapshot(target=target, layer_index=sample.layer_index if sample else None,
                 t_recoating_c=sample.temperature if sample else None, observation_key=key,
                 heater1_setting_percent=self._last_settings[0], heater2_setting_percent=self._last_settings[1],
                 machine_state=machine_state, control_available=ready,
-                control_unavailable_reason=self._control_fault or CONTROL_REASON,
+                control_unavailable_reason=self._control_fault or self._control_hold_reason or CONTROL_REASON,
                 details=details, coupled_output=True, minimum_poll_seconds=self.MINIMUM_POLL_SECONDS,
-                run_key=self._run_key, observation_is_new=bool(sample and sample.key == self._new_sample_key and fresh))
+                run_key=self._run_key, observation_is_new=bool(sample and sample.key == self._new_sample_key and fresh),
+                control_recoverable=self._control_hold_reason is not None and self._control_fault is None,
+                control_epoch=self._control_epoch)
             self._csv_token = source.token
             self._layer_hint = source.context.current_layer
             self._observation_row = {"row_index": sample.layer_index, "temperature": sample.temperature,
@@ -321,6 +428,13 @@ class WindowsUiAdapter:
         return source.token
 
     def apply_ir_power(self, heater: int, power_percent: int | float, expected_observation_key: str, stop_event) -> None:
+        try:
+            return self._apply_ir_power(heater, power_percent, expected_observation_key, stop_event)
+        except ControlSuspended as error:
+            self.suspend_control(str(error))
+            raise
+
+    def _apply_ir_power(self, heater: int, power_percent: int | float, expected_observation_key: str, stop_event) -> None:
         self._check_stopped(stop_event)
         if heater not in (1, 2) or isinstance(power_percent, bool) or not isinstance(power_percent, (int, float)) or not math.isfinite(power_percent) or not 0 <= power_percent <= 100:
             raise ValueError("Heater must be 1 or 2 and power must be finite in 0..100.")
@@ -333,6 +447,8 @@ class WindowsUiAdapter:
             handles = dict(self._native_handles)
             if self._mode != "control" or self._control_fault or baseline is None or persisted is None or target is None:
                 raise ControlUnavailable(self._control_fault or CONTROL_REASON)
+            if self._control_hold_reason is not None:
+                raise ControlSuspended(self._control_hold_reason)
             if snapshot is None or snapshot.observation_key != expected_observation_key or observation is None or time.monotonic() - self._last_read > 3:
                 raise ControlUnavailable("최신 T_recoating 관측값을 다시 확인해야 합니다.")
             if self._last_applied_key == expected_observation_key:
@@ -348,7 +464,7 @@ class WindowsUiAdapter:
         current = sequence_persistence.capture(target)
         expected_number = _number(expected_ir)
         if current is None or expected_number is None or not math.isclose(current.power, expected_number, rel_tol=0, abs_tol=1e-9) or current.non_ir != persisted.non_ir:
-            raise ControlUnavailable("기존 IR 또는 다른 저장 설정이 변경되어 자동 적용을 중단했습니다.")
+            raise ControlSuspended("기존 IR 또는 다른 저장 설정이 변경되어 자동 적용을 중단했습니다.")
         common = {"pid": target.pid, "hwnd": target.hwnd, "machine": target.machine, "image_path": target.image_path, "_generation": generation}
         guarded_at = time.monotonic()
         csv_token = self._verify_csv_observation(expected_observation_key)
@@ -357,14 +473,14 @@ class WindowsUiAdapter:
                                    csv_token=csv_token), stop_event)
         fresh_fields = fresh.get("fields")
         if not isinstance(fresh_fields, dict) or fresh_fields != dict(baseline, textBoxHeatingOutput=expected_ir):
-            raise ControlUnavailable("IR 또는 다른 Sequence 입력값이 변경되어 자동 저장을 중단했습니다.")
+            raise ControlSuspended("IR 또는 다른 Sequence 입력값이 변경되어 자동 저장을 중단했습니다.")
         current = sequence_persistence.capture(target)
         if current is None or current.non_ir != persisted.non_ir or not math.isclose(current.power, expected_number, rel_tol=0, abs_tol=1e-9):
-            raise ControlUnavailable("IR 입력 전 기존 저장 설정이 변경되었습니다.")
+            raise ControlSuspended("IR 입력 전 기존 저장 설정이 변경되었습니다.")
         try:
             assert_fields_match_persisted(fresh_fields, current, target.machine)
         except ValueError as exc:
-            raise ControlUnavailable("IR 입력 전에 다른 설정의 미저장 변경을 발견했습니다. " + str(exc)) from exc
+            raise ControlSuspended("IR 입력 전에 다른 설정의 미저장 변경을 발견했습니다. " + str(exc)) from exc
         if time.monotonic() - guarded_at > 3:
             raise ControlUnavailable("관측 확인 후 시간이 지나 이번 적용을 중단했습니다. 다시 연결해 새 관측을 확인하세요.")
         handles = dict(fresh.get("handles") or handles)
@@ -388,10 +504,13 @@ class WindowsUiAdapter:
                 if verified is None:
                     raise AdapterError("IR 저장 결과를 확인할 수 없습니다.")
             except Exception as exc:
-                with self._lock:
-                    self._control_fault = "자동 적용을 중단했습니다. 결과를 확인한 뒤 다시 연결하세요."
                 if marker.exists() or edit_marker.exists():
+                    with self._lock:
+                        self._control_fault = "자동 적용 결과를 확인할 수 없습니다. 다시 연결하기 전에 원본 설정을 확인하세요."
                     raise AmbiguousWriteError("IR 입력값이 수정되었거나 Save가 실행되었을 수 있으나 완료 여부를 확인하지 못했습니다. 같은 명령을 자동 재시도하지 않습니다. " + str(exc)) from exc
+                if not isinstance(exc, ControlSuspended):
+                    with self._lock:
+                        self._control_fault = "자동 적용을 중단했습니다. 결과를 확인한 뒤 다시 연결하세요."
                 raise
         with self._lock:
             if self._generation != generation or self._target != target:
@@ -429,6 +548,13 @@ class WindowsUiAdapter:
         if stop_event is not None and stop_event.is_set():
             raise AdapterError("관측이 중지되었습니다.")
 
+    @staticmethod
+    def _response_error(request, response, fallback):
+        response = response if isinstance(response, dict) else {}
+        kind = response.get("error_kind")
+        error_type = ControlSuspended if kind == "control_wait" else TargetIdentityError if kind == "identity" else AdapterError
+        return error_type("[" + str(request.get("operation", "unknown")) + "] " + str(response.get("error", fallback)))
+
     def _request(self, request: dict, stop_event) -> dict:
         self._check_stopped(stop_event)
         request = dict(request, bridge_path=str(Path(__file__).with_name("UiaBridge.dll")))
@@ -441,7 +567,7 @@ class WindowsUiAdapter:
             if not isinstance(response, dict):
                 raise AdapterError("UI 읽기 도우미가 올바른 응답을 반환하지 않았습니다.")
             if not response.get("success", False):
-                raise AdapterError("[" + str(request.get("operation", "unknown")) + "] " + str(response.get("error", "UI 읽기에 실패했습니다.")))
+                raise self._response_error(request, response, "UI 읽기에 실패했습니다.")
             return response
         if os.name != "nt":
             raise AdapterError("기존 프로그램 화면 연결은 Windows에서만 지원합니다.")
@@ -474,7 +600,7 @@ class WindowsUiAdapter:
                 self._check_stopped(stop_event)
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    raise AdapterError(f"원본 UI 응답 제한 시간({deadline_seconds:g}초)을 초과했습니다.")
+                    raise UiReadTimeout(f"원본 UI 응답 제한 시간({deadline_seconds:g}초)을 초과했습니다.")
                 try:
                     stdout, stderr = process.communicate(payload, timeout=min(0.05, remaining))
                     break
@@ -485,7 +611,7 @@ class WindowsUiAdapter:
             except (json.JSONDecodeError, TypeError) as exc:
                 raise AdapterError("Windows UI 읽기 도우미가 올바른 응답을 반환하지 않았습니다. " + stderr[-300:]) from exc
             if not isinstance(response, dict) or not response.get("success", False):
-                raise AdapterError("[" + str(request.get("operation", "unknown")) + "] " + str(response.get("error", "Windows UI 읽기에 실패했습니다.")))
+                raise self._response_error(request, response, "Windows UI 읽기에 실패했습니다.")
             return response
         finally:
             if process is not None:

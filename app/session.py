@@ -8,7 +8,7 @@ from pathlib import Path
 import threading
 import time
 
-from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, MachineWindow
+from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, MachineWindow
 from layer_algorithm import LayerAdaptiveController, LayerSettings
 from target_temperature import TargetTemperatureSetting
 from excel_workbook import WorkbookController, WorkbookSpec
@@ -110,6 +110,10 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
     known_run_key = None
     expected_settings = {}
     wait_for_different_layer = None
+    known_control_epoch = None
+    control_holding = False
+    recovery_baseline_pending = False
+    recovery_baseline_layer = None
     effective_target = options.target_temperature_c
     slice_setting = options._slice_dataset_setting
     slice_epoch, slice_dataset = slice_setting.active()
@@ -117,6 +121,21 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                            and options.workbook_spec.slice_start_cell)
     image_waiting = False
     image_baseline_layer = None
+    def hold_feedback():
+        nonlocal control_holding, recovery_baseline_pending, recovery_baseline_layer
+        nonlocal baseline_seen, last_key, last_layer, known_run_key, wait_for_different_layer
+        if not control_holding:
+            for controller in controllers.values():
+                controller.reset()
+        control_holding = True
+        recovery_baseline_pending = True
+        recovery_baseline_layer = None
+        held.clear()
+        reasons.clear()
+        expected_settings.clear()
+        baseline_seen = False
+        last_key = last_layer = known_run_key = wait_for_different_layer = None
+
     try:
         if stop_event.is_set():
             return
@@ -151,6 +170,19 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 raise AdapterError("선택한 장비와 읽은 창의 식별값이 달라 연결을 중단했습니다.")
             effective_mode = options.mode
             status = "조회 중" if options.mode == "monitor" else "새 T_recoating 기록 대기"
+            if options.mode == "control":
+                epoch = snapshot.control_epoch
+                if isinstance(epoch, bool) or not isinstance(epoch, int) or epoch < 0:
+                    raise ControlUnavailable("제어 설정 확인 세대가 올바르지 않습니다.")
+                if known_control_epoch is None:
+                    known_control_epoch = epoch
+                elif epoch != known_control_epoch:
+                    if epoch < known_control_epoch:
+                        raise ControlUnavailable("이전 설정 확인 결과를 재사용할 수 없습니다.")
+                    hold_feedback()
+                    known_control_epoch = epoch
+                    control_holding = False
+                    expected_settings.clear()
             automatic = str(snapshot.machine_state).strip().upper() in ("AUTO", "RUNNING")
             if options.mode != "monitor" and not automatic:
                 for controller in controllers.values():
@@ -165,12 +197,20 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 effective_mode = "waiting"
                 status = "비자동/미확인 상태 · 이력 초기화 후 AUTO/RUNNING 및 새 T_recoating 대기"
             elif options.mode == "control" and not snapshot.control_available:
-                if control_admitted:
-                    raise ControlUnavailable("UI 자동 적용 조건이 변경되어 연결을 중단합니다: " + snapshot.control_unavailable_reason)
-                effective_mode = "control-unavailable"
-                status = "제어 불가: " + snapshot.control_unavailable_reason
+                if snapshot.control_recoverable:
+                    hold_feedback()
+                    effective_mode = "control-waiting"
+                    status = "연결 유지 · IR 적용 대기: " + snapshot.control_unavailable_reason
+                else:
+                    if control_admitted:
+                        raise ControlUnavailable("UI 자동 적용 조건이 변경되어 연결을 중단합니다: " + snapshot.control_unavailable_reason)
+                    effective_mode = "control-unavailable"
+                    status = "제어 불가: " + snapshot.control_unavailable_reason
             elif options.mode == "control":
                 control_admitted = True
+                if control_holding:
+                    effective_mode = "control-waiting"
+                    status = "연결 유지 · 변경된 설정의 재확인 대기"
             can_calculate = effective_mode in ("preview", "control")
             values = {1: snapshot.heater1_setting_percent, 2: snapshot.heater2_setting_percent}
             heaters = (1,) if snapshot.coupled_output else (1, 2)
@@ -183,7 +223,12 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 for heater in heaters:
                     if finite(values[heater]):
                         if heater in expected_settings and not math.isclose(values[heater], expected_settings[heater], rel_tol=0, abs_tol=1e-9):
-                            raise ControlUnavailable("IR 설정이 외부에서 변경되어 자동 적용을 중단합니다. 수동/층별 설정을 확인하고 재연결하세요.")
+                            adapter.suspend_control("IR 설정이 외부에서 변경되어 새 설정을 확인합니다.")
+                            hold_feedback()
+                            effective_mode = "control-waiting"
+                            can_calculate = False
+                            status = "연결 유지 · 외부 IR 설정 변경 확인 중"
+                            break
                         expected_settings[heater] = values[heater]
             valid = (snapshot.observation_key is not None and finite(snapshot.t_recoating_c)
                      and isinstance(snapshot.layer_index, int) and not isinstance(snapshot.layer_index, bool)
@@ -229,9 +274,34 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                     baseline_seen = True
                     last_key = snapshot.observation_key
                     known_run_key = snapshot.run_key
+            control_barrier = effective_mode == "control-waiting"
+            if effective_mode == "control" and recovery_baseline_pending:
+                control_barrier = True
+                status = "설정 확인 완료 · 첫 유효 관찰을 기준으로 대기(저장 없음)"
+                if valid and all(finite(values[heater]) for heater in heaters):
+                    recovery_baseline_pending = False
+                    recovery_baseline_layer = snapshot.layer_index
+                    baseline_seen = True
+                    last_key = snapshot.observation_key
+                    known_run_key = snapshot.run_key
+            elif effective_mode == "control" and recovery_baseline_layer is not None:
+                if (valid and snapshot.observation_is_new is True
+                        and snapshot.layer_index != recovery_baseline_layer
+                        and snapshot.observation_key != last_key
+                        and all(finite(values[heater]) for heater in heaters)):
+                    recovery_baseline_layer = None
+                else:
+                    control_barrier = True
+                    status = "설정 확인 완료 · 다음 새 층의 T_recoating 대기(저장 없음)"
+                    if valid:
+                        last_key = snapshot.observation_key
+                        recovery_baseline_layer = snapshot.layer_index
+                        known_run_key = snapshot.run_key
             # Existing historical rows at connection time are shown but do not
             # create a control action. Wait for receipt of a new T_recoating row.
-            if image_hold and effective_mode in ("preview", "control"):
+            if control_barrier:
+                pass
+            elif image_hold and effective_mode in ("preview", "control"):
                 status = "이미지 교체 중 · 새 층의 T_recoating 대기(저장 없음)"
             elif effective_mode == "waiting":
                 pass
@@ -297,11 +367,22 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                     raise ControlUnavailable("기존 UI에 전달할 유효한 출력 범위를 벗어났습니다.")
                                 if math.isclose(power, values[heater], rel_tol=0, abs_tol=1e-9):
                                     continue  # Holding a value needs no redundant Save.
-                                adapter.apply_ir_power(heater, power, snapshot.observation_key, stop_event)
+                                try:
+                                    validate_epoch = getattr(adapter, "validate_control_epoch", None)
+                                    if validate_epoch is not None:
+                                        validate_epoch(snapshot.control_epoch)
+                                    adapter.apply_ir_power(heater, power, snapshot.observation_key, stop_event)
+                                except ControlSuspended as error:
+                                    adapter.suspend_control(str(error))
+                                    hold_feedback()
+                                    effective_mode = "control-waiting"
+                                    can_calculate = False
+                                    status = "연결 유지 · IR 적용 대기: " + str(error)
+                                    break
                                 applied[heater] = power
                                 expected_settings[heater] = power
                                 writes += 1
-                            if not (image_consuming and slice_setting.desired()[0] != slice_epoch):
+                            if not control_holding and not (image_consuming and slice_setting.desired()[0] != slice_epoch):
                                 status = "T_recoating 수신 · UI 자동 적용 완료" if writes else "T_recoating 수신 · 기존 설정 유지(저장 없음)"
                         else:
                             status = "T_recoating 수신 · 계산만 표시"
@@ -476,8 +557,10 @@ class SessionController:
     @staticmethod
     def _chart_event(event):
         payload = event.payload
-        return WorkerEvent(event.generation, "chart_snapshot", {
-            "snapshot": payload.get("snapshot"), "applied": payload.get("applied", {})})
+        chart = {"snapshot": payload.get("snapshot"), "applied": payload.get("applied", {})}
+        if finite(payload.get("display_target_c")):
+            chart["display_target_c"] = payload["display_target_c"]
+        return WorkerEvent(event.generation, "chart_snapshot", chart)
 
     def drain_chart_events(self, maximum=64):
         """Closing-only data drain. Never restores state, proposals or admission."""

@@ -237,13 +237,23 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual({}, reports[-2]["proposed"])
         self.assertEqual({1: 50}, reports[-1]["proposed"])
 
-    def test_external_ir_change_stops_ui_ownership_without_overwriting_it(self):
+    def test_external_ir_change_keeps_connection_and_holds_without_overwriting_it(self):
         adapter = Mock(spec=UiAdapter)
         adapter.read_snapshot.side_effect = [snapshot(control_available=True),
             replace(snapshot("manual", 1, control_available=True), heater1_setting_percent=55, heater2_setting_percent=55)]
-        with self.assertRaises(ControlUnavailable):
-            run_ui_session(SessionOptions(TARGET, mode="control"), threading.Event(), lambda *args: None, lambda: adapter)
+        stop = threading.Event()
+        reports = []
+        def emit(kind, payload):
+            if kind == "snapshot":
+                reports.append(payload)
+                if len(reports) == 2:
+                    adapter.disconnect.assert_not_called()
+                    stop.set()
+        run_ui_session(SessionOptions(TARGET, mode="control"), stop, emit, lambda: adapter)
         adapter.apply_ir_power.assert_not_called()
+        adapter.suspend_control.assert_called_once()
+        self.assertEqual("control-waiting", reports[-1]["effective_mode"])
+        self.assertEqual({}, reports[-1]["proposed"])
         adapter.disconnect.assert_called_once()
 
     def test_delayed_visible_historical_row_is_baseline_and_never_a_new_input(self):

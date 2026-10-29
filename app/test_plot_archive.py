@@ -155,3 +155,97 @@ class ArchiveTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class ArchiveComponentTests(unittest.TestCase):
+    def test_png_failure_preserves_completed_and_retries_only_missing(self):
+        from plot_images import write_plot
+        with tempfile.TemporaryDirectory() as d:
+            counts = {'csv': 0, 'temperature': 0, 'ir': 0}
+            def csv_writer(path, points):
+                counts['csv'] += 1
+                _write_csv(path, points)
+            def image_writer(path, points, kind, target):
+                counts[kind] += 1
+                if kind == 'temperature' and counts[kind] == 1:
+                    path.write_bytes(b'incomplete')
+                    raise OSError('png failure')
+                write_plot(path, points, kind, target)
+            archive = PlotArchive(directories=[d], writer=csv_writer, image_writer=image_writer)
+            self.addCleanup(archive.close)
+            archive.capture((3, 4), [point(1), point(2)], target_temperature=75)
+            archive.submit()
+            error = wait(archive)[0]
+            self.assertEqual('error', error['kind'])
+            self.assertIsNone(error['plot_paths']['temperature'])
+            csv_path = Path(error['path'])
+            ir_path = Path(error['plot_paths']['ir'])
+            self.assertTrue(csv_path.exists())
+            self.assertTrue(ir_path.exists())
+            self.assertEqual(2, archive.retained_rows)
+            self.assertEqual([], list(Path(d).glob('.ir-plot-*')))
+            csv_bytes, ir_bytes = csv_path.read_bytes(), ir_path.read_bytes()
+            retry = Path(d) / 'retry'
+            archive.submit(retry_failed=True, directory=retry)
+            result = wait(archive)[0]
+            self.assertEqual('saved', result['kind'])
+            self.assertEqual({'csv': 1, 'temperature': 2, 'ir': 1}, counts)
+            self.assertEqual(str(csv_path), result['path'])
+            self.assertEqual(str(ir_path), result['plot_paths']['ir'])
+            self.assertEqual(retry, Path(result['plot_paths']['temperature']).parent)
+            self.assertEqual(csv_bytes, csv_path.read_bytes())
+            self.assertEqual(ir_bytes, ir_path.read_bytes())
+            self.assertEqual(0, archive.retained_rows)
+
+    def test_ir_failure_keeps_temperature_and_csv(self):
+        from plot_images import write_plot
+        def writer(path, points, kind, target):
+            if kind == 'ir':
+                raise OSError('ir failed')
+            write_plot(path, points, kind, target)
+        with tempfile.TemporaryDirectory() as d:
+            archive = PlotArchive(directories=[d], image_writer=writer)
+            self.addCleanup(archive.close)
+            archive.capture((1, 5), [point(1)])
+            archive.submit()
+            event = wait(archive)[0]
+            self.assertEqual('error', event['kind'])
+            self.assertTrue(Path(event['path']).exists())
+            self.assertTrue(Path(event['plot_paths']['temperature']).exists())
+            self.assertIsNone(event['plot_paths']['ir'])
+            self.assertEqual(1, archive.retained_rows)
+
+    def test_existing_png_is_preserved_and_unique_path_selected(self):
+        with tempfile.TemporaryDirectory() as d:
+            collision = []
+            def writer(path, points):
+                _write_csv(path, points)
+                existing = path.with_name(path.stem + '_temperature.png')
+                existing.write_bytes(b'existing')
+                collision.append(existing)
+            archive = PlotArchive(directories=[d], writer=writer)
+            self.addCleanup(archive.close)
+            archive.capture((8, 1), [point(1)])
+            archive.submit()
+            result = wait(archive)[0]
+            self.assertEqual('saved', result['kind'])
+            self.assertNotEqual(str(collision[0]), result['plot_paths']['temperature'])
+            self.assertEqual(b'existing', collision[0].read_bytes())
+            self.assertEqual(Path(result['path']).stem + '_ir.png', Path(result['plot_paths']['ir']).name)
+
+    def test_png_fallback_keeps_csv_and_reports_separate_folder(self):
+        from plot_images import write_plot
+        with tempfile.TemporaryDirectory() as d:
+            first, second = Path(d) / 'first', Path(d) / 'second'
+            def writer(path, points, kind, target):
+                if path.parent == first:
+                    raise OSError('folder rejects images')
+                write_plot(path, points, kind, target)
+            archive = PlotArchive(directories=[first, second], image_writer=writer)
+            self.addCleanup(archive.close)
+            archive.capture((8, 2), [point(1)])
+            archive.submit()
+            result = wait(archive)[0]
+            self.assertEqual('saved', result['kind'])
+            self.assertEqual(first, Path(result['path']).parent)
+            self.assertEqual({second}, {Path(p).parent for p in result['plot_paths'].values()})
+            self.assertEqual([], list(first.glob('*.png')))

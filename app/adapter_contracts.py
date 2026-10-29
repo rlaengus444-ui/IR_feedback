@@ -12,6 +12,21 @@ class ControlUnavailable(AdapterError):
     pass
 
 
+class ControlSuspended(ControlUnavailable):
+    """Known settings/UI change before any IR edit; keep observing while held."""
+    pass
+
+
+class TargetIdentityError(AdapterError):
+    """The verified root/PID/machine identity was lost; do not rebind it."""
+    pass
+
+
+class UiReadTimeout(AdapterError):
+    """A bounded helper timed out; only a known read-only operation may wait."""
+    pass
+
+
 class AmbiguousWriteError(AdapterError):
     """Save may have executed; do not retry, restore, or infer its result."""
     pass
@@ -42,6 +57,8 @@ class UiSnapshot:
     minimum_poll_seconds: float = 1.0
     run_key: str | None = None
     observation_is_new: bool | None = None
+    control_recoverable: bool = False
+    control_epoch: int = 0
 
 
 class UiAdapter(Protocol):
@@ -55,5 +72,9 @@ class UiAdapter(Protocol):
 
     def apply_ir_power(self, heater: int, power_percent: float,
                        expected_observation_key: str, stop_event) -> None: ...
+
+    def suspend_control(self, reason: str) -> None: ...
+
+    def validate_control_epoch(self, expected: int) -> None: ...
 
     def disconnect(self) -> None: ...

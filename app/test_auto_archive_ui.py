@@ -8,6 +8,7 @@ import time
 import tkinter as tk
 import unittest
 from unittest.mock import patch
+from PIL import Image
 
 from layer_charts import _write_csv
 from plot_archive import PlotArchive
@@ -53,6 +54,50 @@ class ArchiveViewTests(unittest.TestCase):
         return {'snapshot': replace(snapshot(f'{run}-{i}', i), run_key=run, coupled_output=True),
                 'applied': {} if saved is None else {1: saved}, 'proposed': {1: 99},
                 'effective_mode': 'control', 'reasons': {1: 'proposal'}, 'status': 'proposal'}
+
+    def test_retired_run_png_uses_outgoing_target_and_both_plots_exist(self):
+        self.connect()
+        first, second = self.data(1, 'A'), self.data(2, 'B')
+        first['display_target_c'], second['display_target_c'] = 65, 75
+        self.emit('snapshot', first)
+        self.emit('snapshot', second)
+        self.emit('finished', None)
+        self.view._pump()
+        end = time.monotonic() + 5
+        while self.archive.busy and time.monotonic() < end:
+            self.view._pump()
+            time.sleep(.005)
+        self.assertFalse(self.archive.busy)
+        pngs = list(Path(self.temp.name).glob('*.png'))
+        self.assertEqual(4, len(pngs))
+        targets = []
+        for path in pngs:
+            with Image.open(path) as image:
+                targets.append(image.info['target_at_capture'])
+        self.assertEqual(['65', '65', '75', '75'], sorted(targets))
+        self.assertEqual(2, len(list(Path(self.temp.name).glob('*.csv'))))
+
+    def test_settings_hold_keeps_graph_connection_until_explicit_finish(self):
+        self.connect()
+        data = self.data(1)
+        data['snapshot'] = replace(data['snapshot'], control_available=False,
+            control_recoverable=True, control_unavailable_reason='pending edit')
+        data['effective_mode'] = 'control-waiting'
+        data['proposed'] = {}
+        self.emit('snapshot', data)
+        self.view._pump()
+        self.assertEqual('connected', self.controller.state)
+        self.assertIn('연결됨', self.view.status.get())
+        self.assertEqual(1, len(self.view.charts.history.points))
+        self.assertEqual([], list(Path(self.temp.name).iterdir()))
+        self.emit('finished', None)
+        self.view._pump()
+        end = time.monotonic() + 5
+        while self.archive.busy and time.monotonic() < end:
+            self.view._pump()
+            time.sleep(.005)
+        self.assertEqual(1, len(list(Path(self.temp.name).glob('*.csv'))))
+        self.assertEqual(2, len(list(Path(self.temp.name).glob('*.png'))))
 
     def pump_until(self, predicate):
         deadline = time.monotonic() + 5

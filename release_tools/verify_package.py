@@ -9,7 +9,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 REQUIRED_APP = (
     'adapter_contracts.py', 'csv_source.py', 'excel_workbook.py', 'excel_worker.ps1',
-    'layer_algorithm.py', 'layer_charts.py', 'plot_archive.py', 'native_helper.ps1', 'README.ko.md',
+    'layer_algorithm.py', 'layer_charts.py', 'plot_archive.py', 'plot_images.py', 'native_helper.ps1', 'README.ko.md',
     'sequence_field_audit.py', 'sequence_persistence.py', 'session.py', 'single_instance.py',
     'standalone_ir.py', 'target_temperature.py', 'UiaBridge.dll', 'windows_ui_adapter.py',
     'workbook-replay.settings.json', 'slice_data.py', 'slice_panel.py', 'slice_workbook.py',
@@ -19,6 +19,7 @@ SOURCES = {**{'app/' + name: 'app/' + name for name in REQUIRED_APP},
            'README.md': 'README.md', 'VERSION.txt': 'VERSION.txt',
            'VALIDATION.ko.md': 'docs/SLICE_LIVE.ko.md',
            'docs/SLICE_LIVE.ko.md': 'docs/SLICE_LIVE.ko.md',
+           'docs/LIVE_SETTINGS.ko.md': 'docs/LIVE_SETTINGS.ko.md',
            'docs/CSV_RESUME_ANCHOR.ko.md': 'docs/CSV_RESUME_ANCHOR.ko.md',
            'docs/validation/csv-resume-anchor-2026.10.29-review.json': 'docs/validation/csv-resume-anchor-2026.10.29-review.json',
            'docs/validation/csv-resume-anchor-2026.10.29-offline.json': 'docs/validation/csv-resume-anchor-2026.10.29-offline.json',

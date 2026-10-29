@@ -10,7 +10,7 @@ import tempfile
 from verify_package import verify
 
 REPOSITORY = 'rlaengus444-ui/IR_feedback'
-VERSION = '2026.10.29-reconnect.2'
+VERSION = '2026.10.29-reconnect.3'
 
 
 def gh_json(*args, data=None):
@@ -45,10 +45,10 @@ def main():
         raise ValueError('Candidate/evidence commit mismatch')
     if candidate['version'] != VERSION or candidate['zip_sha256'] != args.expected_zip_sha256:
         raise ValueError('Candidate version/digest mismatch')
-    required = ('build', 'tests', 'smoke', 'bridge', 'csv_guard', 'native_discovery', 'slice_perf', 'reverify')
+    required = ('build', 'tests', 'smoke', 'bridge', 'csv_guard', 'native_discovery', 'slice_perf', 'settings_recovery', 'reverify')
     if any(readiness['checks'].get(key) != 'success' for key in required):
         raise ValueError('A required Windows validation step failed')
-    for name in ('bridge.json', 'csv-guard.json', 'discovery.json', 'slice-performance.json'):
+    for name in ('bridge.json', 'csv-guard.json', 'discovery.json', 'slice-performance.json', 'settings-recovery.json'):
         if read(name).get('passed') is not True:
             raise ValueError('Failed native validation: '+name)
     if readiness.get('device_application_approved') is not False or readiness.get('release_ready') is not False:
@@ -84,27 +84,24 @@ def main():
             raise ValueError('Version tag changed from the reviewed candidate')
 
     assert_tag()
-    body = ('재시작 첫 CSV 행의 온도가 0일 때 작업 시작 확인까지 누락되어 '
-            '재연결이 실패하는 경로를 수정한 평가용 배포입니다. '
-            '시작 층보다 낮고 시작·완료 시각이 충분히 오래된 앞부분의 완료 행만 제외합니다. '
-            '현재 작업의 시작 층·시각은 미측정 행에서도 확인하되 온도 입력으로 쓰지 않고 첫 유효 완료 온도는 기준으로만 읽습니다. '
-            '화면에는 UI 자동 적용만 표시하며 이미지 시작셀 기본값은 BL13입니다. '
-            '과거 기록·미측정 시작 행·첫 유효 기준 행에서 계산이나 Save를 재실행하지 않습니다. '
-            '제공된 실제 CSV 세 파일 1,122행에서 기존 오류와 수정 결과를 비교하고 단계별 수신을 검증했습니다.\n\n'
-            '서로 충돌하는 층·시각, 비활성 온도 -1, 현재 구간 뒤의 과거 행은 계속 중단합니다. '
-            '기존 작업/파일 선택·해시·신선도·Save 검증과 결과 불명확 시 재시도 금지는 유지합니다. '
-            '작업 일치 오류에는 CSV와 로그의 기준 값을 남깁니다. '
-            '정상 해제·오류 종료·프로그램 닫기에서 누적 그래프 전체를 CSV로 자동 저장합니다. '
-            '파일은 records 폴더(권한 부족 시 LocalAppData)에 고유 이름으로 저장하고 실패한 기록은 보존합니다. '
-            '사용자의 최초 연결 끊김 원인은 오류 기록이 없어 확정하지 않았습니다.\n\n'
-            f'Windows 프로그램 {test_count}개 시험, S3 탐색·연결 준비 검사14개와 '
-            'DLL 다운로드 표시·CSV 보호·이미지 분석 수치/성능 대조·전체 파일 검증을 통과했습니다.\n\n'
-            'S3 연결 수정, 연결 중 이미지 교체, 내장 제어 수식과 외부 Excel 두 종류는 유지합니다. '
-            '실제 Excel COM·장비 시험은 미실행이며 최종 제어 승인과 장비 적용은 보류합니다.\n\n'
+    body = ('BJT의 IR·파라미터·Sequence 화면 변경 시 연결을 유지하고 IR 적용만 대기하는 평가판입니다. '
+            '저장값과 화면을 읽기 전용으로 두 번 확인한 뒤 계산 기준을 초기화하고 다음 새 층부터 이어갑니다. '
+            '미저장 편집값을 자동 저장하거나 취소하지 않고, 복구 중 탭 이동·IR 입력·Save를 실행하지 않습니다.\n\n'
+            '연결 종료 시 전체 CSV와 온도·IR PNG 두 개를 함께 저장합니다. '
+            '최근 100층 밖의 모든 관찰을 포함하며 관찰한 설정과 Save 성공값을 구분합니다. '
+            '일부 저장 실패 시 이미 저장한 파일은 보존하고 실패한 파일만 재시도합니다. '
+            '경로와 결과는 상태 기록에 남습니다.\n\n'
+            'CSV 재연결 수정, UI 자동 적용, BL13, 연결 중 이미지 교체와 분석 속도 개선을 유지합니다. '
+            '내장 제어 수식과 외부 계산시트 두 종류는 바꾸지 않았습니다. '
+            '온도 -1, CSV·작업·시각·신선도 보호와 편집/Save 결과 불명확 시 종료 및 재시도 금지는 유지합니다.\n\n'
+            f'Windows 프로그램 {test_count}개 시험과 실행·정상 종료, DLL·S3 탐색·CSV 보호·설정 복구·이미지 분석·전체 패키지 검증을 통과했습니다. '
+            '설정 복구 시험은 합성 창을 사용하며 실제 장비 출력은 변경하지 않았습니다. '
+            '실제 Excel COM·장비 시험과 최초 연결 끊김 원인 확정은 미완료입니다. '
+            '최종 제어 승인과 실제 장비 적용은 보류합니다.\n\n'
             f'검증 후보 소스: {args.candidate_commit}\nZIP SHA-256: {actual}')
     release = gh_json(f'repos/{REPOSITORY}/releases', data={
         'tag_name': VERSION, 'target_commitish': args.candidate_commit,
-        'name': 'IRFeedback CSV 재연결·자동 저장 · 평가용', 'body': body,
+        'name': 'IRFeedback 연결 유지·플롯 저장 · 평가용', 'body': body,
         'draft': True, 'prerelease': True})
     def assert_release(value, draft):
         if value.get('tag_name') != VERSION or value.get('draft') is not draft or value.get('prerelease') is not True:
