@@ -1,0 +1,63 @@
+{
+  "source_commit": "bbd46c7435710ac76f95779c2243f88f0f9c49ad",
+  "scope": "Immutable git archive snapshot; pure offline fixtures/mocked controls; no equipment or source edits",
+  "results": {
+    "same_stat_replacement_during_refresh": {
+      "bytes_changed": true,
+      "ready_without_ack": true,
+      "needs_reload": false
+    },
+    "readiness_UNKNOWN": {
+      "saved_keys": [
+        "row-6"
+      ],
+      "calculated_layers": [
+        3,
+        6,
+        7
+      ],
+      "cached_layer6_applied": true
+    },
+    "readiness_missing_actual_IR": {
+      "saved_keys": [
+        "row-6"
+      ],
+      "calculated_layers": [
+        3,
+        6,
+        7
+      ],
+      "cached_layer6_applied": true
+    },
+    "admission_lease_resurrection": {
+      "expired_admitted": false,
+      "old_admission_revived": true,
+      "version_before": 1,
+      "version_after": 1
+    },
+    "cross_run_history": {
+      "previous_valid": 1,
+      "previous_powder_layers": 1
+    },
+    "corrected_prior_history": {
+      "corrected_layer_rejected": true,
+      "previous_valid_after_correction": 1,
+      "previous_powder_layers": 1
+    },
+    "unverified_equal_power_learning": {
+      "excel_calculations": 1,
+      "whole_coverage_passed": 0.0,
+      "actual_file_whole_coverage_pct": 100,
+      "native_apply_calls": 0
+    },
+    "native_token_fields": {
+      "keys": [
+        "directory",
+        "home",
+        "home_caption",
+        "hwnd"
+      ],
+      "full_chain_missing": true
+    }
+  }
+}

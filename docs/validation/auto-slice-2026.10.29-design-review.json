@@ -1,0 +1,149 @@
+{
+  "reviewed_at_utc": "2026-10-29 13:47:16 UTC",
+  "stage": "Actual PRE-IMPLEMENTATION design critique",
+  "worktree": "/workspace/IR_feedback_auto_slice",
+  "target_base_commit": "4e8698788d9c3dad09ee1bb362313ee08fefd585",
+  "released_program_base_commit": "6c54f52abdea3f478524bdf9fbeaf3892541dd71",
+  "design_review_complete": true,
+  "implementation_may_proceed": true,
+  "independent_post_review_complete": false,
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "final_control_algorithm_approved": false,
+  "disposition": "The revised bounded, explicitly bound UI-source design may be implemented subject to the requirements below. This is a design review, not an implementation/artifact review, live-binding verification, release approval or equipment approval.",
+  "review_route": {
+    "route": "Actual native collaboration sol_reviewer follow-up",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_verified": false,
+    "cli_authentication_restored": false,
+    "instructions_read": [
+      "AGENTS.md",
+      "CODEX_REVIEW_PROTOCOL.md",
+      ".codex/agents/sol_reviewer.toml",
+      "README.md",
+      "app/README.ko.md",
+      "docs/VALIDATION.ko.md"
+    ]
+  },
+  "inspected_evidence": {
+    "source_files": [
+      "app/session.py",
+      "app/slice_data.py",
+      "app/slice_panel.py",
+      "app/csv_source.py",
+      "app/adapter_contracts.py",
+      "app/windows_ui_adapter.py",
+      "app/native_helper.ps1",
+      "app/UiaBridge.process.part.cs"
+    ],
+    "original_source_files": [
+      "/workspace/ir-auto-slice-research/forms-source/Forms/FormHome.cs",
+      "/workspace/ir-auto-slice-research/forms-source/Forms/FormHome.Designer.cs",
+      "/workspace/ir-auto-slice-research/forms-source/Forms/MainForm.cs",
+      "/workspace/ir-auto-slice-research/printheadcon-source/ProcessStatus.cs"
+    ],
+    "findings": [
+      "FormHome constructs ProductionControl under pnlProduction and LayerMonitoring under pnlMonitoring. Their actual control implementations/designers were not supplied, so the slicing path field's semantic identity is unknown.",
+      "FormHome.Designer names the form FormHome and sets Text='Home'. MainForm.OpenChildForm adds/brings forward prior child form instances rather than removing/disposing them; cached owned Home descendants can remain usable on other tabs.",
+      "Existing native ReadText is bounded and validates PID/root/descendant ownership but does not itself establish a semantic slicing role.",
+      "Current SliceDatasetSetting suppresses identical fingerprint/config requests; an automatic source revision needs forced, source-bound epochs without changing ordinary manual no-op semantics.",
+      "SliceRecord currently retains basename only; auto provenance requires exact original file/entry identity in a separate immutable map or compatible optional field.",
+      "Current _mapping subtracts the minimum filename suffix; auto partial copies require a fixed explicit filename origin.",
+      "Current CsvSample key binds path/file generation/run/layer/start/temperature, but not ImgSlicing or recoating time; auto source lineage needs a separate binding and preflight revalidation."
+    ]
+  },
+  "approved_initial_scope": {
+    "automatic_sources": "Explicitly bound Home path field containing a complete absolute directory path or image-file path whose directory is analyzed.",
+    "zip": "Existing manual ZIP import remains supported. Automatic ZIP-to-CSV extracted-path association is not enabled without an explicit verified entry/path mapping; do not infer it from basename.",
+    "manual_mode": "Automatic mode defaults OFF. Disabled service performs no new OS/file monitoring. Existing manual selection, math, handoff and ZIP behavior remain intact.",
+    "user_source_choice": "User points to a native STATIC/EDIT path field under the selected target's owned Home form, previews the full text/container and explicitly chooses it once. This is required even if there is only one path candidate.",
+    "role_limit": "Source uniqueness alone cannot establish the slicing-input role. User binding resolves the missing UserControl mapping; live automatic semantic identification is not claimed."
+  },
+  "required_design": [
+    {
+      "id": "source-binding",
+      "requirement": "Use the user-pointed leaf as the sole production binding entry. Validate exact selected target PID/root, owned Home scope, supported leaf class, native control ID, bounded parent chain and connection generation. No arbitrary whole-window path search, root UIA/tree walk, Process grid query or automatic tab navigation. Reject ellipsis/truncated text, relative/drive-relative paths, multiple paths and unsupported forms instead of extracting a plausible substring.",
+      "recovery": "Revalidate identity on reads and before actuation. Destroyed/recreated unknown bindings enter source HOLD and require explicit rebind; same text/path does not establish a replacement field. Recheck the hover target at capture time and preview/confirmation time."
+    },
+    {
+      "id": "ui-is-primary",
+      "requirement": "Poll the bound UI leaf independently of CSV and independently of long directory scans/analysis. The first observed unavailable/changed source invalidates the shared gate BEFORE debouncing, filesystem work, GUI events or analysis. Only later publication waits for two stable observations. Same-directory current-filename advancement does not itself require full reanalysis.",
+      "health": "Use bounded reads and a freshness/health lease; a stalled or failed watcher cannot leave old data admitted indefinitely. Long analysis must not block UI source detection. Target/mode/config/binding transitions increment a monotonic source revision."
+    },
+    {
+      "id": "source-state-and-publication",
+      "requirement": "Maintain explicit disabled/pending/unavailable/analyzing/ready states. Do not represent pending automatic source as an ordinary dataset=None, whose manual meaning permits unknown-image fallback. Retain the previous dataset only for display while admission is blocked. Compare-and-publish must atomically require current target/mode/config/binding/source revision and unchanged verified manifest; reject A/B/A obsolete results even when numeric fingerprints match.",
+      "concurrency": "Use a bounded coalescing analysis queue and one cancellable analyzer, not an unbounded thread per change. All GUI state access stays on Tk; pass immutable config snapshots. GUI queue overflow or callbacks arriving late must not control admission; reconcile authoritative shared state.",
+      "epochs": "A valid new automatic source revision forces a new image epoch even for identical data. Enabling, disabling, rebinding and config changes invalidate old proposals. Define restoration of the user's manual dataset on auto OFF and perform that handoff atomically; do not expose a stale automatic dataset as the manual selection."
+    },
+    {
+      "id": "fixed-layer-and-file-provenance",
+      "requirement": "Keep an explicit filename origin plus first_layer for automatic mapping; never recompute the origin from the currently visible subset or from CSV resume/current layer. Missing/later copied files remain missing until present and verified. Preserve gaps. Retain exact normalized original file paths per mapped layer; reject duplicates, ambiguous mappings and unrelated nested data. Do not use basename or folder equality as row membership proof.",
+      "version": "A ready dataset is immutable and bound to its source revision, config, exact mapping and per-file SHA-256. Directory enumeration and file reads are bounded and stable before publication. Stat/inventory brackets alone are not content proof."
+    },
+    {
+      "id": "content-integrity",
+      "requirement": "Fast size/mtime/file-ID manifests are useful triggers but are insufficient for same-size/same-time rewrites. Add bounded content SHA verification for the current/prior relevant images against analyzed SHA values at admission/pre-edit, with revalidation before Save or an equivalent enforced immutable admitted source. Do not scan the whole directory in the control path. Use explicit byte/time caps and stay source HOLD before editing if proof is unavailable or exceeds budget.",
+      "background": "Background digest checks may discover/reanalyze same-stat changes elsewhere in the image set; state the polling/detection limits. Never label a metadata-only equality check as verified image-version equality.",
+      "reload": "Same-path image replacement may be reanalyzed automatically, but a UI path/CSV path cannot prove BJT discarded cached old bytes. The revised explicit product reload/rebind acknowledgment may release that uncertainty only with a fresh cutoff and baseline barriers; it is not independent physical-byte validation."
+    },
+    {
+      "id": "delayed-csv-and-time-cutoff",
+      "requirement": "CSV ImgSlicing is a delayed cross-check, never the import trigger, source selector or fallback source. Continue UI discovery and analysis with no new CSV rows. On source/config/manifest invalidation record a monotonic revision and local wall-clock cutoff. Automatic image-consuming eligibility requires exact mapped image-path membership plus a valid start<=recoat<=finish timestamp with recoating at or after the cutoff.",
+      "timestamps": "Preserve missing/MinValue/malformed recoating as unavailable auto lineage; do not fabricate times. Handle second-resolution timestamps conservatively, without subtracting a tolerance that would admit pre-change measurements. Wall-clock discontinuity requires a new conservative barrier. Old-source/pre-cutoff/unknown-lineage rows remain chart observations and barriers, not new Excel calculations or disconnect causes.",
+      "identity": "Keep a separate auto-lineage token covering raw/validated ImgSlicing and recoat metadata, run/layer/sample key and source revision. Recheck it in adapter preflight along with the existing CSV token. The unchanged ordinary observation key must not silently authorize changed lineage metadata."
+    },
+    {
+      "id": "phase-correct-admission",
+      "requirement": "For automatic image-consuming Excel only, block calculation/learning and Save while source proof is pending. Activate the complete matching dataset through existing image handoff, reset the private workbook/controller once, discard proposals and consume valid held observations. First eligible new-source observation is baseline-only; require a subsequent fresh, different-layer/key observation, with adequate current/prior provenance, before IR.",
+      "prior_history": "Do not retroactively attribute pre-switch layers or a precomputed long blank run to the new source. The smallest conservative release rule is consecutive eligible new-source observations; otherwise rebaseline or mark prior/history features unknown. Keep source-derived blank-run history limited to established new-source lineage.",
+      "readiness": "Unknown/nonautomatic UI, missing actual IR, delayed records and same-layer corrections must consume barriers as in the recent recovery fix. Never resume from their cached keys. Require both control epoch and source/image epoch at each heater admission."
+    },
+    {
+      "id": "source-hold-is-not-settings-hold",
+      "requirement": "Use a distinct source-HOLD category/state. Do not blindly reuse ControlSuspended through its current wrapper, which calls suspend_control and starts the Sequence-settings recovery audit. A source-only change must not force a visible Sequence settings audit or affect builtin/non-image-consuming modes. Combine independent source and settings readiness without conflating their epochs.",
+      "terminal_errors": "Preserve existing invalid -1, CSV/job/layer/hash/freshness and target-identity failures. Do not broadly catch them as source recovery."
+    },
+    {
+      "id": "native-write-boundary",
+      "requirement": "Only auto image-consuming requests carry the optional source guard. Before IR edit and before Save, validate owned bound Home/leaf/chain and canonical container plus relevant image-version proof. Do not add Home reads to ordinary manual/basic operation. A pre-edit source mismatch invalidates the source gate and enters source HOLD without Save/navigation.",
+      "ambiguity": "Once edit_marker or save_marker indicates a possible edit/Save, any failed source guard or uncertain outcome remains AmbiguousWriteError/terminal. No automatic retry, rollback or completion of an unissued Save just because the calculation was admitted. An already queued Save may finish and be verified under existing handling."
+    }
+  ],
+  "minimum_tests_before_post_review": [
+    "Synthetic Windows user-pointed Home leaf binding: correct/foreign PID/root, wrong/ambiguous Home, STATIC/EDIT, truncated/relative/multiple text, hidden Home, parent/class/ID/HWND changes and explicit rebind; zero navigation/Save/grid probes.",
+    "Primary UI A->B change triggers invalidation/analysis before any CSV; zero new CSV must not prevent loading. Same-folder filename increments do not repeatedly analyze.",
+    "Slow scan/hash/analysis while UI changes again, watcher failure/stale lease and A->B->A completion races; dropped GUI events cannot permit old proposals.",
+    "Partial copies, missing files, late lower-numbered filename, unrelated images, directory replacement/junction changes, same-size rewrite with restored mtime and failed analysis; no layer rebasing or partial publication.",
+    "Explicit numbering origins0/1/arbitrary and CSV resume500; exact row-to-full-path mapping and no basename-only matches. Automatic ZIP mapping stays unavailable rather than guessed.",
+    "Delayed CSV A after UIB is ready; same-path reanalysis with pre-cutoff temperature; missing/MinValue/malformed/second-resolution recoating times; clock rollback; none compute or Save.",
+    "Identical sample key/T/start with changed ImgSlicing or recoating metadata between calculation and adapter preflight must fail auto lineage admission.",
+    "Source change near a layer boundary: previous-image/blank-run lineage, consecutive eligibility, gaps, cached different layer, same-layer rewrite, missing actualC and nonautomatic states cannot bypass baseline/fresh-row barriers.",
+    "Simultaneous settings HOLD, source change, target reservation and manual image change; each heater rechecks independent epochs. Auto OFF/rebind/target switch makes pending callbacks stale.",
+    "Source change before edit, between edit and Save, and after Save queued: respectively source HOLD, terminal ambiguity, and verified completion without retry. Preserve confirmed Save chart markers.",
+    "Run actual production Windows transport and bounded image-content guard at its supported maximum budget; assert timeout/oversize behavior before edit, not an unbounded control-thread scan.",
+    "Manual mode/backend APIs, builtin/non-image-consuming modes, original3 CSVs, invalid -1 and rewrite/hash/freshness guards retain behavior. Source XLSX/formulas remain unchanged.",
+    "Existing full CSV/two-PNG archive retry and terminal close cutoff remain unchanged. New modules/config must be mandatory in packaging verification.",
+    "Independent POST of the actual diff plus exact fresh Windows candidate/artifact is required before evaluation distribution; no hardware or Excel COM claim."
+  ],
+  "independent_offline_probes": {
+    "evidence": "/workspace/ir-auto-slice-20261029-review/sol-baseline-probes.json",
+    "results": {
+      "minimum_filename_rebase": "Adding slice00500.png shifts slice00501.png from mapped layer1 to2 under current default mapping.",
+      "stat_identity_collision": "Temporary file content changed with identical dev/inode/size/mtime; SHA changed.",
+      "observation_key_metadata_gap": "Current _sample returned the same key when only ImgSlicing and recoating time changed."
+    },
+    "no_full_baseline_suite_rerun": true,
+    "equipment_actions": 0,
+    "source_edits": 0
+  },
+  "unresolved_and_untested_limits": [
+    "Actual ProductionControl/LayerMonitoring source and live field identity remain unavailable; one-time user binding is mandatory and does not certify an undocumented semantic mapping.",
+    "No implementation exists yet; no Windows source-reader/guard/automatic-watch tests, actual Excel COM, device operations or release artifact were validated for this feature.",
+    "Initial automatic scope excludes unverified ZIP extracted-path mapping; manual ZIP is retained and automatic ZIP must not be advertised as complete.",
+    "UI/CSV path and timestamp agreement cannot independently prove actual binder execution, sensor position/drying or BJT's loaded image-byte revision.",
+    "Polling and preflight provide bounded observations, not an atomic lock against all file/UI/operator changes.",
+    "Final control algorithm approval and equipment application remain on hold. Prior release authorization does not substitute for required POST/exact-artifact review of this feature."
+  ]
+}

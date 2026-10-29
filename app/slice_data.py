@@ -30,6 +30,7 @@ class SliceConfig:
     threshold: int = 0
     first_layer: int = 1
     numbering: str = 'filename'
+    filename_origin: int | None = None
 
     def __post_init__(self):
         for name in ('radius_mm', 'dpi_x', 'dpi_y'):
@@ -44,6 +45,9 @@ class SliceConfig:
             raise ValueError('첫 이미지 대응 층은 1 이상의 정수여야 합니다.')
         if self.numbering not in ('filename', 'sequence'):
             raise ValueError('층 번호 배정 방식을 확인하세요.')
+        if self.filename_origin is not None and (type(self.filename_origin) is not int
+                or not 0 <= self.filename_origin <= 1_000_001 or self.numbering != 'filename'):
+            raise ValueError('자동 입력의 고정 파일명 기준 번호를 확인하세요.')
 
 @dataclass(frozen=True)
 class SliceRecord:
@@ -121,9 +125,9 @@ def _mapping(names, config):
         indices.append((int(match.group()), name))
     if len({i for i, _ in indices}) != len(indices):
         raise ValueError('파일명 층 번호가 중복됩니다. 다른 작업/미리보기 이미지가 섞였는지 확인하세요.')
-    low = min(i for i, _ in indices)
+    low = config.filename_origin if config.filename_origin is not None else min(i for i, _ in indices)
     mapped = sorted((config.first_layer + i - low, n) for i, n in indices)
-    if mapped[-1][0] > 1_000_001:
+    if mapped[0][0] < 1 or mapped[-1][0] > 1_000_001:
         raise ValueError('이미지 대응 층 범위를 초과했습니다.')
     return mapped
 
@@ -228,7 +232,10 @@ def analyze(paths, config, *, cancel=None, progress=None):
         mapped = _mapping(names, config)
         records = []; geometry = None; previous_layer = None; powder_run = 0
         measurements = {}
-        digest = hashlib.sha256(json.dumps(vars(config), sort_keys=True).encode())
+        metadata = dict(vars(config))
+        if metadata['filename_origin'] is None:
+            metadata.pop('filename_origin')  # Preserve existing manual fingerprints.
+        digest = hashlib.sha256(json.dumps(metadata, sort_keys=True).encode())
         for index, (layer, name) in enumerate(mapped):
             _cancel(cancel)
             data = read(name)

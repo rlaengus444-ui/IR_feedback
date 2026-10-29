@@ -1,0 +1,90 @@
+{
+  "recorded_at_utc": "2026-10-29T16:21:52.030661+00:00",
+  "version": "2026.10.29-auto-slice.1",
+  "candidate_commit": "6ee48f34c39a18d290aab6391a587769ce913e96",
+  "evidence_commit": "be3796d960d5f5c5e586995e44bf1147dfefc95b",
+  "delivery_workflow_commit": "908ce72378665aa32d6386c80379ded605d79f41",
+  "validation_run": 40901581109,
+  "windows_tests": 286,
+  "native_source_checks": 30,
+  "all_ten_non_excel_gates_passed": true,
+  "review": {
+    "actual_native_sol_reviewer_final_received": true,
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "max",
+    "provider_identity_independently_verified": false,
+    "cli_authentication_restored": false,
+    "exact_final_review_sha256": "bada5824ceef32eb5d6e282b73a50e74c6ac5dec0a6e89881d2b84bff14dba70",
+    "path": "docs/validation/auto-slice-2026.10.29-release-review.json"
+  },
+  "github": {
+    "release_id": 428099857,
+    "zip_asset_id": 689121927,
+    "bytes": 35370734,
+    "sha256": "148f3a3c71cc1c8b73565bb1c94726040a311038df7615353b21fdd8b71ae4ab",
+    "full_package_readback_verified": true,
+    "public_static_http": 200,
+    "publish_run": 40909207043,
+    "prerelease": true,
+    "equipment_application_approved": false
+  },
+  "drive": {
+    "folder_id": "1Fd_1vA4HLd2NpzHmsO7KMK1lrk5Dx3_5",
+    "zip_attempt": {
+      "attempted_file_id": "16PzfdIkrP-5gBfZsWCt185s-yMVl2nGe",
+      "upload_succeeded": true,
+      "raw_download_succeeded": false,
+      "http_status": 403,
+      "provider_reason": "cannotDownloadAbusiveFile",
+      "provider_message": "This file has been identified as malware or spam and cannot be downloaded.",
+      "unusable_new_copy_removed": true,
+      "no_scan_bypass_or_repackaging": true,
+      "working_download": "https://github.com/rlaengus444-ui/IR_feedback/releases/download/2026.10.29-auto-slice.1/IRFeedback-2026.10.29-auto-slice.1.zip"
+    },
+    "guide_url": "https://drive.google.com/file/d/1R7KmZW_mJ2qOy2w0DS7h94bNb1ZNvY6x/view",
+    "guide_updated_in_place": true,
+    "guide_readback": {
+      "file_id": "1R7KmZW_mJ2qOy2w0DS7h94bNb1ZNvY6x",
+      "bytes": 5265,
+      "sha256": "1b3236e5c15843501fcf413105b7eae30689d62ab14fc275d356e95a2ee66b52",
+      "readback_matches": true
+    },
+    "old_reconnect3_file_removed": "15NLQbyuhduQEwn77DzLBODhPhuqRBY8D",
+    "latest_zip_download_available_on_github": true,
+    "raw_zip_download_verified_on_drive": false
+  },
+  "notion": {
+    "page_id": "3f105e94-a225-801c-9cd6-c70784c2d9ec",
+    "url": "https://app.notion.com/p/3f105e94a225801c9cd6c70784c2d9ec",
+    "latest_toggle_updated": true,
+    "reconnect3_folded_in_older_version_toggle": true,
+    "targeted_writes_succeeded_without_warnings": true,
+    "native_media_references_preserved": 11,
+    "two_workbooks_unchanged": true,
+    "working_github_zip_and_drive_guide_linked": true,
+    "drive_block_noted": true
+  },
+  "unchanged": {
+    "control_formulas": true,
+    "external_workbooks": true,
+    "manual_image_numerical_outputs_and_fingerprints": true,
+    "csv_job_timestamp_freshness_invalid_minus_one_and_ambiguous_save_guards": true,
+    "original_device_source_and_configuration": true,
+    "bridge_dll": true
+  },
+  "limits": {
+    "actual_bjt_path_binding_tested": false,
+    "excel_com_tested": false,
+    "excel_reason": "Excel COM is not registered",
+    "physical_equipment_actions": 0,
+    "final_control_algorithm_approved": false,
+    "equipment_application_approved": false,
+    "stable_release_approved": false,
+    "bjt_cached_image_bytes_independently_proven": false
+  },
+  "no_rebuild_after_review": true,
+  "prerelease": true,
+  "make_latest": "false",
+  "main_merged": false,
+  "draft_pr": "https://github.com/rlaengus444-ui/IR_feedback/pull/8"
+}

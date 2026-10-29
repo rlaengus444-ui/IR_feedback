@@ -1,0 +1,254 @@
+{
+  "reviewed_at_utc": "2026-10-29T15:34:36Z",
+  "reviewer": "sol_reviewer",
+  "invocation": {
+    "route": "native collaboration follow-up to the existing designated reviewer agent",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_verified": false,
+    "cli_authentication_restored": false
+  },
+  "base_commit": "4e8698788d9c3dad09ee1bb362313ee08fefd585",
+  "candidate_commit": "6ee48f34c39a18d290aab6391a587769ce913e96",
+  "review_scope": "Corrected independent source/diff/test POST review of automatic Home-path slice source. This is the core review; exact final Windows artifact and publication review are separate and pending.",
+  "core_post_review_complete": true,
+  "independent_post_review_complete": true,
+  "release_artifact_review_complete": false,
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "final_control_algorithm_approved": false,
+  "disposition": "Corrected core source accepted with platform/artifact gates pending. No unresolved code finding identified by the executed checks. Do not distribute on this record.",
+  "source_state": "Read-only review of clean immutable commit; independent tests used a git-archive copy outside the worktree. No production edits, device access, dependency installation, actual IR edit/Save, or external publication performed.",
+  "resolved_findings": [
+    {
+      "original_severity": "P1",
+      "id": "full-native-binding-chain",
+      "references": [
+        "app/windows_slice_source.py:99",
+        "app/native_helper.ps1:58",
+        "app/native_helper.ps1:99"
+      ],
+      "resolution": "All pinned ancestor nodes are serialized; native checks validate every PID/root/class/control ID/immediate parent and adjacency before/after content proof. Independent token probe and source inspection passed. Actual corrected Windows chain-positive/negative execution remains a platform gate."
+    },
+    {
+      "original_severity": "P1",
+      "id": "same-stat-rewrite-before-publication",
+      "references": [
+        "app/auto_slice_source.py:282",
+        "app/auto_slice_source.py:304"
+      ],
+      "resolution": "New same-directory path-to-SHA map is compared with the acknowledged map before readiness. The independent restored-mtime/size refresh probe publishes changed diagnostic data but remains HOLD with needs_reload true until explicit acknowledgment."
+    },
+    {
+      "original_severity": "P1",
+      "id": "cached-readiness-row-replay",
+      "references": [
+        "app/session.py:275",
+        "app/session.py:293",
+        "app/session.py:304"
+      ],
+      "resolution": "UNKNOWN and missing actual IR consume baseline barriers. Independent tests restored the exact same row with observation_is_new true and confirmed no row6 calculation/Save; only fresh different row7 produced one mock apply."
+    },
+    {
+      "original_severity": "P1",
+      "id": "expired-admission-revival",
+      "references": [
+        "app/auto_slice_source.py:214",
+        "app/auto_slice_source.py:353",
+        "app/auto_slice_source.py:455"
+      ],
+      "resolution": "Lease expiration invalidates generation before heartbeat renewal. Both admit-first and watcher-first independent probes permanently rejected the old admission after new publication."
+    },
+    {
+      "original_severity": "P1",
+      "id": "pre-learning-content-and-lineage-proof",
+      "references": [
+        "app/auto_slice_source.py:403",
+        "app/windows_ui_adapter.py:438",
+        "app/session.py:275"
+      ],
+      "resolution": "Candidate/proof/compare-and-commit now verifies owned source, current/prior bytes and CSV lineage before image history or any image-dependent calculation, including baseline/equal-power paths. Independent mutation probe yielded zero Excel process calls and zero apply calls; critical CSV parser errors propagated."
+    },
+    {
+      "original_severity": "P2",
+      "id": "image-history-provenance",
+      "references": [
+        "app/auto_slice_source.py:368",
+        "app/auto_slice_source.py:403"
+      ],
+      "resolution": "History is scoped by run and CSV generation; corrected layer metadata is quarantined. Raw image path and recoating timestamp additionally participate in cache/observed identity. Independent job/file replacement and corrected-lineage probes did not inherit previous-image/powder history."
+    },
+    {
+      "original_severity": "P2",
+      "id": "extension-folder-and-directory-double-parse",
+      "references": [
+        "app/native_helper.ps1:36",
+        "app/native_helper.ps1:108",
+        "app/windows_slice_source.py:80",
+        "app/windows_slice_source.py:248"
+      ],
+      "resolution": "A dedicated expected-directory normalizer avoids interpreting an already-derived folder as a file. Explicit binding pins directory_field once. Independent parsing checks preserve directories named layers.png/layers.zip and an image inside layers.png. Native Windows positives remain required."
+    },
+    {
+      "original_severity": "P2",
+      "id": "complete-long-short-path-alias-flow",
+      "references": [
+        "app/windows_slice_source.py:25",
+        "app/auto_slice_source.py:418"
+      ],
+      "resolution": "Alias comparison runs outside the gate and resolves only authorized expected image paths; complete drive/folder/filename components remain required. Independent mocked WinAPI accepted mixed long/short components and rejected other drive/folder/filename; no arbitrary CSV path was resolved. Actual native CSV-to-source alias flow remains required."
+    },
+    {
+      "original_severity": "P2",
+      "id": "backward-wall-clock-cutoff",
+      "references": [
+        "app/auto_slice_source.py:113"
+      ],
+      "resolution": "Cutoff uses wall/monotonic anchoring plus a nondecreasing floor. Independent rollback/reload probe moved cutoff conservatively from 10:00:01 to 10:00:13 and rejected the pre-change measurement."
+    }
+  ],
+  "additional_checks": [
+    "Normal idle/no-key polls between layers retained learning history and did not establish a recurring source fault: calculated layers3,4 and one initial handoff reset.",
+    "Same-directory acknowledged bytes cannot be silently replaced by an identical-stat refresh; UI/config/source changes remain versioned and stale publication/admission is rejected.",
+    "SourceSuspended remains separate from Sequence settings recovery; any edit/Save marker retains ambiguous-write priority.",
+    "Manual mode defaults off for auto source, normal manual fingerprint/schema remain compatible, and core algorithm/Excel worker/DLL/template are unchanged in this feature diff."
+  ],
+  "executed_tests": [
+    {
+      "source_commit": "6ee48f34c39a18d290aab6391a587769ce913e96",
+      "command": "DISPLAY=:95 python -m unittest -v test_auto_slice_source test_auto_slice_ui test_slice_data test_slice_handoff test_live_settings",
+      "cwd": "/workspace/ir-auto-slice-20261029-review/preserved-6ee48f3/app",
+      "result": "75/75 passed",
+      "seconds": 5.079,
+      "log": "/workspace/ir-auto-slice-20261029-review/sol-6ee-focused.log"
+    },
+    {
+      "command": "python sol_replay_corrected_core.py preserved-6ee48f3/app sol-6ee-adversarial-probes.json",
+      "result": "13 independent adversarial probe groups passed",
+      "script": "/workspace/ir-auto-slice-20261029-review/sol_replay_corrected_core.py",
+      "report": "/workspace/ir-auto-slice-20261029-review/sol-6ee-adversarial-probes.json",
+      "checks": {
+        "same_stat_refresh_before_publication": {
+          "changed_sha": true,
+          "ready": false,
+          "needs_reload": true
+        },
+        "readiness_barrier_UNKNOWN": {
+          "calculated_layers": [
+            3,
+            7
+          ],
+          "mock_saved_keys": [
+            "row-7"
+          ]
+        },
+        "readiness_barrier_missing_ir": {
+          "calculated_layers": [
+            3,
+            7
+          ],
+          "mock_saved_keys": [
+            "row-7"
+          ]
+        },
+        "lease_admit_first": {
+          "old_version": 1,
+          "current_version": 3,
+          "old_admission_revived": false
+        },
+        "lease_watcher_first": {
+          "old_version": 1,
+          "current_version": 3,
+          "old_admission_revived": false
+        },
+        "provenance_and_correction": {
+          "cross_job_previous_valid": 0,
+          "corrected_layer_previous_valid": 0,
+          "replacement_csv_previous_valid": 0
+        },
+        "equal_power_prelearning_content_proof": {
+          "excel_process_calls": 0,
+          "native_apply_calls": 0,
+          "unverified_history_promoted": false
+        },
+        "critical_csv_error": {
+          "critical_parser_error_propagated": true,
+          "history_promoted": false
+        },
+        "normal_between_layer_idle": {
+          "calculated_layers": [
+            3,
+            4
+          ],
+          "initial_handoff_reset_count": 1
+        },
+        "backward_wall_clock": {
+          "old_cutoff": "2026-10-29T10:00:01",
+          "new_cutoff": "2026-10-29T10:00:13",
+          "pre_change_measurement_admitted": false
+        },
+        "complete_chain_serialized": {
+          "chain_nodes": 3,
+          "native_execution": false
+        },
+        "extension_named_directories": {
+          "image_parent_preserved": true,
+          "directory_png_preserved": true,
+          "directory_zip_preserved": true
+        },
+        "full_path_alias_mock": {
+          "mixed_long_short_components_accepted": true,
+          "other_drive_folder_filename_rejected": true,
+          "only_authorized_expected_path_resolved": true,
+          "actual_windows_execution": false
+        }
+      }
+    },
+    {
+      "source_commit": "fce375954203779503ff485ed4255745383b54ca",
+      "result": "Earlier corrected snapshot: 72 focused tests passed in5.196s plus independently recorded adversarial probes; preserved evidence, superseded by6ee."
+    }
+  ],
+  "inspected_platform_evidence": {
+    "source_commit": "fce375954203779503ff485ed4255745383b54ca",
+    "directory": "/workspace/ir-auto-slice-20261029-review/windows-fce3759",
+    "actual_unit_tests": "283/283 passed in73.694s",
+    "native_auto_slice_gate": "FAILED first positive source guard with directory mismatch before hashing; original report/readiness retained. This is not a successful native validation of6ee.",
+    "other_non_excel_gates": "9 prior non-Excel gates passed on fce",
+    "excel": "COM unavailable; not validated",
+    "fresh_6ee_native_and_artifact_status": "Pending; no success inferred from queued execution or unit tests."
+  },
+  "required_before_distribution": [
+    "Inspect raw successful Windows auto-slice native report on the exact final source, including positive guard, topology negatives, extension-directory and real CSV long/short-alias flow.",
+    "Inspect exact packaged runtime full tests and all10 required non-Excel gates, ZIP/source/manifest/config verification, candidate and outer artifact digests.",
+    "Review exact publication workflow/publisher and bind final independent review to the actual source commit and unchanged candidate ZIP.",
+    "Keep evaluation prerelease versus stable approval distinct; missing Excel COM must remain explicitly recorded and stable/device gates false."
+  ],
+  "untested_limits": [
+    "Real original BJT ProductionControl/LayerMonitoring path producer was not supplied or exercised. User-pointed leaf selection is explicit source binding, not independent proof of that control's semantic role.",
+    "No actual Microsoft Excel COM, printer/sensor/PLC/lamp, live equipment UI or physical sampling timing validation performed. Existing final algorithm/equipment holds remain.",
+    "UI/CSV paths, timestamps and matching bytes cannot prove BJT discarded same-path cached image data; explicit reload acknowledgment remains required after same-directory byte changes.",
+    "Time budgets and bounded checks fail closed but do not establish hard real-time behavior of Windows/network file IO or eliminate all OS/UI TOCTOU races.",
+    "No fresh complete Linux suite is claimed by this reviewer; only the listed focused suite and independent probes were executed. Actual Windows6ee results were not yet available."
+  ],
+  "evidence_sha256": {
+    "sol-design-review.json": "2668f6e3d021dd1761b6170b7f45ef64818cd683494215071f75aa7a4f3efe9c",
+    "sol-post-core-review.json": "0f8d725aa3294facbfad7056d5be533f6eb21edfa21ef7251c7dc5d03a22f63b",
+    "sol-fce-adversarial-probes.json": "223da68312ff58df73d3ea957c9861536bce86d80978b59e0bbbdaa0dd34e410",
+    "sol-6ee-adversarial-probes.json": "5b47dbbd35389f772392179dc6d321da6c7e9b32e12c435ba0bb37f4f6a794ee",
+    "sol-6ee-focused.log": "f86686f669daa75876d184096960f36d4774d62ee472aa8343ae4aaeaeb117a9",
+    "sol_replay_corrected_core.py": "29931abc0d7fbb91f2e6239854c20d3ffe652befb5305230bd4a60b40b357a70"
+  },
+  "key_source_sha256": {
+    "app/auto_slice_source.py": "a795abfeaa12a66c2e5fd0134d26713b226454a90bcd3e8531fea61343dd56ad",
+    "app/windows_slice_source.py": "04e6849fabacb16b0d5648127654687bcea63c34c09f47916b96e451d6b8f94a",
+    "app/session.py": "6913a5b7b0ba8a383e273f06c7c1175dbb50882f2d54de2b4952fbd9ecec8714",
+    "app/csv_source.py": "d6e970843598f6b527c86c3b620b28dcb997b5c32d5f403b7fb3edcf76da4e2d",
+    "app/windows_ui_adapter.py": "e798a3823441e907360922a266d79f46323f98bdb4835683b29ec5102fc04ff5",
+    "app/native_helper.ps1": "4aef5b5d78a687f0417051bb9fed5d6dc6d7951280637222477d77388905b57f",
+    "app/layer_algorithm.py": "c58716206a14dab21239df024746a596828205084676b537fef47a0edf7ffc19",
+    "app/UiaBridge.dll": "181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f",
+    "app/excel_worker.ps1": "8da89bce68691fff1b438e1a71c9b5ab9313b3a96bcb2572dd2b5b0070f64075",
+    "app/templates/IR_슬라이싱_수동계산.xlsx": "7d870e35c7c288573bf5ab279ede6eaab8fe37633cd0afbcc2c389bcdd79c8b3"
+  }
+}

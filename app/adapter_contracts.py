@@ -17,6 +17,11 @@ class ControlSuspended(ControlUnavailable):
     pass
 
 
+class SourceSuspended(ControlUnavailable):
+    """A read-only auto-image proof changed; keep settings recovery separate."""
+    pass
+
+
 class TargetIdentityError(AdapterError):
     """The verified root/PID/machine identity was lost; do not rebind it."""
     pass
@@ -59,6 +64,10 @@ class UiSnapshot:
     observation_is_new: bool | None = None
     control_recoverable: bool = False
     control_epoch: int = 0
+    slicing_image_path: str = ""
+    recoating_finished: object = None
+    slice_lineage: str = ""
+    csv_generation: str = ""
 
 
 class UiAdapter(Protocol):
@@ -76,5 +85,7 @@ class UiAdapter(Protocol):
     def suspend_control(self, reason: str) -> None: ...
 
     def validate_control_epoch(self, expected: int) -> None: ...
+
+    def verify_image_observation(self, key: str, lineage: str, stop_event) -> bool: ...
 
     def disconnect(self) -> None: ...

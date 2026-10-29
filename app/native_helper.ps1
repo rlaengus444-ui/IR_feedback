@@ -33,6 +33,115 @@ function Owned($root, $window, $pidExpected) {
     return $window -ne [IntPtr]::Zero -and [BinderJetQueuedNavigation]::IsOwned($root, $window, $pidExpected)
 }
 
+function NormalizeSourceDirectory([string]$folder) {
+    $folder = [IO.Path]::GetFullPath($folder)
+    if ($folder.Length -gt [IO.Path]::GetPathRoot($folder).Length) { $folder = $folder.TrimEnd([char[]]@('\','/')) }
+    return $folder
+}
+
+function SourceContainer([string]$text, [bool]$directoryField=$false) {
+    $text = $text.Trim()
+    if (-not $text -or $text.Length -gt 4095 -or $text.IndexOfAny([char[]]@([char]0,[char]10,[char]13,[char]0x2026)) -ge 0) { throw 'Incomplete image source path.' }
+    $matchesPath = [regex]::Matches($text, '[A-Za-z]:[\\/]|\\\\')
+    if ($matchesPath.Count -ne 1) { throw 'Exactly one absolute image source path is required.' }
+    $start = $matchesPath[0].Index
+    $prefix = $text.Substring(0,$start).Trim().Trim([char[]]@('"',"'")).Trim().TrimEnd([char[]]@(':','=')).Trim().ToLowerInvariant()
+    if ($prefix -notin @('','path','folder','image path','image folder','slicing path','slicing image path','경로','폴더','이미지 경로','이미지 폴더','슬라이싱 경로','슬라이싱 이미지 경로')) { throw 'Unsupported image source path caption.' }
+    $path = $text.Substring($start).Trim().TrimEnd([char[]]@('"',"'")).Trim()
+    if ($path.IndexOfAny([char[]]@('*','?','<','>','|','"')) -ge 0 -or $path.Contains('...') -or $path.StartsWith('\\.\') -or $path.StartsWith('\\?\')) { throw 'Unsupported image source path.' }
+    $extension = [IO.Path]::GetExtension($path).ToLowerInvariant()
+    if ($extension -eq '.zip' -and -not $directoryField) { throw 'Automatic ZIP source lineage is not supported.' }
+    $folder = if (-not $directoryField -and $extension -in @('.png','.bmp','.tif','.tiff','.jpg','.jpeg')) { [IO.Path]::GetDirectoryName($path) } else { $path }
+    return NormalizeSourceDirectory $folder
+}
+
+function AssertBoundSourceChain($root, $pidExpected, $proof) {
+    if (-not ('BinderJetBoundSourceIdentity' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+public static class BinderJetBoundSourceIdentity {
+    [DllImport("user32.dll")] static extern bool IsWindow(IntPtr w);
+    [DllImport("user32.dll")] static extern bool IsChild(IntPtr p, IntPtr c);
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr w, out uint p);
+    [DllImport("user32.dll")] static extern IntPtr GetParent(IntPtr w);
+    [DllImport("user32.dll")] static extern int GetDlgCtrlID(IntPtr w);
+    [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern int GetClassName(IntPtr w,StringBuilder s,int n);
+    public static void Check(IntPtr root,IntPtr node,int pid,IntPtr parent,int id,string expectedClass) {
+        uint actual,rootPid;
+        if(!IsWindow(root)||!IsWindow(node)||GetWindowThreadProcessId(root,out rootPid)==0||rootPid!=(uint)pid||
+            GetWindowThreadProcessId(node,out actual)==0||actual!=(uint)pid||
+            (node!=root&&!IsChild(root,node))||GetParent(node)!=parent||GetDlgCtrlID(node)!=id)
+            throw new InvalidOperationException("The bound image-path parent/control identity changed; rebind it.");
+        var text=new StringBuilder(256);
+        if(GetClassName(node,text,text.Capacity)==0||!String.Equals(text.ToString(),expectedClass,StringComparison.Ordinal))
+            throw new InvalidOperationException("The bound image-path control class changed; rebind it.");
+    }
+}
+'@
+    }
+    $nodes = @($proof.chain)
+    if ($nodes.Count -lt 2 -or $nodes.Count -gt 64 -or [long]$nodes[0][0] -ne [long]$proof.hwnd -or
+        [long]$nodes[-1][0] -ne $root.ToInt64()) { throw 'A complete pinned image-path chain is required.' }
+    for ($index=0; $index -lt $nodes.Count; $index++) {
+        $node = @($nodes[$index])
+        if ($node.Count -ne 4 -or ($index+1 -lt $nodes.Count -and [long]$node[3] -ne [long]$nodes[$index+1][0])) { throw 'The pinned image-path chain is inconsistent.' }
+        try {
+            [BinderJetBoundSourceIdentity]::Check($root,[IntPtr][long]$node[0],$pidExpected,[IntPtr][long]$node[3],[int]$node[2],[string]$node[1])
+        } catch {
+            if (-not (Owned $root $root $pidExpected)) { $script:identityFailure=$true }
+            throw
+        }
+    }
+}
+
+function AssertSliceSource($root, $pidExpected, $proof) {
+    if ($null -eq $proof) { return }
+    $script:sourceWait = $true
+    AssertBoundSourceChain $root $pidExpected $proof
+    $sourceView = [IntPtr][long]$proof.home; $leaf = [IntPtr][long]$proof.hwnd
+    if (-not (Owned $root $sourceView $pidExpected) -or -not (Owned $root $leaf $pidExpected) -or
+        -not [BinderJetLeafMetadata]::IsDescendant($root,$sourceView,$leaf,$pidExpected)) { throw 'The bound Home image-path field was recreated; rebind it.' }
+    $caption = ([BinderJetNativeProcess]::ReadText($root,$sourceView,$pidExpected)).Trim()
+    if ($caption -cne [string]$proof.home_caption -or $caption.ToLowerInvariant() -notin @('home','홈')) { throw 'The bound Home view changed.' }
+    $folder = SourceContainer ([BinderJetNativeProcess]::ReadText($root,$leaf,$pidExpected)) ([bool]$proof.directory_field)
+    # .NET Framework may expand Windows8.3 names in GetFullPath. Normalize both
+    # the displayed value and the pinned expected directory using the same path.
+    $expectedFolder = NormalizeSourceDirectory ([string]$proof.directory)
+    if (-not [string]::Equals($folder,$expectedFolder,[StringComparison]::OrdinalIgnoreCase)) { throw 'The current image source folder changed.' }
+    $files = @($proof.files)
+    if ($files.Count -lt 1 -or $files.Count -gt 2) { throw 'Current/prior image proofs are required.' }
+    $timer = [Diagnostics.Stopwatch]::StartNew()
+    foreach ($file in $files) {
+        if ([string]$file.sha256 -cnotmatch '^[a-f0-9]{64}$') { throw 'Invalid expected image content digest.' }
+        if (-not [string]::Equals((SourceContainer ([string]$file.path)),$folder,[StringComparison]::OrdinalIgnoreCase)) { throw 'A layer image does not belong to the bound source folder.' }
+        $stream = $null; $sha = $null
+        try {
+            $stream = [IO.File]::Open([string]$file.path,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]7)
+            if ($stream.Length -le 0 -or $stream.Length -gt 268435456) { throw 'Image content size is outside its proof bound.' }
+            $sha = [Security.Cryptography.SHA256]::Create(); $buffer = New-Object byte[] 65536; $total = 0L
+            while (($count = $stream.Read($buffer,0,$buffer.Length)) -gt 0) {
+                if ($timer.ElapsedMilliseconds -gt 750) { throw 'Image content proof exceeded its 750ms bound; wait without applying.' }
+                $total += $count
+                if ($total -gt 268435456) { throw 'Image content grew beyond its proof bound.' }
+                $null = $sha.TransformBlock($buffer,0,$count,$buffer,0)
+            }
+            if ($timer.ElapsedMilliseconds -gt 750) { throw 'Image content proof exceeded its 750ms bound; wait without applying.' }
+            $null = $sha.TransformFinalBlock([byte[]]@(),0,0)
+            $actual = ([BitConverter]::ToString($sha.Hash)).Replace('-','').ToLowerInvariant()
+            if ($actual -cne [string]$file.sha256) { throw 'Image content hash changed; reanalysis and reload confirmation are required.' }
+        } finally {
+            if ($null -ne $stream) { $stream.Dispose() }
+            if ($null -ne $sha) { $sha.Dispose() }
+        }
+    }
+    AssertBoundSourceChain $root $pidExpected $proof
+    if (-not [string]::Equals((SourceContainer ([BinderJetNativeProcess]::ReadText($root,$leaf,$pidExpected)) ([bool]$proof.directory_field)),$folder,[StringComparison]::OrdinalIgnoreCase)) { throw 'The image source folder changed during content verification.' }
+    $script:sourceProofMillis = $timer.ElapsedMilliseconds
+    $script:sourceWait = $false
+}
+
 function MachineKind([string]$text) {
     $matchesMachine = [regex]::Matches($text, '(?i)(?:^|[^A-Z0-9])(M1|S3)(?:$|[^A-Z0-9])')
     $families = @($matchesMachine | ForEach-Object { $_.Groups[1].Value.ToUpperInvariant() } | Select-Object -Unique)
@@ -295,6 +404,7 @@ function PreparedControl($root, $pidExpected, $records) {
 
 $script:identityFailure = $false
 $script:controlWait = $false
+$script:sourceWait = $false
 
 try {
     $request = [Console]::In.ReadToEnd() | ConvertFrom-Json
@@ -372,6 +482,11 @@ try {
                 AssertAutomatic $root $pidExpected $response.handles
                 $response.state = ([BinderJetNativeProcess]::ReadText($root, (HandleOf $response.handles 'state'), $pidExpected)).Trim()
             }
+            'verify_slice_source' {
+                if ($null -eq $request.source_guard) { $script:sourceWait=$true; throw 'An image source proof is required.' }
+                AssertSliceSource $root $pidExpected $request.source_guard
+                $response = @{success=$true;source_proof_ms=$script:sourceProofMillis}
+            }
             'verify_control' {
                 AssertAutomatic $root $pidExpected $handles
                 AssertCsvFile $request.csv_token $request.observation
@@ -402,6 +517,11 @@ try {
                 AssertAutomatic $root $pidExpected $handles
                 $script:controlWait = $false
                 AssertCsvFile $request.csv_token $request.observation
+                AssertSliceSource $root $pidExpected $request.source_guard
+                if ($null -ne $request.source_guard) {
+                    AssertAutomatic $root $pidExpected $handles
+                    AssertCsvFile $request.csv_token $request.observation
+                }
                 [IO.File]::WriteAllText([string]$request.edit_marker, 'edit-may-have-started')
                 [BinderJetNativeFields]::SetIr($root, $ir, $pidExpected, [string]$request.power)
                 $after = ReadFields $root $pidExpected $request.field_map $scope
@@ -410,6 +530,11 @@ try {
                 AssertAutomatic $root $pidExpected $handles
                 AssertCsvFile $request.csv_token $request.observation
                 [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
+                AssertSliceSource $root $pidExpected $request.source_guard
+                if ($null -ne $request.source_guard) {
+                    AssertAutomatic $root $pidExpected $handles
+                    AssertCsvFile $request.csv_token $request.observation
+                }
                 # This durable marker precedes the only queued Save. A timeout,
                 # cancellation or uncertain result must never trigger a retry.
                 [IO.File]::WriteAllText([string]$request.save_marker, 'save-may-have-started')
@@ -425,7 +550,7 @@ try {
     }
     $response | ConvertTo-Json -Depth 10 -Compress
 } catch {
-    $kind = if ($script:identityFailure) { 'identity' } elseif ($script:controlWait) { 'control_wait' } else { 'operation' }
+    $kind = if ($script:identityFailure) { 'identity' } elseif ($script:sourceWait) { 'slice_wait' } elseif ($script:controlWait) { 'control_wait' } else { 'operation' }
     @{success=$false;error=$_.Exception.Message;error_kind=$kind} | ConvertTo-Json -Depth 3 -Compress
     exit 1
 }
