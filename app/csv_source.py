@@ -344,6 +344,11 @@ class MonitoringCsvReader:
             raise CsvSourceError("온도계 비활성 값(-1°C)이 기록되어 IR 제어를 중단합니다.")
         if start is not None and finish is not None and finish < start:
             raise self._context_error(context, index, start, finish, "완료 시각이 시작 시각보다 빠름")
+        if (self._resume_anchor_start is not None and index < context.first_layer and
+                start is not None and finish is not None):
+            # A zero thermometer value is not a measurement, but valid start
+            # and finish timestamps still identify a completed older row.
+            raise self._context_error(context, index, start, finish, "재시작 시작 행 뒤에 이전 완료 층이 나타남")
         if self._skipped_history_rows and index == context.first_layer:
             self._resume_anchor(context, index, start, finish, data["TimePrintingFinished"])
         if temperature == 0 or start is None or finish is None:

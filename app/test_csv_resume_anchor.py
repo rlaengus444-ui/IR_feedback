@@ -98,6 +98,22 @@ class ResumeAnchorTests(unittest.TestCase):
         self.append(encode([self.row(1060, self.started + timedelta(seconds=32), self.now, 44)]))
         self.assertTrue(self.reader.read().is_new)
 
+    def test_zero_temperature_completed_history_after_anchor_is_rejected(self):
+        old_zero = list(self.old)
+        old_zero[-1] = '0'
+        for split in ('same_batch', 'after_metadata', 'after_baseline'):
+            with self.subTest(split=split):
+                self.write([self.old, self.metadata()])
+                reader = self.make_reader()
+                if split != 'same_batch':
+                    self.assert_no_observation(reader.read())
+                if split == 'after_baseline':
+                    self.append(encode([self.next]))
+                    self.assertFalse(reader.read().is_new)
+                self.append(encode([old_zero]))
+                with self.assertRaises(CsvSourceError):
+                    reader.read()
+
     def test_chunked_append_first_sample_is_still_baseline_at_full_token(self):
         self.write([self.old, self.metadata()])
         self.assert_no_observation(self.reader.read())
