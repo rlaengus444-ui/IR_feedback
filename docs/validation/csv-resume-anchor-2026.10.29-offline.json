@@ -1,0 +1,34 @@
+{
+  "scope": "Linux offline/mock/Tk only",
+  "tests": 224,
+  "passed": true,
+  "seconds": 47.878,
+  "failures": [],
+  "errors": [],
+  "skips": [],
+  "platform_exclusions": [
+    "test_session.SingleInstanceTests.test_actual_private_mutex_prevents_a_second_owner_and_can_be_reacquired",
+    "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed"
+  ],
+  "log": "/workspace/ir-anchor-review/linux-suite.log",
+  "candidate_commit": "2d2c4af9253032dac237bb9cdbc2166aef27e02d",
+  "native_tk_teardown_warnings_observed": true,
+  "actual_user_csvs_received": false,
+  "actual_user_csv_replay_completed": false,
+  "windows_exe_validation_completed": false,
+  "hardware_validation_completed": false,
+  "distribution_allowed": false,
+  "control_algorithm_final_approval": "held",
+  "independent_post_review": "complete; offline source only",
+  "files": {
+    "app/csv_source.py": "883e3cc2f143f42bcaefa107096f36f735025a33f757bcf1191120d9e6391d1c",
+    "app/test_csv_resume_anchor.py": "c59aef421173d975bd59642c8f89c013c4c05a9e2aa6941be97dff71bc0c63f3",
+    "docs/CSV_RESUME_ANCHOR.ko.md": "8ff75cb7a1df04187fcbb5b73c17765c94c1e54dce753e41b1041c81e4d26c0b"
+  },
+  "independent_post_review_file": "csv-resume-anchor-2026.10.29-review.json",
+  "independent_post_review_sha256": "4ca122cb5fd3bebe1314abbffee9670983ee03e285562945d850f1ed2d089fc3",
+  "user_reports_csvs_uploaded": true,
+  "attachment_access_status": "No CSV file references in supplied message; no matching files in accessible attachments/shared/library folders. User upload report does not establish local access.",
+  "publication_status": "No new EXE/build/release/main/Notion/Drive update; real-data replay and Windows package validation pending.",
+  "documentation_updated_after_review": true
+}
