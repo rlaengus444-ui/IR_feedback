@@ -49,6 +49,16 @@ try {
     $token = TokenFor $raw
     $noHash = $token.Clone(); $noHash.Remove('sha256')
     MustReject $noHash 'missing hash rejected'
+    $noMtime = $token.Clone(); $noMtime.Remove('mtime_ticks')
+    MustReject $noMtime 'missing mtime rejected as terminal'
+    foreach ($badMtime in @($null, $true, 'not ticks', [double]1.5, [long]0, [long]-1, ([DateTime]::MaxValue.Ticks + [long]1))) {
+        $invalid = $token.Clone(); $invalid.mtime_ticks = $badMtime
+        MustReject $invalid ('invalid mtime type/range rejected as terminal: ' + [string]$badMtime)
+    }
+    foreach ($badSize in @($null, $true, '32', [double]1.5)) {
+        $invalid = $token.Clone(); $invalid.size = $badSize
+        MustReject $invalid ('invalid size type rejected as terminal: ' + [string]$badSize)
+    }
     $oversized = $token.Clone(); $oversized.size = 33554433
     MustReject $oversized 'oversized evidence rejected'
     $corrupt = $token.Clone(); $corrupt.sha256 = '0' * 64

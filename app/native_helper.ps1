@@ -275,12 +275,18 @@ function AssertCsvFile($token, $observation) {
     if ([string]::IsNullOrWhiteSpace($path) -or [IO.Path]::GetFileName($path) -notmatch '^LayerDatasheet_\d{8}_\d{6}\.csv$') { throw 'A verified Monitoring CSV token is required.' }
     $expectedHash = [string](ValueOf $token 'sha256')
     if ($expectedHash -cnotmatch '^[0-9a-f]{64}$') { throw 'A SHA256-bound Monitoring CSV token is required.' }
-    $expectedSize = [long](ValueOf $token 'size')
+    $sizeValue = ValueOf $token 'size'
+    if ($sizeValue -isnot [int] -and $sizeValue -isnot [long]) { throw 'An integer Monitoring CSV size is required.' }
+    $expectedSize = [long]$sizeValue
     if ($expectedSize -le 0 -or $expectedSize -gt 33554432) { throw 'Monitoring CSV exceeds the content verification bound.' }
+    $mtimeValue = ValueOf $token 'mtime_ticks'
+    if ($mtimeValue -isnot [int] -and $mtimeValue -isnot [long]) { throw 'Integer Monitoring CSV UTC ticks are required.' }
+    $expectedMtime = [long]$mtimeValue
+    if ($expectedMtime -le 0 -or $expectedMtime -gt [DateTime]::MaxValue.Ticks) { throw 'Monitoring CSV UTC ticks are outside the supported range.' }
     $file = New-Object IO.FileInfo($path)
     $file.Refresh()
     if (-not $file.Exists -or $file.Length -ne $expectedSize -or
-        $file.LastWriteTimeUtc.Ticks -ne [long](ValueOf $token 'mtime_ticks')) {
+        $file.LastWriteTimeUtc.Ticks -ne $expectedMtime) {
         StopObservation 'The Monitoring CSV changed after the decision; no settings were saved.'
     }
     # Reopen for the second pass so an atomic replacement cannot leave both
@@ -290,7 +296,7 @@ function AssertCsvFile($token, $observation) {
         if ((CsvContentHash $path $expectedSize) -cne $expectedHash) { StopObservation 'The Monitoring CSV content changed after the decision.' }
         $file.Refresh()
         if (-not $file.Exists -or $file.Length -ne $expectedSize -or
-            $file.LastWriteTimeUtc.Ticks -ne [long](ValueOf $token 'mtime_ticks')) { StopObservation 'The Monitoring CSV changed during verification.' }
+            $file.LastWriteTimeUtc.Ticks -ne $expectedMtime) { StopObservation 'The Monitoring CSV changed during verification.' }
     }
     $age = ([DateTime]::UtcNow - $file.LastWriteTimeUtc).TotalSeconds
     if ($age -lt -2 -or $age -gt 5) { throw 'The completed CSV record is no longer fresh enough for an IR update.' }
