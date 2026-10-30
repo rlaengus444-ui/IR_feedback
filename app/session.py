@@ -8,7 +8,7 @@ from pathlib import Path
 import threading
 import time
 
-from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, SourceSuspended, MachineWindow
+from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, SourceSuspended, ObservationSuspended, MachineWindow
 from layer_algorithm import LayerAdaptiveController, LayerSettings
 from target_temperature import TargetTemperatureSetting
 from excel_workbook import WorkbookController, WorkbookSpec
@@ -170,6 +170,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             started = time.monotonic()
             applied = {}
             snapshot = adapter.read_snapshot(stop_event)
+            snapshot_seconds = time.monotonic() - started
             if stop_event.is_set():
                 break
             if (snapshot.target.machine, snapshot.target.pid, snapshot.target.hwnd) != (
@@ -406,14 +407,21 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                             if options.workbook_spec is not None and options.workbook_spec.slice_start_cell:
                                 extra['slice_features'] = (auto_admission.features if auto_admission is not None
                                     else slice_dataset.features(snapshot.layer_index + 1) if slice_dataset is not None else None)
-                            result = controllers[heater].process(snapshot.layer_index + 1,
-                                snapshot.t_recoating_c, values[heater], **extra)
+                            calculation_started = time.monotonic()
+                            try:
+                                result = controllers[heater].process(snapshot.layer_index + 1,
+                                    snapshot.t_recoating_c, values[heater], **extra)
+                            finally:
+                                algorithm_name = 'Excel' if options.workbook_spec is not None else '기본'
+                                emit('log', f'소요시간 · {snapshot.layer_index + 1}층 IR {heater} · '
+                                     f'CSV/UI 조회 {snapshot_seconds:.3f}초 · {algorithm_name} 계산 '
+                                     f'{time.monotonic() - calculation_started:.3f}초')
                             held[heater] = result.power_percent
                             reasons[heater] = result.reason
                         last_layer = snapshot.layer_index
                         if effective_mode == "control":
                             writes = 0
-                            source_write_held = False
+                            write_held = False
                             for heater in heaters:
                                 if stop_event.is_set():
                                     break
@@ -432,6 +440,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                     raise ControlUnavailable("기존 UI에 전달할 유효한 출력 범위를 벗어났습니다.")
                                 if math.isclose(power, values[heater], rel_tol=0, abs_tol=1e-9):
                                     continue  # Holding a value needs no redundant Save.
+                                apply_started = time.monotonic()
                                 try:
                                     validate_epoch = getattr(adapter, "validate_control_epoch", None)
                                     if validate_epoch is not None:
@@ -444,8 +453,20 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                 except SourceSuspended as error:
                                     auto_source.guard_failed(str(error))
                                     held.clear(); reasons.clear(); auto_baseline_pending = True
-                                    source_write_held = True
+                                    write_held = True
                                     status = '연결 유지 · 이미지 대응 재확인: ' + str(error)
+                                    break
+                                except ObservationSuspended as error:
+                                    # No edit/Save started. Never retry the old
+                                    # decision or retain its controller state.
+                                    # Reuse the baseline/fresh-layer barrier,
+                                    # without Sequence settings recovery.
+                                    hold_feedback()
+                                    control_holding = False
+                                    effective_mode = "observation-waiting"
+                                    can_calculate = False
+                                    write_held = True
+                                    status = "연결 유지 · CSV 갱신 대기: " + str(error)
                                     break
                                 except ControlSuspended as error:
                                     adapter.suspend_control(str(error))
@@ -454,10 +475,14 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                     can_calculate = False
                                     status = "연결 유지 · IR 적용 대기: " + str(error)
                                     break
+                                finally:
+                                    emit('log', f'소요시간 · {snapshot.layer_index + 1}층 IR {heater} · '
+                                         f'재검증·저장 요청 {time.monotonic() - apply_started:.3f}초 '
+                                         '(Save 성공 여부는 별도 기록)')
                                 applied[heater] = power
                                 expected_settings[heater] = power
                                 writes += 1
-                            if not control_holding and not source_write_held and not (image_consuming and slice_setting.desired()[0] != slice_epoch):
+                            if not control_holding and not write_held and not (image_consuming and slice_setting.desired()[0] != slice_epoch):
                                 status = "T_recoating 수신 · UI 자동 적용 완료" if writes else "T_recoating 수신 · 기존 설정 유지(저장 없음)"
                         else:
                             status = "T_recoating 수신 · 계산만 표시"

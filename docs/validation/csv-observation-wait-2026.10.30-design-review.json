@@ -1,0 +1,138 @@
+{
+  "review_stage": "PRE-design",
+  "candidateSHA": "a5dd488c5a582e3967f1c97960df7b2243f3982c",
+  "candidate_tree": "a68118998de1711a63ad5094b4ebbabad1b0c86c",
+  "parent_declared_code_identity": "6ee48f34c39a18d290aab6391a587769ce913e96",
+  "source_workspace": "/workspace/IR_feedback_auto_slice",
+  "source_worktree_clean_at_inspection": true,
+  "review_route": {
+    "mechanism": "native collaboration subagent",
+    "task": "/root/sol_reviewer_csv258",
+    "requested_role": "sol_reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_attested": false,
+    "cli_authentication_repaired_or_tested": false
+  },
+  "required_material_read": [
+    "AGENTS.md",
+    "CODEX_REVIEW_PROTOCOL.md",
+    "README.md",
+    "app/README.ko.md",
+    "docs/VALIDATION.ko.md"
+  ],
+  "decision": "Proceed to narrow offline implementation with the constraints below; independent POST diff-and-test review is still required.",
+  "design": {
+    "scope": [
+      "Add a separate ObservationSuspended subtype under ControlUnavailable, alongside ControlSuspended and SourceSuspended, for positively pre-edit CSV-observation invalidation.",
+      "Classify stable same-run newer completed rows and a token unavailable because the source is being written. Do not broadly catch or relabel ControlUnavailable, AdapterError or CsvSourceError.",
+      "On this exception, retain the connection and valid settings baseline, invalidate the cached UI/CSV snapshot, discard the old calculated command, reset all controller history and clear held proposals/reasons.",
+      "Use the first subsequently verified current valid row only as a baseline, even when it was already consumed by the failed guard and observation_is_new is false. Resume calculation only on a fresh genuinely different layer and observation key under the usual AUTO/RUNNING, current-IR and image/source gates.",
+      "Keep CSV observation recovery separate from settings HOLD/_recover_control and control_epoch. A CSV append must not navigate the UI, adopt new settings or wait forever for a settings epoch that will not change.",
+      "Native AssertCsvFile may report a bounded structured observation_wait kind for explicit dynamic evidence changes before editing. Set the classification only on known dynamic rejection branches, clear it on success, and retain identity failure precedence.",
+      "Preserve edit_marker/save_marker precedence: any failure with either marker present remains AmbiguousWriteError, latches the fault, and receives no automatic retry, Save, rollback or heater action. Add ObservationSuspended to the nonfault whitelist only after both markers have been checked."
+    ],
+    "minimal_non_goals": [
+      "No changes to the control law, gain, target profile, output bounds, maximum step or workbook formula semantics.",
+      "No relaxation of parser validity, -1 sentinel, job membership/conflicts, duplicate/regressing layers, bounded I/O, freshness or hash guards.",
+      "Keep run-key mismatch, unclassified/malformed tokens, stale observations and unrelated helper failures terminal in this minimal fix. A separately designed run-transition recovery would need its own evidence.",
+      "No equipment access, real Excel automation, dependency installation, binary replacement, distribution or network mutation."
+    ],
+    "relevant_flow": [
+      "MonitoringCsvReader.read is stateful and consuming: it can advance latest/offset during either pre-edit guard, and returns token=None for partial or unstable files.",
+      "WindowsUiAdapter._verify_csv_observation currently updates _new_sample_key on a same-run new sample, then raises the screenshot ControlUnavailable at app/windows_ui_adapter.py:427 for token loss or key/run mismatch.",
+      "run_ui_session calls controller.process before apply_ir_power. Its apply handlers at app/session.py:444 and :450 handle SourceSuspended and ControlSuspended, so the current generic ControlUnavailable escapes and finally disconnects.",
+      "Native AssertCsvFile is called in read-only verify_control, in apply before edit_marker, and again after edit_marker before Save. Exception classification alone does not prove that no edit occurred; durable markers supply that boundary."
+    ]
+  },
+  "findings": [
+    {
+      "id": "PRE-1",
+      "severity": "high",
+      "location": "app/windows_ui_adapter.py:414-437; app/session.py:435-456",
+      "finding": "A benign newer-row/partial-write race is treated as a terminal capability failure. Both supplied-byte replay cases reproduce the exact screenshot error before native apply or Save.",
+      "required_resolution": "Use a narrow pre-edit observation exception and a connected session recovery path. Do not make all ControlUnavailable exceptions recoverable."
+    },
+    {
+      "id": "PRE-2",
+      "severity": "high",
+      "location": "app/session.py:409-413; app/windows_ui_adapter.py:323-330,419-425",
+      "finding": "The failed calculation has already advanced controller/workbook state, and the guard may already have consumed a newer CSV row. Merely continuing the loop can retain poisoned history or calculate immediately from a row intended as a recovery baseline.",
+      "required_resolution": "Reset every controller, clear old proposals, invalidate cached snapshots, consume the current verified row as baseline without process/Save, and require a fresh different layer/key before calculation. Retain the existing _new_sample_key behavior for a fresh row consumed by the guard."
+    },
+    {
+      "id": "PRE-3",
+      "severity": "high",
+      "location": "app/native_helper.ps1:240-291,490-536,552-554; app/windows_ui_adapter.py:533-541,579-585",
+      "finding": "A broad native wait flag around all AssertCsvFile work could turn malformed tokens or unknown failures into recoverable waits. The same CSV guard also runs after the IR input was edited.",
+      "required_resolution": "Classify only explicit dynamic proof-change branches, keep token/path/hash/size validation and unclassified failures fatal, and ensure marker existence overrides observation_wait/control_wait/slice_wait into AmbiguousWriteError before any recovery."
+    },
+    {
+      "id": "PRE-4",
+      "severity": "medium",
+      "location": "app/session.py:328-357,444-460; app/windows_ui_adapter.py:419-427",
+      "finding": "Observation recovery must compose with AUTO/IR readiness, settings recovery and automatic image handoff. A row observed while readiness is absent must not become a delayed Save when readiness returns; a run mismatch must not be mistaken for the append race.",
+      "required_resolution": "Keep an explicit baseline barrier across those waits, preserve parser/job-conflict errors, and test cached/same-layer rows plus concurrent settings/image waits. Avoid setting control_holding unless genuine settings recovery is required."
+    }
+  ],
+  "testevidence": {
+    "uploaded_sources": [
+      {
+        "path": "/workspace/attachments/c2706a68-3efd-458c-9036-e02e9982bf96/층별_IR_온도.csv",
+        "sha256": "de6f749a512242613a69ecbdd3b2668ec0d13662b482874a90736e855da35868",
+        "rows": 216,
+        "displayed_layer_range": [41, 256]
+      },
+      {
+        "path": "/workspace/attachments/f0326ec9-6e7f-460c-8424-6be9ec558b2c/LayerDatasheet_20261029_191426.csv",
+        "sha256": "bfeadfff9304dc90bcdf1b056190a38db5a95775681c0c959b7e1914e6fb4038",
+        "rows": 258,
+        "last_temperatures_c": {"256": 66.3, "257": 63.3, "258": 62.0}
+      }
+    ],
+    "independently_executed_reproduction": {
+      "command": "python /workspace/ir-csv258-review/reproduce_real_csv.py --app /workspace/IR_feedback_auto_slice/app --output /workspace/ir-csv258-review/sol-design-real-csv.json",
+      "script_authorship": "Parent supplied the script; reviewer inspected it and independently executed it against the clean immutable source.",
+      "artifact": "/workspace/ir-csv258-review/sol-design-real-csv.json",
+      "method": "Unmodified uploaded CSV byte prefixes in isolated temporary files; reconstructed deterministic job log, frozen historical clock, synthetic settings and mocked native UI only.",
+      "cases": [
+        {"name": "complete 257 appended during verify_control after 256 observation", "exception": "ControlUnavailable", "exact_screenshot_message": true, "native_apply_requests": 0, "saves": 0},
+        {"name": "first 225 bytes of 257 appended during verify_control after 256 observation", "exception": "ControlUnavailable", "exact_screenshot_message": true, "native_apply_requests": 0, "saves": 0}
+      ]
+    },
+    "baseline_broad_suite": {
+      "modules": ["test_csv_source", "test_windows_ui_adapter", "test_csv_reconnect", "test_csv_resume_anchor", "test_live_settings", "test_session", "test_auto_slice_source", "test_slice_handoff"],
+      "tests_run": 161,
+      "result": "154 passed; 1 failure and 6 errors caused by platform/display requirements, not presented as a full suite pass.",
+      "environment_failures": ["Windows-only helper path exits before the mocked child can be spawned/killed", "Windows named mutex unavailable on Linux", "5 Tk ViewTests require a display; DISPLAY is absent"],
+      "log": "/workspace/ir-csv258-review/sol-design-tests.log"
+    },
+    "baseline_focused_suite": {
+      "tests_run": 154,
+      "result": "PASS",
+      "failures": 0,
+      "errors": 0,
+      "excluded_environment_cases": 7,
+      "result_artifact": "/workspace/ir-csv258-review/sol-design-focused-tests.json",
+      "log": "/workspace/ir-csv258-review/sol-design-focused-tests.log"
+    },
+    "required_post_regressions": [
+      "Inject complete newer row and incomplete tail at both Python guard boundaries; zero native apply/Save, connection retained, no settings recovery/navigation.",
+      "Inject explicit native CSV proof change in read-only verify_control and pre-edit apply; zero edit/Save and recoverable observation wait.",
+      "Repeat classified native failures after edit_marker and save_marker; terminal AmbiguousWriteError, fault latched, no retry or rollback.",
+      "After a race, verify controller/workbook reset, empty stale proposals and no process/Save on the first current valid baseline, repeated key, same-layer changed key, cached row or stale row. Only a fresh different layer is eligible later.",
+      "Cover a newer row consumed by guard reads, repeated partial reads and completion, including unmodified uploaded row 256/257/258 byte-prefix replay.",
+      "Keep malformed header/column/number, -1, job conflict, changed run, duplicate/regressing layer, malformed token, hash/bounds, stale and unknown helper failures protected.",
+      "Exercise observation waits together with AUTO missing, current IR missing, control epoch/settings hold and automatic image lineage/source handoffs; ensure no delayed replay and no false Save success."
+    ]
+  },
+  "limits": [
+    "This is a pre-design review of unchanged source, not an approval of an implemented diff or a release.",
+    "The uploaded final CSV and screenshot identify a reproduced failure family. Without the original machine log and exact in-flight file state, they do not prove which race occurred during that run.",
+    "The extension disconnect is explained by the exception path. These tests do not establish why BinderJet stopped before layer 259 or demonstrate that the extension commanded that stop.",
+    "Native PowerShell execution, Windows UI/EXE behavior, real Excel COM and the 7 platform/display checks were not validated here. No pwsh, powershell or xvfb-run executable was available.",
+    "No S3/M1 equipment, physical sensor freshness, PLC/lamp output, long-run loop stability, packaging or distribution validation was performed.",
+    "Normal-looking old sensor readings may remain indistinguishable from fresh physical measurements in CSV alone.",
+    "No source, uploaded file or release artifact was changed by this review; only separate review artifacts and temporary mock fixtures were written."
+  ]
+}
