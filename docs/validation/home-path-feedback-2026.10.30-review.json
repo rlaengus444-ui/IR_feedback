@@ -1,0 +1,148 @@
+{
+  "review_stage": "POST-independent-GUI-diff-and-test",
+  "status": "complete",
+  "base_commit": "232bd8d02cc4c127138f2cbb279b71d54b434071",
+  "candidate_commit": "12a6acba94c9078456cea1e17f8ebca9f84857cb",
+  "candidate_tree": "ca368d08613ed415cfe483fbf65667d5a5368a4c",
+  "version": "2026.10.30-csv-wait.2",
+  "worktree_clean_at_final_inspection": true,
+  "review_route": {
+    "mechanism": "native collaboration subagent follow-up",
+    "task": "/root/sol_reviewer_csv258",
+    "requested_role": "sol_reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_attested": false,
+    "cli_authentication_repaired_or_tested": false
+  },
+  "files_reviewed": [
+    ".github/workflows/validate-slice.yml",
+    "README.md",
+    "VERSION.txt",
+    "app/README.ko.md",
+    "app/slice_panel.py",
+    "app/standalone_ir.py",
+    "app/test_auto_archive_ui.py",
+    "app/test_auto_slice_ui.py",
+    "docs/AUTO_SLICE.ko.md",
+    "release_tools/windows_auto_slice_probe.py",
+    "validation/AutoSliceSourceFixture.cs"
+  ],
+  "file_sha256": {
+    ".github/workflows/validate-slice.yml": "c37c834d81ab8d3cbd316ad31d7c8ef642698bc80d5e9bd9c86ad6fbdaf53d94",
+    "README.md": "8f524fa0ad36f7447d5fa9d2713fd92b0d24ec3a9ae1f7b310206e0ab8db1de4",
+    "VERSION.txt": "7863efe803f1a80dfb7c28f39006f5d3f2dab48fde82e35e350664ab6ceca472",
+    "app/README.ko.md": "5999caf2488a4e6e438c9f2e82b1acf9b1c7b38862ebc9e8410269f1356eacb1",
+    "app/slice_panel.py": "55cc70e7d2bf94d6675851edc541a35e23d3b238005be3ce549f699c261e9a4e",
+    "app/standalone_ir.py": "d8456b9943f68cfb59a8729fb5ae1d7a5a9f3b4e06300b9d3430450f7894e433",
+    "app/test_auto_archive_ui.py": "6cc2759d9c041ac46c0ac27b09513a0ecc7d58d72ff1084092acff488b91c1f0",
+    "app/test_auto_slice_ui.py": "e9b143380a42bd82c278b005c4b26549262b745f936b4fbab754a46a200b757c",
+    "docs/AUTO_SLICE.ko.md": "e7d53c16f3e79cda373f409246cf37a1d85159dbca23febec07d82d526f9841a",
+    "release_tools/windows_auto_slice_probe.py": "38c11fdbbcd8ec44ff332b96ef8675ba38f848d9e0320ff78982f0a5ad59cd36",
+    "validation/AutoSliceSourceFixture.cs": "c0158c18a0cb57df13b250f9a6bdc3fde4a7f03280d608a9e6a4d8b3afde6c0b"
+  },
+  "decision": "No unresolved code findings in this narrow GUI patch. The confirmed pump and feedback defects are addressed. This source review does not approve equipment application or distribution and does not establish compatibility with the actual screenshot field.",
+  "unresolved_findings": [],
+  "resolved_findings": [
+    {
+      "id": "GUI-1",
+      "severity": "P1",
+      "finding": "The session can emit observation-waiting but _show_snapshot lacked its label. KeyError escaped _pump before root.after, preventing later polling and queued binding-result handling.",
+      "resolution": "Add the explicit CSV-wait GUI label. The Tk regression drives the actual pump, verifies the next callback is scheduled and then delivers a later confirmed binding result.",
+      "verification": "Baseline read-only mocked-widget replay raised KeyError(observation-waiting) with zero scheduled follow-up callbacks; final committed Tk regression passes."
+    },
+    {
+      "id": "GUI-2",
+      "severity": "P2",
+      "finding": "Binding failure text was stored in auto_status and immediately replaced by the connected watcher refresh, with no dialog or durable failure log.",
+      "resolution": "Dedicated binding_status stores countdown and result separately from watcher auto_status. Current failures produce a main-thread error dialog, visible failure text, bounded UI log and existing persistent error log. Previous confirmed binding is retained.",
+      "verification": "Connected watcher overwrite regression passes. Reviewer independently checked stale errors cannot alter status/log/binding/watcher."
+    },
+    {
+      "id": "GUI-3",
+      "severity": "P2",
+      "finding": "An empty exception string or None result could enter the success-preview path and dereference source=None.",
+      "resolution": "Supply a nonempty capture-error fallback and reject missing binding/source before preview. Missing target is visible without starting capture.",
+      "verification": "Committed invalid-result tests pass; reviewer drove the actual countdown/capture queue with an empty RuntimeError and observed a main-thread error dialog with no preview/adoption."
+    },
+    {
+      "id": "GUI-4",
+      "severity": "P2",
+      "finding": "A result can become stale while the confirmation dialog is open.",
+      "resolution": "Recheck closing, ticket serial, session generation and target immediately after askyesno before adopting or restoring a result.",
+      "verification": "Committed close/new-ticket/target cases pass; reviewer independently changed session generation inside the preview callback and verified no binding was adopted."
+    }
+  ],
+  "scope_checks": [
+    "Production native path reader and source-proof code are unchanged. No WINDOW/UIA/OCR fallback, arbitrary tree scan or CSV path guess was added.",
+    "CSV parsing, session/control behavior, formulas, workbook controller, gains/output limits and edit/Save guards are unchanged.",
+    "Bindings remain explicit and require the existing preview confirmation. Stale/closing/wrong-target results are filtered before dialogs or adoption.",
+    "Version strings and Windows validation workflow candidate ZIP names agree on csv-wait.2.",
+    "Documentation distinguishes supported STATIC/EDIT fields from an unverified custom field and does not claim the screenshot field now binds."
+  ],
+  "validation_coverage_gap": {
+    "finding": "The earlier 295-test result and prior independent review missed the new session effective_mode reaching the real GUI consumer. They did not exercise observation-waiting through _show_snapshot/_pump.",
+    "correction": "A committed Tk regression now covers CSV-wait rendering, continued scheduling and a subsequent binding result. Reviewer also rendered all seven current session modes.",
+    "prior_tests_not_relabelled": "Earlier evidence remains historical and is not presented as coverage of this missing GUI path."
+  },
+  "independently_executed_tests": {
+    "final_tk_suite": {
+      "candidate": "12a6acba94c9078456cea1e17f8ebca9f84857cb",
+      "modules": [
+        "test_auto_archive_ui",
+        "test_auto_slice_ui",
+        "test_slice_live_ui",
+        "test_new_features",
+        "test_session.ViewTests"
+      ],
+      "tests_run": 42,
+      "passed": true,
+      "elapsed_seconds": 5.814,
+      "display": ":96",
+      "log": "/workspace/ir-home-path-review/sol-gui-final-tests.log"
+    },
+    "adversarial_tk_suite": {
+      "candidate": "12a6acba94c9078456cea1e17f8ebca9f84857cb",
+      "tests_run": 4,
+      "passed": true,
+      "elapsed_seconds": 1.548,
+      "scope": [
+        "All seven current session modes render",
+        "Actual countdown/queued empty capture failure produces main-thread feedback",
+        "Stale error changes no dialog/log/state/watcher",
+        "Generation changed inside confirmation cannot adopt stale binding"
+      ],
+      "script": "/workspace/ir-home-path-review/sol-gui-adversarial.py",
+      "summary": "/workspace/ir-home-path-review/sol-gui-adversarial-summary.json",
+      "log": "/workspace/ir-home-path-review/sol-gui-adversarial-final.log"
+    },
+    "static_checks": [
+      "git diff --check passed",
+      "python -m compileall -q app passed",
+      "Exact backend-file diff check confirms no production native/parser/session/controller changes"
+    ]
+  },
+  "native_fixture_review": {
+    "files": [
+      "validation/AutoSliceSourceFixture.cs",
+      "release_tools/windows_auto_slice_probe.py"
+    ],
+    "scope": "Test-only AutoEllipsis/disabled noneditable Label, full native text, and matching Python/native-source-proof rejection of a literal ellipsis. Actual label class is recorded.",
+    "execution_status": "Statically reviewed; final Windows native execution and raw reports were pending at this review completion.",
+    "does_not_prove": "Compatibility with the actual BJT screenshot control or its unprovided implementation."
+  },
+  "evidence_read_but_not_independently_executed": {
+    "baseline_targeted_failure_log": "/workspace/ir-home-path-review/before-ui-tests.txt",
+    "parent_after_log": "/workspace/ir-home-path-review/after-ui-tests-final.txt"
+  },
+  "equipment_application_approved": false,
+  "evaluation_distribution_allowed": false,
+  "limits": [
+    "Actual BJT field class, full exposed path and successful five-second bind/preview remain unverified. The optional user question about the steps used has not been answered.",
+    "The screenshot alone does not establish STATIC, EDIT, owner-drawn WINDOW or literal versus visually rendered ellipsis.",
+    "Tk tests used local offline widgets and mocked native readers/adapters; no BJT UI, sensor, PLC, lamp or heater was accessed.",
+    "No Windows EXE/package test, actual Excel COM, performance measurement or equipment validation is established by this GUI review.",
+    "The final Windows candidate run and new native Label probe results require separate raw-evidence review.",
+    "No repository source, release artifact, remote application, GitHub or Notion content was modified by this reviewer; only separate review scripts/logs/JSON were written."
+  ]
+}

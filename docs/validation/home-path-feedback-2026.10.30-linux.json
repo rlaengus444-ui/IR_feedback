@@ -1,0 +1,13 @@
+{
+  "source_commit": "12a6acba94c9078456cea1e17f8ebca9f84857cb",
+  "run": 299,
+  "passed": true,
+  "seconds": 52.728302822011756,
+  "errors": [],
+  "failures": [],
+  "skipped": [],
+  "excluded_windows_only": [
+    "test_session.SingleInstanceTests.test_actual_private_mutex_prevents_a_second_owner_and_can_be_reacquired",
+    "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed"
+  ]
+}
