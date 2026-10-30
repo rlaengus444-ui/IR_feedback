@@ -1,0 +1,135 @@
+{
+  "review_stage": "POST-independent-diff-and-test",
+  "status": "complete",
+  "baseSHA": "a5dd488c5a582e3967f1c97960df7b2243f3982c",
+  "initial_candidateSHA": "fa882035e1dbadeb6e40f8e5ff534a8c65f90a0f",
+  "candidateSHA": "ddd92159be627384880e398c8953ba79d6721ac9",
+  "candidate_tree": "ec45a0f730d967f0b138b399927213ad9762d047",
+  "workspace": "/workspace/IR_feedback_csv258",
+  "worktree_note": "Tracked source matched the final immutable commit. Parent-authored untracked docs/validation/csv-observation-wait-2026.10.30-offline.json was present at final inspection and is outside this committed-diff review.",
+  "review_route": {
+    "mechanism": "native collaboration subagent follow-up",
+    "task": "/root/sol_reviewer_csv258",
+    "requested_role": "sol_reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_attested": false,
+    "cli_authentication_repaired_or_tested": false
+  },
+  "decision": "Independent code review complete. No unresolved findings remain in the final committed diff. Accept the narrow fix for further offline/candidate validation; this is not equipment, Excel COM, packaging-distribution or final control approval.",
+  "files_reviewed": [
+    "app/adapter_contracts.py",
+    "app/windows_ui_adapter.py",
+    "app/session.py",
+    "app/native_helper.ps1",
+    "app/test_csv_observation_wait.py",
+    "release_tools/windows_csv_guard_probe.ps1",
+    "release_tools/verify_package.py",
+    ".github/workflows/validate-slice.yml",
+    "VERSION.txt",
+    "README.md",
+    "app/README.ko.md",
+    "docs/CSV_OBSERVATION_WAIT.ko.md",
+    "docs/validation/csv-observation-wait-2026.10.30-design-review.json"
+  ],
+  "findings": [
+    {
+      "id": "POST-1",
+      "severity": "P2",
+      "status": "resolved",
+      "initial_location": "app/native_helper.ps1 AssertCsvFile at fa882035",
+      "finding": "Missing/null mtime_ticks cast to zero and entered the recoverable dynamic-file mismatch path, contrary to the declared malformed-token contract. Size also lacked a strict integer type check.",
+      "resolution_commit": "ddd92159be627384880e398c8953ba79d6721ac9",
+      "resolution": "Validate integer size and mtime_ticks before file comparisons; reject nonpositive/out-of-range UTC ticks. All later comparisons use the validated values. The native probe adds missing/null/bool/string/fractional/range cases.",
+      "verification": "Independently inspected the complete follow-up diff and production ordering. The real PowerShell probe was not executable in the reviewer Linux environment; its Windows execution remains a separate validation limit."
+    },
+    {
+      "id": "POST-2",
+      "severity": "P3",
+      "status": "resolved",
+      "initial_location": "docs/CSV_OBSERVATION_WAIT.ko.md replay description at fa882035",
+      "finding": "The replay injected the next row from verify_control after the mocked workbook calculation returned, while the document said it happened during calculation. That wording could confuse forced race reproduction with measured calculation latency.",
+      "resolution_commit": "ddd92159be627384880e398c8953ba79d6721ac9",
+      "resolution": "The document now specifies forced injection after calculation, during pre-edit reverification. It expressly states that the replay does not measure actual Excel COM latency.",
+      "verification": "Independently compared the corrected document with the inspected replay script and executed the replay."
+    }
+  ],
+  "unresolved_findings": [],
+  "review_conclusions": [
+    "ObservationSuspended is a separate ControlUnavailable subtype. Same-run token loss or superseded observations have a connected recovery path; a changed run, parser error, stale same observation and unclassified error still escape that path.",
+    "The adapter invalidates cached snapshots on observation suspension and preserves recognition of a new row consumed by a guard read. This avoids treating cached old data as the recovery baseline.",
+    "The session resets controller/workbook history and clears stale proposals, reuses the first-valid-baseline/fresh-different-layer barrier, and does not request settings recovery for CSV waits. Readiness loss, cached rows and automatic-image admission do not bypass that barrier in the exercised cases.",
+    "Native observation_wait is set only by explicit file-evidence rejection branches. Malformed token validation precedes those branches in the final commit. Unknown I/O errors retain terminal classification.",
+    "The durable edit/save marker check precedes exception-type recovery. All tested classified and unclassified errors after either marker become AmbiguousWriteError and latch the fault; no retry or rollback occurs.",
+    "Timing messages use elapsed monotonic times in finally blocks for process and apply attempts. Failed calculations and apply waits emit timings. Save request duration is explicitly distinguished from Save success. These logs do not establish a total hard cap or measured COM performance.",
+    "The output formulas, step and saturation limits, CSV parser, job anchoring and settings audit were not changed. The version, workflow ZIP names and package source requirements agree. No binary release artifact was changed by this diff."
+  ],
+  "testevidence": {
+    "independently_executed_focused_suite": {
+      "candidate": "ddd92159be627384880e398c8953ba79d6721ac9",
+      "tests_run": 163,
+      "passed": true,
+      "elapsed_seconds": 12.719,
+      "modules": ["test_csv_source", "test_windows_ui_adapter", "test_csv_reconnect", "test_csv_resume_anchor", "test_live_settings", "test_session", "test_auto_slice_source", "test_slice_handoff", "test_csv_observation_wait"],
+      "environment_exclusions": "7 Windows/display-dependent cases; names preserved in the result artifact.",
+      "summary": "/workspace/ir-csv258-review/sol-post-focused-summary.json",
+      "log": "/workspace/ir-csv258-review/sol-post-focused.log"
+    },
+    "independently_authored_adversarial_suite": {
+      "candidate": "ddd92159be627384880e398c8953ba79d6721ac9",
+      "tests_run": 9,
+      "passed": true,
+      "elapsed_seconds": 1.532,
+      "script": "/workspace/ir-csv258-review/sol-post-adversarial.py",
+      "summary": "/workspace/ir-csv258-review/sol-post-adversarial-summary.json",
+      "log": "/workspace/ir-csv258-review/sol-post-adversarial.log",
+      "coverage": [
+        "Complete next row and partial tail at each of the two Python pre-edit CSV guard boundaries; zero native apply/Save and cache invalidation.",
+        "Read-only image verification invalidates a superseded cached snapshot.",
+        "Actual production parser rejects appended -1, NaN, wrong column count, same-layer correction, layer regression and conflicting old start time at pre-edit guard; zero apply/Save.",
+        "Stale same observation and changed run with missing token remain terminal, not ObservationSuspended.",
+        "Source lineage failure stays SourceSuspended and does not trigger settings recovery.",
+        "Five helper error kinds across both edit_marker/save_marker boundaries become AmbiguousWriteError, latch the fault and block another command.",
+        "Observation barrier survives UNKNOWN/missing-IR readiness, restored cached rows and same-layer corrections until a fresh different layer.",
+        "Production AutoSliceSource admission composes with observation suspension; fresh image lineage is required for the later resumed command.",
+        "Process failure and pre-edit wait both emit the appropriate timing logs; apply duration does not claim Save success."
+      ]
+    },
+    "independently_executed_real_csv_replays": {
+      "source_sha256": "bfeadfff9304dc90bcdf1b056190a38db5a95775681c0c959b7e1914e6fb4038",
+      "execution_target": "fa882035e1dbadeb6e40f8e5ff534a8c65f90a0f Python runtime; Python files are byte-identical in final ddd92159",
+      "script_authorship": "Parent supplied the scripts; reviewer inspected and independently executed them.",
+      "method": "Unmodified uploaded CSV byte prefixes, frozen historical clock, reconstructed deterministic log context and production parser/adapter/session. WorkbookController and Windows UI runner are mocked.",
+      "adapter_replay": "/workspace/ir-csv258-review/sol-post-real-csv-fa88203.json",
+      "session_replay": "/workspace/ir-csv258-review/sol-post-real-session-fa88203.json",
+      "result": "Complete and partial append cases raise the recoverable ObservationSuspended before edit. Both session cases observe layers 256,257,258,258,258 without exception; zero native apply, Save and settings-recovery requests."
+    },
+    "independently_executed_package_tests": {
+      "tests_run": 3,
+      "passed": true,
+      "elapsed_seconds": 0.037,
+      "command": "python -m unittest test_verify_package",
+      "log": "/workspace/ir-csv258-review/sol-post-package.log",
+      "scope": "Synthetic package verification fixtures, not a built Windows candidate ZIP."
+    },
+    "other_independent_checks": ["git diff --check base..ddd92159 passed", "python -m compileall -q app release_tools passed"],
+    "parent_executed_full_linux_suite": {
+      "source_commit": "fa882035e1dbadeb6e40f8e5ff534a8c65f90a0f",
+      "tests_run": 293,
+      "passed": true,
+      "elapsed_seconds": 51.99011630700261,
+      "windows_only_exclusions": 2,
+      "artifact_inspected": "/workspace/ir-csv258-review/linux-tests-final-summary.json",
+      "evidence_origin": "Parent-executed evidence; reviewer inspected the artifact but did not independently rerun the full display-enabled suite."
+    }
+  },
+  "limits": [
+    "Native Windows/PowerShell guard and UI execution were reviewed statically here. The final ddd92159 Windows candidate run was pending outside this reviewer environment at review completion; no passed result is claimed for it.",
+    "Actual Excel COM was not run or timed. The configured ordinary response timeout is 8 seconds and initialization uses max(30 seconds, configured timeout); those are response waits, not a total processing-time measurement or hard cap.",
+    "Forced append injection reproduces a race family and does not establish that calculation lasted a whole layer interval in the reported machine run.",
+    "The final CSV cannot establish the exact in-flight append/partial-write state or exception time of the original incident. The extension disconnect path is reproduced; the reason BinderJet stopped before 259 is not established.",
+    "No real M1/S3 sensor, PLC, lamp, equipment UI, long-run thermal stability, binary launcher or distribution was exercised by this reviewer. CSV alone cannot distinguish all normal-looking old physical sensor values.",
+    "Equipment application, final control approval and distribution remain on hold. Independent review completion does not lift an explicit user hold or establish hardware validation.",
+    "The reviewer changed no repository source, uploaded CSV or binary artifact. Review scripts, logs, JSON and temporary mock fixtures were written separately."
+  ]
+}

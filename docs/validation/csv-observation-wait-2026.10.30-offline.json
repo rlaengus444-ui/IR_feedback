@@ -1,0 +1,263 @@
+{
+  "source_commit": "ddd92159be627384880e398c8953ba79d6721ac9",
+  "previous_public_code_commit": "6ee48f34c39a18d290aab6391a587769ce913e96",
+  "inputs": [
+    {
+      "name": "LayerDatasheet_20261029_191426.csv",
+      "bytes": 115763,
+      "sha256": "bfeadfff9304dc90bcdf1b056190a38db5a95775681c0c959b7e1914e6fb4038",
+      "rows": 258
+    },
+    {
+      "name": "층별_IR_온도.csv",
+      "bytes": 4905,
+      "sha256": "de6f749a512242613a69ecbdd3b2668ec0d13662b482874a90736e855da35868",
+      "rows": 216
+    }
+  ],
+  "original_layer_span": [
+    1,
+    258
+  ],
+  "feedback_layer_span": [
+    41,
+    256
+  ],
+  "feedback_all_216_temperatures_match": true,
+  "original_validation_errors": [],
+  "whole_original_incremental_parser_replay": {
+    "rows": 258,
+    "all_tokens_valid": true,
+    "all_layers_match": true,
+    "context_and_clock_reconstructed": true
+  },
+  "race_injection_phase": "After mocked calculation, during pre-edit verify_control",
+  "force_injected_races": {
+    "before": [
+      {
+        "scenario": "complete_258_at_257_preedit_reverification",
+        "exception": {
+          "type": "ControlUnavailable",
+          "message": "CSV의 현재 작업/완료 층이 변경되었거나 기록 중이어서 저장하지 않았습니다."
+        },
+        "emitted_layers": [
+          256
+        ],
+        "saves": 0,
+        "native_apply_requests": 0,
+        "settings_recovery_requests": 0,
+        "calculated_layers": [
+          257
+        ],
+        "reports": [
+          {
+            "layer": 256,
+            "mode": "control",
+            "status": "새 T_recoating 기록 대기",
+            "proposed": {},
+            "applied": {}
+          }
+        ]
+      },
+      {
+        "scenario": "partial_258_at_257_preedit_reverification",
+        "exception": {
+          "type": "ControlUnavailable",
+          "message": "CSV의 현재 작업/완료 층이 변경되었거나 기록 중이어서 저장하지 않았습니다."
+        },
+        "emitted_layers": [
+          256
+        ],
+        "saves": 0,
+        "native_apply_requests": 0,
+        "settings_recovery_requests": 0,
+        "calculated_layers": [
+          257
+        ],
+        "reports": [
+          {
+            "layer": 256,
+            "mode": "control",
+            "status": "새 T_recoating 기록 대기",
+            "proposed": {},
+            "applied": {}
+          }
+        ]
+      }
+    ],
+    "after": [
+      {
+        "scenario": "complete_258_at_257_preedit_reverification",
+        "exception": null,
+        "emitted_layers": [
+          256,
+          257,
+          258,
+          258,
+          258
+        ],
+        "saves": 0,
+        "native_apply_requests": 0,
+        "settings_recovery_requests": 0,
+        "calculated_layers": [
+          257
+        ],
+        "reports": [
+          {
+            "layer": 256,
+            "mode": "control",
+            "status": "새 T_recoating 기록 대기",
+            "proposed": {},
+            "applied": {}
+          },
+          {
+            "layer": 257,
+            "mode": "observation-waiting",
+            "status": "연결 유지 · CSV 갱신 대기: CSV 완료 층 갱신 · 이전 계산을 취소하고 새 관찰을 확인합니다.",
+            "proposed": {},
+            "applied": {}
+          },
+          {
+            "layer": 258,
+            "mode": "control",
+            "status": "설정 확인 완료 · 첫 유효 관찰을 기준으로 대기(저장 없음)",
+            "proposed": {},
+            "applied": {}
+          },
+          {
+            "layer": 258,
+            "mode": "control",
+            "status": "설정 확인 완료 · 다음 새 층의 T_recoating 대기(저장 없음)",
+            "proposed": {},
+            "applied": {}
+          },
+          {
+            "layer": 258,
+            "mode": "control",
+            "status": "설정 확인 완료 · 다음 새 층의 T_recoating 대기(저장 없음)",
+            "proposed": {},
+            "applied": {}
+          }
+        ]
+      },
+      {
+        "scenario": "partial_258_at_257_preedit_reverification",
+        "exception": null,
+        "emitted_layers": [
+          256,
+          257,
+          258,
+          258,
+          258
+        ],
+        "saves": 0,
+        "native_apply_requests": 0,
+        "settings_recovery_requests": 0,
+        "calculated_layers": [
+          257
+        ],
+        "reports": [
+          {
+            "layer": 256,
+            "mode": "control",
+            "status": "새 T_recoating 기록 대기",
+            "proposed": {},
+            "applied": {}
+          },
+          {
+            "layer": 257,
+            "mode": "observation-waiting",
+            "status": "연결 유지 · CSV 갱신 대기: CSV 기록 중 · 이번 계산을 취소하고 완전한 완료 행을 기다립니다.",
+            "proposed": {},
+            "applied": {}
+          },
+          {
+            "layer": 258,
+            "mode": "control",
+            "status": "설정 확인 완료 · 첫 유효 관찰을 기준으로 대기(저장 없음)",
+            "proposed": {},
+            "applied": {}
+          },
+          {
+            "layer": 258,
+            "mode": "control",
+            "status": "설정 확인 완료 · 다음 새 층의 T_recoating 대기(저장 없음)",
+            "proposed": {},
+            "applied": {}
+          },
+          {
+            "layer": 258,
+            "mode": "control",
+            "status": "설정 확인 완료 · 다음 새 층의 T_recoating 대기(저장 없음)",
+            "proposed": {},
+            "applied": {}
+          }
+        ]
+      }
+    ]
+  },
+  "linux_tests": {
+    "source_commit": "fa882035e1dbadeb6e40f8e5ff534a8c65f90a0f",
+    "run": 293,
+    "passed": true,
+    "elapsed_seconds": 51.99011630700261,
+    "errors": [],
+    "failures": [],
+    "skipped": [],
+    "excluded_windows_only": [
+      "test_session.SingleInstanceTests.test_actual_private_mutex_prevents_a_second_owner_and_can_be_reacquired",
+      "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed"
+    ]
+  },
+  "linux_test_note": "Source fa88203; Python application bytes unchanged in ddd9215. ddd changes native token validation/probe and documentation only.",
+  "package_verifier_tests": {
+    "run": 3,
+    "passed": true
+  },
+  "unknowns": [
+    "No incident status log, original S3 job log or exact executing ZIP identity provided.",
+    "No evidence distinguishes actual partial-write vs newer-complete-row triggering condition, failure layer or exact time.",
+    "Forced pre-edit file injection is not measured real Excel latency."
+  ],
+  "not_tested": [
+    "Real Excel COM, S3 native UI, physical sensor, PLC, lamp output, long printing"
+  ],
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false,
+  "released_binary_updated": false,
+  "whole_file_rewrite_probes": {
+    "source_commit": "ddd92159be627384880e398c8953ba79d6721ac9",
+    "no_equipment": true,
+    "synthetic_rows": true,
+    "new_layer_required_to_trigger_race": false,
+    "cases": [
+      {
+        "case": "whole_file_empty_window",
+        "same_completed_layer": 2,
+        "exception": "ObservationSuspended",
+        "native_apply_requests": 0,
+        "saves": 0,
+        "restored_same_layer_readable": true,
+        "settings_recovery_requests": 0
+      },
+      {
+        "case": "whole_file_partial_rewrite",
+        "same_completed_layer": 2,
+        "exception": "ObservationSuspended",
+        "native_apply_requests": 0,
+        "saves": 0,
+        "restored_same_layer_readable": true,
+        "settings_recovery_requests": 0
+      }
+    ]
+  },
+  "previous_supplied_bjt_writer": {
+    "source": "ProcessStatus.cs",
+    "methods": [
+      "SerializeToCsv",
+      "SavePrintingParameters"
+    ],
+    "behavior": "new StreamWriter(filePath), then CsvWriter.WriteRecords(layers): whole-file overwrite, not append",
+    "matches_incident_running_binary": null
+  }
+}

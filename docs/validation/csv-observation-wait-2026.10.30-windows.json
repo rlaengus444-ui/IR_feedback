@@ -1,0 +1,71 @@
+{
+  "source_commit": "ddd92159be627384880e398c8953ba79d6721ac9",
+  "run_id": 40986111128,
+  "run_url": "https://github.com/rlaengus444-ui/IR_feedback/actions/runs/40986111128",
+  "artifact_id": 12947605725,
+  "outer_bytes": 34884871,
+  "outer_sha256": "7dc3dbb77ac63f5ad99e21f2fe6ea4b1ca247f0673ab508e5b9b2c764d1487ca",
+  "inner_zip_bytes": 35379358,
+  "inner_zip_sha256": "3196030d7ca9773e15613b72bcc1dfc59ac044bfc7f2dfa289d0f7312b9d1782",
+  "packaged_tests": {
+    "run": 295,
+    "passed": true,
+    "seconds": 81.518
+  },
+  "native_csv_guard": {
+    "hardware_actions": 0,
+    "two_pass_32mib_ms": 92.986,
+    "maximum_csv_bytes": 33554432,
+    "checks": [
+      "unchanged content accepted",
+      "same-size preserved-mtime 42 to -1 rejected",
+      "partial append holds without edit or Save",
+      "complete append holds without edit or Save",
+      "missing hash rejected",
+      "missing mtime rejected as terminal",
+      "invalid mtime type/range rejected as terminal: ",
+      "invalid mtime type/range rejected as terminal: True",
+      "invalid mtime type/range rejected as terminal: not ticks",
+      "invalid mtime type/range rejected as terminal: 1.5",
+      "invalid mtime type/range rejected as terminal: 0",
+      "invalid mtime type/range rejected as terminal: -1",
+      "invalid mtime type/range rejected as terminal: 3155378976000000000",
+      "invalid size type rejected as terminal: ",
+      "invalid size type rejected as terminal: True",
+      "invalid size type rejected as terminal: 32",
+      "invalid size type rejected as terminal: 1.5",
+      "oversized evidence rejected",
+      "mismatched digest rejected",
+      "32 MiB bounded two-pass content assertion accepted"
+    ],
+    "passed": true
+  },
+  "raw_readiness": {
+    "automated_checks_passed": false,
+    "final_sol_review": "pending",
+    "checks": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "settings_recovery": "success",
+      "auto_slice": "success",
+      "excel": "failure",
+      "reverify": "success"
+    },
+    "source_commit": "ddd92159be627384880e398c8953ba79d6721ac9",
+    "device_application_approved": false,
+    "release_ready": false
+  },
+  "excel": {
+    "excel_com_tested": false,
+    "release_ready": false,
+    "reason": "Excel COM is not registered"
+  },
+  "full_package_manifest_source_bytes_crc_paths_verified": true,
+  "published_exe_zip": false,
+  "equipment_application_approved": false
+}
