@@ -1,0 +1,167 @@
+{
+  "review_stage": "native-artifact-and-independent-evaluation-delivery-review",
+  "status": "complete",
+  "candidate_commit": "12a6acba94c9078456cea1e17f8ebca9f84857cb",
+  "candidate_zip_sha256": "5e6ad6e1af19d3a5a511f29706edee93890f80c06b073b54845386de89280818",
+  "version": "2026.10.30-csv-wait.2",
+  "evaluation_distribution_allowed": true,
+  "independent_post_review_complete": true,
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false,
+  "stable_release_approved": false,
+  "unresolved_findings": [],
+  "authorization_scope": "User authorized ongoing fixed EXE ZIP delivery to GitHub and printing-team Notion in the same conversation. Approval is for evaluation distribution of this exact previously tested artifact; final algorithm and equipment holds remain.",
+  "review_route": {
+    "mechanism": "native collaboration subagent follow-up",
+    "task": "/root/sol_reviewer_csv258",
+    "requested_role": "sol_reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_attested": false,
+    "cli_authentication_repaired_or_tested": false
+  },
+  "decision": "No unresolved findings. The exact csv-wait.2 artifact may be distributed as an evaluation prerelease with make_latest=false. Synthetic native Label support is validated; actual screenshot-field compatibility is not established.",
+  "prior_code_review": {
+    "path": "/workspace/ir-home-path-review/sol-gui-review.json",
+    "preserved": true,
+    "candidate_commit": "12a6acba94c9078456cea1e17f8ebca9f84857cb",
+    "reviewer_tk_tests": 42,
+    "reviewer_adversarial_tk_tests": 4
+  },
+  "artifact_provenance": {
+    "repository": "rlaengus444-ui/IR_feedback",
+    "repository_id": 1434868115,
+    "run_id": 41000552744,
+    "artifact_id": 12953507103,
+    "artifact_name": "slice-candidate-12a6acba94c9078456cea1e17f8ebca9f84857cb",
+    "outer_sha256": "8c901da586528e94ebaa3e4cf52b99a9a0fe63544f86457468c12c54a225d1ee",
+    "outer_size_bytes": 34886545,
+    "inner_zip_sha256": "5e6ad6e1af19d3a5a511f29706edee93890f80c06b073b54845386de89280818",
+    "inner_zip_size_bytes": 35380611,
+    "outer_crc_ok": true,
+    "inner_crc_ok": true,
+    "outer_entries": 17,
+    "extracted_report_mismatches": [],
+    "manifest_mismatches": [],
+    "packaged_sources_compared_to_clean_candidate": 44,
+    "packaged_source_mismatches": [],
+    "integrity_artifact": "/workspace/ir-home-path-review/sol-windows-artifact-integrity.json",
+    "rebuild_covered_by_this_review": false
+  },
+  "windows_raw_evidence": {
+    "origin": "GitHub Actions reports supplied by parent; independently inspected raw reports and verified downloaded artifact/source identities. Reviewer did not run Windows locally.",
+    "directory": "/workspace/ir-home-path-review/windows-12a6acb",
+    "packaged_tests": {
+      "run": 301,
+      "passed": true,
+      "seconds": 78.363,
+      "log": "tests.txt"
+    },
+    "native_auto_path": {
+      "checks": 35,
+      "passed": true,
+      "label_native_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+      "checks_confirmed": [
+        "pointed STATIC and readonly EDIT binding",
+        "AutoEllipsis Label retains complete native WM_GETTEXT",
+        "disabled noneditable Label point binding",
+        "noneditable Label native source proof",
+        "literal ellipsis rejected by Python reader and native proof",
+        "stale identity, source hash and no Save/navigation protections"
+      ],
+      "native_path_read_ms": {
+        "median": 0.14884999998798776,
+        "maximum": 0.7095000000276741,
+        "samples": 100
+      },
+      "physical_equipment_actions": 0,
+      "actual_bjt_path_binding_tested": false,
+      "excel_com_tested": false
+    },
+    "native_csv_guard": {
+      "checks": 20,
+      "passed": true,
+      "two_pass_32mib_ms": 59.361200000000004,
+      "hardware_actions": 0
+    },
+    "other_passed_reports": [
+      "bridge.json",
+      "discovery.json",
+      "settings-recovery.json",
+      "slice-performance.json"
+    ],
+    "non_excel_successful_gates": [
+      "build",
+      "tests",
+      "smoke",
+      "bridge",
+      "csv_guard",
+      "native_discovery",
+      "slice_perf",
+      "settings_recovery",
+      "auto_slice",
+      "reverify"
+    ],
+    "excel": {
+      "excel_com_tested": false,
+      "release_ready": false,
+      "reason": "Excel COM is not registered"
+    },
+    "raw_readiness": {
+      "automated_checks_passed": false,
+      "release_ready": false,
+      "device_application_approved": false,
+      "final_sol_review": "pending",
+      "preserved": true
+    }
+  },
+  "publisher_review": {
+    "path": "/workspace/IR_feedback_home_path_feedback/release_tools/publish_home_path_candidate.py",
+    "sha256": "2922501585cc995742b41cf0a3878a7b728fd479ca04d10514b3c534c9749c73",
+    "delta_from_previously_reviewed_csv_wait_publisher": "Version and accurate release body only; validation, tag/draft/asset guards, source-root comparison and publication protocol are unchanged.",
+    "body_scope": "Reports confirmed GUI defects and synthetic Label validation, explicitly states the actual BJT field is unverified, and retains Excel/equipment/algorithm limits."
+  },
+  "workflow_review": {
+    "path": "/workspace/ir-home-path-review/publish-home-path-workflow.template.yml",
+    "sha256": "b234ea7f13d6016907bc653cf9538f9f0b0979ee8b887896f87069a124a31af9",
+    "immutable_candidate_checkout": "12a6acba94c9078456cea1e17f8ebca9f84857cb at reviewed-source",
+    "permitted_substitution": "Replace only the sole __PUBLISH_SOURCE__ token with the full immutable commit containing this publisher and completed release-review JSON. Other template edits are not covered.",
+    "pins": "Exact run/artifact ID, source, repository IDs, outer size/digest and inner ZIP digest."
+  },
+  "independent_targeted_delivery_tests": {
+    "tests_run": 11,
+    "passed": true,
+    "elapsed_seconds": 8.475,
+    "script": "/workspace/ir-home-path-review/sol-release-publisher-delta-tests.py",
+    "summary": "/workspace/ir-home-path-review/sol-release-publisher-tests.json",
+    "log": "/workspace/ir-home-path-review/sol-release-publisher-tests.log",
+    "source_checkout": "/workspace/ir-home-path-review/sol-release-source",
+    "all_gh_calls_mocked": true,
+    "real_github_or_notion_mutations": 0,
+    "coverage": [
+      "Successful actual-package validation plus mocked draft upload and immutable tag flow; correct new body/test count and explicit actual-BJT uncertainty.",
+      "Strict review identity/booleans and all required Windows gate failures stop before publication.",
+      "Wrong source, corrupt candidate, existing tag/release and mismatched assets/later tag are rejected.",
+      "Actual template code verifies/extracts the exact outer artifact; wrong provenance metadata and corrupt download fail.",
+      "Only one future publication-source placeholder is allowed."
+    ],
+    "protected_base_sha256_before": "ff216aaca807a47b44de34f47194aff88f28dd0f08a9874f330cdd8c67be5e84",
+    "protected_base_sha256_after": "ff216aaca807a47b44de34f47194aff88f28dd0f08a9874f330cdd8c67be5e84",
+    "protected_base_unchanged": true
+  },
+  "publication_requirements": [
+    "Reuse only the exact tested ZIP; do not rebuild, replace existing versions or clobber assets under this review.",
+    "Keep prerelease=true and make_latest=false. Preserve raw false readiness/Excel evidence and final algorithm/equipment holds.",
+    "Perform real published tag/release/asset download hash-and-size readback before reporting successful delivery in Notion.",
+    "Preserve existing Notion calculation sheets and image attachments; distinguish generic synthetic Label support from the still-unverified screenshot field."
+  ],
+  "limits": [
+    "Actual BJT ProductionControl field implementation, native class, full exposed path and five-second bind/preview success remain unknown. The optional user-step question is unanswered.",
+    "Native validation used owned Windows fixtures, not the actual BJT window or physical M1/S3 equipment.",
+    "Excel COM was not registered; no actual workbook COM calculation speed, PLC/lamp behavior or long-run printing validation is claimed.",
+    "Native read/hash timings are fixture/CI measurements, not actual BJT or Excel latency.",
+    "Reviewer performed no GitHub, Notion, equipment or release mutation; real publication/readback remains for the parent.",
+    "Raw release_ready and device_application_approved remain false; this separate evaluation-distribution approval does not approve stable release or equipment application.",
+    "Provider identity is not independently attested and CLI authentication state is unchanged."
+  ]
+}
