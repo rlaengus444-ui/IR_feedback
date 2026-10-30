@@ -32,6 +32,7 @@ class SlicePanel(ttk.Frame):
         self.selected=tk.StringVar(value='선택한 파일 없음')
         self.auto_enabled=tk.BooleanVar(value=False);self.auto_origin=tk.StringVar(value='1')
         self.auto_path=tk.StringVar(value='자동 경로: 지정 전')
+        self.binding_status=tk.StringVar(value='첫 탭 경로 지정(5초)을 누른 뒤 STATUS의 경로 글자 위로 마우스를 옮기세요.')
         self.auto_status=tk.StringVar(value='첫 탭의 경로 표시 칸을 한 번 지정한 뒤 자동 불러오기를 선택하세요.')
         self.configuration_widgets=[]
         self._build()
@@ -52,6 +53,7 @@ class SlicePanel(ttk.Frame):
         self.reload_button=ttk.Button(auto,text='같은 경로 재불러오기 확인',command=self.confirm_reload,state='disabled')
         self.reload_button.pack(side='left',padx=8)
         ttk.Label(self,textvariable=self.auto_path,wraplength=1000).pack(fill='x')
+        ttk.Label(self,textvariable=self.binding_status,wraplength=1000,foreground='#536173').pack(fill='x',pady=(0,3))
         ttk.Label(self,textvariable=self.auto_status,wraplength=1000,foreground='#536173').pack(fill='x',pady=(0,5))
         row=ttk.Frame(self);row.pack(fill='x')
         self.manual_widgets=[]

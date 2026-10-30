@@ -241,21 +241,26 @@ class ThermalFeedbackWindow:
     def _bind_source(self):
         target = self.target_map.get(self.host.get())
         if target is None or self.closing:
-            self._append_log('BJT 실행 창을 먼저 검색하고 선택하세요.');return
+            if not self.closing:
+                message='BJT 실행 창을 먼저 검색하고 선택하세요.'
+                self._append_log(message)
+                self.slice_panel.binding_status.set(message)
+                messagebox.showwarning('슬라이싱 경로 지정',message,parent=self.root)
+            return
         self._binding_serial += 1; serial = self._binding_serial
         context = self.controller.generation
         if self._auto_source is not None:self._auto_source.pause_binding()
         def countdown(left):
             if self.closing or serial != self._binding_serial:return
             if left:
-                self.slice_panel.auto_status.set(f'{left}초 안에 BJT 첫 탭의 슬라이싱 경로 텍스트 위로 마우스를 옮기세요. 클릭하지 않아도 됩니다.')
+                self.slice_panel.binding_status.set(f'{left}초 안에 BJT 첫 탭 STATUS의 슬라이싱 경로 글자 위로 마우스를 옮기세요. 입력하거나 클릭할 필요는 없습니다.')
                 self.root.after(1000,lambda:countdown(left-1));return
             def capture():
                 try:
                     reader=WindowsPathReader(); x,y=reader.cursor()
                     binding,source=reader.bind_at(target,x,y); error=None
                 except Exception as exc:
-                    binding=source=None;error=str(exc)
+                    binding=source=None;error=str(exc).strip() or '경로 표시 칸을 읽지 못했습니다. 다시 지정하세요.'
                 self._binding_queue.put((serial,context,target,binding,source,error))
             threading.Thread(target=capture,name='IR-bind-image-path',daemon=True).start()
         countdown(5)
@@ -266,19 +271,33 @@ class ThermalFeedbackWindow:
             except queue.Empty:break
             if (self.closing or serial != self._binding_serial or context != self.controller.generation
                     or target != self.target_map.get(self.host.get())):continue
+            if error or binding is None or source is None:
+                message=(str(error).strip() if error else '') or '경로 표시 칸을 읽지 못했습니다. 다시 지정하세요.'
+                self.slice_panel.binding_status.set('경로 지정 실패 · '+message)
+                self._append_log('슬라이싱 경로 지정 실패 · '+message)
+                write_error_log('슬라이싱 경로 지정 실패 · '+message)
+                if self._auto_source is not None and self._source_binding is not None:
+                    self._auto_source.rebind(self._source_binding)
+                messagebox.showerror('슬라이싱 경로 지정 실패',
+                    message+'\n\n첫 탭(Home)의 왼쪽 STATUS 영역에서 Browse 바로 왼쪽의 경로 글자를 지정하세요. 읽기 전용 표시 칸도 지정할 수 있습니다.',parent=self.root)
+                continue
             accept = False
             if not error:
                 accept=messagebox.askyesno('슬라이싱 경로 지정',
                     f'{target.machine}의 이 표시 칸을 슬라이싱 경로로 사용할까요?\n\n표시 내용: {source.raw_text}\n\n가져올 폴더: {source.directory}\n이 폴더 안의 이미지 전체를 불러옵니다.',parent=self.root)
+            if (self.closing or serial != self._binding_serial or context != self.controller.generation
+                    or target != self.target_map.get(self.host.get())):continue
             if accept:
                 self._source_binding=binding
                 self.slice_panel.auto_path.set('지정한 경로: '+source.directory)
+                self.slice_panel.binding_status.set('경로 지정 완료 · '+source.directory)
                 self.slice_panel.auto_status.set('경로 지정 완료 · 연결하면 자동으로 분석합니다.')
+                self._append_log('슬라이싱 경로 지정 완료 · '+source.directory)
                 if self.controller.thread is None:
                     self.slice_panel.auto_enabled.set(True);self.slice_panel._mode_changed()
                 if self._auto_source is not None:self._auto_source.rebind(binding)
             else:
-                self.slice_panel.auto_status.set(error or '경로 지정 취소됨')
+                self.slice_panel.binding_status.set('경로 지정 취소됨 · 기존 지정은 유지합니다.')
                 if self._auto_source is not None and self._source_binding is not None:
                     self._auto_source.rebind(self._source_binding)
 
@@ -518,7 +537,7 @@ class ThermalFeedbackWindow:
             "CSV 자동 적용 중 · Process 표 접근 없음 · 다른 탭/최소화 가능"
             if payload["effective_mode"] == "control" else "기존 Sequences IR + Save 경로 확인됨")
         self.status.set("연결됨 · 제어 불가" if payload["effective_mode"] == "control-unavailable" else
-                        "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기", "control-waiting": "설정 확인·IR 적용 대기"}[payload["effective_mode"]])
+                        "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기", "control-waiting": "설정 확인·IR 적용 대기", "observation-waiting": "CSV 갱신·IR 적용 대기"}[payload["effective_mode"]])
         for heater, value in ((1, snapshot.heater1_setting_percent), (2, snapshot.heater2_setting_percent)):
             proposed = payload["proposed"].get(1 if snapshot.coupled_output else heater)
             self.outputs.item(f"heater{heater}", values=("—" if value is None else value,

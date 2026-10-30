@@ -36,7 +36,8 @@ internal static class AutoSliceSourceFixture {
         TextBox path=null;Label label=null;Panel relocated=null;int originalId=0;
         Action makePath=delegate {
             path=new TextBox {Name="txtSlicingPath",Text=args[1],ReadOnly=true,Left=10,Top=20,Width=740};
-            label=new Label {Name="lblSlicingPath",Text=args[1],Left=10,Top=65,Width=740,Height=25};
+            label=new Label {Name="lblSlicingPath",Text=args[1],Left=10,Top=65,Width=180,Height=25,
+                AutoEllipsis=true,BorderStyle=BorderStyle.Fixed3D};
             production.Controls.Add(path);production.Controls.Add(label);
             var h=path.Handle;var l=label.Handle;originalId=GetDlgCtrlID(h);
         };
@@ -51,6 +52,8 @@ internal static class AutoSliceSourceFixture {
             File.WriteAllText(marker+".handles",Process.GetCurrentProcess().Id+","+root.Handle.ToInt64()+","+
                 home.Handle.ToInt64()+","+path.Handle.ToInt64()+","+label.Handle.ToInt64()+","+
                 machine.Handle.ToInt64()+","+wrong.Handle.ToInt64()+","+box.X+","+box.Y+","+lab.X+","+lab.Y);
+            File.WriteAllText(marker+".label-meta",label.AutoEllipsis+","+
+                (TextRenderer.MeasureText(label.Text,label.Font).Width>label.ClientSize.Width)+","+label.Enabled);
         };
         var timer=new Timer{Interval=100};int ticks=0;
         timer.Tick+=delegate {
@@ -61,6 +64,9 @@ internal static class AutoSliceSourceFixture {
                 else if(action=="a") {path.Text=args[1];label.Text=args[1];}
                 else if(action=="hide")home.Hide();
                 else if(action=="show")home.Show();
+                else if(action=="label_disabled")label.Enabled=false;
+                else if(action=="label_enabled")label.Enabled=true;
+                else if(action=="label_ellipsis")label.Text="C:\\example\\\u2026\\001.bmp";
                 else if(action=="recreate") {path.Dispose();label.Dispose();makePath();}
                 else if(action.StartsWith("path:")) {path.Text=action.Substring(5);label.Text=path.Text;}
                 else if(action=="reparent") {
