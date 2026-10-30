@@ -1,0 +1,116 @@
+{
+  "review_stage": "release-critical-independent-evaluation-delivery-review",
+  "status": "complete",
+  "candidate_commit": "ddd92159be627384880e398c8953ba79d6721ac9",
+  "candidate_zip_sha256": "3196030d7ca9773e15613b72bcc1dfc59ac044bfc7f2dfa289d0f7312b9d1782",
+  "version": "2026.10.30-csv-wait.1",
+  "evaluation_distribution_allowed": true,
+  "independent_post_review_complete": true,
+  "equipment_application_approved": false,
+  "stable_release_approved": false,
+  "final_algorithm_approved": false,
+  "unresolved_findings": [],
+  "authorization_scope": "The user now explicitly requested the fixed EXE ZIP on GitHub and the printing-team Notion IR_feedback page. This approves evaluation distribution of the already tested exact ZIP only. Earlier final-algorithm and equipment holds remain.",
+  "review_route": {
+    "mechanism": "native collaboration subagent follow-up",
+    "task": "/root/sol_reviewer_csv258",
+    "requested_role": "sol_reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_attested": false,
+    "cli_authentication_repaired_or_tested": false
+  },
+  "reviewed_publisher": {
+    "path": "/workspace/IR_feedback_csv258/release_tools/publish_csv_wait_candidate.py",
+    "sha256": "a733f39cdc86e8cbc15772f750efa2d2d9c5d005deaaad0ff13b3c369a674022",
+    "state": "Actual new publisher read and executed against exact candidate evidence with all gh interactions mocked."
+  },
+  "reviewed_workflow_template": {
+    "path": "/workspace/ir-csv258-review/publish-csv-wait-workflow.template.yml",
+    "sha256": "3d4ce9bbdf8c367bc3c33269e9ac0a7df01f018dab83e7eaf78049e1c3ba7eb3",
+    "permitted_substitution": "Replace the sole __PUBLISH_SOURCE__ token with the full immutable commit containing this reviewed publisher and completed review JSON. No other template edits are covered.",
+    "immutable_candidate_source_checkout": "ddd92159be627384880e398c8953ba79d6721ac9 at reviewed-source"
+  },
+  "artifact_pins": {
+    "repository": "rlaengus444-ui/IR_feedback",
+    "repository_id": 1434868115,
+    "run_id": 40986111128,
+    "artifact_id": 12947605725,
+    "artifact_name": "slice-candidate-ddd92159be627384880e398c8953ba79d6721ac9",
+    "outer_sha256": "7dc3dbb77ac63f5ad99e21f2fe6ea4b1ca247f0673ab508e5b9b2c764d1487ca",
+    "outer_size_bytes": 34884871,
+    "zip_name": "IRFeedback-2026.10.30-csv-wait.1.zip",
+    "zip_size_bytes": 35379358,
+    "zip_sha256": "3196030d7ca9773e15613b72bcc1dfc59ac044bfc7f2dfa289d0f7312b9d1782",
+    "rebuild_allowed_under_this_review": false
+  },
+  "independent_delivery_tests": {
+    "tests_run": 18,
+    "passed": true,
+    "elapsed_seconds": 12.568,
+    "summary": "/workspace/ir-csv258-review/sol-release-publisher-tests.json",
+    "log": "/workspace/ir-csv258-review/sol-release-publisher-tests.log",
+    "script": "/workspace/ir-csv258-review/sol-release-publisher-tests.py",
+    "isolated_source": "/workspace/ir-csv258-review/sol-release-source",
+    "source_head": "ddd92159be627384880e398c8953ba79d6721ac9",
+    "all_gh_calls_mocked": true,
+    "real_github_or_notion_mutations": 0,
+    "coverage": [
+      "Valid mocked flow verifies the actual package, creates only a new tag and draft, uploads without clobber, verifies asset hashes/sizes, and publishes prerelease=true with make_latest=false.",
+      "Strict completed-review booleans, candidate identity, required Windows gates, native report, evaluation-only status, Excel status and successful actual test summary fail closed.",
+      "Wrong or dirty source checkout, wrong evidence commit and corrupt package bytes stop before any API call.",
+      "Existing release/tag is never replaced. Invalid newly created tag or draft state prevents publication. Bad/missing assets and a later tag mismatch leave the candidate unpublished.",
+      "The actual embedded workflow download code accepts the exact outer artifact and rejects incorrect artifact ID/name/digest/size/expiry/run/source/repository metadata and corrupt downloaded bytes.",
+      "The template has exactly one future-source placeholder and pins the separate DDD source checkout.",
+      "Evidence JSON remains byte-identical in the successful mocked flow."
+    ]
+  },
+  "protected_base": {
+    "path": "/workspace/IR_feedback_csv258/dist/IRFeedback-2026.10.27-csv.6.zip",
+    "sha256_before": "ff216aaca807a47b44de34f47194aff88f28dd0f08a9874f330cdd8c67be5e84",
+    "sha256_after": "ff216aaca807a47b44de34f47194aff88f28dd0f08a9874f330cdd8c67be5e84",
+    "unchanged": true
+  },
+  "earlier_independent_evidence": {
+    "post_review": "/workspace/ir-csv258-review/sol-post-review.json",
+    "native_validation_addendum": "/workspace/ir-csv258-review/sol-native-validation-addendum.json",
+    "artifact_integrity": "/workspace/ir-csv258-review/sol-windows-artifact-integrity.json",
+    "packaged_sources_exactly_match_committed_ddd": 44,
+    "windows_packaged_tests": {
+      "run": 295,
+      "passed": true,
+      "seconds": 81.518
+    },
+    "native_csv_guard": {
+      "checks": 20,
+      "passed": true,
+      "two_pass_32mib_ms": 92.986
+    },
+    "non_excel_windows_gates_succeeded": 10,
+    "raw_excel": {
+      "excel_com_tested": false,
+      "reason": "Excel COM is not registered"
+    },
+    "raw_readiness": {
+      "automated_checks_passed": false,
+      "release_ready": false,
+      "device_application_approved": false,
+      "preserved": true
+    }
+  },
+  "publication_requirements": [
+    "Use only the pinned previously tested ZIP; no untested rebuild or replacement of an existing release/tag/asset.",
+    "Keep a prerelease with make_latest=false. The publication is evaluation distribution, not stable or equipment approval.",
+    "Preserve raw false Excel/readiness evidence and the final algorithm/equipment hold in user-facing release and Notion text.",
+    "Verify the real published tag, release state, downloaded asset digest and size before recording successful delivery in Notion.",
+    "The Notion update may point to the verified evaluation assets and preserve existing calculation-sheet and image attachments; no deletion or unrelated page restructuring is covered."
+  ],
+  "limits": [
+    "Reviewer performed no real GitHub or Notion writes; the actual publication and download readback must be performed and reported by the parent.",
+    "Mocked API checks establish publisher admission and rejection behavior; they cannot establish a future GitHub service response.",
+    "The artifact has Windows native fixture validation, not live BJT or physical sensor/PLC/lamp validation.",
+    "Excel COM and actual calculation speed remain untested; forced CSV races and hash timing are not COM latency measurements.",
+    "Final algorithm approval, equipment application and long-run thermal stability remain on hold.",
+    "This completed review does not claim independent provider-identity attestation or repair of CLI authentication."
+  ]
+}
