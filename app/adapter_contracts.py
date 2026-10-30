@@ -22,6 +22,11 @@ class SourceSuspended(ControlUnavailable):
     pass
 
 
+class ObservationSuspended(ControlUnavailable):
+    """CSV evidence changed before any edit; discard the decision, keep reading."""
+    pass
+
+
 class TargetIdentityError(AdapterError):
     """The verified root/PID/machine identity was lost; do not rebind it."""
     pass

@@ -21,12 +21,12 @@ from pathlib import Path
 from typing import Callable
 
 try:
-    from .adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, SourceSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
+    from .adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, SourceSuspended, ObservationSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
     from . import sequence_persistence
     from .sequence_field_audit import assert_fields_match_persisted, SequenceFieldAuditError
     from .csv_source import MonitoringCsvReader
 except ImportError:
-    from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, SourceSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
+    from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, SourceSuspended, ObservationSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
     import sequence_persistence
     from sequence_field_audit import assert_fields_match_persisted, SequenceFieldAuditError
     from csv_source import MonitoringCsvReader
@@ -423,8 +423,12 @@ class WindowsUiAdapter:
             if source.is_new and source.sample is not None and source.context.run_key == self._run_key:
                 self._new_sample_key = source.sample.key
         sample = source.sample
-        if sample is None or source.token is None or sample.key != expected_key or source.context.run_key != self._run_key:
-            raise ControlUnavailable("CSV의 현재 작업/완료 층이 변경되었거나 기록 중이어서 저장하지 않았습니다.")
+        if source.context.run_key != self._run_key:
+            raise ControlUnavailable("CSV의 작업이 변경되어 이전 작업의 계산값을 저장하지 않았습니다.")
+        if source.token is None:
+            raise ObservationSuspended("CSV 기록 중 · 이번 계산을 취소하고 완전한 완료 행을 기다립니다.")
+        if sample is None or sample.key != expected_key:
+            raise ObservationSuspended("CSV 완료 층 갱신 · 이전 계산을 취소하고 새 관찰을 확인합니다.")
         if expected_lineage is not None and getattr(sample, 'slice_lineage', '') != expected_lineage:
             raise SourceSuspended('CSV 이미지 경로 또는 리코팅 시각이 변경되어 자동 적용을 대기합니다.')
         age = time.time() - sample.finished.timestamp()
@@ -440,6 +444,11 @@ class WindowsUiAdapter:
         self._check_stopped(stop_event)
         try:
             self._verify_csv_observation(key,lineage)
+        except ObservationSuspended:
+            with self._lock:
+                self._last_snapshot = None
+                self._last_read = 0
+            return False
         except ControlUnavailable:
             return False  # A newer/different row needs a new baseline, no Save.
         return True
@@ -447,6 +456,11 @@ class WindowsUiAdapter:
     def apply_ir_power(self, heater: int, power_percent: int | float, expected_observation_key: str, stop_event, *, source_guard=None) -> None:
         try:
             return self._apply_ir_power(heater, power_percent, expected_observation_key, stop_event, source_guard=source_guard)
+        except ObservationSuspended:
+            with self._lock:
+                self._last_snapshot = None
+                self._last_read = 0
+            raise
         except ControlSuspended as error:
             self.suspend_control(str(error))
             raise
@@ -535,7 +549,7 @@ class WindowsUiAdapter:
                     with self._lock:
                         self._control_fault = "자동 적용 결과를 확인할 수 없습니다. 다시 연결하기 전에 원본 설정을 확인하세요."
                     raise AmbiguousWriteError("IR 입력값이 수정되었거나 Save가 실행되었을 수 있으나 완료 여부를 확인하지 못했습니다. 같은 명령을 자동 재시도하지 않습니다. " + str(exc)) from exc
-                if not isinstance(exc, (ControlSuspended, SourceSuspended)):
+                if not isinstance(exc, (ControlSuspended, SourceSuspended, ObservationSuspended)):
                     with self._lock:
                         self._control_fault = "자동 적용을 중단했습니다. 결과를 확인한 뒤 다시 연결하세요."
                 raise
@@ -581,6 +595,8 @@ class WindowsUiAdapter:
         kind = response.get("error_kind")
         if kind == 'slice_wait':
             return SourceSuspended(str(response.get('error') or fallback))
+        if kind == 'observation_wait':
+            return ObservationSuspended(str(response.get('error') or fallback))
         error_type = ControlSuspended if kind == "control_wait" else TargetIdentityError if kind == "identity" else AdapterError
         return error_type("[" + str(request.get("operation", "unknown")) + "] " + str(response.get("error", fallback)))
 

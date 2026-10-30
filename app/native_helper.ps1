@@ -237,12 +237,19 @@ function FiniteNumber([string]$text) {
     return $number
 }
 
+function StopObservation([string]$message) {
+    # Only explicit read-only evidence changes get the recoverable type.
+    # Unknown I/O/helper failures retain their original terminal classification.
+    $script:observationWait = $true
+    throw $message
+}
+
 function CsvContentHash([string]$path, [long]$expectedSize) {
     if ($expectedSize -le 0 -or $expectedSize -gt 33554432) { throw 'Monitoring CSV content verification exceeds its bounded size.' }
     $stream = $null; $sha = $null
     try {
         $stream = [IO.File]::Open($path, [IO.FileMode]::Open, [IO.FileAccess]::Read, ([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
-        if ($stream.Length -ne $expectedSize) { throw 'Monitoring CSV size changed before content verification.' }
+        if ($stream.Length -ne $expectedSize) { StopObservation 'Monitoring CSV size changed before content verification.' }
         $sha = [Security.Cryptography.SHA256]::Create()
         $buffer = New-Object byte[] 65536
         [long]$count = 0
@@ -250,10 +257,10 @@ function CsvContentHash([string]$path, [long]$expectedSize) {
             $part = $stream.Read($buffer, 0, [int][Math]::Min($buffer.Length, $expectedSize + 1 - $count))
             if ($part -eq 0) { break }
             $count += $part
-            if ($count -gt $expectedSize) { throw 'Monitoring CSV grew during content verification.' }
+            if ($count -gt $expectedSize) { StopObservation 'Monitoring CSV grew during content verification.' }
             [void]$sha.TransformBlock($buffer, 0, $part, $buffer, 0)
         }
-        if ($count -ne $expectedSize -or $stream.Length -ne $expectedSize) { throw 'Monitoring CSV changed during content verification.' }
+        if ($count -ne $expectedSize -or $stream.Length -ne $expectedSize) { StopObservation 'Monitoring CSV changed during content verification.' }
         [void]$sha.TransformFinalBlock([byte[]]@(), 0, 0)
         return ([BitConverter]::ToString($sha.Hash)).Replace('-', '').ToLowerInvariant()
     } finally {
@@ -263,6 +270,7 @@ function CsvContentHash([string]$path, [long]$expectedSize) {
 }
 
 function AssertCsvFile($token, $observation) {
+    $script:observationWait = $false
     $path = [string](ValueOf $token 'path')
     if ([string]::IsNullOrWhiteSpace($path) -or [IO.Path]::GetFileName($path) -notmatch '^LayerDatasheet_\d{8}_\d{6}\.csv$') { throw 'A verified Monitoring CSV token is required.' }
     $expectedHash = [string](ValueOf $token 'sha256')
@@ -273,16 +281,16 @@ function AssertCsvFile($token, $observation) {
     $file.Refresh()
     if (-not $file.Exists -or $file.Length -ne $expectedSize -or
         $file.LastWriteTimeUtc.Ticks -ne [long](ValueOf $token 'mtime_ticks')) {
-        throw 'The Monitoring CSV changed after the decision; no settings were saved.'
+        StopObservation 'The Monitoring CSV changed after the decision; no settings were saved.'
     }
     # Reopen for the second pass so an atomic replacement cannot leave both
     # checks reading an old, still-open handle. This is bounded evidence,
     # not an atomic lock with the later device operation.
     for ($pass = 0; $pass -lt 2; $pass++) {
-        if ((CsvContentHash $path $expectedSize) -cne $expectedHash) { throw 'The Monitoring CSV content changed after the decision.' }
+        if ((CsvContentHash $path $expectedSize) -cne $expectedHash) { StopObservation 'The Monitoring CSV content changed after the decision.' }
         $file.Refresh()
         if (-not $file.Exists -or $file.Length -ne $expectedSize -or
-            $file.LastWriteTimeUtc.Ticks -ne [long](ValueOf $token 'mtime_ticks')) { throw 'The Monitoring CSV changed during verification.' }
+            $file.LastWriteTimeUtc.Ticks -ne [long](ValueOf $token 'mtime_ticks')) { StopObservation 'The Monitoring CSV changed during verification.' }
     }
     $age = ([DateTime]::UtcNow - $file.LastWriteTimeUtc).TotalSeconds
     if ($age -lt -2 -or $age -gt 5) { throw 'The completed CSV record is no longer fresh enough for an IR update.' }
@@ -550,7 +558,7 @@ try {
     }
     $response | ConvertTo-Json -Depth 10 -Compress
 } catch {
-    $kind = if ($script:identityFailure) { 'identity' } elseif ($script:sourceWait) { 'slice_wait' } elseif ($script:controlWait) { 'control_wait' } else { 'operation' }
+    $kind = if ($script:identityFailure) { 'identity' } elseif ($script:sourceWait) { 'slice_wait' } elseif ($script:observationWait) { 'observation_wait' } elseif ($script:controlWait) { 'control_wait' } else { 'operation' }
     @{success=$false;error=$_.Exception.Message;error_kind=$kind} | ConvertTo-Json -Depth 3 -Compress
     exit 1
 }

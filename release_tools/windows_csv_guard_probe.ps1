@@ -5,7 +5,7 @@ $tokens = $null; $errors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile($helper, [ref]$tokens, [ref]$errors)
 if ($errors.Count) { throw "Native helper parse errors: $errors" }
 # Load only the actual read-only guard functions, never the UI dispatcher.
-foreach ($name in @('ValueOf', 'FreshLogHint', 'CsvContentHash', 'AssertCsvFile')) {
+foreach ($name in @('ValueOf', 'FreshLogHint', 'StopObservation', 'CsvContentHash', 'AssertCsvFile')) {
     $definitions = @($ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true))
     if ($definitions.Count -ne 1) { throw "Cannot identify exact production function $name" }
     Invoke-Expression $definitions[0].Extent.Text
@@ -21,10 +21,11 @@ function TokenFor([byte[]]$bytes) {
     finally { $sha.Dispose() }
     return @{ path = $path; size = $bytes.Length; mtime_ticks = ([IO.FileInfo]::new($path)).LastWriteTimeUtc.Ticks; sha256 = $digest }
 }
-function MustReject($token, [string]$label) {
+function MustReject($token, [string]$label, [bool]$observationWait = $false) {
     $rejected = $false
     try { AssertCsvFile $token @{ row_index = 0 } } catch { $rejected = $true }
     if (-not $rejected) { throw "Production guard accepted $label" }
+    if ([bool]$script:observationWait -ne $observationWait) { throw "Wrong observation-wait classification for $label" }
     $checks.Add($label)
 }
 try {
@@ -37,7 +38,13 @@ try {
     [IO.File]::WriteAllBytes($path, $modified)
     [IO.File]::SetLastWriteTimeUtc($path, [DateTime]::new([long]$token.mtime_ticks, [DateTimeKind]::Utc))
     if ($modified.Length -ne $raw.Length -or ([IO.FileInfo]::new($path)).LastWriteTimeUtc.Ticks -ne $token.mtime_ticks) { throw 'Regression fixture did not preserve size and mtime' }
-    MustReject $token 'same-size preserved-mtime 42 to -1 rejected'
+    MustReject $token 'same-size preserved-mtime 42 to -1 rejected' $true
+    [IO.File]::WriteAllBytes($path, $raw)
+    $token = TokenFor $raw
+    [IO.File]::AppendAllText($path, '2,')
+    MustReject $token 'partial append holds without edit or Save' $true
+    [IO.File]::AppendAllText($path, "43`r`n")
+    MustReject $token 'complete append holds without edit or Save' $true
     [IO.File]::WriteAllBytes($path, $raw)
     $token = TokenFor $raw
     $noHash = $token.Clone(); $noHash.Remove('sha256')
@@ -45,7 +52,7 @@ try {
     $oversized = $token.Clone(); $oversized.size = 33554433
     MustReject $oversized 'oversized evidence rejected'
     $corrupt = $token.Clone(); $corrupt.sha256 = '0' * 64
-    MustReject $corrupt 'mismatched digest rejected'
+    MustReject $corrupt 'mismatched digest rejected' $true
     $big = New-Object byte[] 33554432
     [IO.File]::WriteAllBytes($path, $big)
     $token = TokenFor $big
