@@ -1,0 +1,134 @@
+{
+  "review_stage": "POST-native-validation-addendum",
+  "status": "complete",
+  "candidateSHA": "ddd92159be627384880e398c8953ba79d6721ac9",
+  "later_source_and_evidence_commit": "9c3446efdc3e010f628cc013d912699d6763c812",
+  "runtime_unchanged_in_later_commit": true,
+  "original_post_review": "/workspace/ir-csv258-review/sol-post-review.json",
+  "original_post_review_preserved": true,
+  "unresolved_findings": [],
+  "decision": "No unresolved code findings. Native Windows candidate evidence now validates the previously pending guard/UI fixture checks. Excel COM and equipment validation remain incomplete; no distribution approval is given.",
+  "review_route": {
+    "mechanism": "native collaboration follow-up",
+    "task": "/root/sol_reviewer_csv258",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_identity_independently_attested": false,
+    "cli_authentication_repaired_or_tested": false
+  },
+  "evidence_origin": "Windows GitHub Actions reports supplied by parent; reviewer independently inspected raw reports, hashes, archives and packaged-source identities. Reviewer did not rerun Windows locally.",
+  "windows_run": {
+    "run_id": 40986111128,
+    "artifact_id": 12947605725,
+    "source_commit": "ddd92159be627384880e398c8953ba79d6721ac9",
+    "reports_directory": "/workspace/ir-csv258-review/windows-ddd9215",
+    "outer_zip_sha256": "7dc3dbb77ac63f5ad99e21f2fe6ea4b1ca247f0673ab508e5b9b2c764d1487ca",
+    "candidate_zip_sha256": "3196030d7ca9773e15613b72bcc1dfc59ac044bfc7f2dfa289d0f7312b9d1782",
+    "outer_crc_ok": true,
+    "inner_crc_ok": true,
+    "all_17_extracted_artifact_entries_match_archive": true,
+    "all_manifest_digests_match": true,
+    "packaged_sources_compared_to_committed_ddd": 44,
+    "packaged_source_mismatches": [],
+    "integrity_artifact": "/workspace/ir-csv258-review/sol-windows-artifact-integrity.json"
+  },
+  "raw_results": {
+    "packaged_unit_tests": {
+      "run": 295,
+      "passed": true,
+      "seconds": 81.518,
+      "log": "/workspace/ir-csv258-review/windows-ddd9215/tests.txt"
+    },
+    "native_csv_guard": {
+      "passed": true,
+      "checks": [
+        "unchanged content accepted",
+        "same-size preserved-mtime 42 to -1 rejected",
+        "partial append holds without edit or Save",
+        "complete append holds without edit or Save",
+        "missing hash rejected",
+        "missing mtime rejected as terminal",
+        "invalid mtime type/range rejected as terminal: ",
+        "invalid mtime type/range rejected as terminal: True",
+        "invalid mtime type/range rejected as terminal: not ticks",
+        "invalid mtime type/range rejected as terminal: 1.5",
+        "invalid mtime type/range rejected as terminal: 0",
+        "invalid mtime type/range rejected as terminal: -1",
+        "invalid mtime type/range rejected as terminal: 3155378976000000000",
+        "invalid size type rejected as terminal: ",
+        "invalid size type rejected as terminal: True",
+        "invalid size type rejected as terminal: 32",
+        "invalid size type rejected as terminal: 1.5",
+        "oversized evidence rejected",
+        "mismatched digest rejected",
+        "32 MiB bounded two-pass content assertion accepted"
+      ],
+      "check_count": 20,
+      "maximum_csv_bytes": 33554432,
+      "two_pass_32mib_ms": 92.986,
+      "hardware_actions": 0,
+      "report": "/workspace/ir-csv258-review/windows-ddd9215/csv-guard.json"
+    },
+    "non_excel_successful_checks": [
+      "build",
+      "tests",
+      "smoke",
+      "bridge",
+      "csv_guard",
+      "native_discovery",
+      "slice_perf",
+      "settings_recovery",
+      "auto_slice",
+      "reverify"
+    ],
+    "additional_native_reports_inspected": [
+      "settings-recovery.json",
+      "auto-slice.json",
+      "bridge.json",
+      "discovery.json",
+      "slice-performance.json"
+    ],
+    "excel": {
+      "excel_com_tested": false,
+      "release_ready": false,
+      "reason": "Excel COM is not registered"
+    },
+    "historical_readiness": {
+      "automated_checks_passed": false,
+      "release_ready": false,
+      "device_application_approved": false,
+      "final_sol_review": "pending",
+      "report_unchanged": true
+    }
+  },
+  "whole_file_writer_crosscheck": {
+    "source": "/workspace/ir-auto-slice-research/printheadcon-source/ProcessStatus.cs",
+    "sha256": "bd816e81e16b2f8af2faf43d32297b865c7a03598a3f194daac5a9f5e1475b51",
+    "locations": [
+      "SerializeToCsv, lines337-353",
+      "SavePrintingParameters, lines388-404"
+    ],
+    "observed_code": "Both methods use new StreamWriter(filePath) and CsvWriter.WriteRecords(Instance.layers).",
+    "interpretation": "For a given existing path, the default StreamWriter constructor truncates/overwrites the file and then serializes the whole layer collection; a reader can encounter an empty or partial rewrite window. Such a race does not require waiting for the next completed layer or an Excel step lasting 58 seconds.",
+    "qualifications": [
+      "The exact source version of the running BJT binary is unverified.",
+      "With blank filePath these methods generate a DateTime.Now filename; their definitions alone do not establish per-layer call schedule or path reuse.",
+      "This is a plausible race mechanism, not proof of the original incident timing or of actual Excel latency."
+    ]
+  },
+  "independent_synthetic_rewrite_probe": {
+    "artifact": "/workspace/ir-csv258-review/sol-whole-file-rewrite-probes.json",
+    "scope": "Production parser/adapter with temporary synthetic CSV and mocked UI, no next completed layer required.",
+    "observed": "Empty and partial same-layer rewrite windows both produced ObservationSuspended with zero native apply, Save and settings recovery. Restored layer/temperature remained readable.",
+    "eligibility_limit": "After empty restore the observation_key can remain None because generation/freshness fencing is conservative. Readable display does not imply a row is eligible for calculation or Save.",
+    "initial_assertion_limit": "An initial reviewer assertion that restoration always yields a valid observation_key was too strong and failed for the empty-window fixture. That assertion is not treated as a product failure or a passed test; the raw observed result is preserved."
+  },
+  "limits": [
+    "Native UI checks use synthetic Windows fixtures and temporary files; they do not validate the live BJT application or physical M1/S3 equipment.",
+    "Excel COM is not registered in the runner; no real workbook COM speed or end-to-end calculation latency was measured.",
+    "The 92.986 ms measurement is a 32 MiB hash guard benchmark on one CI run, not Excel or device latency.",
+    "CSV-only checks cannot prove physical sensor freshness, lamp/PLC behavior or long-run thermal stability.",
+    "The original incident mechanism and why BinderJet stopped before 259 remain unconfirmed.",
+    "Release readiness remains false; no EXE release, distribution, equipment application or final control approval was requested or performed."
+  ]
+}
