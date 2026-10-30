@@ -1,0 +1,129 @@
+{
+  "source_commit": "12a6acba94c9078456cea1e17f8ebca9f84857cb",
+  "run_id": 41000552744,
+  "artifact_id": 12953507103,
+  "outer_bytes": 34886545,
+  "outer_sha256": "8c901da586528e94ebaa3e4cf52b99a9a0fe63544f86457468c12c54a225d1ee",
+  "inner_zip_bytes": 35380611,
+  "inner_zip_sha256": "5e6ad6e1af19d3a5a511f29706edee93890f80c06b073b54845386de89280818",
+  "packaged_tests": {
+    "count": 301,
+    "passed": true,
+    "seconds": 78.363
+  },
+  "auto_source": {
+    "passed": true,
+    "checks": {
+      "explicit_pointed_edit_bound": true,
+      "explicit_pointed_static_bound": true,
+      "ellipsized_noneditable_label_retains_complete_native_text": true,
+      "disabled_noneditable_label_point_binding": true,
+      "wrong_pid_rejected": true,
+      "process_view_rejected": true,
+      "hidden_home_remains_readable": true,
+      "cached_path_read_is_bounded": true,
+      "production_helper_hidden_source_and_two_hashes": true,
+      "noneditable_label_native_source_proof": true,
+      "literal_ellipsis_label_text_rejected": true,
+      "literal_ellipsis_label_native_proof_holds": true,
+      "long_and_short_native_path_forms_match": true,
+      "same_home_native_reparent_holds": true,
+      "native_control_id_change_holds": true,
+      "native_class_mismatch_holds": true,
+      "current_filename_change_preserves_folder": true,
+      "native_path_grammar_matches_python": true,
+      "automatic_import_without_csv": true,
+      "current_filename_does_not_reanalyze_set": true,
+      "parsed_csv_long_alias_matches_imported_full_path": true,
+      "ui_change_refreshes_set_without_csv": true,
+      "pre_edit_folder_mismatch_holds": true,
+      "same_size_mtime_collision_fixture": true,
+      "content_hash_rejects_same_stat_change": true,
+      "same_path_reanalyzes_but_waits_reload_ack": true,
+      "explicit_reload_ack_reopens_source_gate": true,
+      "recreated_field_needs_rebind": true,
+      "explicit_rebind_recovers_without_reconnecting": true,
+      "content_proof_within_production_budget": true,
+      "extension_named_parent_folder_supported": true,
+      "extension_named_directory_field_supported": true,
+      "target_heartbeat_responsive": true,
+      "zero_save_or_navigation": true,
+      "no_process_grid_messages": true
+    },
+    "physical_equipment_actions": 0,
+    "actual_bjt_path_binding_tested": false,
+    "excel_com_tested": false,
+    "label_native_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+    "native_path_read_ms": {
+      "median": 0.14884999998798776,
+      "maximum": 0.7095000000276741,
+      "samples": 100
+    },
+    "fixture_short_alias_differs": true,
+    "two_image_content_proof_ms": {
+      "median": 32,
+      "samples": [
+        32,
+        33,
+        32
+      ],
+      "total_bytes": 8390764
+    }
+  },
+  "csv_guard": {
+    "hardware_actions": 0,
+    "two_pass_32mib_ms": 59.361200000000004,
+    "maximum_csv_bytes": 33554432,
+    "checks": [
+      "unchanged content accepted",
+      "same-size preserved-mtime 42 to -1 rejected",
+      "partial append holds without edit or Save",
+      "complete append holds without edit or Save",
+      "missing hash rejected",
+      "missing mtime rejected as terminal",
+      "invalid mtime type/range rejected as terminal: ",
+      "invalid mtime type/range rejected as terminal: True",
+      "invalid mtime type/range rejected as terminal: not ticks",
+      "invalid mtime type/range rejected as terminal: 1.5",
+      "invalid mtime type/range rejected as terminal: 0",
+      "invalid mtime type/range rejected as terminal: -1",
+      "invalid mtime type/range rejected as terminal: 3155378976000000000",
+      "invalid size type rejected as terminal: ",
+      "invalid size type rejected as terminal: True",
+      "invalid size type rejected as terminal: 32",
+      "invalid size type rejected as terminal: 1.5",
+      "oversized evidence rejected",
+      "mismatched digest rejected",
+      "32 MiB bounded two-pass content assertion accepted"
+    ],
+    "passed": true
+  },
+  "raw_readiness": {
+    "release_ready": false,
+    "source_commit": "12a6acba94c9078456cea1e17f8ebca9f84857cb",
+    "automated_checks_passed": false,
+    "final_sol_review": "pending",
+    "checks": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "settings_recovery": "success",
+      "auto_slice": "success",
+      "excel": "failure",
+      "reverify": "success"
+    },
+    "device_application_approved": false
+  },
+  "excel": {
+    "excel_com_tested": false,
+    "release_ready": false,
+    "reason": "Excel COM is not registered"
+  },
+  "actual_screenshot_field_verified": false,
+  "hardware_tested": false,
+  "equipment_application_approved": false
+}

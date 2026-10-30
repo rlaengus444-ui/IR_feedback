@@ -88,6 +88,15 @@ def main():
             checks['explicit_pointed_edit_bound']=binding.leaf==box and canonical(selection.directory)==canonical(a)
             static_binding,static_selection=reader.bind_at(target,lx,ly)
             checks['explicit_pointed_static_bound']=static_binding.leaf==label and canonical(static_selection.directory)==canonical(a)
+            report['label_native_class']=reader._class(label)
+            label_meta=Path(str(marker)+'.label-meta').read_text().split(',')
+            checks['ellipsized_noneditable_label_retains_complete_native_text']=(label_meta[:2]==['True','True']
+                and static_selection.raw_text==str(a/'001.bmp'))
+            command('label_disabled')
+            disabled_binding,disabled_selection=reader.bind_at(target,lx,ly)
+            checks['disabled_noneditable_label_point_binding']=(disabled_binding.leaf==label
+                and disabled_selection.raw_text==str(a/'001.bmp'))
+            command('label_enabled')
             for test_target,handle,name in ((replace(target,pid=pid+1),box,'wrong_pid_rejected'),
                                             (target,wrong,'process_view_rejected')):
                 try:reader.bind_handle(test_target,handle);checks[name]=False
@@ -109,6 +118,14 @@ def main():
                     'machine':'M1','handles':{'machine':machine},'source_guard':value},threading.Event())
             good_a=proof(a)
             checks['production_helper_hidden_source_and_two_hashes']=verify(good_a)['success']
+            label_proof=proof(a,static_binding)
+            checks['noneditable_label_native_source_proof']=verify(label_proof)['success']
+            command('label_ellipsis')
+            try:reader.read(static_binding);checks['literal_ellipsis_label_text_rejected']=False
+            except SourceReadError:checks['literal_ellipsis_label_text_rejected']=True
+            try:verify(label_proof);checks['literal_ellipsis_label_native_proof_holds']=False
+            except SourceSuspended:checks['literal_ellipsis_label_native_proof_holds']=True
+            command('a')
             kernel=ctypes.WinDLL('kernel32',use_last_error=True)
             kernel.GetLongPathNameW.argtypes=[ctypes.c_wchar_p,ctypes.c_wchar_p,ctypes.c_uint]
             kernel.GetLongPathNameW.restype=ctypes.c_uint

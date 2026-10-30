@@ -99,6 +99,29 @@ class ArchiveViewTests(unittest.TestCase):
         self.assertEqual(1, len(list(Path(self.temp.name).glob('*.csv'))))
         self.assertEqual(2, len(list(Path(self.temp.name).glob('*.png'))))
 
+    def test_csv_wait_keeps_pump_alive_and_delivers_later_path_binding(self):
+        from windows_slice_source import PathBinding, SourceSelection
+        self.connect()
+        data = self.data(255)
+        data.update(effective_mode='observation-waiting', proposed={}, reasons={},
+                    status='연결 유지 · CSV 갱신 대기')
+        self.emit('snapshot', data)
+        with patch.object(self.root, 'after', wraps=self.root.after) as schedule:
+            self.view._pump()
+        self.assertTrue(any(c.args == (50, self.view._pump) for c in schedule.call_args_list))
+        self.assertEqual('connected', self.controller.state)
+        self.assertIn('CSV', self.view.status.get())
+        self.assertEqual(1, len(self.view.charts.history.points))
+        binding = PathBinding(TARGET, 101, 201, (), 'Home')
+        selection = SourceSelection('C:\\slices', 'C:\\slices', binding)
+        self.view._binding_serial = 1
+        self.view._binding_queue.put((1, self.controller.generation, TARGET, binding, selection, None))
+        with patch('standalone_ir.messagebox.askyesno', return_value=True) as confirm:
+            self.view._pump()
+        confirm.assert_called_once()
+        self.assertIs(binding, self.view._source_binding)
+        self.assertEqual([], list(Path(self.temp.name).iterdir()))
+
     def pump_until(self, predicate):
         deadline = time.monotonic() + 5
         while not predicate() and time.monotonic() < deadline:
