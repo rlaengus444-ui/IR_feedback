@@ -5,6 +5,7 @@ import tempfile
 import threading
 import unittest
 from unittest.mock import Mock, patch
+from excel_test_helpers import InlineWorkbookGroup
 
 from adapter_contracts import (AdapterError, AmbiguousWriteError, ControlUnavailable,
                               ObservationSuspended, UiAdapter)
@@ -125,7 +126,7 @@ class ObservationSessionTests(unittest.TestCase):
         if algorithm == 'excel':
             from test_slice_handoff import SPEC, A
             options = SessionOptions(TARGET, mode='control', workbook_spec=SPEC, slice_dataset=A)
-        with patch('session.LayerAdaptiveController', return_value=controller), patch('session.WorkbookController', return_value=controller):
+        with patch('session.LayerAdaptiveController', return_value=controller), patch('session.WorkbookController', return_value=controller), patch('session.AsyncWorkbookGroup', InlineWorkbookGroup):
             run_ui_session(options, stop, emit, lambda:adapter)
         return adapter, controller, reports
 

@@ -1,4 +1,5 @@
 """Offline tests for recoverable control holds and resumption."""
+from excel_test_helpers import InlineWorkbookGroup
 from dataclasses import replace
 import json
 from pathlib import Path
@@ -280,7 +281,7 @@ class RecoverySessionTests(unittest.TestCase):
                     options._slice_dataset_setting.request(handoff.B)
                 if len(reports) == len(frames):
                     stop.set()
-        with patch('session.WorkbookController', return_value=excel):
+        with patch('session.WorkbookController', return_value=excel), patch('session.AsyncWorkbookGroup', InlineWorkbookGroup):
             run_ui_session(options, stop, emit, lambda: adapter)
         for row in reports[1:4]:
             self.assertEqual({}, row['proposed'])
@@ -292,8 +293,8 @@ class RecoverySessionTests(unittest.TestCase):
         options = SessionOptions(test_session.TARGET, mode='control', workbook_spec=handoff.SPEC, slice_dataset=handoff.A)
         adapter, excel, stop = Mock(), Mock(), threading.Event()
         excel.process.return_value = type('Result', (), {'power_percent':55, 'reason':'test'})()
-        adapter.read_snapshot.return_value = replace(test_session.snapshot('fresh', 1), observation_is_new=True,
-            control_available=True, coupled_output=False, control_epoch=1)
+        adapter.read_snapshot.side_effect = [replace(test_session.snapshot(key, layer), observation_is_new=fresh,
+            control_available=True, coupled_output=False, control_epoch=1) for key, layer, fresh in [('base', 0, False), ('fresh', 1, True)]]
         def apply(heater, power, key, stop_event):
             self.assertEqual(1, heater)
             options._slice_dataset_setting.request(handoff.B)
@@ -302,12 +303,13 @@ class RecoverySessionTests(unittest.TestCase):
         def emit(kind, value):
             if kind == 'snapshot':
                 reports.append(value)
-                stop.set()
-        with patch('session.WorkbookController', return_value=excel):
+                if len(reports) == 2:
+                    stop.set()
+        with patch('session.WorkbookController', return_value=excel), patch('session.AsyncWorkbookGroup', InlineWorkbookGroup):
             run_ui_session(options, stop, emit, lambda: adapter)
         adapter.apply_ir_power.assert_called_once()
-        self.assertEqual({1: 55}, reports[0]['applied'])
-        self.assertEqual({}, reports[0]['proposed'])
+        self.assertEqual({1: 55}, reports[-1]['applied'])
+        self.assertEqual({}, reports[-1]['proposed'])
 
     def test_cached_different_layer_does_not_bypass_recovery_barrier(self):
         adapter, stop, reports = Mock(), threading.Event(), []

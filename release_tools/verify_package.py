@@ -8,12 +8,12 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
 REQUIRED_APP = (
-    'adapter_contracts.py', 'csv_source.py', 'excel_workbook.py', 'excel_worker.ps1',
+    'adapter_contracts.py', 'csv_source.py', 'excel_workbook.py', 'excel_async.py', 'excel_calculation.py', 'excel_worker.ps1',
     'layer_algorithm.py', 'layer_charts.py', 'plot_archive.py', 'plot_images.py', 'native_helper.ps1', 'README.ko.md',
     'sequence_field_audit.py', 'sequence_persistence.py', 'session.py', 'single_instance.py',
     'standalone_ir.py', 'target_temperature.py', 'UiaBridge.dll', 'windows_ui_adapter.py',
     'workbook-replay.settings.json', 'slice_data.py', 'slice_panel.py', 'slice_workbook.py',
-    'output_limit.py',
+    'output_limit.py', 'resilient_adapter.py', 'observed_session.py',
     'templates/IR_슬라이싱_수동계산.xlsx',
 )
 SOURCES = {**{'app/' + name: 'app/' + name for name in REQUIRED_APP},
@@ -22,6 +22,7 @@ SOURCES = {**{'app/' + name: 'app/' + name for name in REQUIRED_APP},
            'docs/SLICE_LIVE.ko.md': 'docs/SLICE_LIVE.ko.md',
            'docs/LIVE_SETTINGS.ko.md': 'docs/LIVE_SETTINGS.ko.md',
            'docs/IR_OUTPUT_LIMIT.ko.md': 'docs/IR_OUTPUT_LIMIT.ko.md',
+           'docs/EXCEL_RESPONSE_WAIT.ko.md': 'docs/EXCEL_RESPONSE_WAIT.ko.md',
            'docs/AUTO_SLICE.ko.md': 'docs/AUTO_SLICE.ko.md',
            'docs/CSV_OBSERVATION_WAIT.ko.md': 'docs/CSV_OBSERVATION_WAIT.ko.md',
            'docs/validation/csv-observation-wait-2026.10.30-design-review.json': 'docs/validation/csv-observation-wait-2026.10.30-design-review.json',

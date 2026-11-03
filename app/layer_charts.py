@@ -6,7 +6,7 @@ measurement of heater power. Only successful Save calls create save markers.
 
 from collections import OrderedDict
 from bisect import bisect_left
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import csv
 import math
 import os
@@ -127,11 +127,20 @@ class LayerHistory:
             self.reset()
         self._run_key = run_key
         self._has_run = True
-        if self._keys.get(layer) == key:
-            return False
         saved = payload.get("applied")
         if not isinstance(saved, dict):
             saved = {}
+        if self._keys.get(layer) == key:
+            point = self._points[layer]
+            ir1 = _power(saved.get(1))
+            ir2 = None if point.coupled else _power(saved.get(2))
+            updated = replace(point,
+                ir1_saved=point.ir1_saved if ir1 is None else ir1,
+                ir2_saved=point.ir2_saved if ir2 is None else ir2)
+            if updated == point:
+                return False
+            self._points[layer] = updated
+            return True
         coupled = bool(snapshot.coupled_output)
         point = LayerPoint(layer + 1, temperature,
             _power(snapshot.heater1_setting_percent),

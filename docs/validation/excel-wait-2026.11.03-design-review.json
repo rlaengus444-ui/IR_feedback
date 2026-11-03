@@ -1,0 +1,22 @@
+{
+  "stage": "PRE design critique",
+  "route": "native collaboration.spawn_agent sol_reviewer_excel_wait",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_identity_independently_attested": false,
+  "target_commit": "14905fc346e229f4b8687a8f34d1901dadb8fecc",
+  "final_response_received": true,
+  "result": "Proceed with single-owner async Excel and latched timeout hold; POST required",
+  "decisions": [
+    "Keep CSV/native adapter on original session thread; Excel owner serializes init/reset/all heater calculations",
+    "Timeout and transport failures distinct; only explicit response/transport failure latches observer connection, invalid workbook/result remains terminal",
+    "No automatic restart or retry; reconnect required",
+    "Invalidate unaccepted frozen private history on supersession; never queue observations collected while unavailable",
+    "Exact observation/run/layer/control/target-generation/image/power/cap identity; baseline plus different fresh layer",
+    "Preserve current cap,5pp,CSV hash/freshness/Sequence audits/ambiguousSave protections and verified partialSave observations"
+  ],
+  "actual_pc_cause_unconfirmed": true,
+  "excel_com_tested": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false
+}

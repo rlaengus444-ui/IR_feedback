@@ -1,0 +1,25 @@
+{
+  "stage": "DESIGN PRE for unattended automatic recovery",
+  "route": "native collaboration followup_task to /root/sol_reviewer_excel_wait",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_identity_independently_attested": false,
+  "baseline_commit": "81bfadc5a71ae364e2555d4dd141237c3548ad0d",
+  "final_response_received": true,
+  "design_conditions": [
+    "Keep a single logical observation session and CSV reader until explicit stop.",
+    "Retry only typed proven read-only/transport/Excel faults, with bounded backoff.",
+    "Retain immutable workbook bytes validated before the first controller for both heaters and every recovery.",
+    "Verify retirement of owner, abort, reader, PowerShell, owned Excel handle and temp resources; unknown ownership prevents replacement.",
+    "Retirement fence also applies across operator session replacement.",
+    "Discard old results; require validated current context and a baseline followed by a different fresh layer.",
+    "Preserve pinned job authorization and per-job/channel admission watermarks across transport retries.",
+    "Invalid thermometer markers are not physical temperatures; integrity/conflict rows cannot be dropped to fake recovery.",
+    "Uncertain edit/Save and generic formula/protocol/integrity faults retain a sticky IR barrier with observation continuing.",
+    "Confirmed settings alone cannot prove an unconfirmed queued Save was cleared."
+  ],
+  "algorithm_formula_changes": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false,
+  "distribution_approval": "Requires final source and exact-artifact independent POST review."
+}

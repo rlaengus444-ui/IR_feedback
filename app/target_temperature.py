@@ -45,13 +45,21 @@ class TargetTemperatureSetting:
     def __init__(self, value):
         self._lock = threading.Lock()
         self._value = validate_target_temperature(value)
+        self._generation = 0
 
     def set(self, value):
         validated = validate_target_temperature(value)
         with self._lock:
+            if validated != self._value:
+                self._generation += 1
             self._value = validated
         return validated
 
     def get(self):
         with self._lock:
             return self._value
+
+    def snapshot(self):
+        """Monotonic request identity also distinguishes A -> B -> A."""
+        with self._lock:
+            return self._generation, self._value

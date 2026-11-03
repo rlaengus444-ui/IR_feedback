@@ -82,8 +82,6 @@ class ResumeAnchorTests(unittest.TestCase):
     def test_malformed_or_contradictory_anchor_is_rejected(self):
         cases = [
             [self.old, self.metadata('nonsense')],
-            [self.old, self.metadata('', -1)],
-            [self.old, self.metadata(self.anchor[3], -1)],
             [self.old, self.metadata('', 0, '')],
             [self.old, self.metadata('', 0, '01/01/0001 00:00:00')],
             [self.old, self.metadata('', 0, (self.started + timedelta(seconds=3)).strftime('%m/%d/%Y %H:%M:%S'))],
@@ -102,6 +100,16 @@ class ResumeAnchorTests(unittest.TestCase):
                 self.write(rows)
                 with self.assertRaises(CsvSourceError):
                     self.make_reader().read()
+
+    def test_sentinel_anchor_is_an_invalid_observation(self):
+        for finish in ('', self.anchor[3]):
+            with self.subTest(finish=finish):
+                self.write([self.old, self.metadata(finish, -1)])
+                result = self.make_reader().read()
+                self.assertFalse(result.sample.measurement_valid)
+                self.assertIsNone(result.sample.temperature)
+                self.assertIsNone(result.token)
+                self.assertFalse(result.is_new)
 
     def test_partial_tail_does_not_consume_first_baseline(self):
         self.write([self.old, self.metadata()])

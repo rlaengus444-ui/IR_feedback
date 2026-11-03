@@ -24,6 +24,11 @@ class CsvSourceError(AdapterError):
     pass
 
 
+class CsvReadUnavailable(CsvSourceError):
+    """A transient operating-system failure prevented observation."""
+    pass
+
+
 @contextmanager
 def shared_binary(path: Path):
     """The reader must not prevent the printer from appending or replacing files."""
@@ -192,10 +197,8 @@ class JobLog:
                 if any(text in line for text in ("AutoPrint finished!", "AutoPrint cancelled.", "Stopping printing as requested.")):
                     self.context = replace(self.context, state="IDLE")
             return self.context
-        except (OSError, UnicodeError):
-            self.context = JobContext()
-            self.path, self.identity, self.window_hash = None, None, None
-            return self.context
+        except OSError as exc:
+            raise CsvReadUnavailable("원본 로그를 읽을 수 없습니다.") from exc
 
 
 RECORD_TIME_FORMATS = ("%m/%d/%Y %H:%M:%S", "%m/%d/%Y %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f")
@@ -225,15 +228,17 @@ def unset_record_time(text: str) -> bool:
 @dataclass(frozen=True)
 class CsvSample:
     layer_index: int
-    temperature: float
+    temperature: float | None
     start: str
-    finished: datetime
+    finished: datetime | None
     delay_seconds: float | None
     key: str
     slicing_image_path: str = ""
     recoating_finished: datetime | None = None
     slice_lineage: str = ""
     source_generation: str = ""
+    measurement_valid: bool = True
+    invalid_reason: str = ""
 
 
 @dataclass(frozen=True)
@@ -341,11 +346,6 @@ class MonitoringCsvReader:
         if not 0 <= index <= 1000000 or not math.isfinite(temperature) or not -273.15 <= temperature <= 2000:
             raise CsvSourceError("Monitoring CSV의 층/온도가 허용 범위를 벗어났습니다.")
         start, finish = record_time(data["TimeStart"]), record_time(data["TimePrintingFinished"])
-        # The printer records -1 when its thermometer is disabled. A completed
-        # row carrying that sentinel is not a temperature measurement and must
-        # stop control, rather than be learned as a valid low temperature.
-        if temperature == -1:
-            raise CsvSourceError("온도계 비활성 값(-1°C)이 기록되어 IR 제어를 중단합니다.")
         if start is not None and finish is not None and finish < start:
             raise self._context_error(context, index, start, finish, "완료 시각이 시작 시각보다 빠름")
         if (self._resume_anchor_start is not None and index < context.first_layer and
@@ -355,20 +355,24 @@ class MonitoringCsvReader:
             raise self._context_error(context, index, start, finish, "재시작 시작 행 뒤에 이전 완료 층이 나타남")
         if self._skipped_history_rows and index == context.first_layer:
             self._resume_anchor(context, index, start, finish, data["TimePrintingFinished"])
-        if temperature == 0 or start is None or finish is None:
+        if temperature == -1:
+            for raw, parsed in ((data["TimeStart"], start), (data["TimePrintingFinished"], finish)):
+                if parsed is None and not unset_record_time(raw):
+                    raise self._context_error(context, index, start, finish, "온도계 비활성 행의 시각이 올바르지 않음")
+        elif temperature == 0 or start is None or finish is None:
             return None  # Metadata above never becomes a temperature sample.
         earliest = context.first_started - timedelta(seconds=2)
         if index < context.first_layer:
             # Resuming the original job can retain completed rows from its
             # previous run. Only a leading, strictly older prefix is history.
             # No such row supplies a measurement, token, or control proposal.
-            if (self._history_prefix_open and self._resume_anchor_start is None and
-                    start < earliest and finish < earliest):
+            if (temperature != -1 and self._history_prefix_open and self._resume_anchor_start is None and
+                    start is not None and finish is not None and start < earliest and finish < earliest):
                 self._skipped_history_rows += 1
                 return None
             raise self._context_error(context, index, start, finish,
                                       "이전 층 행의 시간대 또는 위치가 현재 작업과 충돌")
-        if start < earliest:
+        if start is not None and start < earliest:
             raise self._context_error(context, index, start, finish, "현재 층 행이 작업 시작보다 오래됨")
         if self._history_prefix_open and self._skipped_history_rows:
             # Skipping history adds an exception to normal membership checks;
@@ -377,16 +381,18 @@ class MonitoringCsvReader:
                 raise self._context_error(context, index, start, finish, "재시작 기준 층/시각을 확인할 수 없음")
         self._history_prefix_open = False
         recoating = record_time(data["TimeRecoatingFinished"])
-        delay = (finish - recoating).total_seconds() if recoating and start <= recoating <= finish else None
+        delay = (finish - recoating).total_seconds() if recoating and start and finish and start <= recoating <= finish else None
         identity = [str(self.path), self.identity, self.generation, context.run_key, index, data["TimeStart"], temperature]
         key = hashlib.sha256(repr(identity).encode()).hexdigest()
         # Optional lineage never relaxes ordinary CSV temperature/job validation.
         # Its separate token is checked only by explicitly enabled auto images.
         image_path = data.get("ImgSlicing", "")
         lineage = hashlib.sha256(repr((image_path, data["TimeRecoatingFinished"])).encode()).hexdigest()
-        return CsvSample(index, temperature, data["TimeStart"], finish, delay, key,
+        valid = temperature != -1
+        reason = "온도계 비활성 값(-1°C)이 기록되어 IR 제어를 보류합니다." if not valid else ""
+        return CsvSample(index, temperature if valid else None, data["TimeStart"], finish, delay, key,
                          image_path, recoating if delay is not None else None, lineage,
-                         hashlib.sha256(repr(identity[:4]).encode()).hexdigest())
+                         hashlib.sha256(repr(identity[:4]).encode()).hexdigest(), valid, reason)
 
     def read(self) -> CsvSnapshot:
         context = self.log.read()
@@ -398,7 +404,10 @@ class MonitoringCsvReader:
             if time.monotonic() - self._last_scan < 1:
                 return CsvSnapshot(None, context, None, False, "현재 작업의 CSV 생성 대기")
             self._last_scan = time.monotonic()
-            self.path = self._select(context)
+            try:
+                self.path = self._select(context)
+            except OSError as exc:
+                raise CsvReadUnavailable("Monitoring CSV를 선택할 수 없습니다.") from exc
         if self.path is None:
             return CsvSnapshot(None, context, None, False, "작업 시작 로그와 일치하는 Monitoring CSV 생성 대기")
         try:
@@ -454,6 +463,10 @@ class MonitoringCsvReader:
                         if latest and sample.layer_index == latest.layer_index and sample.key != latest.key:
                             raise CsvSourceError("같은 CSV 층의 온도 기록이 변경되어 제어를 보류합니다.")
                         latest = sample
+                        # Expose every invalid observation before processing any
+                        # subsequent rows, even when they arrive in one read.
+                        if not sample.measurement_valid:
+                            break
             changed = latest is not None and (self.latest is None or latest.key != self.latest.key)
             self.pending = combined[start:]
             self.offset += len(raw)
@@ -465,11 +478,13 @@ class MonitoringCsvReader:
                 token = {"path":str(self.path), "size":before.st_size,
                          "mtime_ticks":before.st_mtime_ns // 100 + 621355968000000000,
                          "sha256":hashlib.sha256(first).hexdigest()}
-            fresh = latest is not None and -2 <= self.clock() - latest.finished.timestamp() <= self.MAX_NEW_AGE_SECONDS
-            after_connection = latest is not None and latest.finished.timestamp() >= self.connected_at
-            is_new = bool(not reset and not self._resume_baseline_pending and changed and (not initial or after_connection)
+            if latest is not None and not latest.measurement_valid:
+                token = None
+            fresh = latest is not None and latest.finished is not None and -2 <= self.clock() - latest.finished.timestamp() <= self.MAX_NEW_AGE_SECONDS
+            after_connection = latest is not None and latest.finished is not None and latest.finished.timestamp() >= self.connected_at
+            is_new = bool(latest is not None and latest.measurement_valid and not reset and not self._resume_baseline_pending and changed and (not initial or after_connection)
                           and token is not None and fresh)
-            if latest is not None and token is not None:
+            if latest is not None and latest.measurement_valid and token is not None:
                 self._resume_baseline_pending = False
             details = "CSV 저장된 완료 층을 읽습니다. 측정부터 층 인쇄 완료까지의 지연이 있습니다."
             if waiting_for_anchor:
@@ -478,6 +493,10 @@ class MonitoringCsvReader:
                 details = f"이전 실행 완료 기록 {self._skipped_history_rows}개 제외 · {waiting}"
             elif self._skipped_history_rows:
                 details += f" 이전 실행 완료 기록 {self._skipped_history_rows}개 제외 · 재시작 기준 행 확인."
+            if latest is not None and not latest.measurement_valid:
+                details += " " + latest.invalid_reason
             return CsvSnapshot(latest, context, token, is_new, details)
-        except (OSError, UnicodeError, csv.Error) as exc:
+        except OSError as exc:
+            raise CsvReadUnavailable("Monitoring CSV를 읽을 수 없습니다.") from exc
+        except (UnicodeError, csv.Error) as exc:
             raise CsvSourceError("Monitoring CSV를 안정적으로 읽을 수 없습니다.") from exc

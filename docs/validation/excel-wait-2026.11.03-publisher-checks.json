@@ -1,0 +1,342 @@
+{
+  "candidate_commit": "06081893748df507aa25116dc3d6d6a586d22c61",
+  "candidate_zip_sha256": "a11ca09518e087a63476b86c6f9221e939ffd4ca85e03347a027897189c83c78",
+  "publisher_sha256": "5398553bbecf2dddd8624de1f25547df2fe574eb9de51b7ce3d4af467a1874df",
+  "template_sha256": "aa0e6f4f7dae11ecd35e5b9762d04edb968a206882884e2bdac74d9a2f9fd694",
+  "actual_publication_performed": false,
+  "network_calls_mocked": true,
+  "tests": 66,
+  "passed": true,
+  "cases": [
+    {
+      "name": "valid exact evaluation publication is draft-first and never latest",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "different candidate commit",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "wrong clean-checkout HEAD",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "dirty source checkout",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "review gate evaluation_distribution_allowed",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "review gate independent_post_review_complete",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "review gate equipment_application_approved",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "review gate publisher_sha256",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "review gate workflow_run_id",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "review gate candidate_zip_sha256",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "workflow source mismatch",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "workflow path mismatch",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "local evidence tampering",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "failed Windows tests gate",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "false full readiness refused",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "changed Excel COM status refused",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "native transport provenance mismatch",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "failed native report",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "existing release refused",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "existing tag refused",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "uploaded digest mismatch prevents publication",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "changed tag prevents publication",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_blocked_excel_does_not_block_csv_or_save",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_blocked_initialization_continues_polling",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_blocked_reset_continues_polling",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_context_changes_invalidate_pending_result",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_hold_logged_without_terminating_controller",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_image_handoff_discards_pending_features_and_waits_for_new_layer",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_target_aba_during_process_invalidates_result_and_requires_fresh_row",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_two_heaters_finish_before_save_and_report_partial_ambiguous_save",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_watchdog_discards_late_result",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_recovers_same_session_using_same_prepared_workbook_and_fresh_row",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_repeated_fault_backoff_is_not_reset_by_changes",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_unknown_retirement_keeps_polling_and_prevents_restart",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_disconnect_in_backoff_prevents_restart",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_two_heaters_recovered_before_save",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_fence_blocks_new_group_until_previous_verified",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_cancel_after_claim_before_thread_start_releases_fence",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_snapshot_survives_source_replacement_and_deletion",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_known_excel_exit_is_waited_before_handle_close",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_unknown_ownership_and_live_reader_block_replacement",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_starting_without_pid_stays_unknown",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_stale_first_job_remains_pinned_after_outage",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_session_resumes_saving_after_rebind",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_ambiguous_save_latches_and_rebind_preserves_identity",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_fault_registered_after_latch_delivers_original_once",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_faults_stay_monitor_only_and_preserve_shared_settings",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_stop_during_backoff_wakes_without_another_attempt",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_invalid_then_fresh_higher_layer",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_invalid_is_exposed_before_later_row_in_same_read",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_wait_and_automatic_recovery_keep_connection_then_next_snapshot_reaches_chart",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_observer_recovery_preserves_chart_and_does_not_archive_until_stop",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_calculation_hold_event_is_logged_without_finishing_or_clearing_records",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_partial_save_is_preserved_in_archive_csv_and_plot_input",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_same_key_save_reaches_archive_csv_and_both_png_inputs",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_owned_process_handle_is_terminated_and_verified",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_invalid_pid_never_opens_process_and_ownership_stays_unknown",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_non_ir_prepare_timeout_is_recoverable_when_helper_retires",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_barrier_is_logged_before_queue_even_during_close",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "missing critical regression test_uncertain_save_records_original_error_even_when_stop_is_set",
+      "passed": true,
+      "publication_mocked": true
+    },
+    {
+      "name": "workflow valid immutable artifact extraction",
+      "passed": true,
+      "network_mocked": true
+    },
+    {
+      "name": "workflow wrong artifact ID",
+      "passed": true,
+      "network_mocked": true
+    },
+    {
+      "name": "workflow wrong artifact digest",
+      "passed": true,
+      "network_mocked": true
+    },
+    {
+      "name": "workflow wrong run source",
+      "passed": true,
+      "network_mocked": true
+    },
+    {
+      "name": "workflow wrong repository provenance",
+      "passed": true,
+      "network_mocked": true
+    },
+    {
+      "name": "workflow corrupt downloaded outer ZIP",
+      "passed": true,
+      "network_mocked": true
+    }
+  ]
+}

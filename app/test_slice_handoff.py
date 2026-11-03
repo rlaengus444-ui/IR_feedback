@@ -1,4 +1,5 @@
 """Offline image handoff races; all adapters and Excel engines are synthetic."""
+from excel_test_helpers import InlineWorkbookGroup
 import hashlib
 import threading
 import unittest
@@ -55,7 +56,7 @@ class HandoffTests(unittest.TestCase):
         if excel is None:
             run_ui_session(options, stop, emit, lambda: adapter)
         else:
-            with patch('session.WorkbookController', return_value=excel):
+            with patch('session.WorkbookController', return_value=excel), patch('session.AsyncWorkbookGroup', InlineWorkbookGroup):
                 run_ui_session(options, stop, emit, lambda: adapter)
         return adapter, reports, events
 
@@ -146,11 +147,11 @@ class HandoffTests(unittest.TestCase):
         def save(heater, power, key, stop):
             self.assertEqual(1, heater)
             options._slice_dataset_setting.request(B)
-        frames = [self.frame('fresh', 1, coupled_output=False)]
+        frames = [self.frame('base', 0, False, coupled_output=False), self.frame('fresh', 1, coupled_output=False)]
         adapter, reports, events = self.run_case(frames, options, excel, apply_hook=save)
         self.assertEqual(1, adapter.apply_ir_power.call_count)
-        self.assertEqual({1: 55}, reports[0]['applied'])
-        self.assertEqual({}, reports[0]['proposed'])
+        self.assertEqual({1: 55}, reports[-1]['applied'])
+        self.assertEqual({}, reports[-1]['proposed'])
         self.assertFalse(any(k == 'slice_activated' for k, _ in events))
 
     def test_newer_request_during_reset_never_activates_intermediate_dataset(self):
@@ -179,7 +180,7 @@ class HandoffTests(unittest.TestCase):
                 options._slice_dataset_setting.request(B)
         with self.assertRaisesRegex(RuntimeError, 'reset failed'):
             self.run_case(frames, options, excel, hook)
-        excel.close.assert_called_once()
+        excel.close.assert_called_once_with(force=True)
 
     def test_clear_handoff_passes_unknown_images_after_new_layer(self):
         options = SessionOptions(TARGET, mode='preview', workbook_spec=SPEC, slice_dataset=A)
@@ -189,7 +190,7 @@ class HandoffTests(unittest.TestCase):
             if n == 2:
                 options._slice_dataset_setting.request(None)
         _, reports, _ = self.run_case(frames, options, excel, hook)
-        self.assertIsNone(excel.process.call_args.kwargs['slice_features'])
+        self.assertIsNone(excel.process.call_args.kwargs.get('slice_features'))
         self.assertIsNone(reports[-1]['slice_fingerprint'])
 
     def test_no_valid_snapshot_at_handoff_consumes_first_valid_as_baseline(self):

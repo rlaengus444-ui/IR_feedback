@@ -1,4 +1,5 @@
 """Feature integration tests use only fake adapters and an invisible local view."""
+from excel_test_helpers import InlineWorkbookGroup
 
 import threading
 import unittest
@@ -18,7 +19,7 @@ class ExcelSessionTests(unittest.TestCase):
     def test_excel_controller_is_used_once_for_each_new_row_and_closed(self):
         adapter = Mock(spec=UiAdapter)
         adapter.read_snapshot.side_effect = [snapshot("old", 0, control_available=True),
-            snapshot("new", 1, control_available=True),
+            snapshot("new", 1, control_available=True, observation_is_new=True),
             snapshot("new", 1, control_available=True, heater1_setting_percent=55, heater2_setting_percent=55)]
         controller = Mock()
         controller.process.return_value = LayerRecommendation(55, "Excel test", {})
@@ -32,34 +33,38 @@ class ExcelSessionTests(unittest.TestCase):
                     options._target_temperature_setting.set(70)
                 if len(rows) == 3:
                     stop.set()
-        with patch("session.WorkbookController", return_value=controller) as factory:
+        with patch("session.WorkbookController", return_value=controller) as factory, patch("session.AsyncWorkbookGroup", InlineWorkbookGroup):
             run_ui_session(options, stop, emit, lambda: adapter)
         factory.assert_called_once_with(SPEC, 65.0, maximum_ir_percent=100.0, stop_event=stop)
         controller.set_target_temperature.assert_called_once_with(70)
         controller.process.assert_called_once_with(2, 80, 50)
         adapter.apply_ir_power.assert_called_once_with(1, 55, "new", stop)
         self.assertEqual([{}, {1: 55}, {}], [row["applied"] for row in rows])
-        controller.close.assert_called_once()
+        controller.close.assert_called_once_with(force=True)
 
     def test_invalid_workbook_recommendation_is_never_saved(self):
         adapter = Mock(spec=UiAdapter)
-        adapter.read_snapshot.return_value = snapshot("new", 1, control_available=True, observation_is_new=True)
+        adapter.read_snapshot.side_effect = [snapshot("old", 0, control_available=True, observation_is_new=False),
+                                             snapshot("new", 1, control_available=True, observation_is_new=True)]
         controller = Mock()
         controller.process.return_value = LayerRecommendation(101, "bad", {})
-        with patch("session.WorkbookController", return_value=controller):
+        with patch("session.WorkbookController", return_value=controller), patch("session.AsyncWorkbookGroup", InlineWorkbookGroup):
             with self.assertRaises(ControlUnavailable):
                 run_ui_session(SessionOptions(TARGET, mode="control", workbook_spec=SPEC),
                                threading.Event(), lambda *args: None, lambda: adapter)
         adapter.apply_ir_power.assert_not_called()
-        controller.close.assert_called_once()
+        controller.close.assert_called_once_with(force=True)
 
-    def test_invalid_excel_stops_before_connecting_to_target(self):
-        factory = Mock()
-        with patch("session.WorkbookController", side_effect=ValueError("invalid workbook")):
+    def test_invalid_excel_stops_before_any_save(self):
+        adapter = Mock(spec=UiAdapter)
+        adapter.read_snapshot.return_value = snapshot("old", 0, control_available=True, observation_is_new=False)
+        factory = Mock(return_value=adapter)
+        with patch("session.WorkbookController", side_effect=ValueError("invalid workbook")), patch("session.AsyncWorkbookGroup", InlineWorkbookGroup):
             with self.assertRaisesRegex(ValueError, "invalid workbook"):
                 run_ui_session(SessionOptions(TARGET, mode="control", workbook_spec=SPEC),
                                threading.Event(), lambda *args: None, factory)
-        factory.assert_not_called()
+        adapter.apply_ir_power.assert_not_called()
+        adapter.disconnect.assert_called_once()
 
 
 class FeatureViewTests(unittest.TestCase):

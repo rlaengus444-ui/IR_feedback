@@ -1,0 +1,43 @@
+{
+  "stage": "CODE POST",
+  "route": "native collaboration.followup_task sol_reviewer_excel_wait",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_identity_independently_attested": false,
+  "candidate_commit": "81bfadc5a71ae364e2555d4dd141237c3548ad0d",
+  "baseline_commit": "14905fc346e229f4b8687a8f34d1901dadb8fecc",
+  "final_response_received": true,
+  "source_review_passed": true,
+  "unresolved_blocking_findings": [],
+  "resolved_findings": [
+    "One-based Excel layer restored and integration tested",
+    "Idle target changes preserve accepted frozen history; pending A-B-A invalidated",
+    "Previously observed unavailable/reset rows remain baseline; no cached replay",
+    "Verified partial Save emitted before later terminal error",
+    "Typed operation/elapsed/deadline/phase/process-state diagnostics preserved",
+    "Legacy CSV test fixture updated for group owner; real async coverage separate"
+  ],
+  "independent_checks": [
+    {
+      "scope": "Excel controller/transport/group/helper/real-thread session",
+      "run": 56,
+      "passed": true
+    },
+    {
+      "scope": "Portable session/recovery/manualimage/CSV/cap regression",
+      "run": 80,
+      "passed": true
+    },
+    {
+      "scope": "Corrected CSV observation fixture re-run",
+      "run": 9,
+      "passed": true
+    }
+  ],
+  "check_counts_may_overlap": true,
+  "original_pc_slow_cause_confirmed": false,
+  "excel_com_tested": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false,
+  "artifact_distribution_approved": false
+}

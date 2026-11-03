@@ -127,13 +127,14 @@ class CsvSourceTests(unittest.TestCase):
                 reader = MonitoringCsvReader(target, roots=[self.root], log=self.log)
                 self.assertEqual(42, reader.read().sample.temperature)
                 self.append([self.row(2, -1, self.now)])
-                with self.assertRaisesRegex(CsvSourceError, "-1"):
-                    reader.read()
-                # Re-reading the same file must remain blocked; no stale token
-                # or later row may turn the disabled sensor into a control input.
+                invalid = reader.read()
+                self.assertIsNone(invalid.sample.temperature)
+                self.assertFalse(invalid.sample.measurement_valid)
+                self.assertFalse(invalid.is_new)
+                self.assertIn("-1", invalid.details)
+                self.assertEqual(invalid.sample.key, reader.read().sample.key)
                 self.append([self.row(3, 43, self.now)])
-                with self.assertRaisesRegex(CsvSourceError, "-1"):
-                    reader.read()
+                self.assertEqual(43, reader.read().sample.temperature)
 
     def test_same_layer_correction_and_reversed_order_reject_control(self):
         for row in (self.row(1,50,self.now),self.row(0,50,self.now)):
@@ -159,8 +160,10 @@ class CsvSourceTests(unittest.TestCase):
         self.assertEqual(len(original), len(changed))
         self.path.write_bytes(changed)
         os.utime(self.path, ns=(stat.st_atime_ns, stat.st_mtime_ns))
-        with self.assertRaisesRegex(CsvSourceError, '-1'):
-            self.reader.read()
+        result = self.reader.read()
+        self.assertFalse(result.is_new)
+        self.assertFalse(result.sample.measurement_valid)
+        self.assertIsNone(result.sample.temperature)
 
     def test_unstable_same_size_snapshot_is_not_accepted(self):
         self.reader.read()

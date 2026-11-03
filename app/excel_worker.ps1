@@ -45,8 +45,10 @@ try {
             $request = $line | ConvertFrom-Json
             switch ($request.op) {
                 'init' {
+                    Send-Reply @{ event = 'progress'; phase = 'init:start' }
                     if ($null -ne $excel) { throw 'Excel already initialized.' }
                     $priorPids = @(Get-Process -Name EXCEL -ErrorAction SilentlyContinue | ForEach-Object { $_.Id })
+                    Send-Reply @{ event = 'excel_starting' }
                     try { $excel = New-Object -ComObject Excel.Application }
                     catch { throw 'Cannot start Microsoft Excel. Verify that Excel is installed.' }
                     [uint32]$excelPid = 0
@@ -69,6 +71,7 @@ try {
                     $privatePath = [string]$request.path
                     $sheetName = [string]$request.sheet
                     $targetAddress = [string]$request.target
+                    Send-Reply @{ event = 'progress'; phase = ([string]$request.op + ':open_workbook') }
                     $book = $excel.Workbooks.Open($privatePath, 0, $true)
                     $bootstrap.Close($false)
                     if (-not $book.ReadOnly -or $excel.Workbooks.Count -ne 1) { throw 'Cannot verify isolated, read-only workbook.' }
@@ -84,23 +87,28 @@ try {
                     foreach ($property in $request.slice_inputs.PSObject.Properties) {
                         $sliceColumns[$property.Name] = [int]$sheet.Range([string]$property.Value).Column
                     }
+                    Send-Reply @{ event = 'progress'; phase = ([string]$request.op + ':clear_inputs') }
                     Clear-Inputs
                     Send-Reply @{ ok = $true }
                 }
                 'reset' {
+                    Send-Reply @{ event = 'progress'; phase = 'reset:start' }
                     # Reopen the private unsaved copy to restore all frozen row formulas.
                     # Keep one blank workbook open so Excel retains manual calculation.
                     $bootstrap = $excel.Workbooks.Add()
                     $book.Close($false)
+                    Send-Reply @{ event = 'progress'; phase = ([string]$request.op + ':open_workbook') }
                     $book = $excel.Workbooks.Open($privatePath, 0, $true)
                     $bootstrap.Close($false)
                     if (-not $book.ReadOnly -or $excel.Workbooks.Count -ne 1) { throw 'Cannot verify isolated, read-only workbook.' }
                     $sheet = $book.Worksheets.Item($sheetName)
                     $targetCell = $sheet.Range($targetAddress)
+                    Send-Reply @{ event = 'progress'; phase = ([string]$request.op + ':clear_inputs') }
                     Clear-Inputs
                     Send-Reply @{ ok = $true }
                 }
                 'step' {
+                    Send-Reply @{ event = 'progress'; phase = 'step:inputs' }
                     $row = $firstRow + [int]$request.index
                     if ($row -lt $firstRow -or $row -gt $lastRow) { throw 'Layer formula range exceeded.' }
                     $output = $sheet.Cells.Item($row, $recommendationColumn)
@@ -115,6 +123,7 @@ try {
                         if ($null -eq $value) { [void]$cell.ClearContents() }
                         else { $cell.Value2 = [double]$value }
                     }
+                    Send-Reply @{ event = 'progress'; phase = 'step:calculate' }
                     $excel.Calculate()
                     $value = $output.Value2
                     if (($value -isnot [double]) -and ($value -isnot [int]) -and ($value -isnot [decimal])) {
@@ -123,6 +132,7 @@ try {
                     # Preserve every intermediate formula result for this layer.
                     # Later target changes must not rewrite earlier decisions.
                     $completedRow = $sheet.Range($sheet.Cells.Item($row, 1), $sheet.Cells.Item($row, $maxColumn))
+                    Send-Reply @{ event = 'progress'; phase = 'step:freeze' }
                     $completedRow.Value2 = $completedRow.Value2
                     Send-Reply @{ ok = $true; value = $value }
                 }
