@@ -87,6 +87,7 @@ class UiSnapshot:
     invalid_reason: str = ""
     actual_target: MachineWindow | None = None
     actuation_barrier: bool = False
+    expired_observation_key: str | None = None
 
 
 class UiAdapter(Protocol):

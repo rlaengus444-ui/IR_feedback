@@ -1,0 +1,48 @@
+{
+  "classification": "synthetic_logic_only",
+  "limitations": "Actual Python workbook admission and process logic; immediate synthetic COM response. No Excel formula evaluation, Excel timing, device, PLC, sensors, or hardware writes.",
+  "full_report_sha256": "dd173536894e33da2a271c7774b25bede401556d580144485471d9cd30732127",
+  "script_sha256": "ff0849ff3d89d4b04d8fba2fc9075e3662a28f16336b64f880308b1bc0a37465",
+  "results": {
+    "deployed": {
+      "layers_offered": 300,
+      "layers_calculated": 150,
+      "reset_requests": 150,
+      "controller_reset_calls": 150,
+      "first_step_index": 0,
+      "last_step_index": 0,
+      "all_indices_contiguous": false,
+      "feedback_changes_in_synthetic_function": 0,
+      "source_hashes": {
+        "excel_calculation.py": "86564ecabbd9a74f4b0c54762c6bdc01309ec771cc92d77efd9459a98b1b91d2",
+        "excel_workbook.py": "ebe66e4eb1fc0367a6cf2d3a99abbeddcf2c95819fd26d17bc49ca9f43147bdd"
+      },
+      "simulated_schedule": {
+        "baseline_at_seconds": 0,
+        "layers": 300,
+        "fresh_interval_seconds": 60,
+        "raw_key_removed_after_seconds": 6
+      }
+    },
+    "fixed": {
+      "layers_offered": 300,
+      "layers_calculated": 300,
+      "reset_requests": 0,
+      "controller_reset_calls": 0,
+      "first_step_index": 0,
+      "last_step_index": 299,
+      "all_indices_contiguous": true,
+      "feedback_changes_in_synthetic_function": 80,
+      "source_hashes": {
+        "excel_calculation.py": "6c8fcd20251ed2664f38c67f11bc5221a15b6979ac2e503d0cb11d1e38871238",
+        "excel_workbook.py": "ebe66e4eb1fc0367a6cf2d3a99abbeddcf2c95819fd26d17bc49ca9f43147bdd"
+      },
+      "simulated_schedule": {
+        "baseline_at_seconds": 0,
+        "layers": 300,
+        "fresh_interval_seconds": 60,
+        "raw_key_removed_after_seconds": 6
+      }
+    }
+  }
+}

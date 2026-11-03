@@ -114,6 +114,68 @@ class CalculationTests(unittest.TestCase):
         self.assertEqual(self.group.jobs[-1][4], 110)
         self.assertEqual(len(self.group.jobs), 2)
 
+    def accept_second_row(self):
+        self.calculate(row('2'))
+        ticket = self.group.jobs[-1][0]
+        self.group.events.append({'kind': 'result', 'ticket': ticket, 'results': {1: 5, 2: 6}})
+        self.watch(row('2', new=False))
+        self.assertEqual(self.calculate(row('2', new=False)), {1: 5, 2: 6})
+
+    @staticmethod
+    def expired(**changes):
+        fields = dict(observation_key=None, expired_observation_key='2',
+                      measurement_valid=True, observation_fresh=False,
+                      observation_is_new=False)
+        fields.update(changes)
+        return row('2', **fields)
+
+    def test_matching_expired_idle_row_preserves_history_and_next_layer(self):
+        self.accept_second_row()
+        for target in ((1, 100), (2, 110), (3, 100)):
+            self.watch(self.expired(), eligible=False, allow_idle_history=True, target_stamp=target)
+            self.assertEqual([], self.group.resets)
+            self.assertIsNone(self.calculate(self.expired(), eligible=False, target_stamp=target))
+        self.watch(row('3'))
+        self.calculate(row('3'))
+        self.assertEqual([3, 4], [job[1] for job in self.group.jobs])
+        self.assertEqual([], self.group.resets)
+
+    def test_expired_history_requires_explicit_permission_and_exact_proof(self):
+        cases = [({}, False), ({'expired_observation_key': None}, True),
+                 ({'expired_observation_key': 'other'}, True), ({'csv_generation': 'other'}, True),
+                 ({'run_key': 'other'}, True), ({'layer_index': 4}, True),
+                 ({'control_epoch': 2}, True), ({'measurement_valid': False}, True),
+                 ({'measurement_valid': None}, True), ({'observation_fresh': True}, True),
+                 ({'observation_fresh': None}, True), ({'observation_is_new': True}, True),
+                 ({'observation_is_new': None}, True), ({'observation_key': '2'}, True)]
+        for changes, permission in cases:
+            with self.subTest(changes=changes, permission=permission):
+                self.setUp()
+                self.accept_second_row()
+                self.watch(self.expired(**changes), eligible=False, allow_idle_history=permission)
+                self.assertEqual(1, len(self.group.resets))
+                self.assertIsNone(self.calc._accepted_identity)
+
+    def test_pending_and_unconsumed_results_are_never_kept_on_expiration(self):
+        for result_ready in (False, True):
+            with self.subTest(result_ready=result_ready):
+                self.setUp()
+                self.accept_second_row()
+                self.calculate(row('3'))
+                if result_ready:
+                    ticket = self.group.jobs[-1][0]
+                    self.group.events.append({'kind': 'result', 'ticket': ticket, 'results': {1: 7, 2: 8}})
+                    self.watch(row('3', new=False))
+                self.watch(self.expired(), eligible=False, allow_idle_history=True)
+                self.assertEqual(1, len(self.group.resets))
+                self.assertIsNone(self.calc._accepted_identity)
+
+    def test_image_change_resets_even_with_exact_expired_identity(self):
+        self.accept_second_row()
+        self.watch(self.expired(), eligible=False, allow_idle_history=True, image_epoch=1)
+        self.assertEqual(1, len(self.group.resets))
+        self.assertIsNone(self.calc._accepted_identity)
+
     def test_immediate_result_returned_without_waiting(self):
         class Immediate(Group):
             def submit(self, *args):
