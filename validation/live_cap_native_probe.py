@@ -31,17 +31,42 @@ def adapted(source, folder, package):
     one('elif control=="textBoxHeatingOutput":value="62";parameter_type="DoubleParameter";fields[control]="62"',
         'elif control=="textBoxHeatingOutput":value="80";parameter_type="DoubleParameter";fields[control]="80"')
     one('target=MachineWindow(machine,pid,hwnd,"Own CSV fixture",str(exe.resolve()))', 'assert pid==fixture.pid\n        target=MachineWindow(machine,pid,hwnd,"Own CSV fixture",str(exe.resolve()))')
+    one('    def make_adapter():\n        adapter=WindowsUiAdapter(source_factory=lambda target:MonitoringCsvReader(target,roots=[monitor]))\n        actual=adapter._request\n        def timed(request,event):\n            begin=time.monotonic()\n            try:return actual(request,event)\n            finally:phase_times.append({"operation":request["operation"],"seconds":round(time.monotonic()-begin,3)})\n        adapter._request=timed\n        return adapter',
+        '    def make_adapter():\n        from resilient_adapter import ResilientUiAdapter\n        def own_discovery():\n            assert fixture.poll() is None and fixture.pid==target.pid\n            assert Path(target.image_path).resolve()==exe.resolve()\n            return [target]\n        def raw_factory(source_factory):\n            adapter=WindowsUiAdapter(source_factory=source_factory)\n            actual=adapter._request\n            def timed(request,event):\n                begin=time.monotonic()\n                error=None\n                try:return actual(request,event)\n                except Exception as exc:\n                    error={"type":type(exc).__name__,"message":str(exc)}\n                    raise\n                finally:phase_times.append({"operation":request["operation"],"seconds":round(time.monotonic()-begin,3),"error":error})\n            adapter._request=timed\n            return adapter\n        wrapper=ResilientUiAdapter(raw_factory=raw_factory, discoverer=own_discovery,\n            source_factory=lambda target:MonitoringCsvReader(target,roots=[monitor]))\n        record_wrapper(wrapper)\n        return wrapper')
+    one('options=SessionOptions(target,mode="control")',
+        'options=SessionOptions(target,mode="control",maximum_ir_percent=80)')
+    one('try:run_ui_session(options,stop,lambda kind,payload:events.put((kind,payload)),make_adapter)',
+        'try:\n                from observed_session import run_observed_session\n                run_observed_session(options,stop,lambda kind,payload:events.put((kind,payload)),adapter_factory=make_adapter)')
     begin=source.index('        if case=="dirty":\n            receive(expect_error=True)')
     end=source.index('        assert not Path(str(marker)+".table-access").exists()',begin)
     source=source[:begin]+'''        receive(initial_layer)
         assert before.power == 80
+        # The production wrapper requires an authenticated baseline and a newer
+        # fresh row before declaring control ready; offline snapshots do not count.
+        ready_layer=None; candidate=0; deadline=time.monotonic()+40
+        while time.monotonic()<deadline:
+            candidate+=1
+            command(layer=candidate+1)
+            with csv_path.open("ab") as stream:
+                stream.write(rows_bytes([record(candidate,42,datetime.now().replace(microsecond=0))]))
+            payload=receive(candidate)
+            assert int(Path(str(marker)+".saves").read_text())==0, "Save before live-cap request"
+            cap_status=options._maximum_ir_setting.status()
+            baseline=sequence_persistence.capture(target)
+            assert baseline.power==80 and baseline.non_ir==before.non_ir
+            if (payload["snapshot"].control_available and not cap_status['pending']
+                    and cap_status['active_stamp']==cap_status['requested_stamp']
+                    and cap_status['active_effective_cap']==80):
+                ready_layer=candidate;break
+        assert ready_layer is not None, "Production wrapper did not reach healthy control and active 80% cap"
         command(page=page,minimized=minimized)
         cover_info=start_cover(pid,hwnd)
         assert options._maximum_ir_setting.set(60)
-        receive(initial_layer)
+        receive(ready_layer)
         assert int(Path(str(marker)+".saves").read_text())==0, "cap change saved baseline"
         actuals=[]; save_counts=[]; snapshots=[]
-        for layer, expected in enumerate((75,70,65,60),1):
+        for offset, expected in enumerate((75,70,65,60),1):
+            layer=ready_layer+offset
             command(layer=layer+1)
             with csv_path.open("ab") as stream:
                 stream.write(rows_bytes([record(layer,42,datetime.now().replace(microsecond=0))]))
@@ -54,27 +79,27 @@ def adapted(source, folder, package):
             snapshots.append(payload.get("effective_mode"))
             assert current.power==expected, (layer,expected,current.power)
             assert current.non_ir==before.non_ir
-            assert save_counts[-1]==layer, save_counts
+            assert save_counts[-1]==offset, save_counts
             receive(layer)
             receive(layer)
-            assert int(Path(str(marker)+".saves").read_text())==layer, "duplicate row caused Save"
+            assert int(Path(str(marker)+".saves").read_text())==offset, "duplicate row caused Save"
         background_state=json.loads(Path(str(marker)+".background-state").read_text(encoding="utf-8-sig"))
         assert background_state["page"]==page and background_state["minimized"]==minimized, background_state
         expected_saves=4
 ''' +source[end:]
     one('"completeCsvToSessionSeconds":[round(value,3) for value in received],"uiOperations":phase_times}',
-        '"completeCsvToSessionSeconds":[round(value,3) for value in received],"uiOperations":phase_times, "powers":actuals, "save_counts":save_counts, "snapshots":snapshots, "background_state":background_state, "baseline_save_count":0}')
+        '"completeCsvToSessionSeconds":[round(value,3) for value in received],"uiOperations":phase_times, "powers":actuals, "save_counts":save_counts, "snapshots":snapshots, "background_state":background_state, "baseline_save_count":0, "baseline_cap_status":cap_status, "baseline_layer":ready_layer}')
     one('print(json.dumps(result),flush=True);return result',
         'result.update(stop_cover(*cover_info)); return result')
     one('    finally:\n        stop.set()\n        if worker is not None:worker.join(6)',
-        '    finally:\n        stop.set()\n        if worker is not None:worker.join(6)\n        capture_failure(marker, locals().get("target"), locals().get("before"), fixture)')
+        '    finally:\n        stop.set()\n        if worker is not None:worker.join(6)\n        capture_failure(marker, locals().get("target"), locals().get("before"), fixture, phase_times)')
     return source
 
 
 def main(package, source_root, output):
     report={'passed':False,'cases':[], 'scope':'Synthetic target, synthetic CSV and temporary settings; live cap set after connected 80% baseline; no equipment.',
-            'untested':['Real BJT, hardware, thermal response, locked desktop.']}
-    cover=None; cover_active=None; last_capture={}; stop_sample=threading.Event(); samples=[]
+            'untested':['Real BJT, hardware, thermal response, locked desktop.', 'Discovery uses a fixture-scoped identity-checked callback; native discovery is not exercised.']}
+    cover=None; cover_active=None; last_capture={}; wrapper_events=[]; stop_sample=threading.Event(); samples=[]
     try:
         if os.name!='nt': raise RuntimeError('Windows required')
         sys.path.insert(0,str(package/'app'))
@@ -119,9 +144,15 @@ def main(package, source_root, output):
                         'foreground_samples':len(samples),'cover_pid':pid,'cover_hwnd':hwnd,'target_pid':target_pid,'target_hwnd':target_hwnd}
                 cover.terminate();cover.wait(timeout=5);cover=None;cover_active=None
                 return result
-            def capture_failure(marker,target,before,fixture):
+            def record_wrapper(wrapper):
+                original=wrapper._outage
+                def record(reason):
+                    wrapper_events.append({'event':'outage','reason':str(reason),'monotonic':time.monotonic()})
+                    return original(reason)
+                wrapper._outage=record
+            def capture_failure(marker,target,before,fixture,phase_times):
                 nonlocal last_capture
-                last_capture={'fixture_pid':fixture.pid,'fixture_running_before_teardown':fixture.poll() is None}
+                last_capture={'fixture_pid':fixture.pid,'fixture_running_before_teardown':fixture.poll() is None, 'ui_operations':list(phase_times), 'wrapper_outages':list(wrapper_events)}
                 try:last_capture['saves']=Path(str(marker)+'.saves').read_text()
                 except Exception as exc:last_capture['saves_error']=str(exc)
                 try:
@@ -131,11 +162,11 @@ def main(package, source_root, output):
                     last_capture['non_ir_sha256']=hashlib.sha256(repr(sorted(snap.non_ir.items())).encode()).hexdigest()
                     last_capture['baseline_non_ir_sha256']=hashlib.sha256(repr(sorted(before.non_ir.items())).encode()).hexdigest() if before else None
                 except Exception as exc:last_capture['persistence_error']=str(exc)
-            namespace={'__file__':str(folder/'harness.py'),'__name__':'live_cap_fixture', 'start_cover':start_cover,'stop_cover':stop_cover,'capture_failure':capture_failure}
+            namespace={'__file__':str(folder/'harness.py'),'__name__':'live_cap_fixture', 'start_cover':start_cover,'stop_cover':stop_cover,'capture_failure':capture_failure,'record_wrapper':record_wrapper}
             exec(compile(adapted(harness.read_text(encoding='utf-8'),folder,package),str(harness),'exec'),namespace)
             for machine in ('M1','S3'):
                 for minimized in (False,True):
-                    last_capture={}
+                    last_capture={};wrapper_events.clear()
                     try:
                         result=namespace['exercise'](machine,'webcam',minimized,'normal')
                         result['passed']=result['passed'] and result['foreground_maintained']
@@ -154,7 +185,7 @@ def main(package, source_root, output):
         if cover is not None:cover.terminate();cover.wait(timeout=5)
     output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
-    print(json.dumps(report,indent=2,ensure_ascii=False))
+    print(json.dumps(report,indent=2,ensure_ascii=True))
     return 0 if report['passed'] else 1
 
 if __name__=='__main__':
