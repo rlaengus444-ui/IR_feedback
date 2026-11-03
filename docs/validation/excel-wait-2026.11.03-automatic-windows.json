@@ -1,0 +1,33 @@
+{
+  "source_commit": "06081893748df507aa25116dc3d6d6a586d22c61",
+  "workflow_run_id": 41579511215,
+  "artifact_id": 13204899496,
+  "artifact_bytes": 34895441,
+  "artifact_sha256": "b7b8c8c548a2c46366b13192047bb20176acafbcf7f7aead69bcbc3166f55750",
+  "zip_bytes": 35384335,
+  "zip_sha256": "a11ca09518e087a63476b86c6f9221e939ffd4ca85e03347a027897189c83c78",
+  "manifest_files": 3659,
+  "tests_run": 419,
+  "tests_passed": 419,
+  "tests_skipped": 0,
+  "test_seconds": 87.598,
+  "critical_named_tests_passed": 38,
+  "checks": {
+    "build": "success",
+    "tests": "success",
+    "smoke": "success",
+    "bridge": "success",
+    "csv_guard": "success",
+    "native_discovery": "success",
+    "slice_perf": "success",
+    "settings_recovery": "success",
+    "background": "success",
+    "excel": "failure",
+    "reverify": "success"
+  },
+  "excel_com_tested": false,
+  "equipment_application_approved": false,
+  "raw_release_ready": false,
+  "package_verified_against_clean_source": true,
+  "publisher_sha256": "5398553bbecf2dddd8624de1f25547df2fe574eb9de51b7ce3d4af467a1874df"
+}

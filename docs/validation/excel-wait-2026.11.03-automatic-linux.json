@@ -1,0 +1,18 @@
+{
+  "tests": 371,
+  "failures": 0,
+  "errors": 0,
+  "skipped": [
+    [
+      "test_excel_retirement_windows.WindowsRetirementTests.test_owned_process_handle_is_terminated_and_verified",
+      "requires Windows process handles"
+    ]
+  ],
+  "excluded": 47,
+  "elapsed_seconds": 62.979850664996775,
+  "source": "working-tree automatic recovery",
+  "source_commit": "06081893748df507aa25116dc3d6d6a586d22c61",
+  "log_sha256": "632b0db3a40597b960caddeacc8e9c66281db698c49c26cf843078e6ba7641d8",
+  "windows_com_tested": false,
+  "equipment_application_approved": false
+}

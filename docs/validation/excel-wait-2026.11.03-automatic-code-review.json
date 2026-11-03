@@ -1,0 +1,43 @@
+{
+  "stage": "CODE POST",
+  "route": "native collaboration.followup_task /root/sol_reviewer_excel_wait",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_identity_independently_attested": false,
+  "candidate_commit": "06081893748df507aa25116dc3d6d6a586d22c61",
+  "baseline_commit": "81bfadc5a71ae364e2555d4dd141237c3548ad0d",
+  "final_response_received": true,
+  "source_review_passed": true,
+  "unresolved_blocking_findings": [],
+  "independent_checks": [
+    {
+      "scope": "supervisor/wrapper/sensor/CSV/Excel/recovery/chart",
+      "run": 155,
+      "passed": true
+    }
+  ],
+  "portable_report_reviewed": {
+    "run": 371,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1,
+    "excluded": 47
+  },
+  "resolved_findings": [
+    "Invalid sentinel without timestamps invalidates old control observation/no token",
+    "AUTO/RUNNING readiness consistent",
+    "PersistenceUnavailable reads recoverable after revalidation",
+    "No-thread cancellation retires cross-session Excel fence",
+    "First authoritative job pinned independently of measurement freshness",
+    "Original ambiguous/protocol/integrity exception logged synchronously before bounded queue even while closing",
+    "Same-key delayed and partial confirmed Saves preserved in chart and CSV/PNG export",
+    "Workbook bytes fixed for both channels and all retries",
+    "Strict positive DWORD integer ownership PID evidence",
+    "Non-IR helper timeouts classified accurately only after retirement"
+  ],
+  "original_pc_slow_cause_confirmed": false,
+  "excel_com_tested": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false,
+  "artifact_distribution_approved": false
+}
