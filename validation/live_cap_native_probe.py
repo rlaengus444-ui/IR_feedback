@@ -146,9 +146,9 @@ def main(package, source_root, output):
                 return result
             def record_wrapper(wrapper):
                 original=wrapper._outage
-                def record(reason):
+                def record(reason, **kwargs):
                     wrapper_events.append({'event':'outage','reason':str(reason),'monotonic':time.monotonic()})
-                    return original(reason)
+                    return original(reason, **kwargs)
                 wrapper._outage=record
             def capture_failure(marker,target,before,fixture,phase_times):
                 nonlocal last_capture
