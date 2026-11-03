@@ -1,0 +1,54 @@
+{
+  "review_phase": "CODE_POST",
+  "review_route": "native collaboration child /root/sol_reviewer_excel_wait",
+  "requested_reviewer": "sol_reviewer",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_model_identity_independently_attested": false,
+  "candidate_commit": "71e218282b831135a658f20d71f6fba4f8e77023",
+  "base_commit": "0d5d5274d7d8aceb9c7b4702c2acbe2980f0a0da",
+  "tracked_working_tree_clean": true,
+  "untracked_files_excluded_from_source_approval": [
+    "release_tools/publish_log_continuity_candidate.py"
+  ],
+  "source_review_approved": true,
+  "independent_source_post_review_complete": true,
+  "evaluation_distribution_allowed": false,
+  "evaluation_distribution_status": "Exact Windows artifact and publication controls require separate review.",
+  "equipment_application_approved": false,
+  "final_algorithm_approval": false,
+  "blocking_findings": [],
+  "reviewed_behavior": [
+    "JobLog trusted context and all public cursor state commit only after stable bounded reads, parsing, a post-parse reopen and consumed-window verification, and latest-file selection revalidation.",
+    "Three immediate unstable-snapshot retries; exhausted, missing, incomplete, or unanchored reads raise typed JobLogReadUnavailable instead of emitting an empty job or cached authorization.",
+    "Private provisional parser/cursor state permits bounded backlog progress, is checked against file identity and retained-byte hash on continuation, and never authorizes control before a complete anchored stable tail.",
+    "MonitoringCsvReader preserves its trusted job/file cursor when JobLog is unavailable; a verified real job change still invalidates the old observation.",
+    "Original control hold reasons, actual history-reset request counters and transition events are logged before the bounded GUI queue; control and Save admission predicates are unchanged."
+  ],
+  "independently_executed_tests": {
+    "command": "python -m unittest -v test_job_log_transaction test_csv_source test_excel_calculation test_hold_diagnostics test_log_session_continuity test_resilient_adapter",
+    "tests_run": 85,
+    "failures": 0,
+    "errors": 0,
+    "duration_seconds": 17.158,
+    "scope": "Working-tree bytes frozen without material changes into the pinned candidate; real-file and threaded integration fixtures use mocked native UI and Excel."
+  },
+  "additional_evidence_inspected": [
+    "/workspace/ir-log-review/linux-summary.json",
+    "/workspace/ir-log-review/compare_joblog_race.json",
+    "docs/validation/log-continuity-2026.11.03-design-review.json",
+    "docs/validation/log-continuity-2026.11.03-reproduction.json"
+  ],
+  "unchanged_guard_scope": [
+    "Native Sequence IR and Save guards, pre-edit job and CSV token checks, maximum IR percent and 5 percentage point step limits.",
+    "Fresh baseline and new-layer requirements after unavailable control, sensor invalidity, actual job changes, and other existing barriers.",
+    "Excel formula engine, worker formula/order semantics, immutable workbook recovery, ownership retirement and process fences."
+  ],
+  "limits": [
+    "Concurrent append injection reproduces a plausible code path; historical user status logs do not prove every reset had this exact cause.",
+    "Retained log verification is bounded to the existing maximum 8 MiB consumed window, with no full-file rewrite detection claim.",
+    "Prolonged or exhausted unavailability can still conservatively reset accepted calculation history under existing protection.",
+    "No actual Windows native application, Excel COM, sensor, PLC, lamp, physical Save, thermal behavior, or equipment validation was performed by this reviewer.",
+    "Final algorithm and equipment application remain on HOLD; this record is source approval only."
+  ]
+}

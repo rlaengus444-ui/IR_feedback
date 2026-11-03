@@ -1,0 +1,63 @@
+{
+  "review_phase": "CODE_POST_TEST_ONLY_REVISION",
+  "review_route": "native collaboration child /root/sol_reviewer_excel_wait",
+  "requested_reviewer": "sol_reviewer",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_model_identity_independently_attested": false,
+  "candidate_commit": "c1e0fe395300a0840b171a64e8415cc344da2e46",
+  "previously_approved_source_commit": "71e218282b831135a658f20d71f6fba4f8e77023",
+  "previous_source_review_preserved": "/workspace/ir-log-review/sol-code-review.json",
+  "working_tree_clean": true,
+  "source_review_approved": true,
+  "independent_source_post_review_complete": true,
+  "evaluation_distribution_allowed": false,
+  "evaluation_distribution_status": "Exact rebuilt Windows artifact and publication controls remain pending separate review.",
+  "equipment_application_approved": false,
+  "final_algorithm_approval": false,
+  "blocking_findings": [],
+  "actual_diff": [
+    "app/test_job_log_transaction.py: the in-read rotation fixture accepts only Windows PermissionError WinError 5 as typed unavailability, verifies unchanged trusted state, then rotates after handle closure and requires a verified new job.",
+    "app/test_job_log_transaction.py: a portable denied-rotation case explicitly verifies typed unavailability, unchanged public state, and subsequent new-job recovery.",
+    "docs/validation/log-continuity-2026.11.03-superseded-windows-71e2182.json: preserves the failed Windows fixture run and explicitly forbids distribution of that artifact."
+  ],
+  "production_equivalence": {
+    "packaged_source_files_compared": 49,
+    "changed_from_previous_approved_source": [],
+    "method": "Compared every verify_package.SOURCES byte sequence against git show at 71e218282b831135a658f20d71f6fba4f8e77023."
+  },
+  "independently_executed_tests": {
+    "command": "python -m unittest -v test_job_log_transaction",
+    "tests_run": 14,
+    "duration_seconds": 0.012,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "prior_independently_executed_tests": {
+    "command": "python -m unittest -v test_job_log_transaction test_csv_source test_excel_calculation test_hold_diagnostics test_log_session_continuity test_resilient_adapter",
+    "tests_run": 85,
+    "failures": 0,
+    "errors": 0,
+    "duration_seconds": 17.158,
+    "scope": "Working-tree bytes frozen without material changes into the pinned candidate; real-file and threaded integration fixtures use mocked native UI and Excel."
+  },
+  "superseded_windows_evidence_inspected": {
+    "run_id": 41593781156,
+    "raw_log": "/workspace/ir-log-review/windows-71e2182/tests.txt",
+    "tests_run": 454,
+    "errors": 1,
+    "error_case": "test_rotation_during_read_retries_and_publishes_new_job",
+    "cause": "PermissionError WinError 5 from fixture os.replace during an open shared read; reader correctly raised JobLogReadUnavailable(log I/O failure).",
+    "distribution_allowed": false
+  },
+  "limits": [
+    "Concurrent append injection reproduces a plausible code path; historical user status logs do not prove every reset had this exact cause.",
+    "Retained log verification is bounded to the existing maximum 8 MiB consumed window, with no full-file rewrite detection claim.",
+    "Prolonged or exhausted unavailability can still conservatively reset accepted calculation history under existing protection.",
+    "No actual Windows native application, Excel COM, sensor, PLC, lamp, physical Save, thermal behavior, or equipment validation was performed by this reviewer.",
+    "Final algorithm and equipment application remain on HOLD; this record is source approval only.",
+    "The corrected Windows fixture has not been executed by this Linux reviewer. Its exact rebuilt Windows results require artifact-stage verification.",
+    "This update approves only the exact source revision, carries forward the prior production review without claiming new hardware or Excel COM evidence, and does not approve the superseded 71e artifact."
+  ]
+}

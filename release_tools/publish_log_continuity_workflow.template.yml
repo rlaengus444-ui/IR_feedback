@@ -1,0 +1,78 @@
+name: Publish reviewed JobLog continuity evaluation ZIP
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish-reviewed-candidate:
+    runs-on: windows-2022
+    timeout-minutes: 8
+    steps:
+      - name: Preserve checkout bytes
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+        with:
+          ref: __PUBLISH_SOURCE__
+      - name: Check out the immutable source that produced the reviewed ZIP
+        uses: actions/checkout@v4
+        with:
+          ref: c1e0fe395300a0840b171a64e8415cc344da2e46
+          path: reviewed-source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download the exact reviewed artifact by immutable API ID
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          @'
+          import hashlib, json, os, subprocess, zipfile
+          from pathlib import Path, PurePosixPath
+          repo = 'rlaengus444-ui/IR_feedback'
+          artifact_id = 13211344380
+          run_id = 41594622674
+          source = 'c1e0fe395300a0840b171a64e8415cc344da2e46'
+          expected = '32ecc02f6986f0144d9ab5a0b2067496d0c3a737d399a933fe7ae88ff664c57d'
+          endpoint = f'repos/{repo}/actions/artifacts/{artifact_id}'
+          metadata = json.loads(subprocess.check_output(['gh', 'api', endpoint], timeout=30))
+          assert metadata['id'] == artifact_id and metadata['name'] == 'slice-candidate-' + source
+          assert metadata['expired'] is False and metadata['size_in_bytes'] == 34900751
+          assert metadata['digest'] == 'sha256:' + expected
+          assert metadata['workflow_run']['id'] == run_id and metadata['workflow_run']['head_sha'] == source
+          assert metadata['workflow_run']['repository_id'] == 1434868115
+          assert metadata['workflow_run']['head_repository_id'] == 1434868115
+          archive_path = Path(os.environ['RUNNER_TEMP']) / 'verified-reconnect-evidence.zip'
+          with archive_path.open('xb') as stream:
+              subprocess.run(['gh', 'api', endpoint + '/zip'], stdout=stream, check=True, timeout=60)
+          assert archive_path.stat().st_size == 34900751
+          assert hashlib.sha256(archive_path.read_bytes()).hexdigest() == expected
+          output = Path(os.environ['RUNNER_TEMP']) / 'verified-reconnect-candidate'
+          output.mkdir()
+          with zipfile.ZipFile(archive_path) as archive:
+              infos = archive.infolist()
+              assert len(infos) <= 64
+              assert sum(item.file_size for item in infos) <= 64 * 1024 * 1024
+              seen = set()
+              for item in infos:
+                  name = item.filename
+                  parts = name.rstrip('/').split('/')
+                  assert name and not name.startswith('/') and '\\' not in name
+                  assert all(p not in ('', '.', '..') and ':' not in p and not p.endswith((' ', '.')) for p in parts)
+                  assert not (item.external_attr >> 16 & 0o170000 == 0o120000)
+                  folded = name.rstrip('/').casefold()
+                  assert folded not in seen
+                  seen.add(folded)
+              assert archive.testzip() is None
+              archive.extractall(output)
+          print('Verified exact artifact ID, provenance, archive digest and safe extraction.')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw 'Exact reviewed artifact download failed' }
+      - name: Validate exact evidence and publish only the reviewed evaluation ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          python release_tools/publish_log_continuity_candidate.py "$env:RUNNER_TEMP\verified-reconnect-candidate" c1e0fe395300a0840b171a64e8415cc344da2e46 73539ed1ed66f4df2329d4e8c3c03e88d88c9899111c9bd404ea6cd5f41aa90b docs/validation/log-continuity-2026.11.03-release-review.json "$env:GITHUB_WORKSPACE\reviewed-source"
+          if ($LASTEXITCODE -ne 0) { throw 'Reviewed reconnect and CSV archive evaluation publication failed' }

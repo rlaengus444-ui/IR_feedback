@@ -1,0 +1,655 @@
+{
+  "candidate_commit": "c1e0fe395300a0840b171a64e8415cc344da2e46",
+  "candidate_zip_sha256": "73539ed1ed66f4df2329d4e8c3c03e88d88c9899111c9bd404ea6cd5f41aa90b",
+  "publisher_sha256": "dc0186dcf4171e71f0a15e089e1e880901dceeb39f3fffe65cdc1303ab2f7440",
+  "workflow_template_sha256": "30954956984fea345690062f855eb4983cd3e31de1db3798328ad4722cfe7a3b",
+  "network_calls_mocked": true,
+  "actual_publication_performed": false,
+  "passed": true,
+  "tests": 130,
+  "cases": [
+    {
+      "name": "valid exact evaluation draft, immutable tag, asset readback and not-latest prerelease",
+      "passed": true,
+      "rejected_reason": null
+    },
+    {
+      "name": "wrong candidate commit",
+      "passed": true,
+      "rejected_reason": "Candidate is not the frozen reviewed source"
+    },
+    {
+      "name": "wrong source HEAD",
+      "passed": true,
+      "rejected_reason": "Reference source checkout is not the reviewed candidate"
+    },
+    {
+      "name": "dirty source",
+      "passed": true,
+      "rejected_reason": "Reference source checkout has modified or untracked files"
+    },
+    {
+      "name": "review gate candidate_commit",
+      "passed": true,
+      "rejected_reason": "Completed independent evaluation-delivery review is required"
+    },
+    {
+      "name": "review gate candidate_zip_sha256",
+      "passed": true,
+      "rejected_reason": "Completed independent evaluation-delivery review is required"
+    },
+    {
+      "name": "review gate publisher_sha256",
+      "passed": true,
+      "rejected_reason": "Completed independent evaluation-delivery review is required"
+    },
+    {
+      "name": "review gate workflow_run_id",
+      "passed": true,
+      "rejected_reason": "Completed independent evaluation-delivery review is required"
+    },
+    {
+      "name": "review gate evaluation_distribution_allowed",
+      "passed": true,
+      "rejected_reason": "Completed independent evaluation-delivery review is required"
+    },
+    {
+      "name": "review gate independent_post_review_complete",
+      "passed": true,
+      "rejected_reason": "Completed independent evaluation-delivery review is required"
+    },
+    {
+      "name": "review gate equipment_application_approved",
+      "passed": true,
+      "rejected_reason": "Completed independent evaluation-delivery review is required"
+    },
+    {
+      "name": "workflow provenance head_sha",
+      "passed": true,
+      "rejected_reason": "Unexpected candidate workflow provenance or result"
+    },
+    {
+      "name": "workflow provenance status",
+      "passed": true,
+      "rejected_reason": "Unexpected candidate workflow provenance or result"
+    },
+    {
+      "name": "workflow provenance path",
+      "passed": true,
+      "rejected_reason": "Unexpected candidate workflow provenance or result"
+    },
+    {
+      "name": "altered local artifact evidence",
+      "passed": true,
+      "rejected_reason": "Candidate version/digest mismatch"
+    },
+    {
+      "name": "Windows gate build",
+      "passed": true,
+      "rejected_reason": "A required Windows validation step failed"
+    },
+    {
+      "name": "Windows gate tests",
+      "passed": true,
+      "rejected_reason": "A required Windows validation step failed"
+    },
+    {
+      "name": "Windows gate smoke",
+      "passed": true,
+      "rejected_reason": "A required Windows validation step failed"
+    },
+    {
+      "name": "Windows gate bridge",
+      "passed": true,
+      "rejected_reason": "A required Windows validation step failed"
+    },
+    {
+      "name": "Windows gate csv_guard",
+      "passed": true,
+      "rejected_reason": "A required Windows validation step failed"
+    },
+    {
+      "name": "Windows gate native_discovery",
+      "passed": true,
+      "rejected_reason": "A required Windows validation step failed"
+    },
+    {
+      "name": "Windows gate slice_perf",
+      "passed": true,
+      "rejected_reason": "A required Windows validation step failed"
+    },
+    {
+      "name": "Windows gate settings_recovery",
+      "passed": true,
+      "rejected_reason": "A required Windows validation step failed"
+    },
+    {
+      "name": "Windows gate background",
+      "passed": true,
+      "rejected_reason": "A required Windows validation step failed"
+    },
+    {
+      "name": "Windows gate reverify",
+      "passed": true,
+      "rejected_reason": "A required Windows validation step failed"
+    },
+    {
+      "name": "raw equipment status device_application_approved",
+      "passed": true,
+      "rejected_reason": "Evaluation status must not masquerade as equipment/stable approval"
+    },
+    {
+      "name": "raw equipment status release_ready",
+      "passed": true,
+      "rejected_reason": "Evaluation status must not masquerade as equipment/stable approval"
+    },
+    {
+      "name": "raw equipment status automated_checks_passed",
+      "passed": true,
+      "rejected_reason": "Evaluation status must not masquerade as equipment/stable approval"
+    },
+    {
+      "name": "raw equipment status final_sol_review",
+      "passed": true,
+      "rejected_reason": "Evaluation status must not masquerade as equipment/stable approval"
+    },
+    {
+      "name": "native report bridge.json",
+      "passed": true,
+      "rejected_reason": "Failed native validation: bridge.json"
+    },
+    {
+      "name": "native report csv-guard.json",
+      "passed": true,
+      "rejected_reason": "Failed native validation: csv-guard.json"
+    },
+    {
+      "name": "native report discovery.json",
+      "passed": true,
+      "rejected_reason": "Failed native validation: discovery.json"
+    },
+    {
+      "name": "native report slice-performance.json",
+      "passed": true,
+      "rejected_reason": "Failed native validation: slice-performance.json"
+    },
+    {
+      "name": "native report settings-recovery.json",
+      "passed": true,
+      "rejected_reason": "Failed native validation: settings-recovery.json"
+    },
+    {
+      "name": "native report background.json",
+      "passed": true,
+      "rejected_reason": "Failed native validation: background.json"
+    },
+    {
+      "name": "native provenance harness_sha256",
+      "passed": true,
+      "rejected_reason": "Background native transport/harness provenance mismatch"
+    },
+    {
+      "name": "native provenance bridge_sha256",
+      "passed": true,
+      "rejected_reason": "Background native transport/harness provenance mismatch"
+    },
+    {
+      "name": "native provenance helper_sha256",
+      "passed": true,
+      "rejected_reason": "Background native transport/harness provenance mismatch"
+    },
+    {
+      "name": "unexpected actual COM claim",
+      "passed": true,
+      "rejected_reason": "Unexpected Excel status; review before distribution"
+    },
+    {
+      "name": "unexpected COM failure reason",
+      "passed": true,
+      "rejected_reason": "Unexpected Excel status; review before distribution"
+    },
+    {
+      "name": "incorrect package verifier digest",
+      "passed": true,
+      "rejected_reason": "Verified ZIP digest mismatch"
+    },
+    {
+      "name": "existing immutable release",
+      "passed": true,
+      "rejected_reason": "Release already exists; refusing to overwrite it"
+    },
+    {
+      "name": "existing immutable tag",
+      "passed": true,
+      "rejected_reason": "Tag already exists; refusing to reuse it"
+    },
+    {
+      "name": "changed tag prevents publication",
+      "passed": true,
+      "rejected_reason": "Version tag changed from the reviewed candidate"
+    },
+    {
+      "name": "bad asset digest prevents publication",
+      "passed": true,
+      "rejected_reason": "Uploaded asset state/size/digests differ"
+    },
+    {
+      "name": "missing critical test_blocked_excel_does_not_block_csv_or_save",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_blocked_excel_does_not_block_csv_or_save"
+    },
+    {
+      "name": "missing critical test_blocked_initialization_continues_polling",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_blocked_initialization_continues_polling"
+    },
+    {
+      "name": "missing critical test_blocked_reset_continues_polling",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_blocked_reset_continues_polling"
+    },
+    {
+      "name": "missing critical test_context_changes_invalidate_pending_result",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_context_changes_invalidate_pending_result"
+    },
+    {
+      "name": "missing critical test_hold_logged_without_terminating_controller",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_hold_logged_without_terminating_controller"
+    },
+    {
+      "name": "missing critical test_image_handoff_discards_pending_features_and_waits_for_new_layer",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_image_handoff_discards_pending_features_and_waits_for_new_layer"
+    },
+    {
+      "name": "missing critical test_target_aba_during_process_invalidates_result_and_requires_fresh_row",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_target_aba_during_process_invalidates_result_and_requires_fresh_row"
+    },
+    {
+      "name": "missing critical test_two_heaters_finish_before_save_and_report_partial_ambiguous_save",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_two_heaters_finish_before_save_and_report_partial_ambiguous_save"
+    },
+    {
+      "name": "missing critical test_watchdog_discards_late_result",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_watchdog_discards_late_result"
+    },
+    {
+      "name": "missing critical test_recovers_same_session_using_same_prepared_workbook_and_fresh_row",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_recovers_same_session_using_same_prepared_workbook_and_fresh_row"
+    },
+    {
+      "name": "missing critical test_repeated_fault_backoff_is_not_reset_by_changes",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_repeated_fault_backoff_is_not_reset_by_changes"
+    },
+    {
+      "name": "missing critical test_unknown_retirement_keeps_polling_and_prevents_restart",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_unknown_retirement_keeps_polling_and_prevents_restart"
+    },
+    {
+      "name": "missing critical test_disconnect_in_backoff_prevents_restart",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_disconnect_in_backoff_prevents_restart"
+    },
+    {
+      "name": "missing critical test_two_heaters_recovered_before_save",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_two_heaters_recovered_before_save"
+    },
+    {
+      "name": "missing critical test_fence_blocks_new_group_until_previous_verified",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_fence_blocks_new_group_until_previous_verified"
+    },
+    {
+      "name": "missing critical test_cancel_after_claim_before_thread_start_releases_fence",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_cancel_after_claim_before_thread_start_releases_fence"
+    },
+    {
+      "name": "missing critical test_snapshot_survives_source_replacement_and_deletion",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_snapshot_survives_source_replacement_and_deletion"
+    },
+    {
+      "name": "missing critical test_known_excel_exit_is_waited_before_handle_close",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_known_excel_exit_is_waited_before_handle_close"
+    },
+    {
+      "name": "missing critical test_unknown_ownership_and_live_reader_block_replacement",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_unknown_ownership_and_live_reader_block_replacement"
+    },
+    {
+      "name": "missing critical test_starting_without_pid_stays_unknown",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_starting_without_pid_stays_unknown"
+    },
+    {
+      "name": "missing critical test_stale_first_job_remains_pinned_after_outage",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_stale_first_job_remains_pinned_after_outage"
+    },
+    {
+      "name": "missing critical test_session_resumes_saving_after_rebind",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_session_resumes_saving_after_rebind"
+    },
+    {
+      "name": "missing critical test_ambiguous_save_latches_and_rebind_preserves_identity",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_ambiguous_save_latches_and_rebind_preserves_identity"
+    },
+    {
+      "name": "missing critical test_fault_registered_after_latch_delivers_original_once",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_fault_registered_after_latch_delivers_original_once"
+    },
+    {
+      "name": "missing critical test_faults_stay_monitor_only_and_preserve_shared_settings",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_faults_stay_monitor_only_and_preserve_shared_settings"
+    },
+    {
+      "name": "missing critical test_stop_during_backoff_wakes_without_another_attempt",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_stop_during_backoff_wakes_without_another_attempt"
+    },
+    {
+      "name": "missing critical test_invalid_then_fresh_higher_layer",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_invalid_then_fresh_higher_layer"
+    },
+    {
+      "name": "missing critical test_invalid_is_exposed_before_later_row_in_same_read",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_invalid_is_exposed_before_later_row_in_same_read"
+    },
+    {
+      "name": "missing critical test_wait_and_automatic_recovery_keep_connection_then_next_snapshot_reaches_chart",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_wait_and_automatic_recovery_keep_connection_then_next_snapshot_reaches_chart"
+    },
+    {
+      "name": "missing critical test_observer_recovery_preserves_chart_and_does_not_archive_until_stop",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_observer_recovery_preserves_chart_and_does_not_archive_until_stop"
+    },
+    {
+      "name": "missing critical test_calculation_hold_event_is_logged_without_finishing_or_clearing_records",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_calculation_hold_event_is_logged_without_finishing_or_clearing_records"
+    },
+    {
+      "name": "missing critical test_partial_save_is_preserved_in_archive_csv_and_plot_input",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_partial_save_is_preserved_in_archive_csv_and_plot_input"
+    },
+    {
+      "name": "missing critical test_same_key_save_reaches_archive_csv_and_both_png_inputs",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_same_key_save_reaches_archive_csv_and_both_png_inputs"
+    },
+    {
+      "name": "missing critical test_owned_process_handle_is_terminated_and_verified",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_owned_process_handle_is_terminated_and_verified"
+    },
+    {
+      "name": "missing critical test_invalid_pid_never_opens_process_and_ownership_stays_unknown",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_invalid_pid_never_opens_process_and_ownership_stays_unknown"
+    },
+    {
+      "name": "missing critical test_non_ir_prepare_timeout_is_recoverable_when_helper_retires",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_non_ir_prepare_timeout_is_recoverable_when_helper_retires"
+    },
+    {
+      "name": "missing critical test_barrier_is_logged_before_queue_even_during_close",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_barrier_is_logged_before_queue_even_during_close"
+    },
+    {
+      "name": "missing critical test_uncertain_save_records_original_error_even_when_stop_is_set",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_uncertain_save_records_original_error_even_when_stop_is_set"
+    },
+    {
+      "name": "missing critical test_expired_accepted_rows_preserve_consecutive_history_and_third_save",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_expired_accepted_rows_preserve_consecutive_history_and_third_save"
+    },
+    {
+      "name": "missing critical test_expiry_while_calculation_pending_discards_result_and_resets",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_expiry_while_calculation_pending_discards_result_and_resets"
+    },
+    {
+      "name": "missing critical test_unknown_invalid_and_readiness_loss_reset_accepted_history",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_unknown_invalid_and_readiness_loss_reset_accepted_history"
+    },
+    {
+      "name": "missing critical test_synthetic_history_only_300_layers_expire_between_rows",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_synthetic_history_only_300_layers_expire_between_rows"
+    },
+    {
+      "name": "missing critical test_real_reader_expiry_preserves_workbook_history",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_real_reader_expiry_preserves_workbook_history"
+    },
+    {
+      "name": "missing critical test_expired_known_row_marker_does_not_authorize_save",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_expired_known_row_marker_does_not_authorize_save"
+    },
+    {
+      "name": "missing critical test_expired_marker_requires_known_complete_valid_past_row",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_expired_marker_requires_known_complete_valid_past_row"
+    },
+    {
+      "name": "missing critical test_matching_expired_idle_row_preserves_history_and_next_layer",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_matching_expired_idle_row_preserves_history_and_next_layer"
+    },
+    {
+      "name": "missing critical test_expired_history_requires_explicit_permission_and_exact_proof",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_expired_history_requires_explicit_permission_and_exact_proof"
+    },
+    {
+      "name": "missing critical test_pending_and_unconsumed_results_are_never_kept_on_expiration",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_pending_and_unconsumed_results_are_never_kept_on_expiration"
+    },
+    {
+      "name": "missing critical test_image_change_resets_even_with_exact_expired_identity",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_image_change_resets_even_with_exact_expired_identity"
+    },
+    {
+      "name": "missing critical test_one_race_retries_and_keeps_same_run",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_one_race_retries_and_keeps_same_run"
+    },
+    {
+      "name": "missing critical test_retry_exhaustion_preserves_state_and_recovers",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_retry_exhaustion_preserves_state_and_recovers"
+    },
+    {
+      "name": "missing critical test_incomplete_tail_never_publishes_and_then_completes",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_incomplete_tail_never_publishes_and_then_completes"
+    },
+    {
+      "name": "missing critical test_backlog_progresses_without_publishing_partial",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_backlog_progresses_without_publishing_partial"
+    },
+    {
+      "name": "missing critical test_rewrite_with_same_mtime_discards_provisional",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_rewrite_with_same_mtime_discards_provisional"
+    },
+    {
+      "name": "missing critical test_missing_anchor_and_missing_log_are_unavailable",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_missing_anchor_and_missing_log_are_unavailable"
+    },
+    {
+      "name": "missing critical test_rotation_during_read_retries_and_publishes_new_job",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_rotation_during_read_retries_and_publishes_new_job"
+    },
+    {
+      "name": "missing critical test_unavailable_log_does_not_clear_csv_state",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_unavailable_log_does_not_clear_csv_state"
+    },
+    {
+      "name": "missing critical test_append_new_job_during_parse_is_retried",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_append_new_job_during_parse_is_retried"
+    },
+    {
+      "name": "missing critical test_new_latest_file_during_parse_is_selected",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_new_latest_file_during_parse_is_selected"
+    },
+    {
+      "name": "missing critical test_same_mtime_prefix_rewrite_during_parse_is_detected",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_same_mtime_prefix_rewrite_during_parse_is_detected"
+    },
+    {
+      "name": "missing critical test_korean_message_keeps_stable_reason",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_korean_message_keeps_stable_reason"
+    },
+    {
+      "name": "missing critical test_parser_failure_does_not_commit_cursor",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_parser_failure_does_not_commit_cursor"
+    },
+    {
+      "name": "missing critical test_transient_log_append_preserves_history_at_idle_and_preflight",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_transient_log_append_preserves_history_at_idle_and_preflight"
+    },
+    {
+      "name": "missing critical test_exhausted_preflight_does_not_save_or_replay_and_preserves_previous_save",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_exhausted_preflight_does_not_save_or_replay_and_preserves_previous_save"
+    },
+    {
+      "name": "missing critical test_stable_new_job_rejects_old_decision_and_preserves_previous_save",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_stable_new_job_rejects_old_decision_and_preserves_previous_save"
+    },
+    {
+      "name": "missing critical test_fault_transitions_are_logged_before_queue_even_during_close",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_fault_transitions_are_logged_before_queue_even_during_close"
+    },
+    {
+      "name": "missing critical test_unknown_state_preserves_original_reason_and_logs_transition_once",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_unknown_state_preserves_original_reason_and_logs_transition_once"
+    },
+    {
+      "name": "missing critical test_excel_reset_records_specific_reason_only_once",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_excel_reset_records_specific_reason_only_once"
+    },
+    {
+      "name": "missing critical test_reset_diagnostics_count_actual_resets_and_coalesce",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_reset_diagnostics_count_actual_resets_and_coalesce"
+    },
+    {
+      "name": "missing critical test_reset_diagnostics_capture_pending_and_unconsumed",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_reset_diagnostics_capture_pending_and_unconsumed"
+    },
+    {
+      "name": "missing critical test_rejected_group_reset_is_not_counted",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_rejected_group_reset_is_not_counted"
+    },
+    {
+      "name": "missing critical test_hold_reason_identifies_actual_cause",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_hold_reason_identifies_actual_cause"
+    },
+    {
+      "name": "missing critical test_log_read_unavailable_preserves_specific_reason",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_log_read_unavailable_preserves_specific_reason"
+    },
+    {
+      "name": "missing critical test_denied_rotation_preserves_state_until_retry",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_denied_rotation_preserves_state_until_retry"
+    },
+    {
+      "name": "strict two-line case missing description",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_synthetic_history_only_300_layers_expire_between_rows"
+    },
+    {
+      "name": "strict two-line case changed description",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_synthetic_history_only_300_layers_expire_between_rows"
+    },
+    {
+      "name": "strict two-line case skipped status",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_synthetic_history_only_300_layers_expire_between_rows"
+    },
+    {
+      "name": "strict two-line case inserted third line",
+      "passed": true,
+      "rejected_reason": "Missing passed Excel wait regression: test_synthetic_history_only_300_layers_expire_between_rows"
+    },
+    {
+      "name": "workflow valid exact outer archive extraction",
+      "passed": true
+    },
+    {
+      "name": "workflow wrong immutable artifact ID",
+      "passed": true
+    },
+    {
+      "name": "workflow wrong outer digest",
+      "passed": true
+    },
+    {
+      "name": "workflow expired artifact",
+      "passed": true
+    },
+    {
+      "name": "workflow wrong source commit",
+      "passed": true
+    },
+    {
+      "name": "workflow wrong repository",
+      "passed": true
+    },
+    {
+      "name": "workflow corrupt outer download",
+      "passed": true
+    }
+  ]
+}
