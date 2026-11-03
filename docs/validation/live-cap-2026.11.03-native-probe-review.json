@@ -1,0 +1,36 @@
+{
+  "review_phase": "SUPPLEMENTAL_ACTUAL_RUNTIME_SYNTHETIC_EXECUTION_REVIEW",
+  "review_route": "native collaboration child /root/sol_reviewer_excel_wait",
+  "candidate_source_commit": "069a57fca3cdf82b5a80b13ea74544390f73bb78",
+  "workflow_sha256": "e376400f6ee46f7c84144c530c38b01ce23a860f4351a1259bbfcf999066f2e8",
+  "probe_sha256": "649433437dad8f4b287a70ba3ecfa672d1350401522a0963079069faf9e0f1ae",
+  "isolated_synthetic_execution_allowed": true,
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "scope": [
+    "Same read-only isolated Windows workflow and fully source/manifest/hash-verified frozen package as the prior approved probe.",
+    "Owned-only PID/path resolver, retained ResilientUiAdapter and production run_observed_session; no global real-machine discovery or production code mutation.",
+    "Explicit initial cap80; bounded fresh-row readiness loop requires control_available, initial cap active with matching request stamp, unchanged persisted80/non-IR fields, and zero Saves before requesting60.",
+    "Four subsequent fresh rows must persist75/70/65/60 exactly once each, with duplicate rows unchanged, final page/minimized state checked and cover ownership sampled.",
+    "Native request logging records operation, duration, error type/message and rethrows the original error. Wrapper outage logging delegates unchanged; failure capture preserves these events and owned fixture state before teardown.",
+    "Console output is ASCII-safe while the evidence JSON remains UTF-8. No helper budget, Save acknowledgement policy, data admission or ambiguity guard is changed."
+  ],
+  "prior_probe_result_preserved": {
+    "workflow_run_id": 41628001141,
+    "reported_cases_passed": 3,
+    "reported_cases_failed": 1,
+    "evidence": "/workspace/ir-live-cap-review/native-first.json",
+    "failure": "First M1 normal case read timeout before cap request, with zero Saves, persisted80 and unchanged non-IR fields. Underlying native operation not captured by the old probe.",
+    "not_reclassified_as_pass": true
+  },
+  "independent_checks": [
+    "Exact probe and workflow hashes verified.",
+    "Reviewed the actual adaptation diff and compiled it against the frozen validation harness.",
+    "Prior external offline uncertain-Save test independently passed1test in1.006seconds; this revised Windows runtime execution is not yet performed."
+  ],
+  "limits": [
+    "This approves one revised probe execution, not a retry-until-green policy. Preserve read failures/recovery events even if final cases pass.",
+    "Source approval remains unchanged; exact fresh artifact/publication approval is still pending. The first failed canonical artifact and failed first supplemental probe remain failed evidence.",
+    "No actual equipment, Excel COM or thermal validation is authorized; final algorithm/equipment HOLD remains."
+  ]
+}

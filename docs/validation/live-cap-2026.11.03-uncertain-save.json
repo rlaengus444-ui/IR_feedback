@@ -1,0 +1,7 @@
+{
+  "test": "test_uncertain_save_live_cap.UncertainSaveTests.test_uncertain_second_save_stays_held_after_live_cap_and_fresh_rows",
+  "result": "passed",
+  "environment": "Linux; frozen application source; fake raw adapter and fake Excel controller",
+  "scope": "one confirmed first heater Save followed by one uncertain second heater Save; live cap 80 to 60 while in flight; four later observations; no retry",
+  "limitations": "No Excel COM, native helper, equipment or hardware validation."
+}

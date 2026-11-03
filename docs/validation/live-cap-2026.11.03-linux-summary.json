@@ -1,0 +1,14 @@
+{
+  "tests": 444,
+  "failures": 0,
+  "errors": 0,
+  "skipped": [
+    [
+      "test_excel_retirement_windows.WindowsRetirementTests.test_owned_process_handle_is_terminated_and_verified",
+      "requires Windows process handles"
+    ]
+  ],
+  "excluded": 51,
+  "elapsed_seconds": 96.60399992098974,
+  "source": "working-tree live maximum IR"
+}

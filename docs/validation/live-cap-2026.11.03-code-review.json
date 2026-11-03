@@ -1,0 +1,95 @@
+{
+  "review_phase": "CODE_POST",
+  "review_route": "native collaboration child /root/sol_reviewer_excel_wait",
+  "requested_reviewer": "sol_reviewer",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_model_identity_independently_attested": false,
+  "candidate_commit": "069a57fca3cdf82b5a80b13ea74544390f73bb78",
+  "base_commit": "93eb2705c45443dcd1ca90b44d1e9ec09b599b82",
+  "version": "2026.11.03-live-cap.1",
+  "source_checkout": "/workspace/IR_feedback_live_cap_release_source",
+  "working_tree_clean": true,
+  "source_review_approved": true,
+  "independent_source_post_review_complete": true,
+  "independent_post_review_complete": true,
+  "review_completion_scope": "SOURCE ONLY",
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approval": false,
+  "blocking_findings": [],
+  "resolved_findings": [
+    {
+      "issue": "The BF beta-learning saturation check used only the new effective cap, so raising 62.5 to 80 could conceal the previous saturated output and permit beta to rise from 0.50 to 0.55.",
+      "fix": "Retain the last committed effective cap, advance it only on row append, clear it on reset, and compare previous D against min(previous effective cap,current effective cap).",
+      "verification": "New cap raise/lower eligible-block tests and transactional/reset tests pass; original complete helper-column and replay numeric tests remain passing."
+    }
+  ],
+  "reviewed_behavior": [
+    "One versioned logical-session cap supports A-B-A, immutable validated bounds, min-conflict rejection without stamp mutation, and same-object recovery/observer preservation.",
+    "Fresh-layer descent is max(effective cap,actual-original step); temporary values above the requested cap are explicit policy. JSON original min/max/step and actual-input validation remain enforced.",
+    "Basic D/E/V history records the gradual command; historical saturation persists across cap changes through the last committed cap. Old helper-column/replay numerics remain passing.",
+    "Excel controllers initialize and recover with numeric100 ceiling, validate raw results as finite0..100 first, and retain original workbook/formula/frozen-row behavior; session applies user cap policy.",
+    "Pending/completed/basic old-cap work is discarded, quiescent accepted history is retained, and late per-heater native admission rechecks the exact cap stamp.",
+    "An admitted operation may finish after a new request. A short token critical section ends before I/O; pending labels, subsequent heater refusal, partial Save markers and ambiguity barriers remain consistent.",
+    "A helper denied before payload delivery remains read-only transport failure and globally fenced if retirement is unconfirmed; attempted delivery retains conservative actuation ambiguity.",
+    "Queued UI acknowledgments cannot restore old proposals or erase confirmed Save records. Documentation distinguishes initial cap descent from normal first-two-observation feedback holds."
+  ],
+  "independently_executed_tests": {
+    "tests_run": 118,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 11.311,
+    "modules": [
+      "test_live_limit_setting",
+      "test_live_limit_algorithm",
+      "test_live_limit_excel",
+      "test_live_limit_admission",
+      "test_live_limit_runtime",
+      "test_live_limit_session_ack",
+      "test_layer_algorithm",
+      "test_resilient_adapter",
+      "test_output_limit",
+      "test_windows_ui_adapter",
+      "test_observed_session",
+      "test_excel_calculation"
+    ],
+    "log": "/workspace/ir-live-cap-review/sol-source-focused-tests.txt",
+    "summary_and_production_hashes": "/workspace/ir-live-cap-review/sol-source-focused-summary.json",
+    "production_app_files_hash_compared_to_frozen_revision": 31,
+    "production_hash_differences": [],
+    "excluded_platform_case": [
+      "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed"
+    ]
+  },
+  "additional_full_portable_evidence_inspected": {
+    "tests_run": 444,
+    "failures": 0,
+    "errors": 0,
+    "windows_process_handle_skips": 1,
+    "excluded_platform_gui_cases": 51,
+    "seconds": 96.604,
+    "log": "/workspace/ir-live-cap-review/linux-tests.txt",
+    "summary": "/workspace/ir-live-cap-review/linux-summary.json",
+    "includes_new_BF_cap_state_and_basic_ABA_cases": true,
+    "log_sha256": "762a0c37be8c42e59bd3ade59440706e0552128ab72b373c18a16980c450d61b",
+    "previous_442_run_preserved": "/workspace/ir-live-cap-review/pre-final-bf-run"
+  },
+  "unchanged_source_guards": [
+    "CSV freshness, invalid -1 marker, job identity and native token/content checks.",
+    "Native Sequence non-IR audit and Save helper; bridge DLL and persistence verification.",
+    "Excel worker formulas/order, immutable workbook preparation, ownership retirement and group fences."
+  ],
+  "accepted_scope_clarification": {
+    "local_preference_persistence": "Existing synchronous atomic local preference writes remain on Tk. The accepted cap request and short-lock release occur first, so control/native/Excel admission does not wait for that disk write; slow disk can still delay the GUI pump. Docs explicitly state this. No blanket nonblocking-GUI claim is approved."
+  },
+  "limits": [
+    "Source approval is not artifact/publication approval. Exact Windows build, raw reports, ZIP manifest/source matching and publication controls require separate review.",
+    "This reviewer ran Linux offline, real-file and synthetic/native-response tests, not Microsoft Excel COM or real equipment. Tk GUI and native Windows process behavior remain pending Windows evidence.",
+    "A prior broad reviewer command included the existing Windows-only hung-helper case on Linux; its child-killed assertion failed because no Windows process was created. The canonical focused run explicitly excludes that platform case.",
+    "No physical BJT, sensor, PLC, lamp, physical Save, thermal behavior or closed-loop stability was validated or authorized.",
+    "The explicit gradual transition may remain above a newly requested cap for multiple valid fresh layers and can hold indefinitely if existing safety checks are not satisfied.",
+    "Final algorithm approval and equipment application remain on HOLD."
+  ]
+}

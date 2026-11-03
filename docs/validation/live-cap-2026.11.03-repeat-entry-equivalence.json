@@ -1,0 +1,8 @@
+{
+  "source_commit": "069a57fca3cdf82b5a80b13ea74544390f73bb78",
+  "first_archive_sha256": "6914f86cdaa59eed91534bf468fb8fc034f0521df7cb08814cca5b4302f3177d",
+  "repeat_archive_sha256": "6bd8ad2e68f3d6e345cac2c3c0e95e0c84b0995544d8a664b7dce48b114a4945",
+  "entry_byte_differences": [],
+  "entries_compared": 3660,
+  "all_entry_bytes_equal": true
+}

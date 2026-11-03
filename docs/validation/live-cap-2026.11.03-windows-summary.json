@@ -1,0 +1,53 @@
+{
+  "candidate_commit": "069a57fca3cdf82b5a80b13ea74544390f73bb78",
+  "zip_sha256": "6bd8ad2e68f3d6e345cac2c3c0e95e0c84b0995544d8a664b7dce48b114a4945",
+  "zip_bytes": 35392386,
+  "manifest_hashed_files": 3659,
+  "source_files_verified": 49,
+  "runtime_files_equal_previous": 3610,
+  "runtime_differences": [],
+  "windows_tests": 495,
+  "seconds": 122.156,
+  "tests_failed": 0,
+  "tests_skipped": 0,
+  "required_non_excel_gates": {
+    "build": "success",
+    "tests": "success",
+    "smoke": "success",
+    "bridge": "success",
+    "csv_guard": "success",
+    "native_discovery": "success",
+    "slice_perf": "success",
+    "settings_recovery": "success",
+    "background": "success",
+    "reverify": "success"
+  },
+  "non_excel_all_passed": true,
+  "background_passed": true,
+  "background_passed_cases": 8,
+  "excel": {
+    "excel_com_tested": false,
+    "release_ready": false,
+    "reason": "Excel COM is not registered"
+  },
+  "equipment_application_approved": false,
+  "evidence_sha256": {
+    "smoke.txt": "412ecb28910b048ecd2fb753db234e31da841b018a6deeb25072d709a486aab6",
+    "candidate.json": "6d47949f773d0261d5a55f3fb0529ba719204832ecb4cce2e55595319ba58b01",
+    "slice-performance.json": "48805eba49474e9993d9598526621b524e5b1c0caf2a866278c769639a5c33f3",
+    "excel.json": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03",
+    "SHA256.txt": "523ab18fa7a2cb223289a848af05f7a206c72972d69720e274e0c1dacfdec764",
+    "IRFeedback-2026.11.03-live-cap.1.zip": "6bd8ad2e68f3d6e345cac2c3c0e95e0c84b0995544d8a664b7dce48b114a4945",
+    "tests.txt": "2c4e64c77769a749d6324a0feb6ae9ce238db3405dfdfd1da7d656c9673c06bb",
+    "csv-guard.json": "74938ed99d0a43960867f9eac2b3d2d42725d1710da263e4dbd97a4e8b3a9365",
+    "discovery.txt": "927636556900083834e5725078d4bfbea443a2ad93ab2a086efccca74e4798af",
+    "settings-recovery.json": "1c68b0ec80f189ce215eb4a7556f5b0076985ed9182a6b01388a9ef925bb20ba",
+    "bridge.json": "6283df24a72e12a21e151fb071609e7b46d6c6777588c29e4b345db8af0e8bfb",
+    "settings-recovery.txt": "1c68b0ec80f189ce215eb4a7556f5b0076985ed9182a6b01388a9ef925bb20ba",
+    "discovery.json": "927636556900083834e5725078d4bfbea443a2ad93ab2a086efccca74e4798af",
+    "slice-performance.txt": "48805eba49474e9993d9598526621b524e5b1c0caf2a866278c769639a5c33f3",
+    "background.json": "6dc5ea121fe2d6a76f4a43b95ff6b3e733d0e96e45c748931f5a6a7efacbd2c8",
+    "background.txt": "6dc5ea121fe2d6a76f4a43b95ff6b3e733d0e96e45c748931f5a6a7efacbd2c8",
+    "readiness.json": "6adbf3d53854a15c3c9090d23de7a1d5c856dcd964adad1e9259591f52ddfcfe"
+  }
+}

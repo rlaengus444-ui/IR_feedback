@@ -1,0 +1,23 @@
+{
+  "review_phase": "SUPPLEMENTAL_PROBE_INSTRUMENTATION_CORRECTION",
+  "candidate_commit": "808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+  "probe_sha256": "8a5d7d64b00cfbd7b00a425ccd6c1e50972b57bd0dd5a8c0f922f5b16ae7fc71",
+  "workflow_sha256": "d740f23eb9ecaebf4537ae441e9e7cedcbcc7ccc20caf8f5a92b126c75b0eaca",
+  "isolated_synthetic_execution_allowed": true,
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "independent_reproduction": {
+    "old_recorder": "record(reason) raises TypeError on preserve_initial_grant keyword before calling production method or appending outage log.",
+    "corrected_recorder": "record(reason, **kwargs) forwards all kwargs and preserves the production return/error behavior.",
+    "actual_808b_wrapper": "Forced first read-only validate timeout retained the grant; same-root retry prepared monitor/control exactly once with no sticky fault and zero Saves.",
+    "exact_adapted_harness_compiles": true
+  },
+  "previous_failed_run": 41632431484,
+  "prior_result_preserved": "native-final.json remains a failed3/4 probe result, classified separately as incompatible instrumentation; it is not proof of a production bootstrap failure.",
+  "reviewer_correction": "The previous execution review missed the private-method signature change introduced by808b. The mismatch and corrected delegation were independently reproduced before clearing this run.",
+  "limits": [
+    "No production code, native timeout, Save acknowledgement, assertions or data/admission guard was changed.",
+    "This authorizes one corrected isolated validation run only; raw results and exact artifact/publication decision remain pending.",
+    "All earlier failed reports remain preserved. Equipment and final algorithm HOLD remain."
+  ]
+}

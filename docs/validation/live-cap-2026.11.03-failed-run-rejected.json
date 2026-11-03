@@ -1,0 +1,20 @@
+{
+  "candidate_commit": "069a57fca3cdf82b5a80b13ea74544390f73bb78",
+  "windows_run_id": 41625262551,
+  "candidate_zip_sha256": "6914f86cdaa59eed91534bf468fb8fc034f0521df7cb08814cca5b4302f3177d",
+  "publisher_sha256": "51359ee1620d389485f65ac83816143c89146c6b2837ddba672618605fdfeba0",
+  "actual_package_verify_passed": true,
+  "readiness_sha256": "bf5505220677da49d3be358d914aaa82dc16b569c39b0c20951e2df713e69db3",
+  "background_sha256": "97edab2fb982085702382916bcce30882a6cd60cb95a654af054ff928cf48a30",
+  "review_gate_mocked": true,
+  "external_calls_mocked": true,
+  "actual_publication_performed": false,
+  "case": {
+    "name": "actual failed background evidence is rejected",
+    "passed": true,
+    "rejected_reason": "A required Windows validation step failed",
+    "mocked_calls": [
+      "download"
+    ]
+  }
+}

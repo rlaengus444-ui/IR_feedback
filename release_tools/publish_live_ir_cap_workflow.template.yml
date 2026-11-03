@@ -1,0 +1,78 @@
+name: Publish reviewed live maximum IR evaluation ZIP
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish-reviewed-candidate:
+    runs-on: windows-2022
+    timeout-minutes: 8
+    steps:
+      - name: Preserve checkout bytes
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+        with:
+          ref: __PUBLISH_SOURCE__
+      - name: Check out the immutable source that produced the reviewed ZIP
+        uses: actions/checkout@v4
+        with:
+          ref: 808b8cbc131c3072147eb0f79ceedd5ba8a4ef89
+          path: reviewed-source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download the exact reviewed artifact by immutable API ID
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          @'
+          import hashlib, json, os, subprocess, zipfile
+          from pathlib import Path, PurePosixPath
+          repo = 'rlaengus444-ui/IR_feedback'
+          artifact_id = 13228273895
+          run_id = 41631423591
+          source = '808b8cbc131c3072147eb0f79ceedd5ba8a4ef89'
+          expected = 'c7bf7036203227c036c97a39a64a2eb00a6031485885e61e44a04ac8cd964d1c'
+          endpoint = f'repos/{repo}/actions/artifacts/{artifact_id}'
+          metadata = json.loads(subprocess.check_output(['gh', 'api', endpoint], timeout=30))
+          assert metadata['id'] == artifact_id and metadata['name'] == 'slice-candidate-' + source
+          assert metadata['expired'] is False and metadata['size_in_bytes'] == 34906997
+          assert metadata['digest'] == 'sha256:' + expected
+          assert metadata['workflow_run']['id'] == run_id and metadata['workflow_run']['head_sha'] == source
+          assert metadata['workflow_run']['repository_id'] == 1434868115
+          assert metadata['workflow_run']['head_repository_id'] == 1434868115
+          archive_path = Path(os.environ['RUNNER_TEMP']) / 'verified-reconnect-evidence.zip'
+          with archive_path.open('xb') as stream:
+              subprocess.run(['gh', 'api', endpoint + '/zip'], stdout=stream, check=True, timeout=60)
+          assert archive_path.stat().st_size == 34906997
+          assert hashlib.sha256(archive_path.read_bytes()).hexdigest() == expected
+          output = Path(os.environ['RUNNER_TEMP']) / 'verified-reconnect-candidate'
+          output.mkdir()
+          with zipfile.ZipFile(archive_path) as archive:
+              infos = archive.infolist()
+              assert len(infos) <= 64
+              assert sum(item.file_size for item in infos) <= 64 * 1024 * 1024
+              seen = set()
+              for item in infos:
+                  name = item.filename
+                  parts = name.rstrip('/').split('/')
+                  assert name and not name.startswith('/') and '\\' not in name
+                  assert all(p not in ('', '.', '..') and ':' not in p and not p.endswith((' ', '.')) for p in parts)
+                  assert not (item.external_attr >> 16 & 0o170000 == 0o120000)
+                  folded = name.rstrip('/').casefold()
+                  assert folded not in seen
+                  seen.add(folded)
+              assert archive.testzip() is None
+              archive.extractall(output)
+          print('Verified exact artifact ID, provenance, archive digest and safe extraction.')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw 'Exact reviewed artifact download failed' }
+      - name: Validate exact evidence and publish only the reviewed evaluation ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          python release_tools/publish_live_ir_cap_candidate.py "$env:RUNNER_TEMP\verified-reconnect-candidate" 808b8cbc131c3072147eb0f79ceedd5ba8a4ef89 51441d797dedd2011847e81bd250cfd7cb67ef0864e003f2b02e4cb0a04f91aa docs/validation/live-cap-2026.11.03-release-review.json "$env:GITHUB_WORKSPACE\reviewed-source"
+          if ($LASTEXITCODE -ne 0) { throw 'Reviewed live maximum IR evaluation publication failed' }

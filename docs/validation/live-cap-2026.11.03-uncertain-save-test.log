@@ -1,0 +1,6 @@
+test_uncertain_second_save_stays_held_after_live_cap_and_fresh_rows (test_uncertain_save_live_cap.UncertainSaveTests.test_uncertain_second_save_stays_held_after_live_cap_and_fresh_rows) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.006s
+
+OK

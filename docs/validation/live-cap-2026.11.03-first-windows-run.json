@@ -1,0 +1,36 @@
+{
+  "candidate_commit": "069a57fca3cdf82b5a80b13ea74544390f73bb78",
+  "version": "2026.11.03-live-cap.1",
+  "workflow_run_id": 41625262551,
+  "artifact_id": 13225995867,
+  "artifact_bytes": 34904847,
+  "artifact_sha256": "b1392d0c0886ef30343f6ad78e1854b93d5566b8a3c59160ce6927fb5b4b29d8",
+  "zip_sha256": "6914f86cdaa59eed91534bf468fb8fc034f0521df7cb08814cca5b4302f3177d",
+  "windows_application_tests": {
+    "run": 495,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 119.393
+  },
+  "background_passed": false,
+  "background_cases_passed": 7,
+  "background_cases_total": 8,
+  "failed_case": {
+    "machine": "M1",
+    "minimized": true,
+    "case": "normal",
+    "error": "Save was queued but the target acknowledgement is uncertain.",
+    "foreground_preserved": true,
+    "actual_save_outcome": "unknown; fixture teardown preceded outcome diagnostics"
+  },
+  "cause_established": false,
+  "source_changes_to_hide_failure": false,
+  "save_retry_added": false,
+  "unchanged_source_repeat_workflow_run_id": 41626735680,
+  "excel_com_tested": false,
+  "excel_reason": "Excel COM is not registered",
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "note": "All original reports remain unmodified. Continued-on-error job step conclusions do not override raw outcomes."
+}

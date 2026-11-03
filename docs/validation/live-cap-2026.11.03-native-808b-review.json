@@ -1,0 +1,31 @@
+{
+  "review_phase": "EXACT_808B_SUPPLEMENTAL_SYNTHETIC_EXECUTION_REVIEW",
+  "review_route": "native collaboration child /root/sol_reviewer_excel_wait",
+  "candidate_source_commit": "808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+  "input_workflow_run_id": 41631423591,
+  "input_artifact_id": 13228273895,
+  "github_metadata_outer_artifact_bytes": 34906997,
+  "github_metadata_outer_sha256": "c7bf7036203227c036c97a39a64a2eb00a6031485885e61e44a04ac8cd964d1c",
+  "input_zip_sha256": "51441d797dedd2011847e81bd250cfd7cb67ef0864e003f2b02e4cb0a04f91aa",
+  "workflow_sha256": "d740f23eb9ecaebf4537ae441e9e7cedcbcc7ccc20caf8f5a92b126c75b0eaca",
+  "probe_sha256": "736b7f6ff78e8117cf6882f3a33c0732791222b1c64227da86f6c69b485fc099",
+  "isolated_synthetic_execution_allowed": true,
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "reviewed_delta": [
+    "Workflow changes only frozen source ref, artifact run/name and expected inner ZIP digest to the exact808b candidate.",
+    "Probe changes only the module documentation comment; its AST excluding that docstring is identical to the previously reviewed649433437dad8f4b287a70ba3ecfa672d1350401522a0963079069faf9e0f1ae probe."
+  ],
+  "independent_checks": [
+    "Actual file hashes and diffs inspected.",
+    "GitHub connector artifact metadata independently confirms source808b, run41631423591, artifact13228273895, repository IDs1434868115 and exact outer digest/size.",
+    "Adaptation against the new frozen validation harness compiles successfully.",
+    "Unchanged execution limits: read-only permissions,8-minute Windows job, complete package source/manifest/digest verification before bounded extraction, owned temporary fixture/cover PID/path only, no equipment or publication."
+  ],
+  "limits": [
+    "Execution approval does not establish a passing result or artifact/publication approval. Raw results still require review.",
+    "A healthy native run exercises live cap transitions through the fixed runtime. It demonstrates actual initial-timeout recovery only if an eligible timeout/recovery is recorded; otherwise that path is covered by the deterministic source tests, not this native run.",
+    "Both earlier3/4 supplemental failures and the first canonical uncertain-Save failure remain preserved.",
+    "No actual Microsoft Excel COM or equipment validation is authorized; final algorithm/equipment HOLD remains unchanged."
+  ]
+}
