@@ -35,6 +35,24 @@ _MAX_ROWS = 10000
 _NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main", "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships", "p": "http://schemas.openxmlformats.org/package/2006/relationships"}
 
 
+class _WorkbookRequestError(RuntimeError):
+    def __init__(self, message, *, operation, elapsed, deadline, phase, process_state):
+        super().__init__(message)
+        self.operation = operation
+        self.elapsed = elapsed
+        self.deadline = deadline
+        self.phase = phase
+        self.process_state = process_state
+
+
+class WorkbookTimeout(_WorkbookRequestError):
+    """The response deadline expired; this worker must not be reused."""
+
+
+class WorkbookTransportError(_WorkbookRequestError):
+    """The worker or its transport failed before returning a response."""
+
+
 def _address(value):
     match = _CELL.fullmatch(str(value).strip())
     if not match:
@@ -282,7 +300,7 @@ def inspect_workbook(spec: WorkbookSpec, data: bytes, stop_event=None):
 
 
 class WorkbookController:
-    def __init__(self, spec: WorkbookSpec, target_temperature_c: float, *, timeout=8.0, stop_event=None, maximum_ir_percent=100.0):
+    def __init__(self, spec: WorkbookSpec, target_temperature_c: float, *, timeout=8.0, stop_event=None, maximum_ir_percent=100.0, on_created=None):
         self.spec = spec
         self.maximum_ir_percent = validate_maximum_ir(maximum_ir_percent)
         self.timeout = float(timeout)
@@ -298,22 +316,41 @@ class WorkbookController:
         self._queue = queue.Queue()
         self._count = 0
         self._last_layer = None
+        self._phase = None
+        self._last_operation = None
+        self._operation_started = None
         try:
+            if on_created is not None:
+                on_created(self)
+            self._check_stopped()
             with open(spec.path, "rb") as f:
                 data = f.read(_MAX_BYTES + 1)
             self.metadata = inspect_workbook(spec, data, stop_event=self.stop_event)
             if self.stop_event is not None and self.stop_event.is_set():
                 raise InterruptedError("연결이 취소되어 Excel 계산을 시작하지 않았습니다.")
-            self._temp = tempfile.TemporaryDirectory(prefix="IR-feedback-excel-")
-            private_path = Path(self._temp.name) / "workbook.xlsx"
+            temp = tempfile.TemporaryDirectory(prefix="IR-feedback-excel-")
+            with self._lifecycle_lock:
+                if self._closed:
+                    temp.cleanup()
+                    raise InterruptedError("연결이 취소되어 Excel 계산을 시작하지 않았습니다.")
+                self._temp = temp
+            private_path = Path(temp.name) / "workbook.xlsx"
             private_path.write_bytes(data)
             worker = Path(__file__).with_name("excel_worker.ps1")
-            self._proc = subprocess.Popen(
+            self._check_stopped()
+            proc = subprocess.Popen(
                 ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(worker)],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                 text=True, encoding="utf-8", errors="replace", bufsize=1,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-            threading.Thread(target=self._reader, args=(self._proc,), daemon=True).start()
+            with self._lifecycle_lock:
+                if self._closed:
+                    proc.kill()
+                    proc.wait(timeout=2)
+                    raise InterruptedError("연결이 취소되어 Excel 계산을 시작하지 않았습니다.")
+                self._proc = proc
+            threading.Thread(target=self._reader, args=(proc,), daemon=True).start()
+            self._check_stopped()
             request = dict(op="init", path=str(private_path), sheet=self.metadata["sheet"],
                            temperature=spec.temperature_cell, actual=spec.actual_power_cell,
                            recommendation=spec.recommendation_cell, target=spec.target_cell,
@@ -332,7 +369,10 @@ class WorkbookController:
                 except Exception:
                     self._queue.put({"error": "Excel 응답 형식이 올바르지 않습니다."})
                     continue
-                if data.get("event") == "excel_started":
+                if data.get("event") == "progress":
+                    with self._lifecycle_lock:
+                        self._phase = str(data.get("phase", ""))
+                elif data.get("event") == "excel_started":
                     try:
                         import ctypes
                         kernel = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -355,32 +395,59 @@ class WorkbookController:
                 else:
                     self._queue.put(data)
         finally:
-            self._queue.put({"error": "Excel 계산 프로세스가 종료되었습니다."})
+            self._queue.put({"transport_error": "Excel 계산 프로세스가 종료되었습니다."})
+
+    def _check_stopped(self):
+        if (self.stop_event is not None and self.stop_event.is_set()) or self._closed:
+            self.close(force=True)
+            raise InterruptedError("연결이 취소되어 Excel 계산을 중단했습니다.")
 
     def _call(self, command, timeout=None):
-        if not self._proc or self._proc.poll() is not None:
-            raise RuntimeError("Excel 계산 프로세스가 실행 중이 아닙니다.")
+        started = time.monotonic()
+        budget = self.timeout if timeout is None else timeout
+        deadline = started + budget
+        operation = str(command.get("op", "unknown"))
+        with self._lifecycle_lock:
+            self._last_operation = operation
+            self._operation_started = started
+            self._phase = "send"
+            proc = self._proc
+        def failure(cls, message):
+            elapsed = time.monotonic() - started
+            with self._lifecycle_lock:
+                phase = self._phase
+            state = "missing" if proc is None else ("running" if proc.poll() is None else "exited")
+            self.close(force=True)
+            return cls(f"{message} ({operation}, {phase}, {elapsed:.3f}초)", operation=operation,
+                       elapsed=elapsed, deadline=budget, phase=phase, process_state=state)
+        self._check_stopped()
+        if not proc or proc.poll() is not None:
+            raise failure(WorkbookTransportError, "Excel 계산 프로세스가 실행 중이 아닙니다.")
         try:
-            self._proc.stdin.write(json.dumps(command, ensure_ascii=True) + "\n")
-            self._proc.stdin.flush()
-            deadline = time.monotonic() + (timeout or self.timeout)
+            proc.stdin.write(json.dumps(command, ensure_ascii=True) + "\n")
+            proc.stdin.flush()
             while True:
-                if self.stop_event is not None and self.stop_event.is_set():
-                    self.close(force=True)
-                    raise InterruptedError("연결이 취소되어 Excel 계산을 중단했습니다.")
+                self._check_stopped()
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise queue.Empty
                 try:
                     response = self._queue.get(timeout=min(remaining, 0.1))
+                    self._check_stopped()
+                    if time.monotonic() >= deadline:
+                        raise queue.Empty
                     break
                 except queue.Empty:
                     continue
         except InterruptedError:
             raise
-        except (OSError, BrokenPipeError, queue.Empty) as error:
-            self.close(force=True)
-            raise RuntimeError("Excel 계산 응답이 지연되어 제어를 중단했습니다.") from error
+        except queue.Empty as error:
+            raise failure(WorkbookTimeout, "Excel 계산 응답이 지연되어 제어를 중단했습니다.") from error
+        except (OSError, ValueError) as error:
+            self._check_stopped()
+            raise failure(WorkbookTransportError, "Excel 계산 프로세스와 통신할 수 없습니다.") from error
+        if response.get("transport_error"):
+            raise failure(WorkbookTransportError, response["transport_error"])
         if response.get("error"):
             self.close(force=True)
             raise RuntimeError("Excel 계산 실패: " + str(response["error"]))
@@ -393,7 +460,7 @@ class WorkbookController:
 
     def reset(self):
         if self._count:
-            self._call({"op": "reset"})
+            self._call({"op": "reset"}, max(30.0, getattr(self, "timeout", 8.0)))
         self._count = 0
         self._last_layer = None
 
@@ -449,8 +516,10 @@ class WorkbookController:
             self._closed = True
             excel_handle = self._excel_handle
             self._excel_handle = None
-        proc = self._proc
-        self._proc = None
+            proc = self._proc
+            self._proc = None
+            temp = self._temp
+            self._temp = None
         if proc:
             if not force and proc.poll() is None:
                 try:
@@ -474,9 +543,8 @@ class WorkbookController:
             # worker only supplies a PID absent before its COM creation.
             kernel.TerminateProcess(excel_handle, 1)
             kernel.CloseHandle(excel_handle)
-        if self._temp:
+        if temp:
             try:
-                self._temp.cleanup()
+                temp.cleanup()
             except OSError:
                 pass
-            self._temp = None

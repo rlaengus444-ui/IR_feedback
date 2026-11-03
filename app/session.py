@@ -12,6 +12,8 @@ from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavaila
 from layer_algorithm import LayerAdaptiveController, LayerSettings
 from target_temperature import TargetTemperatureSetting
 from excel_workbook import WorkbookController, WorkbookSpec
+from excel_calculation import ExcelCalculation
+from excel_async import AsyncWorkbookGroup
 from slice_data import SliceDataset
 from output_limit import validate_maximum_ir
 
@@ -99,10 +101,12 @@ def default_adapter_factory():
     return WindowsUiAdapter()
 
 
-def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_factory):
-    """All external reads/writes and calculation execute in this worker only."""
+def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_factory, *, workbook_group_factory=None):
+    """Only this worker reads BJT/CSV or writes IR; Excel has a separate owner."""
     adapter = None
     controllers = {}
+    excel_calc = None
+    excel_hold_reported = None
     held = {}
     reasons = {}
     baseline_seen = False
@@ -126,12 +130,17 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
     image_baseline_layer = None
     maximum_ir = options.maximum_ir_percent
     power_limit_holding = False
+    def reset_controllers():
+        for controller in controllers.values():
+            controller.reset()
+        if excel_calc is not None:
+            excel_calc.reset()
+
     def hold_feedback():
         nonlocal control_holding, recovery_baseline_pending, recovery_baseline_layer
         nonlocal baseline_seen, last_key, last_layer, known_run_key, wait_for_different_layer
         if not control_holding:
-            for controller in controllers.values():
-                controller.reset()
+            reset_controllers()
         control_holding = True
         recovery_baseline_pending = True
         recovery_baseline_layer = None
@@ -146,8 +155,9 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             return
         if options.mode != "monitor":
             if options.workbook_spec is not None:
-                controllers = {1: WorkbookController(options.workbook_spec, options.target_temperature_c,
-                    maximum_ir_percent=maximum_ir, stop_event=stop_event)}
+                excel_calc = ExcelCalculation(options.workbook_spec, options.target_temperature_c,
+                    maximum_ir, stop_event, controller_factory=WorkbookController,
+                    group_factory=workbook_group_factory or AsyncWorkbookGroup)
             else:
                 path = options.settings_path or Path(__file__).with_name("workbook-replay.settings.json")
                 if Path(path).stat().st_size > 262144:
@@ -194,8 +204,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                     expected_settings.clear()
             automatic = str(snapshot.machine_state).strip().upper() in ("AUTO", "RUNNING")
             if options.mode != "monitor" and not automatic:
-                for controller in controllers.values():
-                    controller.reset()
+                reset_controllers()
                 held.clear()
                 reasons.clear()
                 baseline_seen = False
@@ -223,12 +232,6 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             can_calculate = effective_mode in ("preview", "control")
             values = {1: snapshot.heater1_setting_percent, 2: snapshot.heater2_setting_percent}
             heaters = (1,) if snapshot.coupled_output else (1, 2)
-            if (can_calculate and options.workbook_spec is not None and 2 in heaters
-                    and 2 not in controllers):
-                if stop_event.is_set():
-                    break
-                controllers[2] = WorkbookController(options.workbook_spec, effective_target,
-                    maximum_ir_percent=maximum_ir, stop_event=stop_event)
             if effective_mode == "control":
                 for heater in heaters:
                     if finite(values[heater]):
@@ -266,8 +269,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 if image_consuming:
                     held.clear()
                     reasons.clear()
-                    for controller in controllers.values():
-                        controller.reset()  # Reopens its pristine private copy.
+                    reset_controllers()  # Reopens its pristine private copy.
                 if slice_setting.activate(desired_epoch):
                     slice_epoch, slice_dataset = desired_epoch, desired_dataset
                     if image_consuming:
@@ -328,6 +330,24 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                         last_key = snapshot.observation_key
                         recovery_baseline_layer = snapshot.layer_index
                         known_run_key = snapshot.run_key
+            target_stamp = options._target_temperature_setting.snapshot()
+            features = (slice_dataset.features(snapshot.layer_index + 1)
+                        if slice_dataset is not None and valid else None)
+            if excel_calc is not None:
+                excel_calc.watch(snapshot,
+                    eligible=can_calculate and valid and not control_barrier and not image_hold
+                             and all(finite(values[heater]) for heater in heaters),
+                    powers={heater: values[heater] for heater in heaters}, heaters=heaters,
+                    target_stamp=target_stamp, image_epoch=slice_epoch if image_consuming else None,
+                    features=features if image_consuming else None)
+                if excel_calc.latched_reason:
+                    held.clear(); reasons.clear()
+                    effective_mode = "calculation-hold"
+                    can_calculate = False
+                    status = excel_calc.waiting_status()
+                    if excel_hold_reported != excel_calc.latched_reason:
+                        emit("calculation_hold", excel_calc.diagnostic_reason or excel_calc.latched_reason)
+                        excel_hold_reported = excel_calc.latched_reason
             # Existing historical rows at connection time are shown but do not
             # create a control action. Wait for receipt of a new T_recoating row.
             if control_barrier:
@@ -349,8 +369,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                     last_key = snapshot.observation_key
                     status = "이력 초기화됨 · 다른 새 층의 T_recoating 대기"
                 elif run_changed or uncertain_same_layer:
-                    for controller in controllers.values():
-                        controller.reset()
+                    reset_controllers()
                     held.clear()
                     reasons.clear()
                     last_layer = None
@@ -369,86 +388,119 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                 controller.set_target_temperature(requested_target)
                             effective_target = requested_target
                             emit("log", f"새 CSV 관찰부터 목표 온도 {effective_target:g} °C 적용")
-                        last_key = snapshot.observation_key
                         if last_layer is not None and snapshot.layer_index <= last_layer:
-                            for controller in controllers.values():
-                                controller.reset()
-                        for heater in heaters:
-                            extra = {}
-                            if options.workbook_spec is not None and options.workbook_spec.slice_start_cell:
-                                extra['slice_features'] = (slice_dataset.features(snapshot.layer_index + 1)
-                                    if slice_dataset is not None else None)
-                            calculation_started = time.monotonic()
-                            try:
-                                result = controllers[heater].process(snapshot.layer_index + 1,
-                                    snapshot.t_recoating_c, values[heater], **extra)
-                            finally:
-                                algorithm_name = 'Excel' if options.workbook_spec is not None else '기본'
-                                emit('log', f'소요시간 · {snapshot.layer_index + 1}층 IR {heater} · '
-                                     f'CSV/UI 조회 {snapshot_seconds:.3f}초 · {algorithm_name} 계산 '
-                                     f'{time.monotonic() - calculation_started:.3f}초')
-                            held[heater] = result.power_percent
-                            reasons[heater] = result.reason
-                        last_layer = snapshot.layer_index
-                        if effective_mode == "control":
-                            writes = 0
-                            write_held = False
+                            reset_controllers()
+                        batch = None
+                        if excel_calc is not None:
+                            batch = excel_calc.calculate(snapshot,
+                                {heater: values[heater] for heater in heaters}, heaters,
+                                target_stamp, slice_epoch if image_consuming else None,
+                                features if image_consuming else None)
+                            if batch is None:
+                                held.clear(); reasons.clear()
+                                effective_mode = "calculation-hold" if excel_calc.latched_reason else "calculation-waiting"
+                                status = excel_calc.waiting_status()
+                        else:
+                            batch = {}
                             for heater in heaters:
-                                if stop_event.is_set():
-                                    break
-                                power = held[heater]
-                                if image_consuming and not slice_setting.admit(slice_epoch):
-                                    held.clear()
-                                    reasons.clear()
-                                    status = "이미지 교체 요청됨 · 이전 계산 적용 보류"
-                                    break
-                                if (not finite(power) or not 0 <= power <= maximum_ir
-                                        or abs(power - values[heater]) > 5.0 + 1e-9):
-                                    raise ControlUnavailable("최대 IR 출력 또는 1회 최대 5%p 증감 제한을 벗어났습니다.")
-                                if math.isclose(power, values[heater], rel_tol=0, abs_tol=1e-9):
-                                    continue  # Holding a value needs no redundant Save.
-                                apply_started = time.monotonic()
+                                calculation_started = time.monotonic()
                                 try:
-                                    validate_epoch = getattr(adapter, "validate_control_epoch", None)
-                                    if validate_epoch is not None:
-                                        validate_epoch(snapshot.control_epoch)
-                                    adapter.apply_ir_power(heater, power, snapshot.observation_key, stop_event)
-                                except ObservationSuspended as error:
-                                    # No edit/Save started. Never retry the old
-                                    # decision or retain its controller state.
-                                    # Reuse the baseline/fresh-layer barrier,
-                                    # without Sequence settings recovery.
-                                    hold_feedback()
-                                    control_holding = False
-                                    effective_mode = "observation-waiting"
-                                    can_calculate = False
-                                    write_held = True
-                                    status = "연결 유지 · CSV 갱신 대기: " + str(error)
-                                    break
-                                except ControlSuspended as error:
-                                    adapter.suspend_control(str(error))
-                                    hold_feedback()
-                                    effective_mode = "control-waiting"
-                                    can_calculate = False
-                                    status = "연결 유지 · IR 적용 대기: " + str(error)
-                                    break
+                                    batch[heater] = controllers[heater].process(snapshot.layer_index + 1,
+                                        snapshot.t_recoating_c, values[heater])
                                 finally:
                                     emit('log', f'소요시간 · {snapshot.layer_index + 1}층 IR {heater} · '
-                                         f'재검증·저장 요청 {time.monotonic() - apply_started:.3f}초 '
-                                         '(Save 성공 여부는 별도 기록)')
-                                applied[heater] = power
-                                expected_settings[heater] = power
-                                writes += 1
-                            if not control_holding and not write_held and not (image_consuming and slice_setting.desired()[0] != slice_epoch):
-                                status = "T_recoating 수신 · UI 자동 적용 완료" if writes else "T_recoating 수신 · 기존 설정 유지(저장 없음)"
-                        else:
-                            status = "T_recoating 수신 · 계산만 표시"
+                                         f'CSV/UI 조회 {snapshot_seconds:.3f}초 · 기본 계산 '
+                                         f'{time.monotonic() - calculation_started:.3f}초')
+                        if batch is not None:
+                            if excel_calc is not None and finite(excel_calc.last_calculation_seconds):
+                                emit("log", f"소요시간 · {snapshot.layer_index + 1}층 · "
+                                     f"CSV/UI 조회 {snapshot_seconds:.3f}초 · Excel 전체 계산 "
+                                     f"{excel_calc.last_calculation_seconds:.3f}초")
+                            if set(batch) != set(heaters):
+                                raise ControlUnavailable("IR 전체 채널의 계산 결과를 확인하지 못했습니다.")
+                            for heater, result in batch.items():
+                                held[heater] = result.power_percent
+                                reasons[heater] = result.reason
+                            last_key = snapshot.observation_key
+                            last_layer = snapshot.layer_index
+                        if batch is not None:
+                            if effective_mode == "control":
+                                writes = 0
+                                write_held = False
+                                for heater in heaters:
+                                    if stop_event.is_set():
+                                        break
+                                    power = held[heater]
+                                    if (excel_calc is not None and
+                                            options._target_temperature_setting.snapshot() != target_stamp):
+                                        reset_controllers()
+                                        held.clear(); reasons.clear(); write_held = True
+                                        status = "목표 변경됨 · 이전 Excel 결과 적용 보류"
+                                        break
+                                    if image_consuming and not slice_setting.admit(slice_epoch):
+                                        held.clear()
+                                        reasons.clear()
+                                        status = "이미지 교체 요청됨 · 이전 계산 적용 보류"
+                                        break
+                                    if (not finite(power) or not 0 <= power <= maximum_ir
+                                            or abs(power - values[heater]) > 5.0 + 1e-9):
+                                        raise ControlUnavailable("최대 IR 출력 또는 1회 최대 5%p 증감 제한을 벗어났습니다.")
+                                    if math.isclose(power, values[heater], rel_tol=0, abs_tol=1e-9):
+                                        continue  # Holding a value needs no redundant Save.
+                                    apply_started = time.monotonic()
+                                    try:
+                                        validate_epoch = getattr(adapter, "validate_control_epoch", None)
+                                        if validate_epoch is not None:
+                                            validate_epoch(snapshot.control_epoch)
+                                        adapter.apply_ir_power(heater, power, snapshot.observation_key, stop_event)
+                                    except ObservationSuspended as error:
+                                        # No edit/Save started. Never retry the old
+                                        # decision or retain its controller state.
+                                        # Reuse the baseline/fresh-layer barrier,
+                                        # without Sequence settings recovery.
+                                        hold_feedback()
+                                        control_holding = False
+                                        effective_mode = "observation-waiting"
+                                        can_calculate = False
+                                        write_held = True
+                                        status = "연결 유지 · CSV 갱신 대기: " + str(error)
+                                        break
+                                    except ControlSuspended as error:
+                                        adapter.suspend_control(str(error))
+                                        hold_feedback()
+                                        effective_mode = "control-waiting"
+                                        can_calculate = False
+                                        status = "연결 유지 · IR 적용 대기: " + str(error)
+                                        break
+                                    except Exception:
+                                        if applied:
+                                            emit("snapshot", dict(snapshot=snapshot, effective_mode="control-waiting",
+                                                proposed={}, reasons={}, applied=dict(applied),
+                                                status="일부 IR 저장 확인 후 오류 발생 · 추가 적용 중단",
+                                                display_target_c=effective_target, slice_epoch=slice_epoch,
+                                                slice_features=features))
+                                        raise
+                                    finally:
+                                        emit('log', f'소요시간 · {snapshot.layer_index + 1}층 IR {heater} · '
+                                             f'재검증·저장 요청 {time.monotonic() - apply_started:.3f}초 '
+                                             '(Save 성공 여부는 별도 기록)')
+                                    applied[heater] = power
+                                    expected_settings[heater] = power
+                                    writes += 1
+                                if not control_holding and not write_held and not (image_consuming and slice_setting.desired()[0] != slice_epoch):
+                                    status = "T_recoating 수신 · UI 자동 적용 완료" if writes else "T_recoating 수신 · 기존 설정 유지(저장 없음)"
+                            else:
+                                status = "T_recoating 수신 · 계산만 표시"
                     else:
                         status = "T_recoating 수신 · 현재 IR 설정을 읽을 수 없어 계산 대기"
             if image_consuming and slice_setting.desired()[0] != slice_epoch:
                 held.clear()
                 reasons.clear()
                 status = "이미지 교체 요청됨 · 이전 계산 적용 보류"
+            if (excel_calc is not None and effective_mode in ("control", "preview")
+                    and (excel_calc.pending or excel_calc.describe().get("state") in ("initializing", "resetting", "busy"))):
+                effective_mode = "calculation-waiting"
+                status = excel_calc.waiting_status()
             if last_status != (effective_mode, status):
                 emit("log", status)
                 last_status = (effective_mode, status)
@@ -469,6 +521,8 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             if adapter is not None:
                 adapter.disconnect()
         finally:
+            if excel_calc is not None:
+                excel_calc.close()
             for controller in controllers.values():
                 close = getattr(controller, "close", None)
                 if close is not None:
@@ -534,6 +588,11 @@ class SessionController:
         self.image_consuming = bool(options.mode != "monitor" and options.workbook_spec is not None
                                     and options.workbook_spec.slice_start_cell)
         def emit(kind, payload):
+            if kind == "calculation_hold" and self.error_logger is not None:
+                try:
+                    self.error_logger(str(payload))
+                except OSError:
+                    pass
             self.events.put(WorkerEvent(generation, kind, payload))
         def work():
             try:

@@ -1,3 +1,4 @@
+from excel_test_helpers import InlineWorkbookGroup
 import tempfile,time,threading,unittest
 from pathlib import Path
 from unittest.mock import Mock,patch
@@ -22,14 +23,14 @@ class SliceIntegration(unittest.TestCase):
     def test_session_passes_actual_one_based_layer_and_prior_image_to_excel(self):
         d=analyze(self.fixtures(),SliceConfig(1,400,400,first_layer=1059))
         spec=WorkbookSpec('fixture.xlsx','Sheet','B13','C13','D13','B5','A13','BL13')
-        adapter=Mock(spec=UiAdapter);adapter.read_snapshot.side_effect=[UiSnapshot(TARGET,layer_index=k,t_recoating_c=65.,observation_key=str(k),heater1_setting_percent=60.,machine_state='AUTO',observation_is_new=True) for k in (1058,1059)]
+        adapter=Mock(spec=UiAdapter);adapter.read_snapshot.side_effect=[UiSnapshot(TARGET,layer_index=k,t_recoating_c=65.,observation_key=str(k),heater1_setting_percent=60.,machine_state='AUTO',observation_is_new=True) for k in (1057,1058,1059)]
         excel=Mock();excel.process.return_value=LayerRecommendation(60.,'test',{})
         stop=threading.Event();reports=[]
         def emit(kind,payload):
             if kind=='snapshot':
                 reports.append(payload)
-                if len(reports)==2:stop.set()
-        with patch('session.WorkbookController',return_value=excel):
+                if len(reports)==3:stop.set()
+        with patch('session.WorkbookController',return_value=excel), patch('session.AsyncWorkbookGroup', InlineWorkbookGroup):
             run_ui_session(SessionOptions(TARGET,mode='preview',workbook_spec=spec,slice_dataset=d),stop,emit,lambda:adapter)
         a,b=excel.process.call_args_list
         self.assertEqual(1059,a.args[0]);self.assertEqual(0,a.kwargs['slice_features']['previous_image_valid'])

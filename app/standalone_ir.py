@@ -458,7 +458,7 @@ class ThermalFeedbackWindow:
             "CSV 자동 적용 중 · Process 표 접근 없음 · 다른 탭/최소화 가능"
             if payload["effective_mode"] == "control" else "기존 Sequences IR + Save 경로 확인됨")
         self.status.set("연결됨 · 제어 불가" if payload["effective_mode"] == "control-unavailable" else
-                        "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기", "control-waiting": "설정 확인·IR 적용 대기", "observation-waiting": "CSV 갱신·IR 적용 대기", "power-limit-waiting": "최대 IR 초과·적용 대기"}[payload["effective_mode"]])
+                        "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기", "control-waiting": "설정 확인·IR 적용 대기", "observation-waiting": "CSV 갱신·IR 적용 대기", "power-limit-waiting": "최대 IR 초과·적용 대기", "calculation-waiting": "Excel 응답 대기", "calculation-hold": "Excel 오류·IR 적용 정지"}[payload["effective_mode"]])
         for heater, value in ((1, snapshot.heater1_setting_percent), (2, snapshot.heater2_setting_percent)):
             proposed = payload["proposed"].get(1 if snapshot.coupled_output else heater)
             self.outputs.item(f"heater{heater}", values=("—" if value is None else value,
@@ -536,7 +536,7 @@ class ThermalFeedbackWindow:
                 self._show_snapshot(event.payload)
             elif event.kind == "chart_snapshot":
                 self._record_chart_payload(event.payload)
-            elif event.kind == "log":
+            elif event.kind in ("log", "calculation_hold"):
                 self._append_log(event.payload)
             elif event.kind == "error":
                 self.status.set("연결 오류")
