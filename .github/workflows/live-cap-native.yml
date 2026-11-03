@@ -1,0 +1,55 @@
+name: Synthetic live cap native transport crosscheck
+on:
+  push:
+    branches: ['validation/live-cap-native-20261103']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native-live-cap:
+    runs-on: windows-2022
+    timeout-minutes: 8
+    steps:
+      - name: Preserve checkout bytes
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 069a57fca3cdf82b5a80b13ea74544390f73bb78
+          path: frozen-source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: rlaengus444-ui/IR_feedback
+          run-id: 41625262551
+          name: slice-candidate-069a57fca3cdf82b5a80b13ea74544390f73bb78
+          path: candidate
+      - name: Verify and extract the immutable production candidate
+        shell: pwsh
+        run: |
+          @'
+          import sys,zipfile,hashlib
+          from pathlib import Path
+          sys.path.insert(0,'frozen-source/release_tools')
+          from verify_package import verify
+          package=Path('candidate/IRFeedback-2026.11.03-live-cap.1.zip')
+          assert verify(package,'2026.11.03-live-cap.1',root=Path('frozen-source'))=='6914f86cdaa59eed91534bf468fb8fc034f0521df7cb08814cca5b4302f3177d'
+          with zipfile.ZipFile(package) as archive:
+              assert len(archive.infolist())<5000
+              assert sum(i.file_size for i in archive.infolist())<200*1024*1024
+              archive.extractall('extracted')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw 'Frozen candidate verification failed' }
+      - name: Run native live cap descent in owned fixtures only
+        shell: pwsh
+        run: |
+          & "$env:GITHUB_WORKSPACE\extracted\runtime\python.exe" validation/live_cap_native_probe.py "$env:GITHUB_WORKSPACE\extracted" "$env:GITHUB_WORKSPACE\frozen-source" "$env:RUNNER_TEMP\live-cap-native.json"
+          if ($LASTEXITCODE -ne 0) { throw 'Native live cap fixture crosscheck failed; preserve diagnostics' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-cap-native-${{ github.sha }}
+          path: ${{ runner.temp }}/live-cap-native.json
