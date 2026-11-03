@@ -1,0 +1,29 @@
+{
+  "stage": "CODE POST",
+  "route": "native collaboration.followup_task /root/sol_reviewer_excel_wait",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_identity_independently_attested": false,
+  "candidate_commit": "4e93d03b70b0c1abe782b9da8f4e614f6e01ccd2",
+  "baseline_commit": "1c410a08952c1f68cca860c275fd8a515b1ddf58",
+  "final_response_received": true,
+  "source_review_passed": true,
+  "unresolved_blocking_findings": [],
+  "independent_focused_tests_passed": 47,
+  "extended_composed_regression_passed": true,
+  "composed_scope": "real CSV reader, raw adapter, resilient wrapper, session, asynchronous group, synthetic Excel and native UI; four consecutive accepted rows, two confirmed mock Saves, expiry after Save, one initialization, zero resets",
+  "portable_report_reviewed": {
+    "run": 383,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1,
+    "excluded": 47
+  },
+  "freshness_and_save_guards_unchanged": true,
+  "excel_engine_and_formulas_unchanged": true,
+  "formula_only_engine_introduced": false,
+  "actual_excel_com_tested": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false,
+  "artifact_distribution_approved": false
+}

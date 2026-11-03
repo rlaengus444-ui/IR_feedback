@@ -1,0 +1,19 @@
+{
+  "tests": 383,
+  "failures": 0,
+  "errors": 0,
+  "skipped": [
+    [
+      "test_excel_retirement_windows.WindowsRetirementTests.test_owned_process_handle_is_terminated_and_verified",
+      "requires Windows process handles"
+    ]
+  ],
+  "excluded": 47,
+  "elapsed_seconds": 73.94051952799782,
+  "source": "working-tree accepted history continuity",
+  "source_commit": "4e93d03b70b0c1abe782b9da8f4e614f6e01ccd2",
+  "log_sha256": "81fbe7330655dad4706e13bda534af586ad07c302604844b1822c6a24f84ccec",
+  "actual_excel_com_tested": false,
+  "equipment_application_approved": false,
+  "latest_composed_test_extension_rerun_separately": true
+}
