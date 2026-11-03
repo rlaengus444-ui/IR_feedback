@@ -1,0 +1,34 @@
+name: Inspect frozen live cap validation evidence
+on:
+  push:
+    branches: ['diagnostics/live-cap-evidence-20261103']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: rlaengus444-ui/IR_feedback
+          run-id: 41625262551
+          name: slice-candidate-069a57fca3cdf82b5a80b13ea74544390f73bb78
+          path: evidence
+      - name: Read original reports without changing candidate or release
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,re,hashlib
+          root=Path('evidence')
+          for name in ('candidate.json','readiness.json','excel.json','background.json','background.txt'):
+              path=root/name
+              assert path.is_file() and path.stat().st_size < 1024*1024,name
+              print('REPORT',name,'SHA256',hashlib.sha256(path.read_bytes()).hexdigest(),flush=True)
+              print(path.read_text(encoding='utf-8-sig'),flush=True)
+          tests=(root/'tests.txt').read_text(encoding='utf-8-sig')
+          print('TEST SUMMARY',tests[-1500:],flush=True)
+          print('TEST COUNT',re.findall(r'Ran (\d+) tests',tests),flush=True)
+          PY
