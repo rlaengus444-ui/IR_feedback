@@ -28,11 +28,13 @@ def _identity(target):
 
 class ResilientUiAdapter:
     """One logical session, retaining CSV evidence and write barriers on reconnect."""
+    supports_apply_admission = True
     _DELAYS = (2, 5, 15, 30, 60)
 
     def __init__(self, raw_factory=WindowsUiAdapter, discoverer=None,
                  source_factory=MonitoringCsvReader, clock=time.monotonic):
         self._raw_factory, self._discoverer = raw_factory, discoverer
+        self._apply_admission_gate = None
         self._source_factory, self._clock = source_factory, clock
         self._raw = self._reader = None
         self._target = self.current_target = None
@@ -64,6 +66,17 @@ class ResilientUiAdapter:
     def _new_raw(self):
         return self._raw_factory(source_factory=lambda target: self._reader)
 
+    def set_apply_admission_gate(self, callback):
+        if callback is not None and not callable(callback):
+            raise TypeError('Apply admission gate must be callable or None.')
+        if self._raw is not None:
+            setter = getattr(self._raw, 'set_apply_admission_gate', None)
+            if setter is None and callback is not None:
+                raise ControlUnavailable('원본 어댑터가 적용 승인 검사를 지원하지 않습니다.')
+            if setter is not None:
+                setter(callback)
+        self._apply_admission_gate = callback
+
     def discover(self):
         self._check(self._stop)
         if self._discoverer:
@@ -90,6 +103,11 @@ class ResilientUiAdapter:
         self._check(event)
         raw = self._new_raw()
         try:
+            setter = getattr(raw, 'set_apply_admission_gate', None)
+            if self._apply_admission_gate is not None and setter is None:
+                raise ControlUnavailable('원본 어댑터가 적용 승인 검사를 지원하지 않습니다.')
+            if setter is not None:
+                setter(self._apply_admission_gate)
             raw.connect(target, event)
             raw.prepare_mode('monitor', event)
         except (ReadTransportError, TargetIdentityError, ControlUnavailable, PersistenceUnavailable, OSError) as exc:

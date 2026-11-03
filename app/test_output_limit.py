@@ -69,29 +69,43 @@ class SessionMaximumIrTests(unittest.TestCase):
                         self.assertLessEqual(call.args[1], cap)
                         self.assertLessEqual(abs(call.args[1] - actual), 5)
 
-    def test_above_limit_holds_and_recovery_requires_baseline_and_fresh_row(self):
+    def test_above_user_limit_ramps_on_each_fresh_layer(self):
         for mode in ('preview', 'control'):
             with self.subTest(mode=mode):
-                frames = self.frames(60, 2) + self.frames(65, 2) + self.frames(60, 4)
+                actuals = (80, 80, 75, 70, 65, 60)
                 frames = [snapshot(str(i), i, control_available=True, coupled_output=False,
                                    observation_is_new=i > 0, t_recoating_c=50,
-                                   heater1_setting_percent=f.heater1_setting_percent,
-                                   heater2_setting_percent=f.heater2_setting_percent)
-                          for i, f in enumerate(frames)]
-                adapter, reports = self.run_frames(frames, mode=mode, maximum_ir_percent=62.5)
-                for report in reports[2:4]:
-                    self.assertEqual('power-limit-waiting', report['effective_mode'])
-                    self.assertEqual({}, report['proposed'])
-                    self.assertEqual({}, report['applied'])
-                self.assertEqual({}, reports[4]['proposed'])
+                                   heater1_setting_percent=actual, heater2_setting_percent=actual)
+                          for i, actual in enumerate(actuals)]
+                adapter, reports = self.run_frames(frames, mode=mode, maximum_ir_percent=60)
+                self.assertEqual({}, reports[0]['proposed'])
+                self.assertEqual([{1: value, 2: value} for value in (75, 70, 65, 60, 60)],
+                                 [report['proposed'] for report in reports[1:]])
                 if mode == 'control':
-                    self.assertEqual({}, reports[5]['proposed'])
-                    self.assertTrue(reports[6]['proposed'])
+                    self.assertEqual([75, 75, 70, 70, 65, 65, 60, 60],
+                                     [call.args[1] for call in adapter.apply_ir_power.call_args_list])
                 else:
-                    self.assertTrue(reports[5]['proposed'])
-                for call in adapter.apply_ir_power.call_args_list:
-                    self.assertNotIn(call.args[2], ('2', '3', '4'))
-                    self.assertLessEqual(call.args[1], 62.5)
+                    adapter.apply_ir_power.assert_not_called()
+
+    def test_above_json_hard_bound_holds_until_baseline_and_fresh_row(self):
+        document = json.loads(Path(__file__).with_name('workbook-replay.settings.json').read_text())
+        document['parameters']['maximum_power_percent'] = 58
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'settings.json'
+            path.write_text(json.dumps(document))
+            for mode in ('preview', 'control'):
+                with self.subTest(mode=mode):
+                    actuals = (60, 60, 58, 58, 58, 58)
+                    frames = [snapshot(str(i), i, control_available=True, coupled_output=False,
+                                       observation_is_new=i > 0, t_recoating_c=50,
+                                       heater1_setting_percent=actual, heater2_setting_percent=actual)
+                              for i, actual in enumerate(actuals)]
+                    adapter, reports = self.run_frames(frames, mode=mode, settings_path=path)
+                    self.assertTrue(all(report['effective_mode'] == 'power-limit-waiting'
+                                        and not report['proposed'] for report in reports[:2]))
+                    self.assertEqual({}, reports[2]['proposed'])
+                    self.assertTrue(reports[-1]['proposed'])
+                    adapter.apply_ir_power.assert_not_called()
 
     def test_json_minimum_above_user_cap_is_rejected(self):
         document = json.loads(Path(__file__).with_name('workbook-replay.settings.json').read_text())
@@ -116,12 +130,12 @@ class SessionMaximumIrTests(unittest.TestCase):
             self.run_frames(self.frames(60), mode='preview', maximum_ir_percent=62.5)
         self.assertEqual(2, len(controllers))
         for controller in controllers:
-            self.assertEqual(62.5, controller.settings.maximum_power_percent)
+            self.assertEqual(100, controller.settings.maximum_power_percent)
             self.assertEqual(62.5, controller._history[-1]['D'])
             # Seed an eligible beta-observation block to exercise saturation.
             controller._history[-1].update(AR=3, AW=1, AY=10, AZ=0, BA=0,
                 BB=0, BC=0, BD=1, BE=0, BF=0, AU=0, D=62.5, V=0)
-            row = controller.process(5, 50, 62.5).diagnostics
+            row = controller.process(5, 50, 62.5, maximum_power_percent=62.5).diagnostics
             self.assertEqual(1, row['AV'])
             self.assertEqual(1, row['BF'])
             self.assertEqual(62.5, row['D'])

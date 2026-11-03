@@ -15,7 +15,8 @@ from excel_workbook import WorkbookController, WorkbookSpec
 from excel_calculation import ExcelCalculation
 from excel_async import AsyncWorkbookGroup
 from slice_data import SliceDataset
-from output_limit import validate_maximum_ir
+from output_limit import (validate_maximum_ir, LiveMaximumIrSetting, LiveMaximumIrChanged,
+                          limit_ir_recommendation)
 
 
 def finite(value):
@@ -77,6 +78,7 @@ class SessionOptions:
     maximum_ir_percent: float = 100.0
     _target_temperature_setting: TargetTemperatureSetting = field(init=False, repr=False, compare=False)
     _slice_dataset_setting: SliceDatasetSetting = field(init=False, repr=False, compare=False)
+    _maximum_ir_setting: LiveMaximumIrSetting = field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
         if self.target.machine not in ("M1", "S3", "unknown") or self.target.pid <= 0 or self.target.hwnd <= 0:
@@ -93,6 +95,7 @@ class SessionOptions:
         object.__setattr__(self, "_target_temperature_setting",
                            TargetTemperatureSetting(self.target_temperature_c))
         object.__setattr__(self, "_slice_dataset_setting", SliceDatasetSetting(self.slice_dataset))
+        object.__setattr__(self, "_maximum_ir_setting", LiveMaximumIrSetting(self.maximum_ir_percent))
 
 
 def default_adapter_factory():
@@ -111,6 +114,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
     last_control_hold = None
     held = {}
     reasons = {}
+    held_cap_stamp = None
     baseline_seen = False
     last_key = None
     last_layer = None
@@ -130,7 +134,8 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                            and options.workbook_spec.slice_start_cell)
     image_waiting = False
     image_baseline_layer = None
-    maximum_ir = options.maximum_ir_percent
+    limit_setting = options._maximum_ir_setting
+    hard_minimum, hard_maximum, hard_step = 0.0, 100.0, 5.0
     power_limit_holding = False
     def reset_controllers(reason="제어 조건 재확인"):
         for controller in controllers.values():
@@ -158,17 +163,19 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
         if options.mode != "monitor":
             if options.workbook_spec is not None:
                 excel_calc = ExcelCalculation(options.workbook_spec, options.target_temperature_c,
-                    maximum_ir, stop_event, controller_factory=WorkbookController,
+                    100.0, stop_event, controller_factory=WorkbookController,
                     group_factory=workbook_group_factory or AsyncWorkbookGroup)
             else:
                 path = options.settings_path or Path(__file__).with_name("workbook-replay.settings.json")
                 if Path(path).stat().st_size > 262144:
                     raise ValueError("설정 파일은 256 KiB 이하여야 합니다.")
                 settings = LayerSettings.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
-                settings = replace(settings, target_temperature_c=options.target_temperature_c,
-                    maximum_power_percent=min(settings.maximum_power_percent, maximum_ir))
-                maximum_ir = settings.maximum_power_percent
+                settings = replace(settings, target_temperature_c=options.target_temperature_c)
+                hard_minimum, hard_maximum, hard_step = (settings.minimum_power_percent,
+                    settings.maximum_power_percent, settings.maximum_step_percent)
                 controllers = {heater: LayerAdaptiveController(settings) for heater in (1, 2)}
+        if options.mode != 'monitor' and not limit_setting.status()['ready']:
+            limit_setting.bind_bounds(hard_minimum, hard_maximum, hard_step)
         if stop_event.is_set():
             return
         adapter = adapter_factory()
@@ -258,15 +265,14 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             valid = (snapshot.observation_key is not None and finite(snapshot.t_recoating_c)
                      and isinstance(snapshot.layer_index, int) and not isinstance(snapshot.layer_index, bool)
                      and snapshot.layer_index >= 0)
-            above_limit = any(finite(values[heater]) and values[heater] > maximum_ir for heater in heaters)
+            above_limit = any(finite(values[heater]) and not hard_minimum <= values[heater] <= hard_maximum for heater in heaters)
             if options.mode != "monitor" and above_limit:
                 if not power_limit_holding:
-                    hold_feedback("현재 IR이 사용자 최대 출력보다 높음")
+                    hold_feedback("현재 IR이 알고리즘 허용 범위를 벗어남")
                 power_limit_holding = True
                 effective_mode = "power-limit-waiting"
                 can_calculate = False
-                status = (f"연결 유지 · 현재 IR이 최대 {maximum_ir:g}%를 초과합니다. "
-                          "장비 설정을 상한 이내로 확인한 뒤 새 층부터 재개합니다(저장 없음).")
+                status = "연결 유지 · 현재 IR이 알고리즘 허용 범위를 벗어났습니다(저장 없음)."
             elif power_limit_holding:
                 # External settings recovery still owns its normal guards.
                 # The first valid in-bound row is baseline only, never replayed.
@@ -343,6 +349,11 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                         recovery_baseline_layer = snapshot.layer_index
                         known_run_key = snapshot.run_key
             target_stamp = options._target_temperature_setting.snapshot()
+            cap_stamp = limit_setting.snapshot()
+            if held_cap_stamp is not None and held_cap_stamp != cap_stamp:
+                held.clear()
+                reasons.clear()
+                held_cap_stamp = None
             features = (slice_dataset.features(snapshot.layer_index + 1)
                         if slice_dataset is not None and valid else None)
             if excel_calc is not None:
@@ -353,7 +364,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                        and all(finite(values[heater]) for heater in heaters),
                     powers={heater: values[heater] for heater in heaters}, heaters=heaters,
                     target_stamp=target_stamp, image_epoch=slice_epoch if image_consuming else None,
-                    features=features if image_consuming else None)
+                    features=features if image_consuming else None, cap_stamp=cap_stamp)
                 if excel_calc.latched_reason:
                     held.clear(); reasons.clear()
                     effective_mode = "calculation-hold"
@@ -409,7 +420,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                             batch = excel_calc.calculate(snapshot,
                                 {heater: values[heater] for heater in heaters}, heaters,
                                 target_stamp, slice_epoch if image_consuming else None,
-                                features if image_consuming else None)
+                                features if image_consuming else None, cap_stamp=cap_stamp)
                             if batch is None:
                                 held.clear(); reasons.clear()
                                 effective_mode = "calculation-hold" if excel_calc.latched_reason else "calculation-waiting"
@@ -420,11 +431,19 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                 calculation_started = time.monotonic()
                                 try:
                                     batch[heater] = controllers[heater].process(snapshot.layer_index + 1,
-                                        snapshot.t_recoating_c, values[heater])
+                                        snapshot.t_recoating_c, values[heater],
+                                        maximum_power_percent=min(cap_stamp[1], hard_maximum))
                                 finally:
                                     emit('log', f'소요시간 · {snapshot.layer_index + 1}층 IR {heater} · '
                                          f'CSV/UI 조회 {snapshot_seconds:.3f}초 · 기본 계산 '
                                          f'{time.monotonic() - calculation_started:.3f}초')
+                        if batch is not None and limit_setting.snapshot() != cap_stamp:
+                            reset_controllers("계산 중 IR 상한 변경")
+                            held.clear(); reasons.clear()
+                            last_key = snapshot.observation_key
+                            last_layer = snapshot.layer_index
+                            batch = None
+                            status = "IR 상한 변경됨 · 다음 새 층 대기"
                         if batch is not None:
                             if excel_calc is not None and finite(excel_calc.last_calculation_seconds):
                                 emit("log", f"소요시간 · {snapshot.layer_index + 1}층 · "
@@ -433,8 +452,22 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                             if set(batch) != set(heaters):
                                 raise ControlUnavailable("IR 전체 채널의 계산 결과를 확인하지 못했습니다.")
                             for heater, result in batch.items():
-                                held[heater] = result.power_percent
+                                if not finite(result.power_percent) or not 0 <= result.power_percent <= 100:
+                                    raise ControlUnavailable("계산된 IR 출력이 0~100 범위의 유효한 숫자가 아닙니다.")
+                                limited = limit_ir_recommendation(values[heater], result.power_percent,
+                                    cap_stamp[1], hard_minimum, hard_maximum, hard_step)
+                                if excel_calc is None and not math.isclose(limited, result.power_percent,
+                                                                           rel_tol=0, abs_tol=1e-9):
+                                    raise ControlUnavailable("기본 알고리즘 출력이 최대 출력 또는 변경 폭과 일치하지 않습니다.")
+                                held[heater] = limited
                                 reasons[heater] = result.reason
+                            if not limit_setting.activate(cap_stamp):
+                                reset_controllers("계산 확정 전 IR 상한 변경")
+                                held.clear(); reasons.clear()
+                                batch = None
+                                status = "IR 상한 변경됨 · 다음 새 층 대기"
+                            else:
+                                held_cap_stamp = cap_stamp
                             last_key = snapshot.observation_key
                             last_layer = snapshot.layer_index
                         if batch is not None:
@@ -445,6 +478,11 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                     if stop_event.is_set():
                                         break
                                     power = held[heater]
+                                    if limit_setting.snapshot() != cap_stamp:
+                                        reset_controllers("IR 적용 전 상한 변경")
+                                        held.clear(); reasons.clear(); write_held = True
+                                        status = "IR 상한 변경됨 · 다음 새 층 대기"
+                                        break
                                     if (excel_calc is not None and
                                             options._target_temperature_setting.snapshot() != target_stamp):
                                         reset_controllers("IR 적용 전 목표 온도 변경")
@@ -456,17 +494,30 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                         reasons.clear()
                                         status = "이미지 교체 요청됨 · 이전 계산 적용 보류"
                                         break
-                                    if (not finite(power) or not 0 <= power <= maximum_ir
-                                            or abs(power - values[heater]) > 5.0 + 1e-9):
+                                    if (not finite(power) or not hard_minimum <= power <= hard_maximum
+                                            or abs(power - values[heater]) > hard_step + 1e-9):
                                         raise ControlUnavailable("최대 IR 출력 또는 1회 최대 5%p 증감 제한을 벗어났습니다.")
                                     if math.isclose(power, values[heater], rel_tol=0, abs_tol=1e-9):
                                         continue  # Holding a value needs no redundant Save.
                                     apply_started = time.monotonic()
+                                    admission_tokens = []
+                                    gate_supported = getattr(adapter, 'supports_apply_admission', False) is True
                                     try:
                                         validate_epoch = getattr(adapter, "validate_control_epoch", None)
                                         if validate_epoch is not None:
                                             validate_epoch(snapshot.control_epoch)
+                                        def admit():
+                                            admission_tokens.append(limit_setting.begin_admission(cap_stamp, power, values[heater]))
+                                        if gate_supported:
+                                            adapter.set_apply_admission_gate(admit)
+                                        else:
+                                            admit()
                                         adapter.apply_ir_power(heater, power, snapshot.observation_key, stop_event)
+                                    except LiveMaximumIrChanged:
+                                        reset_controllers("IR 적용 직전 상한 변경")
+                                        held.clear(); reasons.clear(); write_held = True
+                                        status = "IR 상한 변경됨 · 다음 새 층 대기"
+                                        break
                                     except ObservationSuspended as error:
                                         # No edit/Save started. Never retry the old
                                         # decision or retain its controller state.
@@ -492,9 +543,13 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                                 proposed={}, reasons={}, applied=dict(applied),
                                                 status="일부 IR 저장 확인 후 오류 발생 · 추가 적용 중단",
                                                 display_target_c=effective_target, slice_epoch=slice_epoch,
-                                                slice_features=features))
+                                                slice_features=features, decision_cap_stamp=held_cap_stamp))
                                         raise
                                     finally:
+                                        if gate_supported:
+                                            adapter.set_apply_admission_gate(None)
+                                        for token in admission_tokens:
+                                            limit_setting.end_admission(token)
                                         emit('log', f'소요시간 · {snapshot.layer_index + 1}층 IR {heater} · '
                                              f'재검증·저장 요청 {time.monotonic() - apply_started:.3f}초 '
                                              '(Save 성공 여부는 별도 기록)')
@@ -529,9 +584,16 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                          + f" · 설정 확인 세대={snapshot.control_epoch}")
                     excel_reset_reported = reset_count
             display_target = options._target_temperature_setting.get() if options.mode == "monitor" else effective_target
+            limit_status = limit_setting.status()
+            actual_values = [values[heater] for heater in heaters if finite(values[heater])]
+            limit_status['current_percent'] = max(actual_values) if actual_values else None
+            limit_status['ramping'] = bool(limit_status['active_effective_cap'] is not None and
+                any(value > limit_status['active_effective_cap'] for value in actual_values))
             emit("snapshot", dict(snapshot=snapshot, effective_mode=effective_mode,
                                   proposed=dict(held), reasons=dict(reasons), applied=applied, status=status,
                                   display_target_c=display_target,
+                                  limit_status=limit_status,
+                                  decision_cap_stamp=held_cap_stamp,
                                   slice_epoch=slice_epoch,
                                   slice_fingerprint=slice_dataset.fingerprint if slice_dataset is not None else None,
                                   slice_features=(slice_dataset.features(snapshot.layer_index + 1)
@@ -602,6 +664,7 @@ class SessionController:
         self.error = None
         self.target_temperature_setting = None
         self.slice_dataset_setting = None
+        self.maximum_ir_setting = None
         self.image_consuming = False
 
     def connect(self, options):
@@ -615,6 +678,7 @@ class SessionController:
         self.error = None
         self.target_temperature_setting = options._target_temperature_setting
         self.slice_dataset_setting = options._slice_dataset_setting
+        self.maximum_ir_setting = options._maximum_ir_setting
         self.image_consuming = bool(options.mode != "monitor" and options.workbook_spec is not None
                                     and options.workbook_spec.slice_start_cell)
         def emit(kind, payload):
@@ -666,6 +730,12 @@ class SessionController:
             raise ValueError("연결 중에만 이미지 데이터 교체를 예약할 수 있습니다.")
         return self.slice_dataset_setting.request(dataset)
 
+    def update_maximum_ir(self, value):
+        if (self.thread is None or self.closed or self.state not in ("connected", "recovering")
+                or self.maximum_ir_setting is None):
+            raise ValueError("연결 중에만 최대 IR 출력을 적용할 수 있습니다.")
+        return self.maximum_ir_setting.set(value)
+
     def close(self):
         self.closed = True
         self.disconnect()
@@ -688,6 +758,7 @@ class SessionController:
                 self.thread = None  # Cleanup completed before this event was emitted.
                 self.target_temperature_setting = None
                 self.slice_dataset_setting = None
+                self.maximum_ir_setting = None
                 self.image_consuming = False
                 self.state = "error" if self.error else "disconnected"
             if event.kind == "snapshot" and self.state == "disconnecting":
@@ -701,6 +772,21 @@ class SessionController:
                         payload.update(proposed={}, reasons={},
                                        status="이미지 교체 예약 · 이전 권장값 표시 보류")
                     event = WorkerEvent(event.generation, event.kind, payload)
+            if event.kind == 'snapshot' and self.maximum_ir_setting is not None:
+                old_status = event.payload.get('limit_status') or {}
+                current_status = self.maximum_ir_setting.status()
+                if (old_status.get('active_stamp') == current_status.get('active_stamp')
+                        and not current_status['pending']):
+                    current_status['ramping'] = old_status.get('ramping', False)
+                    current_status['current_percent'] = old_status.get('current_percent')
+                else:
+                    current_status.update(ramping=False, current_percent=None)
+                event = WorkerEvent(event.generation, event.kind, dict(event.payload, limit_status=current_status))
+                if ('decision_cap_stamp' in event.payload and event.payload['decision_cap_stamp'] is not None
+                        and event.payload['decision_cap_stamp'] != current_status['requested_stamp']):
+                    event = WorkerEvent(event.generation, event.kind,
+                        dict(event.payload, proposed={}, reasons={},
+                             status='IR 상한 변경 예약 · 이전 권장값 표시 보류'))
             result.append(event)
         return result
 

@@ -254,6 +254,7 @@ class SessionRecoveryTests(unittest.TestCase):
         saves = []
         raw_instances = []
         class ScriptedRaw(Raw):
+            def set_apply_admission_gate(self, callback): self.gate = callback
             def read_snapshot(self, event):
                 index = next(frames)
                 if index == 6:
@@ -263,6 +264,7 @@ class SessionRecoveryTests(unittest.TestCase):
                     machine_state='AUTO', observation_key=str(index), observation_is_new=True,
                     observation_fresh=True, control_available=True, minimum_poll_seconds=0)
             def apply_ir_power(self, heater, power, key, event):
+                if self.gate: self.gate()
                 saves.append((len(raw_instances), key))
         def factory(source_factory):
             raw = ScriptedRaw(source_factory)
@@ -324,7 +326,8 @@ class HelperRetirementTests(unittest.TestCase):
             def communicate(self, payload=None, timeout=None):
                 raise subprocess.TimeoutExpired('fake', timeout)
         child = LiveHelper()
-        ticks = count(step=10)
+        from itertools import chain
+        ticks = chain((0, 1, 10), count(20, 10))
         fake_os = SimpleNamespace(name='nt', environ=os.environ)
         fake_time = SimpleNamespace(monotonic=lambda: next(ticks))
         transport = WindowsUiAdapter(helper_timeout=.1)
