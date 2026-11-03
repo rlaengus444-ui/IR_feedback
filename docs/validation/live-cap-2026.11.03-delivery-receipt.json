@@ -1,0 +1,85 @@
+{
+  "version": "2026.11.03-live-cap.1",
+  "release_id": 432654703,
+  "release_url": "https://github.com/rlaengus444-ui/IR_feedback/releases/tag/2026.11.03-live-cap.1",
+  "assets": [
+    {
+      "id": 705500722,
+      "name": "IRFeedback-2026.11.03-live-cap.1.zip",
+      "size": 35393223,
+      "digest": "sha256:51441d797dedd2011847e81bd250cfd7cb67ef0864e003f2b02e4cb0a04f91aa",
+      "url": "https://github.com/rlaengus444-ui/IR_feedback/releases/download/2026.11.03-live-cap.1/IRFeedback-2026.11.03-live-cap.1.zip"
+    },
+    {
+      "id": 705500724,
+      "name": "SHA256.txt",
+      "size": 103,
+      "digest": "sha256:edda0c5fdb3bace5df2aa5ca1500ae6b58a5f4f72d0071cdc5a75db8c3800c63",
+      "url": "https://github.com/rlaengus444-ui/IR_feedback/releases/download/2026.11.03-live-cap.1/SHA256.txt"
+    }
+  ],
+  "runtime_source_commit": "808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+  "review_and_publisher_commit": "bd1930cf6c9c766cd63746f9562f9dd31de3de15",
+  "publication_commit": "7d9d7000226ca27faf0b86ca54136571091e27b7",
+  "publication_workflow_sha256": "cff0cbe69dfa40b65e555aadbb2786e19ffe4311f4a9de7fb38aa5d7bdb12471",
+  "publication_run_id": 41634382655,
+  "publication_conclusion": "success",
+  "canonical_windows_run_id": 41631423591,
+  "windows_application_tests": 508,
+  "windows_application_failures": 0,
+  "windows_application_skips": 0,
+  "background_fixture_cases_passed": 8,
+  "supplemental_native_run_id": 41633176074,
+  "supplemental_native_cases_passed": 4,
+  "actual_initial_validate_timeouts_then_recovery": 2,
+  "independent_review_route": "native collaboration /root/sol_reviewer_excel_wait",
+  "requested_review_model": "gpt-6.1-sol",
+  "requested_review_reasoning_effort": "max",
+  "independent_post_review_complete": true,
+  "evaluation_distribution_allowed": true,
+  "final_algorithm_approval": false,
+  "equipment_application_approved": false,
+  "excel_com_tested": false,
+  "notion": {
+    "page_id": "3f105e94-a225-801c-9cd6-c70784c2d9ec",
+    "url": "https://app.notion.com/p/3f105e94a225801c9cd6c70784c2d9ec",
+    "latest_title": "최신 버전 · EXE live-cap.1 / 수동 계산시트 2종",
+    "targeted_latest_update": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"page_id\":\"3f105e94-a225-801c-9cd6-c70784c2d9ec\"}"
+        }
+      ],
+      "structuredContent": null,
+      "isError": false
+    },
+    "previous_excel_wait_3_toggle_append": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"page_id\":\"3f105e94-a225-801c-9cd6-c70784c2d9ec\"}"
+        }
+      ],
+      "structuredContent": null,
+      "isError": false
+    },
+    "native_attachments_preserved_by_targeted_edits": true,
+    "existing_native_file_blocks": 9,
+    "existing_native_image_blocks": 2
+  },
+  "draft_pull_request": "https://github.com/rlaengus444-ui/IR_feedback/pull/15",
+  "public_download_verification": {
+    "version": "2026.11.03-live-cap.1",
+    "download_url": "https://github.com/rlaengus444-ui/IR_feedback/releases/download/2026.11.03-live-cap.1/IRFeedback-2026.11.03-live-cap.1.zip",
+    "http_status": 200,
+    "request_has_authorization_header": false,
+    "zip_bytes": 35393223,
+    "zip_sha256": "51441d797dedd2011847e81bd250cfd7cb67ef0864e003f2b02e4cb0a04f91aa",
+    "complete_package_manifest_and_frozen_source_verified": true,
+    "source_commit": "808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+    "checksum_http_status": 200,
+    "checksum_matches": true,
+    "equipment_application_approved": false
+  }
+}
