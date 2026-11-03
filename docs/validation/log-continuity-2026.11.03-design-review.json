@@ -1,0 +1,26 @@
+{
+  "stage": "DESIGN PRE",
+  "route": "native collaboration.followup_task /root/sol_reviewer_excel_wait",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_identity_independently_attested": false,
+  "base_commit": "0d5d5274d7d8aceb9c7b4702c2acbe2980f0a0da",
+  "final_response_received": true,
+  "design_conditions": [
+    "Stage all public reader/parser fields until stable complete anchored tail is proven",
+    "Three bounded immediate retries; never publish cached AUTO or an empty false job change",
+    "Private provisional backlog progress revalidates identity and consumed hash before continuing",
+    "Post-parse bytes/stat/latest selection revalidation before all publication",
+    "Missing anchor/candidate, partial tail, unread backlog and exhausted retry raise typed read-unavailable",
+    "Preserve CSV cursor and trusted public state on unavailable reads",
+    "Keep existing IR hold/reset behavior for prolonged unavailability; actual new jobs block old results",
+    "Transition-only durable diagnostics preserve source and reset reasons without granting write authority"
+  ],
+  "generic_history_preservation_added": false,
+  "user_log_sha256": "14173a07afe29086bf31a5b997e66cbfe4f27272f559327a63d0e55b4ecd4510",
+  "every_past_user_reset_cause_confirmed": false,
+  "read_race_reproduced": true,
+  "actual_excel_com_tested": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false
+}

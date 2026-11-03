@@ -13,7 +13,7 @@ from unittest.mock import patch
 import csv_source
 
 from adapter_contracts import MachineWindow
-from csv_source import CsvSourceError, JobContext, JobLog, MonitoringCsvReader, log_timestamp
+from csv_source import CsvSourceError, JobContext, JobLog, JobLogReadUnavailable, MonitoringCsvReader, log_timestamp
 
 
 HEADER = list(MonitoringCsvReader.REQUIRED) + ["PrintShiftFromCenterPixels", "MonitoringEvaluation"]
@@ -267,7 +267,8 @@ class JobLogTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             base=Path(directory);(base/"Logs").mkdir()
             (base/"Logs/20261027_S3.log").write_text("2026-10-27오전060139...[BJT - AUTO]: AutoPrint started!\n",encoding="utf-8")
-            self.assertIsNone(JobLog(MachineWindow("M1",1,2,"fixture",str(base/"Operator.exe"))).read().run_key)
+            with self.assertRaises(JobLogReadUnavailable):
+                JobLog(MachineWindow("M1",1,2,"fixture",str(base/"Operator.exe"))).read()
 
 
 if __name__=="__main__":unittest.main()

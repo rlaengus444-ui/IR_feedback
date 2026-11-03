@@ -536,7 +536,7 @@ class ThermalFeedbackWindow:
                 self._show_snapshot(event.payload)
             elif event.kind == "chart_snapshot":
                 self._record_chart_payload(event.payload)
-            elif event.kind in ("log", "calculation_hold", "observer_hold", "actuation_barrier"):
+            elif event.kind in ("log", "calculation_hold", "observer_hold", "actuation_barrier", "control_hold", "history_reset"):
                 self._append_log(event.payload)
             elif event.kind == "error":
                 self.status.set("연결 오류")

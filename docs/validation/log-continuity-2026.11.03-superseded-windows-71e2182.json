@@ -1,0 +1,37 @@
+{
+  "stage": "SUPERSEDED WINDOWS CANDIDATE - NOT DISTRIBUTABLE",
+  "source_commit": "71e218282b831135a658f20d71f6fba4f8e77023",
+  "workflow_run_id": 41593781156,
+  "artifact_id": 13211303152,
+  "artifact_bytes": 34901582,
+  "artifact_sha256": "819d7d754ed5d0436cbde8018bdc6a55c46522cdb22010e8e0f97e445c3cac43",
+  "raw_readiness": {
+    "checks": {
+      "build": "success",
+      "tests": "failure",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "settings_recovery": "success",
+      "background": "success",
+      "excel": "failure",
+      "reverify": "success"
+    },
+    "automated_checks_passed": false,
+    "final_sol_review": "pending",
+    "source_commit": "71e218282b831135a658f20d71f6fba4f8e77023",
+    "device_application_approved": false,
+    "release_ready": false
+  },
+  "tests_run": 454,
+  "test_errors": 1,
+  "test_failures": 0,
+  "test_log_sha256": "8410ef32e1e76da4ab5fdc8998d02b51909c29828889ff845981331d05a7e2f2",
+  "error_case": "test_rotation_during_read_retries_and_publishes_new_job",
+  "error": "Windows WinError 5 denied os.replace while fixture read handle was open; typed unavailability was raised as designed. Fixture incorrectly required immediate POSIX-style replacement.",
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "raw_evidence_preserved": true
+}
