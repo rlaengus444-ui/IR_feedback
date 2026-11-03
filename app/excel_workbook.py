@@ -24,6 +24,7 @@ from xml.etree import ElementTree as ET
 
 from layer_algorithm import LayerRecommendation, number
 from slice_data import FEATURE_NAMES
+from output_limit import validate_maximum_ir
 
 _CELL = re.compile(r"^\$?([A-Za-z]{1,3})\$?([1-9][0-9]{0,6})$")
 _SAFE_FUNCTIONS = frozenset("IF IFERROR IFNA AND OR NOT TRUE FALSE ABS MIN MAX SUM AVERAGE COUNT COUNTA COUNTIF COUNTIFS SUMIF SUMIFS AVERAGEIF AVERAGEIFS INT ROUND ROUNDUP ROUNDDOWN SIGN MOD POWER SQRT ISNUMBER ISBLANK ISTEXT ISERROR ISNA CHOOSE MATCH INDEX LOOKUP VLOOKUP HLOOKUP XLOOKUP SUMPRODUCT MEDIAN LARGE SMALL FLOOR CEILING TRUNC EXACT LEN LEFT RIGHT MID CONCAT CONCATENATE TEXT VALUE N NA".split())
@@ -281,8 +282,9 @@ def inspect_workbook(spec: WorkbookSpec, data: bytes, stop_event=None):
 
 
 class WorkbookController:
-    def __init__(self, spec: WorkbookSpec, target_temperature_c: float, *, timeout=8.0, stop_event=None):
+    def __init__(self, spec: WorkbookSpec, target_temperature_c: float, *, timeout=8.0, stop_event=None, maximum_ir_percent=100.0):
         self.spec = spec
+        self.maximum_ir_percent = validate_maximum_ir(maximum_ir_percent)
         self.timeout = float(timeout)
         self.stop_event = stop_event
         if not number(target_temperature_c):
@@ -398,7 +400,7 @@ class WorkbookController:
     def process(self, layer, temperature_c, previous_actual_power, restart=False, *, slice_features=None):
         if not isinstance(layer, int) or isinstance(layer, bool) or layer < 1:
             raise ValueError("층 번호는 양의 정수여야 합니다.")
-        if not number(temperature_c) or not number(previous_actual_power) or not 0 <= previous_actual_power <= 100:
+        if not number(temperature_c) or not number(previous_actual_power) or not 0 <= previous_actual_power <= self.maximum_ir_percent:
             raise ValueError("온도 또는 현재 IR 출력이 올바르지 않습니다.")
         if restart or (self._last_layer is not None and layer != self._last_layer + 1):
             self.reset()
@@ -437,10 +439,10 @@ class WorkbookController:
         value = response.get("value")
         if not number(value) or not 0 <= value <= 100:
             raise ValueError("권장 IR 수식의 결과가 0~100 범위의 숫자가 아닙니다.")
-        safe = max(0.0, min(100.0, previous_actual_power + 5.0, max(previous_actual_power - 5.0, float(value))))
+        safe = max(0.0, min(self.maximum_ir_percent, previous_actual_power + 5.0, max(previous_actual_power - 5.0, float(value))))
         self._count += 1
         self._last_layer = layer
-        return LayerRecommendation(safe, "Excel 수식" if safe == value else "Excel 수식 · 최대 증감 제한", {"excel_raw": value})
+        return LayerRecommendation(safe, "Excel 수식" if safe == value else "Excel 수식 · 최대 출력/증감 제한", {"excel_raw": value, "maximum_ir_percent": self.maximum_ir_percent})
 
     def close(self, force=False):
         with self._lifecycle_lock:

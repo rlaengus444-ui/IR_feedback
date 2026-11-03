@@ -1,0 +1,72 @@
+{
+  "stage": "CODE POST",
+  "route": "native collaboration.followup_task to sol_reviewer_ir_cap",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "independent_provider_model_identity_attested": false,
+  "candidate_commit": "70c6c15be14c02ea740cee1ab65d2ec8f911cb30",
+  "baseline_commit": "8d5341bf2e747258c72328d4b91cb5e193098ea8",
+  "final_response_received": true,
+  "source_review_passed": true,
+  "unresolved_blocking_findings": [],
+  "resolved_findings": [
+    "Stale Excel factory expectation now includes maximum_ir_percent100",
+    "SLICE_INPUT manual-only and packaged removal notice link corrected"
+  ],
+  "independent_tests": {
+    "core_regression": {
+      "run": 190,
+      "skipped": 0,
+      "passed": true
+    },
+    "additional_batch": {
+      "run": 54,
+      "failures": 1,
+      "skipped": 5,
+      "finding_resolved": true
+    },
+    "focused_rereview": {
+      "run": 45,
+      "skipped": 0,
+      "passed": true
+    },
+    "deterministic_controller_observations": {
+      "count": 3600,
+      "caps": [
+        0,
+        0.001,
+        0.5,
+        5,
+        20.25,
+        62.5,
+        99.99,
+        100
+      ],
+      "bounds_step_committed_history_passed": true
+    }
+  },
+  "untested": [
+    "Windows GUI/native/background pending exact candidate run",
+    "Excel COM",
+    "Live BJT/sensor/PLC/lamp",
+    "Thermal stability"
+  ],
+  "publisher_reviewed": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approval": false,
+  "evaluation_distribution_allowed": false,
+  "prior_runtime_review_commit": "c1f3acccb4902c64007cb74ea49a072290579c49",
+  "harness_review": {
+    "passed": true,
+    "sha256": "d470e90872072365528c569851e79f4e63e9b469b9935ba548273bfd3f6ac04c",
+    "checks": [
+      "Actual transformation and generated code compilation",
+      "Setup then foreground once then all CSV processing and Save",
+      "Missing/duplicate replacement rejected",
+      "Connected dirty setting keeps receiving CSV and holds Save",
+      "Foreground samples bounded; setup/minimize transition excluded"
+    ],
+    "windows_execution_pending_at_source_review": true
+  },
+  "source_review_final_response_received": true
+}

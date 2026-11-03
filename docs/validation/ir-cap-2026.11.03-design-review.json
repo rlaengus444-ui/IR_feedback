@@ -1,0 +1,22 @@
+{
+  "stage": "PRE design critique",
+  "reviewer": "sol_reviewer_ir_cap",
+  "route": "native collaboration.spawn_agent",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "independent_provider_model_identity_attested": false,
+  "target_commit": "8d5341bf2e747258c72328d4b91cb5e193098ea8",
+  "final_response_received": true,
+  "result": "Proceed with implementation; POST review required",
+  "constraints": [
+    "Connection-fixed cap finite nonboolean0..100 default100",
+    "Current actual above cap holds calculations and writes with CSV/graphs connected; no abrupt >5pp writes",
+    "Builtin effective maximum=min(JSONmaximum,usercap) before history; rejectminimum conflict",
+    "Workbook validates raw0..100 then bounds cap/step; preserves raw workbook frozen history and actualC",
+    "Central perheater output/step assertion",
+    "Remove activeauto UI/service/options/admission/sourceproofs; retain manual epoch and unknownimage validity",
+    "No focus stealing; explicit synthetic currentbackground tests needed; no equipment/COMclaims"
+  ],
+  "equipment_application_approved": false,
+  "final_algorithm_approval": false
+}

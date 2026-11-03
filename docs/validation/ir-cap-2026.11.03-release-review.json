@@ -1,0 +1,182 @@
+{
+  "stage": "Independent final exact-artifact and evaluation-distribution POST review",
+  "reviewed_at_utc": "2026-11-03T03:03:53.246660+00:00",
+  "candidate_commit": "70c6c15be14c02ea740cee1ab65d2ec8f911cb30",
+  "baseline_commit": "8d5341bf2e747258c72328d4b91cb5e193098ea8",
+  "candidate_version": "2026.11.03-ir-cap.1",
+  "candidate_zip_sha256": "8ab4037dd6fd15039ea222c3a70fbbcf30bbb4dc244db44897e08894c823c755",
+  "candidate_zip_bytes": 35365626,
+  "independent_post_review_complete": true,
+  "source_code_review_passed": true,
+  "exact_artifact_review_passed": true,
+  "evaluation_distribution_allowed": true,
+  "equipment_application_approved": false,
+  "final_control_algorithm_approved": false,
+  "production_or_stable_release_approved": false,
+  "disposition": "PASS for distribution of only the exact reviewed ZIP as an evaluation prerelease with documented limitations. This does not approve equipment operation, the final control algorithm, thermal stability or a stable/production release.",
+  "unresolved_blocking_findings": [],
+  "review_route": {
+    "route": "Actual native collaboration reviewer follow-up to sol_reviewer_ir_cap",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_verified": false,
+    "cli_model_request_used": false
+  },
+  "artifact_provenance": {
+    "repository": "rlaengus444-ui/IR_feedback",
+    "repository_id": 1434868115,
+    "actions_run_id": 41568778381,
+    "artifact_id": 13200651203,
+    "artifact_name": "slice-candidate-70c6c15be14c02ea740cee1ab65d2ec8f911cb30",
+    "outer_evidence_sha256": "0f5b0aa670da20664f8e5afad6b8fa7d90222061ad3c79c28645da98f1369d46",
+    "outer_evidence_bytes": 34873435,
+    "github_metadata_independently_read": true,
+    "github_metadata_matches_source_run_repository_size_and_digest": true,
+    "outer_crc_and_17_extracted_entries_byte_matched": true,
+    "clean_source_checkout": "/workspace/IR_feedback_ir_cap_release_source",
+    "source_package_verifier_passed": true,
+    "inner_package_entries": 3655,
+    "manifest_hashes_independently_verified": 3654,
+    "all_required_source_files_match_clean_candidate": true,
+    "pe_launcher_runtime_and_bridge_present": true,
+    "algorithm_settings_json_and_manual_template_present": true,
+    "automatic_source_app_modules_absent": true,
+    "background_report_harness_bridge_helper_hashes_match_candidate": true
+  },
+  "executed_independent_review_checks": {
+    "core_non_gui_regression_tests": {
+      "run": 190,
+      "passed": true,
+      "skipped": 0
+    },
+    "additional_regression_batch": {
+      "run": 54,
+      "original_failures": 1,
+      "skipped": 5,
+      "stale_factory_assertion_fixed": true
+    },
+    "focused_rereview_tests": {
+      "run": 45,
+      "passed": true,
+      "skipped": 0
+    },
+    "deterministic_bounded_controller_observations": {
+      "count": 3600,
+      "caps": [
+        0,
+        0.001,
+        0.5,
+        5,
+        20.25,
+        62.5,
+        99.99,
+        100
+      ],
+      "bounds_step_and_committed_D_match_passed": true
+    },
+    "harness_adaptation_compiles_and_missing_duplicate_patterns_rejected": true,
+    "publisher_complete_flow_mocked_with_actual_zip_verification": {
+      "passed": true,
+      "mock_calls": 13,
+      "uploaded_assets_simulated": 2,
+      "external_mutations": 0
+    },
+    "publisher_rejects_bad_native_provenance_and_rewritten_raw_readiness_before_api": true,
+    "workflow_embedded_python_compiles": true
+  },
+  "inspected_validation_evidence": {
+    "windows_packaged_runtime_unit_tests": {
+      "run": 280,
+      "seconds": 69.245,
+      "passed": true,
+      "skipped": 0,
+      "independently_executed_by_this_reviewer": false
+    },
+    "windows_log_diagnostics": [
+      "Two Tk callback teardown invalid-command diagnostics; unittest outcomes remain OK.",
+      "One Pillow getdata deprecation warning."
+    ],
+    "linux_parent_run": {
+      "commit": "c1f3acccb4902c64007cb74ea49a072290579c49",
+      "run": 236,
+      "seconds": 48.03,
+      "passed": true,
+      "skipped": 0,
+      "windows_gui_or_native_tests_excluded": 44
+    },
+    "windows_required_non_excel_gate_count": 10,
+    "windows_required_non_excel_gates_passed": true,
+    "background": {
+      "unique_cases": 8,
+      "machines": [
+        "M1",
+        "S3"
+      ],
+      "new_csv_observations_per_case": 3,
+      "normal_and_minimized_confirmed_native_saves": 4,
+      "connected_dirty_and_paused_zero_save_holds": 4,
+      "both_dirty_cases_connected_hold_observed": true,
+      "all_cases_zero_process_table_access_and_unchanged_non_ir_persistence": true,
+      "cover_foreground_sample_counts": [
+        115,
+        109,
+        91,
+        51,
+        111,
+        105,
+        91,
+        59
+      ],
+      "all_recorded_foreground_stages_and_end_cover_hwnd": true,
+      "scope": "After connection baseline and target page/minimize setup; unrelated synthetic process foregrounded once before all three new CSV observations, calculations and native edit/Save; no refocusing during control.",
+      "sampling_limit": "Bounded foreground samples, not continuous proof or a real browser test."
+    },
+    "bridge_loading_and_tamper_missing_oversize_guards_passed": true,
+    "csv_native_content_guard_passed": true,
+    "native_discovery_bounds_identity_and_duplicate_guards_passed": true,
+    "full_m1_s3_settings_recovery_guards_passed": true,
+    "slice_analysis_parity_and_performance_checks_passed": true,
+    "launcher_smoke_passed": true
+  },
+  "raw_ci_status_preserved": {
+    "workflow_conclusion": "failure",
+    "automated_checks_passed": false,
+    "release_ready": false,
+    "device_application_approved": false,
+    "final_sol_review": "pending",
+    "excel_step_outcome": "failure",
+    "excel_com_tested": false,
+    "excel_reason": "Excel COM is not registered",
+    "evaluation_exception": "This independent exact-artifact review allows evaluation distribution while preserving and disclosing unavailable Excel COM validation; it does not mark the raw workflow or stable release gate passed."
+  },
+  "resolved_review_findings": [
+    "Stale Excel-controller factory expectation updated for maximum_ir_percent.",
+    "Manual-only image documentation and packaged removal-notice link corrected.",
+    "Automatic-only filename origin removed without changing ordinary manual mapping/fingerprints.",
+    "Foreground harness scope starts after connection/setup and reports excluded transitions explicitly.",
+    "Harness replacement patterns fail closed; temporary recursive helper defect corrected.",
+    "Publisher binds native report provenance to candidate source and explains foreground sampling scope."
+  ],
+  "reviewed_delivery_tools": {
+    "publisher_sha256": "545d90e331bb0d4a3a46353e24ffa080d436c3297a73eed353b3c50c529321e5",
+    "workflow_template_sha256": "603b90f30e3d7b85da7e4a1da82b455c010c259237c51580782e552a4b61d5bc",
+    "allowed_template_change": "Replace the single __PUBLISH_SOURCE__ placeholder with the full immutable commit containing these exact reviewed publisher bytes and this review record; all artifact/run/source/hash pins and publication behavior remain unchanged.",
+    "approved_delivery_behavior": "Reverify the immutable downloaded artifact and candidate source; create a fresh candidate tag and draft prerelease; upload only the reviewed ZIP and its checksum; verify asset size/digests and tag before and after publishing; never rebuild or overwrite an existing version."
+  },
+  "preserved_failure_evidence": {
+    "first_windows_candidate_commit": "4461c64929c807e520b15b29f10d551e9183795a",
+    "path": "/workspace/ir-cap-review/windows-first",
+    "tests_background_and_readiness_failure_records_present": true,
+    "interpretation": "First-run minimized cases completed native Save but failed foreground sampling; those Boolean observations do not establish the cause. They are not relabeled passed by the revised-scope rerun."
+  },
+  "untested_or_not_approved": [
+    "Actual Microsoft Excel COM calculation and lifecycle.",
+    "Live BJT, physical S3 sensors, PLCs, lamps, actual IR power or physical drying.",
+    "Long-duration operation, closed-loop thermal stability, overshoot and experimental control performance.",
+    "Foreground retention during initial connection preparation or the minimization transition.",
+    "Locked desktop, sleep, hidden windows and privilege mismatch.",
+    "A real third-party browser; foreground proof uses an unrelated owned synthetic WinForms process.",
+    "Background native Save probes use the default cap; the configured cap is verified through software tests rather than physical power measurement.",
+    "Reviewer did not perform actual equipment, GitHub publication or messaging actions."
+  ]
+}

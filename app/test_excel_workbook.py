@@ -118,6 +118,7 @@ class WorkbookControlTest(unittest.TestCase):
         c = object.__new__(WorkbookController)
         c.metadata = {'first_row': 13, 'last_row': 14}
         c.target = 65.0
+        c.maximum_ir_percent = 100.0
         c._count = 0
         c._last_layer = None
         c.calls = []
@@ -134,6 +135,29 @@ class WorkbookControlTest(unittest.TestCase):
         self.assertEqual(c.calls[0]['target'], 70)
         self.assertEqual(c.calls[0]['layer'], 101)
         self.assertEqual(c.calls[0]['index'], 0)
+
+    def test_user_cap_and_step_limit_apply_to_valid_workbook_results(self):
+        for cap, actual, result, expected in ((62.5, 60, 90, 62.5),
+                                               (100, 60, 90, 65),
+                                               (0, 0, 90, 0),
+                                               (62.5, 60, 0, 55)):
+            with self.subTest(cap=cap, actual=actual, result=result):
+                c = self.controller(result)
+                c.maximum_ir_percent = cap
+                self.assertEqual(expected, c.process(1, 65, actual).power_percent)
+
+    def test_above_cap_actual_and_invalid_raw_result_are_rejected(self):
+        c = self.controller(60)
+        c.maximum_ir_percent = 62.5
+        with self.assertRaises(ValueError):
+            c.process(1, 65, 62.6)
+        self.assertEqual(0, c._count)
+        self.assertEqual([], c.calls)
+        c = self.controller(101)
+        c.maximum_ir_percent = 62.5
+        with self.assertRaises(ValueError):
+            c.process(1, 65, 60)
+        self.assertEqual(0, c._count)
 
     def test_bad_results_never_advance(self):
         for value in (None, math.inf, math.nan, '20', True, -1, 101):

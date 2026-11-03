@@ -34,7 +34,7 @@ class ExcelSessionTests(unittest.TestCase):
                     stop.set()
         with patch("session.WorkbookController", return_value=controller) as factory:
             run_ui_session(options, stop, emit, lambda: adapter)
-        factory.assert_called_once_with(SPEC, 65.0, stop_event=stop)
+        factory.assert_called_once_with(SPEC, 65.0, maximum_ir_percent=100.0, stop_event=stop)
         controller.set_target_temperature.assert_called_once_with(70)
         controller.process.assert_called_once_with(2, 80, 50)
         adapter.apply_ir_power.assert_called_once_with(1, 55, "new", stop)
