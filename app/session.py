@@ -337,6 +337,8 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 excel_calc.watch(snapshot,
                     eligible=can_calculate and valid and not control_barrier and not image_hold
                              and all(finite(values[heater]) for heater in heaters),
+                    allow_idle_history=can_calculate and not control_barrier and not image_hold
+                                       and all(finite(values[heater]) for heater in heaters),
                     powers={heater: values[heater] for heater in heaters}, heaters=heaters,
                     target_stamp=target_stamp, image_epoch=slice_epoch if image_consuming else None,
                     features=features if image_consuming else None)

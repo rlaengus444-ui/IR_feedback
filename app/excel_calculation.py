@@ -24,6 +24,7 @@ class ExcelCalculation:
         self.latched_reason = None
         self.diagnostic_reason = None
         self.accepted_stamp = None
+        self._accepted_identity = None
         self.last_calculation_seconds = None
         self._ticket = 0
         self._context = None
@@ -48,6 +49,7 @@ class ExcelCalculation:
     def reset(self):
         self.pending = False
         self._context = self._completed = self.accepted_stamp = None
+        self._accepted_identity = None
         self._needs_baseline = True
         self._baseline = None
         if self.group is not None and not self.latched_reason and not self._resetting and not self._clean:
@@ -56,7 +58,8 @@ class ExcelCalculation:
                 self._resetting = True
         self._clean = True
 
-    def watch(self, snapshot, *, eligible, powers, heaters, target_stamp, image_epoch, features=None):
+    def watch(self, snapshot, *, eligible, powers, heaters, target_stamp, image_epoch, features=None,
+              allow_idle_history=False):
         heaters = tuple(heaters)
         valid = (snapshot.observation_key is not None and snapshot.layer_index is not None)
         identity = self._identity(snapshot) if valid else None
@@ -105,6 +108,7 @@ class ExcelCalculation:
             self.group.close()
             self.pending = False
             self._completed = None
+            self._accepted_identity = None
             return
         environment = (getattr(snapshot, 'csv_generation', None), snapshot.run_key,
                        snapshot.control_epoch, image_epoch)
@@ -131,6 +135,7 @@ class ExcelCalculation:
                     self.pending = False
                     self._completed = None
                     self._context = self.accepted_stamp = None
+                    self._accepted_identity = None
                     self._failures += 1
                     self.fault_generation += 1
                     self._recovery = 'retiring'
@@ -156,11 +161,23 @@ class ExcelCalculation:
         if valid and (self.group.state != 'ready' or self._resetting):
             self._baseline = identity
         if not self._eligible:
-            if not self._clean or self.pending or self._completed is not None:
-                self.reset()
-            if valid:
-                self._baseline = identity
-            self._needs_baseline = True
+            expired_key = getattr(snapshot, 'expired_observation_key', None)
+            expired_identity = (getattr(snapshot, 'csv_generation', None), expired_key,
+                                snapshot.run_key, snapshot.layer_index, snapshot.control_epoch)
+            idle_history = (allow_idle_history is True and snapshot.observation_key is None
+                            and expired_key is not None and self._accepted_identity is not None
+                            and expired_identity == self._accepted_identity
+                            and getattr(snapshot, 'measurement_valid', None) is True
+                            and getattr(snapshot, 'observation_fresh', None) is False
+                            and snapshot.observation_is_new is False
+                            and self.group.state == 'ready' and not self._resetting
+                            and not self.pending and self._completed is None)
+            if not idle_history:
+                if not self._clean or self.pending or self._completed is not None:
+                    self.reset()
+                if valid:
+                    self._baseline = identity
+                self._needs_baseline = True
         elif self._needs_baseline and self.group.state == 'ready' and not self._resetting:
             if self._baseline is None:
                 self._baseline = identity
@@ -178,6 +195,7 @@ class ExcelCalculation:
             self.last_calculation_seconds = self._completed_elapsed
             self._completed_elapsed = None
             self.accepted_stamp = (target_stamp, image_epoch)
+            self._accepted_identity = context[0]
             self._failures = 0
             return result
         if (self.pending or self._needs_baseline or self._resetting or

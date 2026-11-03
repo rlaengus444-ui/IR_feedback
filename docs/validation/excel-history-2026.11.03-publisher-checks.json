@@ -1,0 +1,336 @@
+{
+  "candidate_commit": "4e93d03b70b0c1abe782b9da8f4e614f6e01ccd2",
+  "candidate_zip_sha256": "a8743bbb5dce6eda6f3bb65b2d16bead3378e8cf304a78135b1eab97362b4f17",
+  "publisher_sha256": "6ebcc83fe75d9416f4211d8aaa147de6179f63ee5ad42541c33848685aa8ed37",
+  "workflow_template_sha256": "b7ab8d26009a5a4cb0c2b02ac357769f43949f114b5280a555a3dd2ee1fe4660",
+  "network_calls_mocked": true,
+  "actual_publication_performed": false,
+  "passed": true,
+  "tests": 81,
+  "cases": [
+    {
+      "name": "valid exact evaluation publication uses draft, immutable tag and not-latest prerelease",
+      "passed": true
+    },
+    {
+      "name": "wrong candidate commit",
+      "passed": true
+    },
+    {
+      "name": "wrong source HEAD",
+      "passed": true
+    },
+    {
+      "name": "dirty source",
+      "passed": true
+    },
+    {
+      "name": "review gate evaluation_distribution_allowed",
+      "passed": true
+    },
+    {
+      "name": "review gate independent_post_review_complete",
+      "passed": true
+    },
+    {
+      "name": "review gate equipment_application_approved",
+      "passed": true
+    },
+    {
+      "name": "review gate publisher_sha256",
+      "passed": true
+    },
+    {
+      "name": "review gate workflow_run_id",
+      "passed": true
+    },
+    {
+      "name": "review gate candidate_zip_sha256",
+      "passed": true
+    },
+    {
+      "name": "workflow source mismatch",
+      "passed": true
+    },
+    {
+      "name": "workflow path mismatch",
+      "passed": true
+    },
+    {
+      "name": "altered local evidence",
+      "passed": true
+    },
+    {
+      "name": "failed Windows tests gate",
+      "passed": true
+    },
+    {
+      "name": "false readiness",
+      "passed": true
+    },
+    {
+      "name": "unexpected COM claim",
+      "passed": true
+    },
+    {
+      "name": "native provenance mismatch",
+      "passed": true
+    },
+    {
+      "name": "failed native report",
+      "passed": true
+    },
+    {
+      "name": "existing release",
+      "passed": true
+    },
+    {
+      "name": "existing tag",
+      "passed": true
+    },
+    {
+      "name": "bad uploaded asset prevents publication",
+      "passed": true
+    },
+    {
+      "name": "changed tag prevents publication",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_blocked_excel_does_not_block_csv_or_save",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_blocked_initialization_continues_polling",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_blocked_reset_continues_polling",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_context_changes_invalidate_pending_result",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_hold_logged_without_terminating_controller",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_image_handoff_discards_pending_features_and_waits_for_new_layer",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_target_aba_during_process_invalidates_result_and_requires_fresh_row",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_two_heaters_finish_before_save_and_report_partial_ambiguous_save",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_watchdog_discards_late_result",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_recovers_same_session_using_same_prepared_workbook_and_fresh_row",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_repeated_fault_backoff_is_not_reset_by_changes",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_unknown_retirement_keeps_polling_and_prevents_restart",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_disconnect_in_backoff_prevents_restart",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_two_heaters_recovered_before_save",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_fence_blocks_new_group_until_previous_verified",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_cancel_after_claim_before_thread_start_releases_fence",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_snapshot_survives_source_replacement_and_deletion",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_known_excel_exit_is_waited_before_handle_close",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_unknown_ownership_and_live_reader_block_replacement",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_starting_without_pid_stays_unknown",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_stale_first_job_remains_pinned_after_outage",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_session_resumes_saving_after_rebind",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_ambiguous_save_latches_and_rebind_preserves_identity",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_fault_registered_after_latch_delivers_original_once",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_faults_stay_monitor_only_and_preserve_shared_settings",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_stop_during_backoff_wakes_without_another_attempt",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_invalid_then_fresh_higher_layer",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_invalid_is_exposed_before_later_row_in_same_read",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_wait_and_automatic_recovery_keep_connection_then_next_snapshot_reaches_chart",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_observer_recovery_preserves_chart_and_does_not_archive_until_stop",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_calculation_hold_event_is_logged_without_finishing_or_clearing_records",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_partial_save_is_preserved_in_archive_csv_and_plot_input",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_same_key_save_reaches_archive_csv_and_both_png_inputs",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_owned_process_handle_is_terminated_and_verified",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_invalid_pid_never_opens_process_and_ownership_stays_unknown",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_non_ir_prepare_timeout_is_recoverable_when_helper_retires",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_barrier_is_logged_before_queue_even_during_close",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_uncertain_save_records_original_error_even_when_stop_is_set",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_expired_accepted_rows_preserve_consecutive_history_and_third_save",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_expiry_while_calculation_pending_discards_result_and_resets",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_unknown_invalid_and_readiness_loss_reset_accepted_history",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_synthetic_history_only_300_layers_expire_between_rows",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_real_reader_expiry_preserves_workbook_history",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_expired_known_row_marker_does_not_authorize_save",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_expired_marker_requires_known_complete_valid_past_row",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_matching_expired_idle_row_preserves_history_and_next_layer",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_expired_history_requires_explicit_permission_and_exact_proof",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_pending_and_unconsumed_results_are_never_kept_on_expiration",
+      "passed": true
+    },
+    {
+      "name": "missing critical test_image_change_resets_even_with_exact_expired_identity",
+      "passed": true
+    },
+    {
+      "name": "strict two-line regression missing description",
+      "passed": true
+    },
+    {
+      "name": "strict two-line regression changed description",
+      "passed": true
+    },
+    {
+      "name": "strict two-line regression skipped status",
+      "passed": true
+    },
+    {
+      "name": "strict two-line regression inserted third line",
+      "passed": true
+    },
+    {
+      "name": "workflow valid extraction",
+      "passed": true
+    },
+    {
+      "name": "workflow wrong artifact ID",
+      "passed": true
+    },
+    {
+      "name": "workflow wrong outer digest",
+      "passed": true
+    },
+    {
+      "name": "workflow wrong workflow source",
+      "passed": true
+    },
+    {
+      "name": "workflow wrong repository",
+      "passed": true
+    },
+    {
+      "name": "workflow corrupt outer download",
+      "passed": true
+    }
+  ]
+}

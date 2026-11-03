@@ -402,9 +402,14 @@ class WindowsUiAdapter:
                     self._baseline_sample_key = sample.key
                 if source.is_new:
                     self._new_sample_key = sample.key
-            fresh = sample is not None and sample.finished is not None and -2 <= time.time() - sample.finished.timestamp() <= MonitoringCsvReader.MAX_NEW_AGE_SECONDS
+            age = time.time() - sample.finished.timestamp() if sample and sample.finished is not None else None
+            fresh = age is not None and -2 <= age <= MonitoringCsvReader.MAX_NEW_AGE_SECONDS
             key = sample.key if sample and source.token and (
                 sample.key == self._baseline_sample_key or (sample.key == self._new_sample_key and fresh)) else None
+            expired_key = (sample.key if sample and source.token and key is None
+                and getattr(sample, 'measurement_valid', True) and age is not None
+                and age > MonitoringCsvReader.MAX_NEW_AGE_SECONDS
+                and self._new_sample_key is not None and sample.key == self._new_sample_key else None)
             details = source.details
             if self._mode == "control" and machine_state == "unknown":
                 details += " 원본 UI 응답 대기 · CSV 조회만 계속하며 IR 적용은 정지합니다."
@@ -425,7 +430,8 @@ class WindowsUiAdapter:
                 slice_lineage=getattr(sample, 'slice_lineage', ''),
                 csv_generation=getattr(sample, 'source_generation', ''),
                 observation_fresh=bool(fresh), measurement_valid=getattr(sample, 'measurement_valid', True),
-                invalid_reason=getattr(sample, 'invalid_reason', ''), actual_target=target)
+                invalid_reason=getattr(sample, 'invalid_reason', ''), actual_target=target,
+                expired_observation_key=expired_key)
             self._csv_token = source.token
             self._layer_hint = source.context.current_layer
             self._observation_row = {"row_index": sample.layer_index, "temperature": sample.temperature,

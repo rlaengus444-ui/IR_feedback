@@ -1,0 +1,24 @@
+{
+  "stage": "DESIGN PRE",
+  "route": "native collaboration.followup_task /root/sol_reviewer_excel_wait",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_identity_independently_attested": false,
+  "base_commit": "1c410a08952c1f68cca860c275fd8a515b1ddf58",
+  "final_response_received": true,
+  "design_conditions": [
+    "Keep five-second admission freshness and all Save guards unchanged",
+    "Expired metadata only for complete token-backed known valid row with age strictly greater than five seconds",
+    "Retain accepted frozen history only on exact source/run/layer/control identity and explicit otherwise-ready parent signal",
+    "No pending or unconsumed results during retention; unknown/token-less/invalid or changed environment still resets",
+    "Idle target changes preserve accepted rows, pending A-B-A invalidates",
+    "Keep persistent Excel engine, original formulas and freeze semantics unchanged"
+  ],
+  "root_cause": "Accepted history reset when ordinary age-out clears the admission observation key",
+  "user_log_sha256": "83edde916e43b0b762ebffcd050319181e24dcab5e09f47a8b623760e9767a99",
+  "actual_pc_trigger_fields_available": false,
+  "code_reproduction_matches_log_timing": true,
+  "actual_excel_com_tested": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false
+}

@@ -1,5 +1,6 @@
 """CSV acquisition and native Sequence orchestration; all data are synthetic."""
 import csv
+from dataclasses import replace
 from datetime import datetime, timedelta
 import io
 import json
@@ -9,7 +10,7 @@ import tempfile
 import threading
 import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, MachineWindow
 from csv_source import MonitoringCsvReader
@@ -98,6 +99,45 @@ class AdapterTests(unittest.TestCase):
             self.assertEqual((1,43),(snapshot.layer_index,snapshot.t_recoating_c))
             self.assertEqual(["validate"],[c["operation"] for c in calls])
             self.assertFalse(snapshot.control_available)
+
+    def test_expired_known_row_marker_does_not_authorize_save(self):
+        with tempfile.TemporaryDirectory() as directory:
+            adapter, state, calls, path, values, append, baseline, source, audit = self.fixture(directory)
+            fresh = append()
+            self.assertIsNotNone(fresh.observation_key)
+            reading = adapter._csv.read()
+            adapter._csv = Mock(read=Mock(return_value=reading))
+            adapter._last_read = 0
+            with patch('windows_ui_adapter.time.time', return_value=reading.sample.finished.timestamp() + 6):
+                expired = adapter.read_snapshot(threading.Event())
+            self.assertIsNone(expired.observation_key)
+            self.assertEqual(expired.expired_observation_key, fresh.observation_key)
+            self.assertFalse(expired.observation_is_new)
+            with self.assertRaises(ControlUnavailable):
+                adapter.apply_ir_power(1, 67, fresh.observation_key, threading.Event())
+            self.assertEqual(state['saves'], 0)
+
+    def test_expired_marker_requires_known_complete_valid_past_row(self):
+        with tempfile.TemporaryDirectory() as directory:
+            adapter, state, calls, path, values, append, baseline, source, audit = self.fixture(directory)
+            fresh = append()
+            reading = adapter._csv.read()
+            sample = reading.sample
+            cases = [
+                ('unknown', replace(reading, sample=replace(sample, key='unknown')), 6),
+                ('partial', replace(reading, token=None), 6),
+                ('invalid', replace(reading, sample=replace(sample, measurement_valid=False)), 6),
+                ('future', reading, -3),
+                ('fresh', reading, 1),
+            ]
+            for name, case, age in cases:
+                with self.subTest(name=name):
+                    adapter._csv = Mock(read=Mock(return_value=case))
+                    adapter._last_read = 0
+                    with patch('windows_ui_adapter.time.time', return_value=sample.finished.timestamp() + age):
+                        result = adapter.read_snapshot(threading.Event())
+                    self.assertIsNone(result.expired_observation_key)
+            self.assertEqual(state['saves'], 0)
 
     def test_control_never_opens_reads_or_scrolls_process_table(self):
         with tempfile.TemporaryDirectory() as d:
