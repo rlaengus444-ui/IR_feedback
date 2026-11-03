@@ -80,6 +80,8 @@ class ThermalFeedbackWindow:
         self.mode = tk.StringVar(value="UI 자동 적용")
         self.target_temperature = tk.StringVar(value="65")
         self.maximum_ir_percent = tk.StringVar(value=maximum_ir)
+        self.maximum_ir_status = tk.StringVar(value="연결 중 변경 가능 · 다음 새 층부터 반영")
+        self._last_limit_snapshot = None
         self.settings_path = tk.StringVar()
         self.algorithm_type = tk.StringVar(value="기본 알고리즘")
         self.algorithm_path_label = tk.StringVar(value="설정 JSON(선택)")
@@ -152,9 +154,10 @@ class ThermalFeedbackWindow:
         limits.grid(row=3, column=0, columnspan=5, sticky="ew", pady=(8, 0))
         ttk.Label(limits, text="최대 IR 출력 %").pack(side="left")
         self.maximum_ir_entry = ttk.Entry(limits, textvariable=self.maximum_ir_percent, width=9)
-        self.maximum_ir_entry.pack(side="left", padx=(8, 12))
-        ttk.Label(limits, text="0~100 · 기본/Excel 공통 · 연결 전 설정", foreground="#536173").pack(side="left")
-        self.configuration_widgets.append((self.maximum_ir_entry, "normal"))
+        self.maximum_ir_entry.pack(side="left", padx=(8, 5))
+        self.maximum_ir_apply_button = ttk.Button(limits, text="상한 적용", command=self.apply_maximum_ir)
+        self.maximum_ir_apply_button.pack(side="left", padx=(0, 12))
+        ttk.Label(limits, textvariable=self.maximum_ir_status, foreground="#536173").pack(side="left")
         advanced = ttk.Frame(connection)
         advanced.grid(row=4, column=0, columnspan=5, sticky="ew", pady=(10, 0))
         ttk.Label(advanced, text="알고리즘").pack(side="left")
@@ -342,7 +345,8 @@ class ThermalFeedbackWindow:
                 self._history_target_temperature = options.target_temperature_c
                 self.charts.set_target_temperature(options.target_temperature_c)
                 self.status.set("연결 중…")
-                self._append_log(f"최대 IR 출력 {maximum_ir:g}% · 연결 중 고정 · 기본 JSON 상한이 더 낮으면 해당 값 적용")
+                self._last_limit_snapshot = None
+                self._append_log(f"최대 IR 출력 {maximum_ir:g}% · 연결 중 상한 적용으로 변경 가능 · 기본 JSON 상한이 더 낮으면 해당 값 적용")
                 self.capability.set("CSV 저장 후 자동 적용 · 다른 탭/최소화 가능 · 수동 편집/원본 UI 응답 실패 시 적용 정지"
                     if options.mode == "control" else "읽기·제어 가능 여부를 확인하고 있습니다.")
         except (ValueError, KeyError, OSError) as error:
@@ -363,6 +367,48 @@ class ThermalFeedbackWindow:
         except ValueError as error:
             self._append_log(str(error))
 
+    def apply_maximum_ir(self):
+        try:
+            value = parse_maximum_ir(self.maximum_ir_percent.get())
+            self.controller.update_maximum_ir(value)
+        except ValueError as error:
+            self._append_log(str(error))
+            self._refresh_buttons()
+            return
+        self.maximum_ir_percent.set(f"{value:g}")
+        self._append_log(f"최대 IR 출력 {value:g}% 요청 · 다음 유효한 새 층부터 반영 · 현재 출력이 높으면 층마다 최대 5%p 감속")
+        try:
+            self.maximum_ir_preference.save(value)
+        except OSError as error:
+            message = f"상한 변경 요청은 접수됨 · 설정 파일 저장 실패: {error}"
+            self._append_log(message)
+            write_error_log(message)
+        self._refresh_buttons()
+
+    def _refresh_maximum_ir_status(self):
+        setting = getattr(self.controller, "maximum_ir_setting", None)
+        info = setting.status() if setting is not None else None
+        if not isinstance(info, dict) or not info.get("ready"):
+            self.maximum_ir_status.set("0~100% · 연결 준비 후 변경 가능 · 다음 새 층부터 반영")
+            return False
+        requested, active = info["requested"], info["active_effective_cap"]
+        if info["pending"]:
+            previous = f" · 현재 적용 상한 {active:g}%" if active is not None else ""
+            wait = "진행 중인 저장 완료 후 새 층 대기" if info["in_flight"] else "다음 새 층 적용 대기"
+            self.maximum_ir_status.set(f"요청 {requested:g}% · {wait}{previous}")
+        else:
+            effective = info["effective_cap"]
+            text = f"적용 상한 {effective:g}%"
+            if requested != effective:
+                text += f" · 요청 {requested:g}% / 알고리즘 상한 적용"
+            last = self._last_limit_snapshot or {}
+            if last.get("active_stamp") == info["active_stamp"] and last.get("ramping"):
+                text += " · 상한 도달까지 새 층마다 단계 감속"
+            elif info["in_flight"]:
+                text += " · 승인된 저장 진행 중"
+            self.maximum_ir_status.set(text)
+        return True
+
     def _refresh_buttons(self):
         closed = getattr(self.controller, "closed", False)
         busy = self.controller.thread is not None or self.closing or closed
@@ -373,6 +419,10 @@ class ThermalFeedbackWindow:
                         and self.controller.state in ("connecting", "connected", "recovering"))
         self.temperature_entry.configure(state="disabled" if self.closing or closed or self.controller.state == "disconnecting" else "normal")
         self.target_apply_button.configure(state="normal" if target_ready else "disabled")
+        limit_ready = self._refresh_maximum_ir_status()
+        limit_connected = target_ready and self.controller.state in ("connected", "recovering")
+        self.maximum_ir_entry.configure(state="disabled" if self.closing or closed or self.controller.state == "disconnecting" else "normal")
+        self.maximum_ir_apply_button.configure(state="normal" if limit_ready and limit_connected else "disabled")
         self.search_button.configure(state="disabled" if busy or self.searching else "normal")
         self.connect_button.configure(state="disabled" if busy or self.searching or self.slice_panel.running or not self.target_map else "normal")
         self.disconnect_button.configure(state="normal" if busy and not self.closing and not closed and self.controller.state != "disconnecting" else "disabled")
@@ -438,6 +488,7 @@ class ThermalFeedbackWindow:
 
     def _show_snapshot(self, payload):
         snapshot = payload["snapshot"]
+        self._last_limit_snapshot = payload.get("limit_status")
         if "display_target_c" in payload:
             self.charts.set_target_temperature(payload["display_target_c"])
         self._record_chart_payload(payload)
@@ -554,7 +605,9 @@ class ThermalFeedbackWindow:
 
     def close(self):
         try:
-            self.maximum_ir_preference.save(parse_maximum_ir(self.maximum_ir_percent.get()))
+            setting = getattr(self.controller, "maximum_ir_setting", None)
+            value = setting.snapshot()[1] if setting is not None else parse_maximum_ir(self.maximum_ir_percent.get())
+            self.maximum_ir_preference.save(value)
         except (ValueError, OSError) as error:
             self._append_log(f"최대 IR 출력 설정 저장 실패 · 이전 저장값 유지: {error}")
             write_error_log(f"최대 IR 출력 설정 저장 실패: {error}")

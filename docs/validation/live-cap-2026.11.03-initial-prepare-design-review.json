@@ -1,0 +1,52 @@
+{
+  "review_phase": "DESIGN_PRE_INITIAL_CONTROL_PREPARATION_RECOVERY",
+  "review_route": "native collaboration child /root/sol_reviewer_excel_wait",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_model_identity_independently_attested": false,
+  "base_commit": "069a57fca3cdf82b5a80b13ea74544390f73bb78",
+  "design_approved_for_implementation": true,
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approval": false,
+  "classification": "Pre-existing bootstrap recovery liveness defect exposed by a real synthetic validate timeout; not a cap-numerical regression and not a valid requirement to warm the application via GUI search.",
+  "evidence": {
+    "workflow_run_id": 41629148145,
+    "report": "/workspace/ir-live-cap-review/native-runtime.json",
+    "observed_sequence": [
+      "validate UiReadTimeout3.027seconds",
+      "reconnect validate succeeds1.328seconds",
+      "read_status refuses missing audited task-state label",
+      "zero Saves, persisted80, non-IR unchanged; no cap request was reached"
+    ]
+  },
+  "approved_narrow_design": [
+    "Treat initial preparation as an unused one-shot grant bound to the logical session, the explicit requested control mode and the originally selected PID/HWND plus normalized executable path/machine. Do not transfer the unused grant to a new process/root merely because executable and machine match.",
+    "Preserve that unused grant only when a raw connect-stage validate call fails with a typed ReadTransportError whose operation is exactly validate, actuation_possible is False, helper_retired is True, and no preparation attempt, sticky fault or possible actuation has occurred. Use structured phase/error attributes; never parse an exception string to infer safety.",
+    "Eligible verified read-only discovery/validate retries may retain the grant under the existing bounded backoff and unique target checks. Stop, identity ambiguity/change, unknown retirement, any other phase/unknown error, or any sticky fault revokes it. Never restore a consumed/revoked grant from current prepared_mode or eventual transport success.",
+    "After the same-instance unique reconnect and monitor binding succeed, run the existing initial preparation exactly once before attempting an audited native-state read that depends on its handles. Merely deleting the _outage flag reset is insufficient because prepare_mode(control) is not automatically called again after reconnect.",
+    "Consume/record preparation attempted before invoking raw.prepare_mode(control), even if it fails or raises an apparently safe validate error. Keep this attempt history independent of _prepared_mode, which is cleared during outages.",
+    "Retain the same reader, pinned job, high-water marks, live cap/target/image settings and sticky barriers. Successful preparation still gives no Save authority until all existing current-job/native AUTO/settings/CSV/sensor baseline and different-fresh-layer checks pass.",
+    "Do not change raw helper budgets, control/data audits, native Save acknowledgement, actuation ambiguity, automatic write retry or formula behavior. This is initial-bootstrap grant recovery only; existing post-preparation recovery must gain no new preparation shortcut.",
+    "Document the scope accurately: existing read_snapshot/_prepare_authorized can invoke raw.prepare_mode(control) on later matching fresh AUTO observations. This narrow change does not establish a new global no-navigation-after-recovery guarantee."
+  ],
+  "required_tests": [
+    "Reproduce the old failure with a fake native-state read that refuses until initial control preparation creates audited handles. One validate timeout then same-instance retry must reach preparation once and later a valid baseline/new-layer control result without manual reconnect.",
+    "Repeated eligible validate and verified read-only discovery failures retain only the unused grant, follow existing bounded backoff, keep CSV observation running and never issue an edit/Save during failure.",
+    "No grant reuse for prepare/metadata/enter_sequence failures, helper_retired=False, actuation_possible=True, generic OSError/protocol/identity errors, ambiguous/zero/multiple targets, changed PID/HWND/path/machine, stop or sticky faults.",
+    "Consume before preparation entry; failed preparation, subsequent outages and already prepared sessions cannot renew or use the new shortcut. Existing post-preparation behavior and barriers remain unchanged.",
+    "Monitor/preview modes cannot trigger control preparation. A live cap change during initial outage survives but cannot Save the old row; original job/watermarks/settings/history are not cleared or broadened.",
+    "Deterministic first-validate read-only timeout through the real observed/resilient/session path proves same logical-session recovery with no warm-up/fresh-run reset. Retain operation/type/elapsed/recovery diagnostics.",
+    "After a new exact source commit/build, rerun the frozen-package Windows owned-fixture probe and full native/application gates. Keep both previous3/4 supplemental runs and the earlier uncertain-ack canonical failure as evidence, regardless of later success."
+  ],
+  "pending": [
+    "Actual diff/test POST on the new exact commit is required.",
+    "Any production change requires a new exact Windows package and provenance; the existing069 ZIPs cannot serve as fixed-runtime artifacts.",
+    "Final artifact/publication approval remains blocked pending the new implementation/evidence review."
+  ],
+  "limits": [
+    "The original069 source POST record remains a historical source review; this new finding is preserved rather than erased.",
+    "No actual equipment, Excel COM or closed-loop thermal validation is performed or authorized.",
+    "No claim of guaranteed automatic IR resumption for all faults; uncertain Save remains a sticky observation-only hold."
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "review_phase": "CODE_POST_INITIAL_CONTROL_PREPARATION_RECOVERY",
+  "review_route": "native collaboration child /root/sol_reviewer_excel_wait",
+  "requested_reviewer": "sol_reviewer",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_model_identity_independently_attested": false,
+  "candidate_commit": "808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+  "base_commit": "069a57fca3cdf82b5a80b13ea74544390f73bb78",
+  "source_checkout": "/workspace/IR_feedback_live_cap_final_source",
+  "working_tree_clean": true,
+  "source_review_approved": true,
+  "independent_source_post_review_complete": true,
+  "independent_post_review_complete": true,
+  "review_completion_scope": "SOURCE ONLY",
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approval": false,
+  "blocking_findings": [],
+  "previous_source_review_preserved": "/workspace/ir-live-cap-review/sol-code-review.json",
+  "design_pre_review": "/workspace/ir-live-cap-review/sol-initial-prepare-pre-review.json",
+  "production_delta_scope": "Only app/resilient_adapter.py changed among the31 production app files compared to the approved069 source; remaining delta is13 regression tests, narrow docs and the PRE record.",
+  "reviewed_state_transitions": [
+    "Unused initial-prepare authority is preserved only for a connect-stage typed validate ReadTransportError with actuation_possible is False, helper_retired is True, no sticky fault, no previous preparation attempt and an original PID/HWND plus normalized exe/machine match.",
+    "Verified read-only discovery retries may retain that grant; other failures, identity ambiguity/change, stop, transport drop and sticky faults revoke both the recovery grant and unused initial permission.",
+    "A qualifying same-instance reconnect binds monitor state, then consumes the one-shot grant before the existing initial preparation call when control mode was explicitly requested. Preparation-attempt state is independent of prepared_mode and cannot be renewed by outages.",
+    "Unknown source/raw constructor and disconnect errors revoke both permission paths before propagating; same-object re-entry cannot turn a later safe-looking validation timeout into renewed eligibility.",
+    "Existing reader/job pin/high-water marks, shared live cap and baseline/different-fresh-layer admission remain. A new cap during the outage cannot Save the old row.",
+    "Already attempted/prepared sessions gain no new initial-preparation shortcut. Established later _prepare_authorized behavior is unchanged; no global no-navigation-on-recovery guarantee is claimed."
+  ],
+  "review_followups_resolved": [
+    "Both original unused permission and recovery grant are revoked on stop, identity and unknown-error paths, preventing same-object resurrection.",
+    "Source/raw constructor failures and failed-raw disconnect exceptions were moved under revoke-both handling; direct constructor-then-validation reproduction now retains no grant.",
+    "Regression coverage includes monitor-phase validate-looking errors, each original identity component, failed preparation consumption, read-only discovery classification, and a real observed/resilient/session chain with a live-cap change during initial outage."
+  ],
+  "independently_executed_tests": {
+    "tests_run": 131,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 12.532,
+    "new_initial_prepare_cases": 13,
+    "modules": [
+      "test_initial_prepare_recovery",
+      "test_live_limit_setting",
+      "test_live_limit_algorithm",
+      "test_live_limit_excel",
+      "test_live_limit_admission",
+      "test_live_limit_runtime",
+      "test_live_limit_session_ack",
+      "test_layer_algorithm",
+      "test_resilient_adapter",
+      "test_output_limit",
+      "test_windows_ui_adapter",
+      "test_observed_session",
+      "test_excel_calculation"
+    ],
+    "log": "/workspace/ir-live-cap-review/sol-initial-prepare-focused-tests.txt",
+    "summary_and_production_hashes": "/workspace/ir-live-cap-review/sol-initial-prepare-focused-summary.json",
+    "frozen_production_hash_differences": [],
+    "excluded_platform_case": [
+      "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed"
+    ]
+  },
+  "full_portable_evidence_independently_inspected": {
+    "tests_run": 457,
+    "failures": 0,
+    "errors": 0,
+    "windows_process_handle_skips": 1,
+    "excluded_platform_gui_cases": 51,
+    "seconds": 97.785,
+    "all13_new_cases_exactly_once_passed": true,
+    "log": "/workspace/ir-live-cap-review/final-linux-tests.txt",
+    "log_sha256": "b7f86a817c5b68703dfcf8ade628bab560837ab19cb65df5ff0d825c67d561bc",
+    "summary": "/workspace/ir-live-cap-review/final-linux-summary.json",
+    "application_hashes_match_frozen_source": true,
+    "post_run_reporting_utility_failed": true,
+    "reporting_failure": "After unittest printed Ran457 and OK(skipped=1), the reporting utility exited1 because it tried to JSON-serialize a WindowsRetirementTests object. The unchanged raw log retains the traceback; the reconstructed summary explicitly identifies this reporting failure. No unit test failure/error was present.",
+    "report_generation_note": "Actual suite passed457 tests with one Windows-process-handle skip. Original runner then exited1 while serializing the skipped TestCase object. This report is recovered from the unchanged raw log; the utility was fixed to serialize test.id(). No application changes or test failures occurred."
+  },
+  "unchanged_guard_scope": [
+    "Native helper, bridge, native Save request/acknowledgement, write markers, persistence and non-IR audits, helper timeouts and actuation ambiguity behavior.",
+    "Live-cap numerical mapping,5 percentage point/original JSON step limits, original JSON min/max and raw Excel0..100 validation.",
+    "CSV freshness/job/sensor checks, asynchronous workbook lifecycle and frozen formulas, sticky uncertain-Save barriers, known partial-Save and chart/archive behavior."
+  ],
+  "limits": [
+    "Source approval is not approval of any808b artifact. A new exact Windows build, actual raw gates and package/publication review are required;069 ZIPs cannot demonstrate this fixed runtime.",
+    "All earlier canonical and supplemental failed069 runs remain preserved and are not reclassified as passing.",
+    "Independent execution was Linux offline/synthetic. Native Windows behavior, actual Excel COM, user PC, BJT, sensors, PLCs, lamps, physical Saves and closed-loop thermal behavior were not validated by this reviewer.",
+    "The pre-initial known read-only validation path is narrowly recoverable; other setup errors and uncertain native Saves can still leave IR held. This does not guarantee automatic IR resumption for every possible fault.",
+    "Final algorithm and equipment application HOLD remains unchanged."
+  ]
+}

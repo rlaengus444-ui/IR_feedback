@@ -1,0 +1,236 @@
+{
+  "review_phase": "EXACT_ARTIFACT_AND_EVALUATION_PUBLICATION_POST",
+  "review_route": "native collaboration child /root/sol_reviewer_excel_wait",
+  "requested_reviewer": "sol_reviewer",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_model_identity_independently_attested": false,
+  "candidate_commit": "808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+  "source_commit": "808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+  "version": "2026.11.03-live-cap.1",
+  "candidate_zip_name": "IRFeedback-2026.11.03-live-cap.1.zip",
+  "candidate_zip_bytes": 35393223,
+  "candidate_zip_sha256": "51441d797dedd2011847e81bd250cfd7cb67ef0864e003f2b02e4cb0a04f91aa",
+  "publisher_sha256": "50b97e402f919488803ea9b0aedc80ca46697cc66fa6fa3c44bcd03aef3a9a97",
+  "workflow_template_sha256": "e49b797edd95dd4b85b03c2457d9ea151383fe3ff48934e8c35250743c168f87",
+  "workflow_run_id": 41631423591,
+  "artifact_id": 13228273895,
+  "artifact_bytes": 34906997,
+  "artifact_sha256": "c7bf7036203227c036c97a39a64a2eb00a6031485885e61e44a04ac8cd964d1c",
+  "evaluation_distribution_allowed": true,
+  "independent_post_review_complete": true,
+  "equipment_application_approved": false,
+  "final_algorithm_approval": false,
+  "blocking_findings": [],
+  "approval_scope": [
+    "Evaluation distribution only of the exact reviewed ZIP, exact SHA-pinned publisher script and exact SHA-pinned publication workflow template.",
+    "The only permitted workflow template edit is replacing its single __PUBLISH_SOURCE__ token with the full immutable evidence/publisher commit SHA containing this review and the exact reviewed publisher. All other workflow bytes, candidate/source refs, run/artifact IDs and hashes must remain unchanged.",
+    "Retain draft-first creation, immutable candidate tag, prerelease=true, make_latest=false, asset digest/size readback and the reviewed limitations. No rebuild, replacement of existing assets, stable/equipment approval or actual equipment operation is authorized."
+  ],
+  "source_reviews_preserved": [
+    "/workspace/ir-live-cap-review/sol-code-review.json",
+    "/workspace/ir-live-cap-review/sol-initial-prepare-pre-review.json",
+    "/workspace/ir-live-cap-review/sol-initial-prepare-code-review.json"
+  ],
+  "provenance_verified": {
+    "metadata_route": "GitHub connector fetch_workflow_run_artifacts and fetch_workflow_run_jobs",
+    "repository": "rlaengus444-ui/IR_feedback",
+    "repository_id": 1434868115,
+    "head_repository_id": 1434868115,
+    "artifact_name": "slice-candidate-808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+    "artifact_expired": false,
+    "metadata_source_run_artifact_size_digest_match_local": true,
+    "outer_evidence_files": 17,
+    "all_outer_entries_match_extracted_evidence_bytes": true,
+    "frozen_source_checkout_clean": true
+  },
+  "package_verification": {
+    "verifier": "release_tools/verify_package.py from the exact frozen source",
+    "passed": true,
+    "source_files_compared": 49,
+    "manifest_hashed_files": 3659,
+    "all_package_files": 3660,
+    "all_source_bytes_and_manifest_hashes_verified": true,
+    "path_safety_duplicate_collision_symlink_and_crc_checks_passed": true,
+    "settings_json_and_bridge_match_source": true,
+    "bridge_sha256": "181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f",
+    "native_helper_sha256": "79971445e975b5ef2d15eaef0aedf0a073fe95b8504cfd5e749eb0b912746621",
+    "runtime_and_launcher_files_identical_to_approved_dot3": 3610,
+    "runtime_reference_zip_sha256": "73539ed1ed66f4df2329d4e8c3c03e88d88c9899111c9bd404ea6cd5f41aa90b"
+  },
+  "canonical_windows_evidence": {
+    "tests_run": 508,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 122.952,
+    "required_critical_regressions": 135,
+    "critical_exactly_once_passed": 135,
+    "strict_two_line_300_layer_case_verified": true,
+    "actual_non_excel_required_gates_passed": 10,
+    "background_native_fixture_cases_passed": 8,
+    "background_fixture_saves": 4,
+    "dirty_or_paused_holds_without_save": 4,
+    "process_table_accesses": 0,
+    "non_ir_fields_unchanged": true,
+    "background_harness_helper_bridge_source_provenance_match": true,
+    "overall_ci_conclusion": "failure",
+    "overall_failure_scope": "Enforce release readiness; raw Excel COM gate failed because Excel COM is not registered.",
+    "excel_com_tested": false,
+    "excel_reason": "Excel COM is not registered",
+    "raw_readiness_unchanged": {
+      "release_ready": false,
+      "source_commit": "808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+      "final_sol_review": "pending",
+      "checks": {
+        "build": "success",
+        "tests": "success",
+        "smoke": "success",
+        "bridge": "success",
+        "csv_guard": "success",
+        "native_discovery": "success",
+        "slice_perf": "success",
+        "settings_recovery": "success",
+        "background": "success",
+        "excel": "failure",
+        "reverify": "success"
+      },
+      "automated_checks_passed": false,
+      "device_application_approved": false
+    }
+  },
+  "supplemental_native_evidence": {
+    "workflow_run_id": 41633176074,
+    "workflow_validation_commit": "3b97e346843e393cd281770d57e40a589f14bd33",
+    "artifact_id": 13230060076,
+    "artifact_bytes": 2642,
+    "artifact_sha256": "708020d0b22691a8c51ef20961c1c1a23ffb9ee47f815cdffcd65e40390dc01b",
+    "report": "/workspace/ir-live-cap-review/native-corrected.json",
+    "report_sha256": "01c399e434637391f1f05a6b0d4b97a16928cf34f605c985c79a20883a4b7dab",
+    "probe_sha256": "8a5d7d64b00cfbd7b00a425ccd6c1e50972b57bd0dd5a8c0f922f5b16ae7fc71",
+    "validation_workflow_sha256": "d740f23eb9ecaebf4537ae441e9e7cedcbcc7ccc20caf8f5a92b126c75b0eaca",
+    "metadata_archive_report_and_committed_code_provenance_verified": true,
+    "cases": "M1 and S3, normal and minimized, isolated owned WinForms fixtures only",
+    "cases_passed": 4,
+    "cases_failed": 0,
+    "synthetic_native_fixture_saves": 16,
+    "persisted_powers_each_case": [
+      75,
+      70,
+      65,
+      60
+    ],
+    "save_counts_each_case": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "baseline_save_count_each_case": 0,
+    "duplicate_row_additional_saves": 0,
+    "non_ir_unchanged": true,
+    "process_table_accesses": 0,
+    "foreground_sampling_and_final_page_minimized_readback_passed": true,
+    "initial_bootstrap_recovery_actually_observed": {
+      "case": "M1 normal",
+      "fixture_pid_before_and_after": 5172,
+      "validate_timeout_seconds": [
+        3.013,
+        3.015
+      ],
+      "subsequent_successful_validate_seconds": 0.37,
+      "wrapper_outages": 2,
+      "enter_sequence_calls": 1,
+      "prepare_control_calls": 1,
+      "active_80_percent_baseline_layer": 11,
+      "subsequent_confirmed_descent_saves": 4,
+      "final_persisted_ir": 60,
+      "same_fixture_same_logical_runtime_no_manual_reconnect": true
+    },
+    "scope_limit": "Uses the real observed/resilient/session/basic-algorithm/native-helper path with synthetic CSV and an owned fixture-scoped discovery callback. It does not exercise real BJT discovery, Microsoft Excel COM, real equipment or thermal response."
+  },
+  "independent_offline_checks": {
+    "exact808b_source_tests": 131,
+    "source_tests_passed": 131,
+    "source_test_record": "/workspace/ir-live-cap-review/sol-initial-prepare-code-review.json",
+    "full_linux_tests_inspected": 457,
+    "linux_test_failures": 0,
+    "linux_test_errors": 0,
+    "linux_windows_handle_skips": 1,
+    "linux_platform_gui_exclusions": 51,
+    "reporter_serialization_error_after_passing_suite_preserved": true,
+    "uncertain_save_live_cap_probe_independently_executed": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 1.006,
+      "scope": "Mocked Excel/native through real controller/observed/resilient/session; prior confirmed first-heater Save and chart marker survive second-heater uncertainty, a cap change and fresh rows without retry."
+    }
+  },
+  "publisher_workflow_review": {
+    "retained_publication_guards": "Reference source cleanliness, exact candidate/version/hash, completed independent evaluation review, matching publisher/verifier, exact canonical run artifact readback, all raw non-Excel/native/background gates, strict COM-false status, exact critical-test PASS lines, immutable tag/release, draft-first prerelease, not-latest and exact uploaded assets.",
+    "independent_mock_checks_executed": 191,
+    "independent_mock_checks_passed": 191,
+    "missing_each_critical_test_rejected": 135,
+    "network_and_remote_mutation_calls_mocked": true,
+    "actual_publication_performed_by_reviewer": false,
+    "mock_report": "/workspace/ir-live-cap-review/sol-publisher-808b-mock-checks.json",
+    "mock_harness": "/workspace/ir-live-cap-review/sol_publisher_808b_checks.py",
+    "mock_harness_sha256": "3630bf79b7fc6b6660490f636f774a6c88dd132c509cf840316f585a9f0dd973",
+    "release_text_discloses_previous_uncertain_queued_save_and_local_sync_disk_limit": true,
+    "release_text_keeps_equipment_algorithm_hold_and_no_COM_claim": true
+  },
+  "earlier_evidence_preserved_not_reclassified": [
+    {
+      "source_commit": "069a57fca3cdf82b5a80b13ea74544390f73bb78",
+      "workflow_run_id": 41625262551,
+      "artifact_id": 13225995867,
+      "candidate_zip_sha256": "6914f86cdaa59eed91534bf468fb8fc034f0521df7cb08814cca5b4302f3177d",
+      "result": "Canonical background7/8; minimized-M1 queued Save acknowledgement uncertain. Eventual Save outcome unconfirmed by that report.",
+      "evaluation_distribution_allowed": false,
+      "assessment": "/workspace/ir-live-cap-review/sol-background-assessment-41625262551.json"
+    },
+    {
+      "source_commit": "069a57fca3cdf82b5a80b13ea74544390f73bb78",
+      "workflow_run_id": 41626735680,
+      "result": "Unchanged-source full repeat background8/8; all3660 package entry bytes matched the first build. This did not resolve the uncertain-ack cause and is not the selected release source."
+    },
+    {
+      "workflow_run_id": 41628001141,
+      "report": "/workspace/ir-live-cap-review/native-first.json",
+      "result": "Supplemental raw-runner3/4; initial read timeout before the cap request, zero Saves/persisted80/non-IR unchanged."
+    },
+    {
+      "workflow_run_id": 41629148145,
+      "report": "/workspace/ir-live-cap-review/native-runtime.json",
+      "result": "Supplemental production-wrapper3/4 exposed lost unused initial preparation authority after known read-only validation timeout; addressed by the separately PRE/POST-reviewed808b change."
+    },
+    {
+      "workflow_run_id": 41632431484,
+      "report": "/workspace/ir-live-cap-review/native-final.json",
+      "result": "Supplemental3/4 with incompatible diagnostic recorder: record(reason) rejected the new preserve_initial_grant keyword before delegation. Reproduced and corrected only in the probe; original failed report retained.",
+      "correction_record": "/workspace/ir-live-cap-review/sol-probe-instrumentation-correction-review.json"
+    }
+  ],
+  "limits": [
+    "Approval is evaluation distribution only. Raw CI release_ready, automated_checks_passed and device_application_approved remain false; raw final_sol_review remains pending and was not rewritten.",
+    "No actual Microsoft Excel COM calculation, user PC inspection, real BJT/sensor/PLC/lamp, physical heater output, locked/sleeping desktop or long-duration thermal operation was validated by this review.",
+    "Native fixture Save/readback and observed initial read-timeout recovery are software integration evidence, not real equipment or universal automatic-recovery guarantees. Foreground evidence is sampled after connection/page transition.",
+    "The cause of the earlier queued-Save acknowledgement uncertainty remains unproven. Save timeouts can still produce a sticky observation-only IR hold; automatic write retry, rollback or rearming is not approved.",
+    "During an explicit gradual transition, actual IR settings can remain above the newly requested cap for several valid fresh layers. No descent occurs without all existing validity/readiness/Save safeguards.",
+    "Synchronous local preference persistence may briefly stall Tk on a slow disk; the cap request is published first and no admission lock is held across disk/native/Excel I/O.",
+    "Final algorithm approval and actual equipment application remain on HOLD."
+  ],
+  "evidence_sha256": {
+    "candidate.json": "eec6945a7303b05846a7fae6f85c44ba59852843c1786ab0a68a982b5ed0137d",
+    "readiness.json": "3df838f0b50395084c9d9c10367b0aad8d07c52307e90bd6dec2d37f46acc573",
+    "tests.txt": "e4087df154dc7e188e9b7a8241ff5d9b9fc4d3b7c9809815726a7dc7d750d1d0",
+    "bridge.json": "bdcc25b659b7b86abdcfb515511968acdb62036b5b6005a8f207c94c3577419d",
+    "csv-guard.json": "f47ad432a391e407132a58b1f74eb73946178e56c921ba901b7a471a0f2d5cf5",
+    "discovery.json": "e5ad38c9449cec53fc5a6db234d2ee05741c8a3c6c6e017ab3b2e70b01ecdc71",
+    "slice-performance.json": "5c36b65af7e5cdc18602e331e49957100b5bfec5960be77957801e81a12df481",
+    "settings-recovery.json": "c8f0ec4c31fbd37bf5344547384895102477a1870ba08d5d22d008f7833b7f23",
+    "background.json": "a75f340777f3abb4cd95c0f0b7e5b999ed1aff6e929d9e018daf28ec0447e010",
+    "excel.json": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03"
+  }
+}

@@ -1,0 +1,412 @@
+{
+  "passed": false,
+  "cases": [
+    {
+      "machine": "M1",
+      "minimized": false,
+      "passed": false,
+      "error": "원본 UI 응답 제한 시간(3초)을 초과했습니다.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\a\\IR_feedback\\IR_feedback\\validation\\live_cap_native_probe.py\", line 140, in main\n    result=namespace['exercise'](machine,'webcam',minimized,'normal')\n  File \"D:\\a\\IR_feedback\\IR_feedback\\frozen-source\\validation\\csv_route_probe.py\", line 113, in exercise\n    receive(expect_error=True)\n    ^^^^^^^^^^^^^^^^^^\n  File \"D:\\a\\IR_feedback\\IR_feedback\\frozen-source\\validation\\csv_route_probe.py\", line 95, in receive\n    raise AssertionError(payload)\nAssertionError: 원본 UI 응답 제한 시간(3초)을 초과했습니다.\n",
+      "readonly_pre_teardown": {
+        "fixture_pid": 8084,
+        "fixture_running_before_teardown": true,
+        "saves": "0",
+        "power": 80.0,
+        "non_ir_unchanged": true,
+        "non_ir_sha256": "9e473a85bbc566efb8bee8f68e12a507e174c048038d196a0ce33177a4cbe530",
+        "baseline_non_ir_sha256": "9e473a85bbc566efb8bee8f68e12a507e174c048038d196a0ce33177a4cbe530"
+      }
+    },
+    {
+      "machine": "M1",
+      "case": "normal",
+      "page": "webcam",
+      "minimized": true,
+      "passed": true,
+      "saveCount": 4,
+      "processTableAccesses": 0,
+      "nonIrUnchanged": true,
+      "completeCsvToSessionSeconds": [
+        1.711,
+        1.791,
+        1.855,
+        1.527
+      ],
+      "uiOperations": [
+        {
+          "operation": "validate",
+          "seconds": 1.347
+        },
+        {
+          "operation": "enter_sequence",
+          "seconds": 0.669
+        },
+        {
+          "operation": "metadata",
+          "seconds": 1.761
+        },
+        {
+          "operation": "prepare_control",
+          "seconds": 0.585
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.363
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.634
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.823
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.362
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.58
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.832
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.365
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.58
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.812
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.364
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.589
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.844
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.369
+        }
+      ],
+      "powers": [
+        75.0,
+        70.0,
+        65.0,
+        60.0
+      ],
+      "save_counts": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "snapshots": [
+        "control",
+        "control",
+        "control",
+        "control"
+      ],
+      "background_state": {
+        "page": "webcam",
+        "minimized": true,
+        "coreLayer": 5,
+        "coreTemperature": 42,
+        "refreshCount": 1
+      },
+      "baseline_save_count": 0,
+      "foreground_maintained": true,
+      "foreground_samples": 287,
+      "cover_pid": 7400,
+      "cover_hwnd": 66248,
+      "target_pid": 2352,
+      "target_hwnd": 393258,
+      "readonly_pre_teardown": {
+        "fixture_pid": 2352,
+        "fixture_running_before_teardown": true,
+        "saves": "4",
+        "power": 60.0,
+        "non_ir_unchanged": true,
+        "non_ir_sha256": "9e473a85bbc566efb8bee8f68e12a507e174c048038d196a0ce33177a4cbe530",
+        "baseline_non_ir_sha256": "9e473a85bbc566efb8bee8f68e12a507e174c048038d196a0ce33177a4cbe530"
+      }
+    },
+    {
+      "machine": "S3",
+      "case": "normal",
+      "page": "webcam",
+      "minimized": false,
+      "passed": true,
+      "saveCount": 4,
+      "processTableAccesses": 0,
+      "nonIrUnchanged": true,
+      "completeCsvToSessionSeconds": [
+        1.809,
+        1.87,
+        1.496,
+        1.812
+      ],
+      "uiOperations": [
+        {
+          "operation": "validate",
+          "seconds": 0.347
+        },
+        {
+          "operation": "enter_sequence",
+          "seconds": 0.482
+        },
+        {
+          "operation": "metadata",
+          "seconds": 0.883
+        },
+        {
+          "operation": "prepare_control",
+          "seconds": 0.544
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.38
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.57
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.826
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.364
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.574
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.806
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.363
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.579
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.817
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.37
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.586
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.842
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.37
+        }
+      ],
+      "powers": [
+        75.0,
+        70.0,
+        65.0,
+        60.0
+      ],
+      "save_counts": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "snapshots": [
+        "control",
+        "control",
+        "control",
+        "control"
+      ],
+      "background_state": {
+        "page": "webcam",
+        "minimized": false,
+        "coreLayer": 5,
+        "coreTemperature": 42,
+        "refreshCount": 1
+      },
+      "baseline_save_count": 0,
+      "foreground_maintained": true,
+      "foreground_samples": 289,
+      "cover_pid": 1748,
+      "cover_hwnd": 131782,
+      "target_pid": 7448,
+      "target_hwnd": 262616,
+      "readonly_pre_teardown": {
+        "fixture_pid": 7448,
+        "fixture_running_before_teardown": true,
+        "saves": "4",
+        "power": 60.0,
+        "non_ir_unchanged": true,
+        "non_ir_sha256": "f65b2ac10578724e1c98a84fbb60697a922dfab59df2f31a22a192250935f537",
+        "baseline_non_ir_sha256": "f65b2ac10578724e1c98a84fbb60697a922dfab59df2f31a22a192250935f537"
+      }
+    },
+    {
+      "machine": "S3",
+      "case": "normal",
+      "page": "webcam",
+      "minimized": true,
+      "passed": true,
+      "saveCount": 4,
+      "processTableAccesses": 0,
+      "nonIrUnchanged": true,
+      "completeCsvToSessionSeconds": [
+        1.606,
+        1.916,
+        1.562,
+        1.833
+      ],
+      "uiOperations": [
+        {
+          "operation": "validate",
+          "seconds": 0.354
+        },
+        {
+          "operation": "enter_sequence",
+          "seconds": 0.504
+        },
+        {
+          "operation": "metadata",
+          "seconds": 0.911
+        },
+        {
+          "operation": "prepare_control",
+          "seconds": 0.547
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.377
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.585
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.826
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.37
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.595
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.836
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.378
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.582
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.812
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.359
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.579
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.824
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.356
+        }
+      ],
+      "powers": [
+        75.0,
+        70.0,
+        65.0,
+        60.0
+      ],
+      "save_counts": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "snapshots": [
+        "control",
+        "control",
+        "control",
+        "control"
+      ],
+      "background_state": {
+        "page": "webcam",
+        "minimized": true,
+        "coreLayer": 5,
+        "coreTemperature": 42,
+        "refreshCount": 1
+      },
+      "baseline_save_count": 0,
+      "foreground_maintained": true,
+      "foreground_samples": 283,
+      "cover_pid": 7176,
+      "cover_hwnd": 197316,
+      "target_pid": 3648,
+      "target_hwnd": 327974,
+      "readonly_pre_teardown": {
+        "fixture_pid": 3648,
+        "fixture_running_before_teardown": true,
+        "saves": "4",
+        "power": 60.0,
+        "non_ir_unchanged": true,
+        "non_ir_sha256": "f65b2ac10578724e1c98a84fbb60697a922dfab59df2f31a22a192250935f537",
+        "baseline_non_ir_sha256": "f65b2ac10578724e1c98a84fbb60697a922dfab59df2f31a22a192250935f537"
+      }
+    }
+  ],
+  "scope": "Synthetic target, synthetic CSV and temporary settings; live cap set after connected 80% baseline; no equipment.",
+  "untested": [
+    "Real BJT, hardware, thermal response, locked desktop."
+  ],
+  "harness_sha256": "b6e7b57fd7a4c4e55c7a7cf91c0e74f336534362738371b981bb5aaea3b13c10",
+  "fixture_source_sha256": "33b15dc85dbbe03d53c6962850a32f9bdd933be2c17a6873b39c7b132cd1eb25",
+  "session_sha256": "730f426f63b3876a2214a2bc6abf0e8d62dba196ea84cff4fdd7c16d5240beff",
+  "probe_sha256": "96ec2c552c9316ec11c35092751dea6f6f502abb66faa52f515afca6d0ff26a1",
+  "helper_sha256": "79971445e975b5ef2d15eaef0aedf0a073fe95b8504cfd5e749eb0b912746621",
+  "bridge_sha256": "181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f"
+}

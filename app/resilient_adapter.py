@@ -28,11 +28,13 @@ def _identity(target):
 
 class ResilientUiAdapter:
     """One logical session, retaining CSV evidence and write barriers on reconnect."""
+    supports_apply_admission = True
     _DELAYS = (2, 5, 15, 30, 60)
 
     def __init__(self, raw_factory=WindowsUiAdapter, discoverer=None,
                  source_factory=MonitoringCsvReader, clock=time.monotonic):
         self._raw_factory, self._discoverer = raw_factory, discoverer
+        self._apply_admission_gate = None
         self._source_factory, self._clock = source_factory, clock
         self._raw = self._reader = None
         self._target = self.current_target = None
@@ -49,6 +51,8 @@ class ResilientUiAdapter:
         self._watermark = {}
         self._prepared_mode = None
         self._initial_prepare_allowed = True
+        self._initial_recovery_grant = False
+        self._control_prepare_attempted = False
         self._last_snapshot = None
         self._was_ready = False
         self._epoch = 0
@@ -59,10 +63,23 @@ class ResilientUiAdapter:
 
     def _check(self, event):
         if self._stopped or (event is not None and event.is_set()):
+            self._initial_recovery_grant = False
+            self._initial_prepare_allowed = False
             raise AdapterError('관측이 중지되었습니다.')
 
     def _new_raw(self):
         return self._raw_factory(source_factory=lambda target: self._reader)
+
+    def set_apply_admission_gate(self, callback):
+        if callback is not None and not callable(callback):
+            raise TypeError('Apply admission gate must be callable or None.')
+        if self._raw is not None:
+            setter = getattr(self._raw, 'set_apply_admission_gate', None)
+            if setter is None and callback is not None:
+                raise ControlUnavailable('원본 어댑터가 적용 승인 검사를 지원하지 않습니다.')
+            if setter is not None:
+                setter(callback)
+        self._apply_admission_gate = callback
 
     def discover(self):
         self._check(self._stop)
@@ -77,32 +94,65 @@ class ResilientUiAdapter:
     def connect(self, target, stop_event):
         self._check(stop_event)
         if self._target is not None and target != self._target:
+            self._initial_recovery_grant = False
+            self._initial_prepare_allowed = False
             raise TargetIdentityError('기존 관측 대상이 변경되었습니다.')
         if not target.image_path or target.machine not in {'M1', 'S3'}:
+            self._initial_recovery_grant = False
+            self._initial_prepare_allowed = False
             raise TargetIdentityError('장비와 실행 파일 경로를 확인해야 합니다.')
         self._target, self._stop = target, stop_event
         if self._reader is None:
-            self._reader = self._source_factory(target)
+            try:
+                self._reader = self._source_factory(target)
+            except BaseException:
+                self._initial_prepare_allowed = False
+                self._initial_recovery_grant = False
+                raise
         if self._raw is None:
             self._attempt(target, stop_event)
 
     def _attempt(self, target, event):
         self._check(event)
-        raw = self._new_raw()
         try:
+            raw = self._new_raw()
+        except BaseException:
+            self._initial_prepare_allowed = False
+            self._initial_recovery_grant = False
+            raise
+        phase = 'setup'
+        try:
+            setter = getattr(raw, 'set_apply_admission_gate', None)
+            if self._apply_admission_gate is not None and setter is None:
+                raise ControlUnavailable('원본 어댑터가 적용 승인 검사를 지원하지 않습니다.')
+            if setter is not None:
+                setter(self._apply_admission_gate)
+            phase = 'connect'
             raw.connect(target, event)
+            phase = 'monitor'
             raw.prepare_mode('monitor', event)
         except (ReadTransportError, TargetIdentityError, ControlUnavailable, PersistenceUnavailable, OSError) as exc:
             if getattr(exc, "actuation_possible", False):
                 self.freeze_control(exc)
-            raw.disconnect()
-            self._outage(str(exc))
+            eligible = (phase == 'connect' and isinstance(exc, ReadTransportError)
+                        and exc.operation == 'validate' and exc.actuation_possible is False
+                        and exc.helper_retired is True and not self._sticky
+                        and not self._control_prepare_attempted
+                        and (self._initial_prepare_allowed or self._initial_recovery_grant)
+                        and self._same_original_root(target))
+            self._dispose_failed_raw(raw)
+            self._outage(str(exc), preserve_initial_grant=eligible)
             return
         except (ProtocolError, CsvSourceError) as exc:
-            raw.disconnect()
+            self._dispose_failed_raw(raw)
             self.freeze_control(exc)
             self._outage(str(exc))
             return
+        except BaseException:
+            self._initial_recovery_grant = False
+            self._initial_prepare_allowed = False
+            self._dispose_failed_raw(raw)
+            raise
         self._raw, self.current_target = raw, target
         self._reader.target = target
         if hasattr(self._reader, 'log'):
@@ -112,35 +162,66 @@ class ResilientUiAdapter:
         self._needs_baseline, self._baseline = True, None
         self._epoch += 1
         self.recovery_state = 'connected'
+        if self._initial_recovery_grant and self._mode == 'control':
+            self._initial_recovery_grant = False
+            self._prepare_authorized(event)
 
-    def _outage(self, reason):
+    def _dispose_failed_raw(self, raw):
+        try:
+            raw.disconnect()
+        except BaseException:
+            self._initial_prepare_allowed = False
+            self._initial_recovery_grant = False
+            raise
+
+    def _same_original_root(self, target):
+        return (self._target is not None and target.pid == self._target.pid and
+                target.hwnd == self._target.hwnd and _identity(target) == _identity(self._target))
+
+    def _outage(self, reason, *, preserve_initial_grant=False):
         self._was_ready = False
         self._initial_prepare_allowed = False
+        self._initial_recovery_grant = bool(preserve_initial_grant)
         self._prepared_mode = None
-        if self._raw is not None:
-            self._raw.disconnect()
+        try:
+            if self._raw is not None:
+                self._raw.disconnect()
+        except BaseException:
+            self._initial_recovery_grant = False
+            raise
+        finally:
             self._raw = None
-        self._epoch += 1
-        self._needs_baseline, self._baseline = True, None
-        self._next_retry = self._clock() + self._DELAYS[min(self._failures, len(self._DELAYS)-1)]
-        self._failures += 1
-        self.recovery_state = 'waiting: ' + reason
+            self._epoch += 1
+            self._needs_baseline, self._baseline = True, None
+            self._next_retry = self._clock() + self._DELAYS[min(self._failures, len(self._DELAYS)-1)]
+            self._failures += 1
+            self.recovery_state = 'waiting: ' + reason
 
     def _reconnect(self, event):
+        self._check(event)
         if self._clock() < self._next_retry:
             return
-        self._check(event)
         try:
             candidates = [x for x in self.discover() if _identity(x) == _identity(self._target)]
             if len(candidates) != 1:
                 self._outage('동일 실행 파일과 장비의 창을 유일하게 확인할 수 없습니다.')
                 return
+            if self._initial_recovery_grant and not self._same_original_root(candidates[0]):
+                self._initial_recovery_grant = False
             self._attempt(candidates[0], event)
         except (ReadTransportError, TargetIdentityError, OSError) as exc:
-            self._outage(str(exc))
+            preserve = (self._initial_recovery_grant and isinstance(exc, ReadTransportError)
+                        and exc.operation == 'discover' and exc.actuation_possible is False
+                        and exc.helper_retired is True and not self._sticky)
+            self._outage(str(exc), preserve_initial_grant=preserve)
         except (ProtocolError, CsvSourceError) as exc:
             self.freeze_control(exc)
             self._outage(str(exc))
+
+        except BaseException:
+            self._initial_recovery_grant = False
+            self._initial_prepare_allowed = False
+            raise
 
     def prepare_mode(self, mode, stop_event):
         self._check(stop_event)
@@ -149,15 +230,20 @@ class ResilientUiAdapter:
         self._mode = mode
         # Control preparation is deferred until the observed job is authorized.
         if self._raw and mode == 'preview':
+            self._initial_recovery_grant = False
             self._raw.prepare_mode(mode, stop_event)
             self._prepared_mode = mode
-        elif self._raw and mode == 'control' and self._initial_prepare_allowed:
+        elif self._raw and mode == 'control' and (self._initial_prepare_allowed or self._initial_recovery_grant):
             self._initial_prepare_allowed = False
+            self._initial_recovery_grant = False
             self._prepare_authorized(stop_event)
 
     def _prepare_authorized(self, stop_event):
         if self._mode != 'control' or self._prepared_mode == 'control' or self._sticky:
             return
+        self._control_prepare_attempted = True
+        self._initial_prepare_allowed = False
+        self._initial_recovery_grant = False
         try:
             self._raw.prepare_mode('control', stop_event)
             self._prepared_mode = 'control'
@@ -177,6 +263,8 @@ class ResilientUiAdapter:
             callback(self._fault)
 
     def freeze_control(self, reason):
+        self._initial_recovery_grant = False
+        self._initial_prepare_allowed = False
         self._was_ready = False
         if not self._sticky:
             self._fault = reason if isinstance(reason, BaseException) else AdapterError(str(reason) or '자동 적용 보류')
@@ -352,14 +440,18 @@ class ResilientUiAdapter:
             raise ControlSuspended(self._sticky) from exc
 
     def drop_transport(self):
+        self._initial_recovery_grant = False
+        self._initial_prepare_allowed = False
         self._was_ready = False
-        if self._raw:
-            self._raw.disconnect()
+        try:
+            if self._raw:
+                self._raw.disconnect()
+        finally:
             self._raw = None
-        self._prepared_mode = None
-        self._epoch += 1
-        self._needs_baseline, self._baseline = True, None
-        self._next_retry = self._clock()
+            self._prepared_mode = None
+            self._epoch += 1
+            self._needs_baseline, self._baseline = True, None
+            self._next_retry = self._clock()
 
     def disconnect(self):
         if self._stop is None or self._stop.is_set():

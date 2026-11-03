@@ -24,6 +24,7 @@ class ExcelCalculation:
         self.latched_reason = None
         self.diagnostic_reason = None
         self.accepted_stamp = None
+        self.accepted_cap_stamp = None
         self._accepted_identity = None
         self.history_reset_count = 0
         self.last_history_reset = None
@@ -44,9 +45,9 @@ class ExcelCalculation:
         return (getattr(snapshot, 'csv_generation', None), snapshot.observation_key,
                 snapshot.run_key, snapshot.layer_index, snapshot.control_epoch)
 
-    def _context_for(self, snapshot, powers, heaters, target_stamp, image_epoch):
+    def _context_for(self, snapshot, powers, heaters, target_stamp, image_epoch, cap_stamp=None):
         return (self._identity(snapshot), target_stamp, image_epoch,
-                tuple((heater, powers[heater]) for heater in heaters), self.maximum_ir_percent)
+                tuple((heater, powers[heater]) for heater in heaters), self.maximum_ir_percent, cap_stamp)
 
     def reset(self, reason='제어 조건 재확인'):
         accepted_layer = self._accepted_identity[3] if self._accepted_identity is not None else None
@@ -60,6 +61,7 @@ class ExcelCalculation:
                 'accepted_layer': accepted_layer}
         self.pending = False
         self._context = self._completed = self.accepted_stamp = None
+        self.accepted_cap_stamp = None
         self._accepted_identity = None
         self._needs_baseline = True
         self._baseline = None
@@ -72,7 +74,7 @@ class ExcelCalculation:
         self._clean = True
 
     def watch(self, snapshot, *, eligible, powers, heaters, target_stamp, image_epoch, features=None,
-              allow_idle_history=False):
+              allow_idle_history=False, cap_stamp=None):
         heaters = tuple(heaters)
         valid = (snapshot.observation_key is not None and snapshot.layer_index is not None)
         identity = self._identity(snapshot) if valid else None
@@ -122,13 +124,14 @@ class ExcelCalculation:
             self.pending = False
             self._completed = None
             self._accepted_identity = None
+            self.accepted_cap_stamp = None
             return
         environment = (getattr(snapshot, 'csv_generation', None), snapshot.run_key,
                        snapshot.control_epoch, image_epoch)
         if self._environment is not None and environment != self._environment:
             self.reset('CSV 작업·설정·이미지 환경 변경')
         self._environment = environment
-        context = self._context_for(snapshot, powers, heaters, target_stamp, image_epoch) if valid else None
+        context = self._context_for(snapshot, powers, heaters, target_stamp, image_epoch, cap_stamp) if valid else None
         if (self.pending or self._completed is not None) and (not self._eligible or context != self._context):
             self.reset('진행 중인 계산의 관측 또는 설정 변경')
         event = self.group.poll()
@@ -148,6 +151,7 @@ class ExcelCalculation:
                     self.pending = False
                     self._completed = None
                     self._context = self.accepted_stamp = None
+                    self.accepted_cap_stamp = None
                     self._accepted_identity = None
                     self._failures += 1
                     self.fault_generation += 1
@@ -196,10 +200,10 @@ class ExcelCalculation:
                 self._baseline = identity
             self._needs_baseline = False
 
-    def calculate(self, snapshot, powers, heaters, target_stamp, image_epoch, features=None):
+    def calculate(self, snapshot, powers, heaters, target_stamp, image_epoch, features=None, cap_stamp=None):
         if self.group is None or self.latched_reason or not self._eligible:
             return None
-        context = self._context_for(snapshot, powers, tuple(heaters), target_stamp, image_epoch)
+        context = self._context_for(snapshot, powers, tuple(heaters), target_stamp, image_epoch, cap_stamp)
         if self._completed is not None:
             if context != self._context:
                 self.reset('완료 결과의 관측 또는 설정 불일치')
@@ -208,6 +212,7 @@ class ExcelCalculation:
             self.last_calculation_seconds = self._completed_elapsed
             self._completed_elapsed = None
             self.accepted_stamp = (target_stamp, image_epoch)
+            self.accepted_cap_stamp = cap_stamp
             self._accepted_identity = context[0]
             self._failures = 0
             return result
@@ -223,9 +228,9 @@ class ExcelCalculation:
             self.pending = True
             self._clean = False
             self.watch(snapshot, eligible=True, powers=powers, heaters=heaters,
-                       target_stamp=target_stamp, image_epoch=image_epoch, features=features)
+                       target_stamp=target_stamp, image_epoch=image_epoch, features=features, cap_stamp=cap_stamp)
             if self._completed is not None:
-                return self.calculate(snapshot, powers, heaters, target_stamp, image_epoch, features)
+                return self.calculate(snapshot, powers, heaters, target_stamp, image_epoch, features, cap_stamp)
         return None
 
     def waiting_status(self):

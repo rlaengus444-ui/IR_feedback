@@ -1,0 +1,91 @@
+{
+  "review_phase": "FAILED_ARTIFACT_BACKGROUND_EVIDENCE_ASSESSMENT",
+  "candidate_commit": "069a57fca3cdf82b5a80b13ea74544390f73bb78",
+  "workflow_run_id": 41625262551,
+  "artifact_id": 13225995867,
+  "artifact_bytes": 34904847,
+  "github_metadata_artifact_sha256": "b1392d0c0886ef30343f6ad78e1854b93d5566b8a3c59160ce6927fb5b4b29d8",
+  "candidate_zip_bytes": 35392386,
+  "candidate_zip_sha256": "6914f86cdaa59eed91534bf468fb8fc034f0521df7cb08814cca5b4302f3177d",
+  "source_code_post_approval_unchanged": true,
+  "source_code_post_review": "/workspace/ir-live-cap-review/sol-code-review.json",
+  "evaluation_distribution_allowed": false,
+  "independent_post_review_complete": false,
+  "equipment_application_approved": false,
+  "background_cases_passed": 7,
+  "background_cases_failed": 1,
+  "failed_case": {
+    "machine": "M1",
+    "minimized": true,
+    "case": "normal",
+    "passed": false,
+    "error": "IR 입력값이 수정되었거나 Save가 실행되었을 수 있으나 완료 여부를 확인하지 못했습니다. 같은 명령을 자동 재시도하지 않습니다. [apply] Save was queued but the target acknowledgement is uncertain.",
+    "traceback": "Traceback (most recent call last):\n  File \"D:\\a\\IR_feedback\\IR_feedback\\release_tools\\windows_background_probe.py\", line 155, in main\n    result = namespace['exercise'](machine, 'webcam', minimized, case)\n  File \"D:\\a\\IR_feedback\\IR_feedback\\validation\\csv_route_probe.py\", line 143, in exercise\n    while sequence_persistence.capture(target).power!=67 and time.monotonic()<until:time.sleep(.05)\n                ^^^^^^^^^^^^^^\n  File \"D:\\a\\IR_feedback\\IR_feedback\\validation\\csv_route_probe.py\", line 96, in receive\n    if kind==\"snapshot\" and payload[\"snapshot\"].layer_index==layer:\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: IR 입력값이 수정되었거나 Save가 실행되었을 수 있으나 완료 여부를 확인하지 못했습니다. 같은 명령을 자동 재시도하지 않습니다. [apply] Save was queued but the target acknowledgement is uncertain.\n",
+    "different_process_foreground": true,
+    "foreground_samples": 110,
+    "foreground_transitions": [
+      {
+        "seconds": 0.025,
+        "stage": "csv-layer:1",
+        "hwnd": 527984,
+        "owner": "cover"
+      },
+      {
+        "seconds": 0.245,
+        "stage": "csv-layer:2",
+        "hwnd": 527984,
+        "owner": "cover"
+      },
+      {
+        "seconds": 0.719,
+        "stage": "native:read_status",
+        "hwnd": 527984,
+        "owner": "cover"
+      },
+      {
+        "seconds": 1.094,
+        "stage": "csv-layer:3",
+        "hwnd": 527984,
+        "owner": "cover"
+      },
+      {
+        "seconds": 1.375,
+        "stage": "native:verify_control",
+        "hwnd": 527984,
+        "owner": "cover"
+      },
+      {
+        "seconds": 1.907,
+        "stage": "native:apply",
+        "hwnd": 527984,
+        "owner": "cover"
+      }
+    ],
+    "cover_pid": 7724,
+    "cover_hwnd": 527984,
+    "target_pid": 6876,
+    "target_hwnd": 921024,
+    "foreground_at_end": true
+  },
+  "findings": [
+    "Raw background.json and readiness.json report background failure. A successful continue-on-error job step is not passing validation evidence.",
+    "The failing normal minimized-M1 case reached queued Save but did not establish target acknowledgement within the helper budget. Its report does not confirm saveCount or non-IR readback, so actual eventual Save commit is unknown from this artifact.",
+    "No foreground loss was observed in the failed case's 110 samples. This does not prove continuous foreground invariance between samples.",
+    "Native helper, bridge and background harness bytes are unchanged from the prior source. The failure alone does not establish a cap-feature regression, a specific slow-I/O cause, or nondeterministic fixture behavior.",
+    "The existing native background harness runs real run_ui_session/default Windows transport with a steady cap100, so it exercises the new admission gate but not a live cap transition.",
+    "Windows495-test raw summary is OK and includes the live-cap preflight/after-admission/partial-Save and historical beta-saturation regressions. Those synthetic tests do not replace the failed native-background gate."
+  ],
+  "appropriate_next_evidence": [
+    "Complete the one already planned unchanged-source full Windows rerun; preserve and report both runs, including all cases and raw gate values. Do not repeat until a passing outcome is selected or edit the failed evidence.",
+    "If the native case fails again, stop normal release progression and instrument bounded failure-side reads of the owned fixture's Save count, persisted IR/non-IR snapshots, heartbeat and phase durations. Read after failure to avoid adding timing load to the Save path. Do not infer confirmation from queued intent.",
+    "Use the existing delayed-Save synthetic fixture through the production resilient/observed session to verify exactly one queued command, continued CSV/graph observation, and sticky IR hold after an uncertain outcome, including later fresh layers, a new cap request and a read-only rebind. No automatic replay or cap-based rearming.",
+    "A healthy native-fixture live-cap sequence such as80->75->70->65->60 on distinct fresh layers, with persisted readback and no immediate Apply-click Save, would strengthen integration evidence. A controlled preflight change must yield zero edit/Save; an after-admission change may permit the one admitted operation only.",
+    "Review any proposed acknowledgement-policy or fixture changes separately against actual evidence. Do not lengthen budgets, mark uncertain Save successful, remove the failed case, or weaken sticky barriers merely to pass the gate.",
+    "Any later evaluation approval must name the exact fresh artifact/hash, actual non-Excel gate results and prior failed run. It cannot approve this failed artifact or establish real equipment/COM/long-duration operation."
+  ],
+  "limits": [
+    "No actual Windows execution, Microsoft Excel COM, user PC, physical BJT, sensor, PLC, lamp or thermal validation was performed by this reviewer.",
+    "Uncertain native Save outcomes may require an observation-only hold; unattended operation cannot safely guarantee automatic IR resumption for every possible fault.",
+    "Final algorithm and equipment HOLD remains unchanged."
+  ]
+}

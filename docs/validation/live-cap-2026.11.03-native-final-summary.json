@@ -1,0 +1,132 @@
+{
+  "verified": true,
+  "run_id": 41633176074,
+  "source_commit": "808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+  "report_sha256": "01c399e434637391f1f05a6b0d4b97a16928cf34f605c985c79a20883a4b7dab",
+  "file_hashes_match": {
+    "harness_sha256": {
+      "reported": "b6e7b57fd7a4c4e55c7a7cf91c0e74f336534362738371b981bb5aaea3b13c10",
+      "local": "b6e7b57fd7a4c4e55c7a7cf91c0e74f336534362738371b981bb5aaea3b13c10"
+    },
+    "fixture_source_sha256": {
+      "reported": "33b15dc85dbbe03d53c6962850a32f9bdd933be2c17a6873b39c7b132cd1eb25",
+      "local": "33b15dc85dbbe03d53c6962850a32f9bdd933be2c17a6873b39c7b132cd1eb25"
+    },
+    "session_sha256": {
+      "reported": "730f426f63b3876a2214a2bc6abf0e8d62dba196ea84cff4fdd7c16d5240beff",
+      "local": "730f426f63b3876a2214a2bc6abf0e8d62dba196ea84cff4fdd7c16d5240beff"
+    },
+    "helper_sha256": {
+      "reported": "79971445e975b5ef2d15eaef0aedf0a073fe95b8504cfd5e749eb0b912746621",
+      "local": "79971445e975b5ef2d15eaef0aedf0a073fe95b8504cfd5e749eb0b912746621"
+    },
+    "bridge_sha256": {
+      "reported": "181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f",
+      "local": "181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f"
+    },
+    "probe_sha256": {
+      "reported": "8a5d7d64b00cfbd7b00a425ccd6c1e50972b57bd0dd5a8c0f922f5b16ae7fc71",
+      "local": "8a5d7d64b00cfbd7b00a425ccd6c1e50972b57bd0dd5a8c0f922f5b16ae7fc71"
+    }
+  },
+  "cases": [
+    {
+      "machine": "M1",
+      "minimized": false,
+      "passed": true,
+      "baseline_layer": 11,
+      "powers": [
+        75.0,
+        70.0,
+        65.0,
+        60.0
+      ],
+      "save_counts": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "foreground_samples": 259,
+      "outage_count": 2
+    },
+    {
+      "machine": "M1",
+      "minimized": true,
+      "passed": true,
+      "baseline_layer": 3,
+      "powers": [
+        75.0,
+        70.0,
+        65.0,
+        60.0
+      ],
+      "save_counts": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "foreground_samples": 230,
+      "outage_count": 0
+    },
+    {
+      "machine": "S3",
+      "minimized": false,
+      "passed": true,
+      "baseline_layer": 3,
+      "powers": [
+        75.0,
+        70.0,
+        65.0,
+        60.0
+      ],
+      "save_counts": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "foreground_samples": 242,
+      "outage_count": 0
+    },
+    {
+      "machine": "S3",
+      "minimized": true,
+      "passed": true,
+      "baseline_layer": 3,
+      "powers": [
+        75.0,
+        70.0,
+        65.0,
+        60.0
+      ],
+      "save_counts": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "foreground_samples": 239,
+      "outage_count": 0
+    }
+  ],
+  "first_m1_recovery": {
+    "validate_seconds": [
+      3.013,
+      3.015,
+      0.37
+    ],
+    "read_only_timeouts": 2,
+    "successful_validate": true,
+    "sequence_entries": 1,
+    "control_preparations": 1,
+    "baseline_save_count": 0
+  },
+  "duplicate_rows": "The successful probe asserts no additional Save on duplicate polling after each new row.",
+  "limitations": [
+    "Real BJT, hardware, thermal response, locked desktop.",
+    "Discovery uses a fixture-scoped identity-checked callback; native discovery is not exercised.",
+    "Synthetic evidence only; no real machine or thermal validation."
+  ]
+}

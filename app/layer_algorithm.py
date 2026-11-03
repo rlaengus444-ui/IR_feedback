@@ -115,9 +115,11 @@ class LayerAdaptiveController:
     def __init__(self, settings: LayerSettings):
         self.settings = settings
         self._history = deque(maxlen=3)
+        self._last_effective_cap = None
 
     def reset(self):
         self._history.clear()
+        self._last_effective_cap = None
 
     def set_target_temperature(self, temperature_c):
         """Change the target for future observations without replaying history."""
@@ -125,7 +127,7 @@ class LayerAdaptiveController:
             target_temperature_c=validate_target_temperature(temperature_c))
 
     def process(self, layer: int, temperature_c: float, previous_actual_power: float,
-                restart: bool = False) -> LayerRecommendation:
+                restart: bool = False, maximum_power_percent: float | None = None) -> LayerRecommendation:
         s = self.settings
         if type(restart) is not bool:
             raise ValueError("restart must be boolean")
@@ -135,6 +137,12 @@ class LayerAdaptiveController:
             raise ValueError("temperature must be finite")
         if not number(previous_actual_power) or not s.minimum_power_percent <= previous_actual_power <= s.maximum_power_percent:
             raise ValueError("previous actual power is outside configured bounds")
+        if maximum_power_percent is None:
+            effective_maximum = s.maximum_power_percent
+        else:
+            if not number(maximum_power_percent) or not s.minimum_power_percent <= maximum_power_percent <= 100:
+                raise ValueError("maximum power is outside configured bounds")
+            effective_maximum = min(maximum_power_percent, s.maximum_power_percent)
         if restart or (self._history and layer != self._history[-1]["A"] + 1):
             self.reset()
         first = not self._history
@@ -217,7 +225,7 @@ class LayerAdaptiveController:
             row["BD"] = sign(row["T"]) if row["AX"] > 0 else prior("BD")
             row["BE"] = prior("BE") + int(row["AW"] > 1 and row["AX"] > 0 and prev["BD"] != 0 and sign(row["T"]) != prev["BD"])
             row["BF"] = int(prior("BF") == 1 or abs(prev["V"]) >= s.maximum_step_percent
-                             or prev["D"] <= s.minimum_power_percent or prev["D"] >= s.maximum_power_percent)
+                             or prev["D"] <= s.minimum_power_percent or prev["D"] >= min(self._last_effective_cap, effective_maximum))
         row["BJ"] = int(row["AV"] == 1 and row["AW"] == s.beta_observation_layers)
         row["BG"] = 0
         if row["BJ"]:
@@ -237,10 +245,16 @@ class LayerAdaptiveController:
             # Excel ROUND on this nonnegative quantity rounds .5 upward.
             magnitude = math.floor(row["I"] * (abs(row["U"]) - s.deadband_c) + 0.000000000001 + 0.5)
             row["V"] = sign(row["U"]) * min(s.maximum_step_percent, magnitude)
-        row["D"] = min(s.maximum_power_percent, max(s.minimum_power_percent, previous_actual_power + row["V"]))
+        if previous_actual_power > effective_maximum:
+            row["D"] = max(effective_maximum, previous_actual_power - s.maximum_step_percent)
+            row["V"] = row["D"] - previous_actual_power
+        else:
+            row["D"] = min(effective_maximum, max(s.minimum_power_percent, previous_actual_power + row["V"]))
         row["E"] = row["D"] - previous_actual_power
         self._history.append(row)
-        return LayerRecommendation(row["D"], self._reason(row), dict(row))
+        self._last_effective_cap = effective_maximum
+        reason = "최대 IR 상한을 향해 출력 내림" if previous_actual_power > effective_maximum else self._reason(row)
+        return LayerRecommendation(row["D"], reason, dict(row))
 
     def _reason(self, row):
         if row["Q"] > 0:

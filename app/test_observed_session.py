@@ -1,10 +1,13 @@
 """Offline coverage for the persistent observer-only recovery wrapper."""
 import threading
 import unittest
+import json
+import tempfile
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 from observed_session import run_observed_session
-from session import SessionController, SessionOptions
+from session import SessionController, SessionOptions, run_ui_session
 from adapter_contracts import AmbiguousWriteError
 from test_session import TARGET, snapshot
 from test_slice_handoff import A, B
@@ -27,6 +30,48 @@ class FastStop:
 
 
 class ObservedSessionTests(unittest.TestCase):
+    def test_invalid_control_bounds_remain_unbound_in_monitor_fallback(self):
+        document = json.loads(Path(__file__).with_name('workbook-replay.settings.json').read_text())
+        document['parameters']['minimum_power_percent'] = 50
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'settings.json'
+            path.write_text(json.dumps(document))
+            options = SessionOptions(TARGET, mode='control', settings_path=path, maximum_ir_percent=49)
+            adapter = Mock()
+            adapter.read_snapshot.return_value = snapshot('base', 0)
+            stop = threading.Event()
+            events = []
+            def emit(kind, payload):
+                events.append((kind, payload))
+                if kind == 'snapshot':
+                    stop.set()
+            run_observed_session(options, stop, emit, adapter_factory=lambda: adapter,
+                                 runner=run_ui_session, retry_delays=(0,))
+            self.assertTrue(any(kind == 'observer_hold' for kind, _ in events))
+            self.assertFalse(options._maximum_ir_setting.status()['ready'])
+            with self.assertRaises(ValueError):
+                options._maximum_ir_setting.set(60)
+            adapter.apply_ir_power.assert_not_called()
+
+    def test_bound_limit_survives_monitor_fallback(self):
+        options = SessionOptions(TARGET, mode='control', maximum_ir_percent=60)
+        options._maximum_ir_setting.bind_bounds(50, 80, 2)
+        adapter, stop = Mock(), threading.Event()
+        adapter.read_snapshot.return_value = snapshot('base', 0)
+        def runner(current, stopped, emit, factory, *, preserve_adapter):
+            if current.mode == 'control':
+                raise ValueError('configuration fault after binding')
+            return run_ui_session(current, stopped, emit, factory, preserve_adapter=preserve_adapter)
+        def emit(kind, value):
+            if kind == 'snapshot':
+                stop.set()
+        run_observed_session(options, stop, emit, adapter_factory=lambda: adapter,
+                             runner=runner, retry_delays=(0,))
+        status = options._maximum_ir_setting.status()
+        self.assertEqual((50, 80, 2), (status['minimum'], status['hard_maximum'], status['step']))
+        self.assertEqual(70, options._maximum_ir_setting.set(70))
+        adapter.apply_ir_power.assert_not_called()
+
     def test_barrier_is_logged_before_queue_even_during_close(self):
         import observed_session
         adapter = Mock()

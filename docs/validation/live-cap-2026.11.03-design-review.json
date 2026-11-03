@@ -1,0 +1,42 @@
+{
+  "review_phase": "DESIGN_PRE",
+  "review_route": "native collaboration child /root/sol_reviewer_excel_wait",
+  "requested_reviewer": "sol_reviewer",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_model_identity_independently_attested": false,
+  "base_commit": "93eb2705c45443dcd1ca90b44d1e9ec09b599b82",
+  "design_approved_for_implementation": true,
+  "source_post_review_complete": false,
+  "evaluation_distribution_allowed": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approval": false,
+  "user_policy": "User explicitly selected gradual reduction by at most 5 percentage points per fresh layer, including a temporary output above a newly requested cap.",
+  "conditions": [
+    "One logical-session-owned validated versioned maximum-IR setting; monotonic serial distinguishes A-B-A. Bind immutable JSON bounds before enabling Apply. Invalid requests, including user cap below the immutable JSON minimum, are rejected before changing the accepted value/stamp; show the previous active cap clearly.",
+    "Effective basic cap is min(user request, immutable original JSON maximum). Original JSON minimum, maximum, maximum step and input validity are never widened. Excel owners use the immutable numeric 0..100 envelope on all initializations and recoveries; live user cap remains a separate decision/admission context.",
+    "Basic process may accept optional per-call maximum_power_percent. Validate actual against original JSON bounds, compute saturation with the effective cap, use original step<=5, and record gradual-descent D/E consistently in the new history row. Do not rewrite accepted rows or reset idle history solely for a cap change.",
+    "For valid actual a above effective cap c, next=max(c,a-step); commands may temporarily remain above c but may not rise and must respect original hard bounds. This same visible cap policy applies at initial connection after the ordinary baseline/fresh-layer guards. No command on Apply, no old-layer replay, and no fallback descent on invalid sensors/formulas or unavailable native control.",
+    "Raw Excel results are validated as finite numeric 0..100 before any cap or ramp mapping. For actual<=cap preserve the previous cap/step mapping. Keep original workbook bytes, formulas and frozen row semantics unchanged.",
+    "Include cap serial/value in pending/completed decision contexts and per-heater Save admission. Any cap change, even an increase or A-B-A returning to the same number, invalidates an unaccepted old decision. Reset contaminated pending/basic history under existing cancellation barriers and wait for a new valid baseline and a different fresh layer. Quiescent accepted history survives cap-only changes.",
+    "Use a short lock-protected admission token immediately before a real native apply request, after all preflight checks. Recheck cap stamp and command policy there. Release the lock before I/O. A request arriving after that admission cannot cancel the already admitted native operation; keep it visibly pending until that operation returns, then block all further old-stamp heater admissions.",
+    "Clear admission in finally for success, safe refusal, cancellation and ambiguous errors; preserve original sticky ambiguous-write barriers and durable partial-Save evidence. The real raw adapter and resilient wrapper must forward the admission gate. Apply-entry fallback is only acceptable for simple test fixtures and does not verify the real preflight race.",
+    "Retain the same live cap object across observer/recovery attempts and do not reread altered JSON or recreate a session option default. Requested/effective/ramping/in-flight UI states must be generation-aware; stale queued events cannot label an old cap as current or erase confirmed Save markers. GUI callbacks perform no external native/Excel I/O; preference persistence must not serialize GUI interaction behind a Save."
+  ],
+  "required_regressions": [
+    "Cap validation, finite/bool/range edges, unbound update, JSON min rejection without stamp mutation, JSON max clamp display, and smaller-than-5 JSON step preservation.",
+    "Basic ramp sequence such as 80->75->70->65->60 on distinct fresh layers, fractional/zero caps, unchanged actual input validation, consistent D/E/V diagnostics and saturation, cap increase above initial cap, and normal-path numerical parity.",
+    "Excel invalid raw outputs rejected before clamping/ramping; numeric100 owner used initially and after recovery; prior normal cap/step mapping and workbook freeze semantics preserved.",
+    "Cap changes during pending, completed-unconsumed and basic synchronous calculations, A-B-A, idle accepted/expired history preservation, no old-row replay, and baseline plus different-new-layer cancellation recovery.",
+    "Actual raw preflight injection: cap changes before native admission produce zero edit/Save; cap changes after admission show pending while the admitted Save finishes, block the next heater, and preserve known partial Save and ambiguous sticky barriers.",
+    "No ramp on duplicate/stale/incomplete/invalid sensor/job mismatch/readiness loss, actual outside original hard bounds, formula errors or unknown native outcomes.",
+    "Same setting survives Excel recovery, native rebind, observer-only supervisor replacement, and GUI close/disconnect races; a cap update never rearms an observer-only session.",
+    "Tk status/button/queue tests show requested versus effective/ramping/in-flight states, rejection keeps previous active cap, no connection/chart/archive reset on cap-only changes, and no external I/O blocking in Apply."
+  ],
+  "limits": [
+    "This is pre-implementation design approval only. Actual diff-and-test POST and exact artifact review remain mandatory.",
+    "No equipment, Excel COM, physical heater behavior or closed-loop stability validation was performed or authorized by this review.",
+    "A temporary value above the requested cap is an explicit gradual-transition policy, not a claim that the new numerical ceiling has already been achieved.",
+    "The final algorithm and equipment application HOLD remains unchanged."
+  ]
+}

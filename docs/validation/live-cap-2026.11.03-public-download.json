@@ -1,0 +1,13 @@
+{
+  "version": "2026.11.03-live-cap.1",
+  "download_url": "https://github.com/rlaengus444-ui/IR_feedback/releases/download/2026.11.03-live-cap.1/IRFeedback-2026.11.03-live-cap.1.zip",
+  "http_status": 200,
+  "request_has_authorization_header": false,
+  "zip_bytes": 35393223,
+  "zip_sha256": "51441d797dedd2011847e81bd250cfd7cb67ef0864e003f2b02e4cb0a04f91aa",
+  "complete_package_manifest_and_frozen_source_verified": true,
+  "source_commit": "808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+  "checksum_http_status": 200,
+  "checksum_matches": true,
+  "equipment_application_approved": false
+}

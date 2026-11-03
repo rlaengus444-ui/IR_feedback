@@ -48,6 +48,7 @@ def run_observed_session(options, stop_event, emit, *, adapter_factory=Resilient
                 # session, not to a transport or calculation attempt.
                 object.__setattr__(current, "_target_temperature_setting", options._target_temperature_setting)
                 object.__setattr__(current, "_slice_dataset_setting", options._slice_dataset_setting)
+                object.__setattr__(current, "_maximum_ir_setting", options._maximum_ir_setting)
                 delay = retry_delays[min(failures, len(retry_delays) - 1)]
                 failures += 1
                 if stop_event.wait(delay):

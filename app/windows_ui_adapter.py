@@ -91,6 +91,7 @@ def _log_layer_hint(target: MachineWindow) -> tuple[int | None, str | None]:
 
 
 class WindowsUiAdapter:
+    supports_apply_admission = True
     _process_fence = threading.Lock()
     _unretired_helper = None
     _unretired_directory = None
@@ -102,6 +103,7 @@ class WindowsUiAdapter:
             raise ValueError("UI helper timeout must be in 0.1..10 seconds.")
         self.helper_timeout = float(helper_timeout)
         self._runner = runner
+        self._apply_admission_gate = None
         self._source_factory = source_factory
         self._csv = None
         self._csv_token = None
@@ -135,6 +137,18 @@ class WindowsUiAdapter:
         self._native_fields: dict = {}
         self._retained_log_hint: int | None = None
         self._log_run_key: str | None = None
+
+    def set_apply_admission_gate(self, callback) -> None:
+        if callback is not None and not callable(callback):
+            raise TypeError("Apply admission gate must be callable or None.")
+        with self._lock:
+            self._apply_admission_gate = callback
+
+    def _admit_apply(self) -> None:
+        with self._lock:
+            callback = self._apply_admission_gate
+        if callback is not None:
+            callback()
 
     def discover(self) -> list[MachineWindow]:
         response = self._request({"operation": "discover"}, None)
@@ -617,6 +631,8 @@ class WindowsUiAdapter:
                 raise AdapterError("연결이 변경되어 이전 작업을 중단했습니다.")
         if self._runner is not None:
             try:
+                if request.get("operation") == "apply":
+                    self._admit_apply()
                 response = self._runner(request, stop_event)
             except (OSError, TimeoutError) as exc:
                 operation = request.get("operation", "unknown")
@@ -634,6 +650,7 @@ class WindowsUiAdapter:
         if not self._helper_lock.acquire(timeout=deadline_seconds):
             raise AdapterError("이전 UI 읽기가 아직 종료되지 않았습니다.")
         process = None
+        delivery_possible = False
         try:
             previous = WindowsUiAdapter._unretired_helper
             if previous is not None:
@@ -672,12 +689,18 @@ class WindowsUiAdapter:
                 raise AdapterError("연결이 해제되어 이전 UI 작업을 취소했습니다.")
             deadline = time.monotonic() + deadline_seconds
             payload: str | None = json.dumps(request, ensure_ascii=False)
+            admitted = False
             while True:
                 self._check_stopped(stop_event)
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise UiReadTimeout(f"원본 UI 응답 제한 시간({deadline_seconds:g}초)을 초과했습니다.", request.get("operation", "unknown"), request.get("operation") not in _NON_IR_OPERATIONS)
                 try:
+                    if request.get("operation") == "apply" and not admitted:
+                        self._admit_apply()
+                        admitted = True
+                    if payload is not None:
+                        delivery_possible = True
                     stdout, stderr = process.communicate(payload, timeout=min(0.05, remaining))
                     break
                 except subprocess.TimeoutExpired:
@@ -724,6 +747,6 @@ class WindowsUiAdapter:
             self._helper_lock.release()
             if not retired:
                 operation = request.get("operation", "unknown")
-                if operation not in _NON_IR_OPERATIONS:
+                if operation not in _NON_IR_OPERATIONS and delivery_possible:
                     raise AmbiguousWriteError("UI 도우미의 종료를 확인할 수 없어 입력 또는 Save 결과가 불확실합니다.")
                 raise ReadTransportError(operation, "UI 도우미의 종료를 확인할 수 없습니다.", helper_retired=False)
