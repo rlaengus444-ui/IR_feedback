@@ -29,6 +29,22 @@ class CsvReadUnavailable(CsvSourceError):
     pass
 
 
+class JobLogReadUnavailable(CsvReadUnavailable):
+    """A current and fully validated log observation is unavailable."""
+    def __init__(self, reason):
+        self.reason = reason
+        messages = {
+            "no matching log": "현재 장비의 로그 파일을 기다립니다.",
+            "backlog": "로그 기록을 순서대로 확인하고 있습니다.",
+            "incomplete tail": "로그의 마지막 줄이 완성되기를 기다립니다.",
+            "missing job anchor": "현재 작업의 시작 기록과 첫 층을 기다립니다.",
+            "unstable log": "로그가 기록 중이어서 안정된 읽기를 기다립니다.",
+            "log I/O failure": "로그 파일에 접근할 수 없어 다시 확인합니다.",
+            "unsupported target": "장비 로그 경로를 확인할 수 없습니다.",
+        }
+        super().__init__(messages.get(reason, "로그를 확인할 수 없습니다."))
+
+
 @contextmanager
 def shared_binary(path: Path):
     """The reader must not prevent the printer from appending or replacing files."""
@@ -123,82 +139,118 @@ class JobLog:
         self.last_stat = None
         self.window_start = 0
         self.window_hash = None
+        self._provisional = None
+
+    def _select_log(self, folder):
+        with os.scandir(folder) as entries:
+            candidates = [Path(item.path) for item in itertools.islice(entries, 4096)
+                          if item.is_file() and item.name.casefold().endswith("_" + self.target.machine.casefold() + ".log")]
+        if not candidates:
+            return None
+        return max(candidates, key=lambda item: (item.stat().st_mtime_ns, str(item)))
 
     def read(self) -> JobContext:
         if self.target.machine not in {"M1", "S3"} or not self.target.image_path:
-            return self.context
+            raise JobLogReadUnavailable("unsupported target")
         folder = Path(self.target.image_path).parent / "Logs"
+        fields = ("context", "path", "identity", "offset", "pending", "last_stat", "window_start", "window_hash")
         try:
-            with os.scandir(folder) as entries:
-                candidates = [Path(item.path) for item in itertools.islice(entries, 4096)
-                              if item.is_file() and item.name.casefold().endswith("_" + self.target.machine.casefold() + ".log")]
-            if not candidates:
-                return self.context
-            path = max(candidates, key=lambda item: item.stat().st_mtime_ns)
-            with shared_binary(path) as stream:
-                stat = os.fstat(stream.fileno())
-                identity = (stat.st_dev, stat.st_ino)
-                signature = (identity, stat.st_size, stat.st_mtime_ns)
-                reset = path != self.path or identity != self.identity or stat.st_size < self.offset
-                # Recheck the previously inspected window even when metadata is unchanged.
-                old = None
-                old_start = self.window_start
-                if not reset and self.window_hash is not None:
-                    stream.seek(self.window_start)
-                    old = stream.read(self.offset - self.window_start)
-                    if hashlib.sha256(old).digest() != self.window_hash:
-                        reset = True
-                if reset:
-                    self.context = JobContext()
-                    self.offset = max(0, stat.st_size - self.MAX_INITIAL_BYTES)
-                    self.pending = b""
-                    self.window_start = self.offset
-                end = min(stat.st_size, self.offset + (self.MAX_INITIAL_BYTES if reset else self.MAX_APPEND_BYTES))
-                # At most the last 8 MiB of consumed log is retained as identity.
-                start = max(self.window_start, end - self.MAX_INITIAL_BYTES)
-                stream.seek(start)
-                first = stream.read(end - start)
-                stream.seek(start)
-                second = stream.read(end - start)
-                after = os.fstat(stream.fileno())
+            for attempt in range(3):
+                path = self._select_log(folder)
+                if path is None:
+                    self._provisional = None
+                    raise JobLogReadUnavailable("no matching log")
+                base = self._provisional or {name: getattr(self, name) for name in fields}
+                with shared_binary(path) as stream:
+                    stat = os.fstat(stream.fileno())
+                    identity = (stat.st_dev, stat.st_ino)
+                    signature = (identity, stat.st_size, stat.st_mtime_ns)
+                    reset = path != base["path"] or identity != base["identity"] or stat.st_size < base["offset"]
+                    old = None
+                    old_start = base["window_start"]
+                    if not reset and base["window_hash"] is not None:
+                        stream.seek(old_start)
+                        old = stream.read(base["offset"] - old_start)
+                        if hashlib.sha256(old).digest() != base["window_hash"]:
+                            reset = True
+                    if reset:
+                        self._provisional = None
+                        base = dict(context=JobContext(), path=None, identity=None,
+                                    offset=max(0, stat.st_size - self.MAX_INITIAL_BYTES), pending=b"",
+                                    last_stat=None, window_start=max(0, stat.st_size - self.MAX_INITIAL_BYTES), window_hash=None)
+                    offset = base["offset"]
+                    end = min(stat.st_size, offset + (self.MAX_INITIAL_BYTES if reset else self.MAX_APPEND_BYTES))
+                    start = max(base["window_start"], end - self.MAX_INITIAL_BYTES)
+                    stream.seek(start)
+                    first = stream.read(end - start)
+                    stream.seek(start)
+                    second = stream.read(end - start)
+                    after = os.fstat(stream.fileno())
+                    current = path.stat()
+                    overlap_changed = old is not None and not reset and first[:offset-start] != old[start-old_start:]
+                    selected = self._select_log(folder)
+                    if selected != path or overlap_changed:
+                        self._provisional = None
+                    if (overlap_changed or first != second or len(first) != end-start or
+                        (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns) != (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns) or
+                        (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns) != (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns) or
+                        selected != path):
+                        continue
+                raw = first[offset-start:]
+                lines = (base["pending"] + raw).split(b"\n")
+                pending = lines.pop()
+                if len(pending) > 65536 or any(len(line) > 65536 for line in lines):
+                    raise CsvSourceError("원본 로그의 한 줄이 허용 크기를 초과했습니다.")
+                context = base["context"]
+                for raw_line in lines:
+                    line = raw_line.decode("utf-8-sig", errors="replace").strip()
+                    if "AUTO" not in line:
+                        continue
+                    if "AutoPrint started!" in line:
+                        stamp = log_timestamp(line)
+                        key = hashlib.sha256((str(path) + "\0" + line).encode()).hexdigest() if stamp else None
+                        context = JobContext(run_key=key, state="AUTO")
+                    match = re.search(r"\bLayer:\s*(\d+)\s*->\s*Current Z\s*=", line)
+                    if match and context.run_key:
+                        layer = int(match.group(1))
+                        if not 0 <= layer <= 1000000:
+                            raise CsvSourceError("원본 로그의 층 번호가 허용 범위를 벗어났습니다.")
+                        first_layer = context.first_layer
+                        context = replace(context, current_layer=layer,
+                            first_layer=layer if first_layer is None else first_layer,
+                            first_started=log_timestamp(line) if first_layer is None else context.first_started)
+                    if any(text in line for text in ("AutoPrint finished!", "AutoPrint cancelled.", "Stopping printing as requested.")):
+                        context = replace(context, state="IDLE")
+                # Parsing can take time. Revalidate the selected file and every
+                # consumed byte before publishing either trusted or staged state.
+                with shared_binary(path) as verify:
+                    verify_before = os.fstat(verify.fileno())
+                    verify.seek(start)
+                    checked = verify.read(end - start)
+                    verify_after = os.fstat(verify.fileno())
                 current = path.stat()
-                overlap_changed = old is not None and not reset and first[:self.offset - start] != old[start - old_start:]
-                if (overlap_changed or first != second or
-                    (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns) != (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns) or
-                    (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns) != (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)):
-                    self.context = JobContext()
-                    self.path, self.identity, self.window_hash = None, None, None
-                    return self.context
-                raw = first[self.offset - start:]
-                self.offset = end
-                self.window_start, self.window_hash = start, hashlib.sha256(first).digest()
-                self.path, self.identity, self.last_stat = path, identity, signature
-            lines = (self.pending + raw).split(b"\n")
-            self.pending = lines.pop()
-            if len(self.pending) > 65536:
-                raise CsvSourceError("원본 로그의 한 줄이 허용 크기를 초과했습니다.")
-            for raw_line in lines:
-                line = raw_line.decode("utf-8-sig", errors="replace").strip()
-                if "AUTO" not in line:
+                def metadata(value):
+                    return (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns)
+                expected = metadata(stat)
+                selected = self._select_log(folder)
+                if selected != path or checked != first or (current.st_dev, current.st_ino) != identity or current.st_size < end:
+                    self._provisional = None
+                if (metadata(verify_before) != expected or metadata(verify_after) != expected or
+                        metadata(current) != expected or checked != first or selected != path):
                     continue
-                if "AutoPrint started!" in line:
-                    stamp = log_timestamp(line)
-                    key = hashlib.sha256((str(path) + "\0" + line).encode()).hexdigest() if stamp else None
-                    self.context = JobContext(run_key=key, state="AUTO")
-                match = re.search(r"\bLayer:\s*(\d+)\s*->\s*Current Z\s*=", line)
-                if match and self.context.run_key:
-                    layer = int(match.group(1))
-                    if not 0 <= layer <= 1000000:
-                        raise CsvSourceError("원본 로그의 층 번호가 허용 범위를 벗어났습니다.")
-                    first = self.context.first_layer
-                    self.context = replace(self.context, current_layer=layer,
-                        first_layer=layer if first is None else first,
-                        first_started=log_timestamp(line) if first is None else self.context.first_started)
-                if any(text in line for text in ("AutoPrint finished!", "AutoPrint cancelled.", "Stopping printing as requested.")):
-                    self.context = replace(self.context, state="IDLE")
-            return self.context
+                staged = dict(context=context, path=path, identity=identity, offset=end, pending=pending,
+                              last_stat=signature, window_start=start, window_hash=hashlib.sha256(first).digest())
+                if end != stat.st_size or pending or not (context.run_key and context.first_layer is not None and context.first_started):
+                    self._provisional = staged
+                    reason = "backlog" if end != stat.st_size else "incomplete tail" if pending else "missing job anchor"
+                    raise JobLogReadUnavailable(reason)
+                for name in fields:
+                    setattr(self, name, staged[name])
+                self._provisional = None
+                return context
+            raise JobLogReadUnavailable("unstable log")
         except OSError as exc:
-            raise CsvReadUnavailable("원본 로그를 읽을 수 없습니다.") from exc
+            raise JobLogReadUnavailable("log I/O failure") from exc
 
 
 RECORD_TIME_FORMATS = ("%m/%d/%Y %H:%M:%S", "%m/%d/%Y %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f")

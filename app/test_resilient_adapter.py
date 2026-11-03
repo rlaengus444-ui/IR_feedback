@@ -207,6 +207,32 @@ class ResilienceTests(unittest.TestCase):
         self.adapter.read_snapshot(None)
         self.assertEqual(raw.modes, ['monitor', 'control'])
 
+    def test_hold_reason_identifies_actual_cause(self):
+        raw = self.raws[-1]
+        raw.snapshot = self.snap('a')
+        initial = self.adapter.read_snapshot(None)
+        self.assertEqual(initial.control_unavailable_reason, '새 기준 및 새 관측 대기')
+        raw.snapshot = self.snap('b', 2)
+        self.assertTrue(self.adapter.read_snapshot(None).control_available)
+        raw.snapshot = replace(self.snap('c', 3), control_available=False,
+            control_unavailable_reason='설정 저장 파일 확인 대기')
+        self.assertEqual(self.adapter.read_snapshot(None).control_unavailable_reason, '설정 저장 파일 확인 대기')
+        raw.snapshot = replace(self.snap('bad', 4), measurement_valid=False, invalid_reason='온도계 비활성')
+        self.assertEqual(self.adapter.read_snapshot(None).control_unavailable_reason, '온도계 비활성')
+        raw.snapshot = replace(self.snap('missing', 5), run_key=None)
+        self.assertIn('작업 식별', self.adapter.read_snapshot(None).control_unavailable_reason)
+        raw.snapshot = replace(self.snap('other', 6), run_key='another')
+        self.assertIn('작업과 달라', self.adapter.read_snapshot(None).control_unavailable_reason)
+        self.assertFalse(self.adapter._last_snapshot.control_available)
+
+    def test_log_read_unavailable_preserves_specific_reason(self):
+        from csv_source import CsvReadUnavailable
+        raw = self.raws[-1]
+        raw.read_snapshot = lambda event: (_ for _ in ()).throw(CsvReadUnavailable('원본 로그 읽기 중'))
+        result = self.adapter.read_snapshot(None)
+        self.assertEqual(result.control_unavailable_reason, '원본 로그 읽기 중')
+        self.assertFalse(result.control_available)
+
     def test_other_job_never_armed(self):
         raw = self.raws[-1]
         raw.snapshot = self.snap('a')

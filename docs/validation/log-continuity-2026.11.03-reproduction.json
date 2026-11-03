@@ -1,0 +1,120 @@
+{
+  "classification": "synthetic_log_read_and_control_state_only",
+  "limitations": "Real file/reader/adapter/wrapper with mocked native UI; no Excel COM or equipment; no Save invoked.",
+  "results": {
+    "deployed": {
+      "injected_log_append": true,
+      "initial": {
+        "run_key": "80ea0a68735a27a891d4214be3e87d073aa9d2f2389ec9acc9e17acfdeede2ec",
+        "control_available": true,
+        "control_epoch": 3,
+        "control_reason": "기존 Sequence IR 입력·Save 경로와 저장 파일을 아직 확인하지 못했습니다.",
+        "reader_run_key": "80ea0a68735a27a891d4214be3e87d073aa9d2f2389ec9acc9e17acfdeede2ec",
+        "reader_path_selected": true,
+        "reader_offset": 280,
+        "reader_generation": 0,
+        "raw_run_key": "80ea0a68735a27a891d4214be3e87d073aa9d2f2389ec9acc9e17acfdeede2ec",
+        "raw_baseline_key": "79cc8f8a141b8d9e52364c517507a6d1b05720bb6369bfbc7910939fcd8522fd",
+        "raw_new_key": "b0efd9968d82016c5a6fd4b8ec8f971b3503a8d2f5878ba172c9c69398c6a73a",
+        "wrapper_pinned_key": "80ea0a68735a27a891d4214be3e87d073aa9d2f2389ec9acc9e17acfdeede2ec",
+        "wrapper_needs_baseline": false
+      },
+      "transient": {
+        "run_key": null,
+        "control_available": false,
+        "control_epoch": 3,
+        "control_reason": "새 기준 및 새 관측 대기",
+        "reader_run_key": null,
+        "reader_path_selected": false,
+        "reader_offset": 0,
+        "reader_generation": 0,
+        "raw_run_key": null,
+        "raw_baseline_key": null,
+        "raw_new_key": null,
+        "wrapper_pinned_key": "80ea0a68735a27a891d4214be3e87d073aa9d2f2389ec9acc9e17acfdeede2ec",
+        "wrapper_needs_baseline": false
+      },
+      "restored": {
+        "run_key": "80ea0a68735a27a891d4214be3e87d073aa9d2f2389ec9acc9e17acfdeede2ec",
+        "control_available": true,
+        "control_epoch": 4,
+        "control_reason": "기존 Sequence IR 입력·Save 경로와 저장 파일을 아직 확인하지 못했습니다.",
+        "reader_run_key": "80ea0a68735a27a891d4214be3e87d073aa9d2f2389ec9acc9e17acfdeede2ec",
+        "reader_path_selected": true,
+        "reader_offset": 280,
+        "reader_generation": 0,
+        "raw_run_key": "80ea0a68735a27a891d4214be3e87d073aa9d2f2389ec9acc9e17acfdeede2ec",
+        "raw_baseline_key": "b0efd9968d82016c5a6fd4b8ec8f971b3503a8d2f5878ba172c9c69398c6a73a",
+        "raw_new_key": null,
+        "wrapper_pinned_key": "80ea0a68735a27a891d4214be3e87d073aa9d2f2389ec9acc9e17acfdeede2ec",
+        "wrapper_needs_baseline": false
+      },
+      "checks": {
+        "initial_ready": true,
+        "transient_job_missing": true,
+        "transient_control_held": true,
+        "same_job_restored": true,
+        "reader_file_state_cleared": true,
+        "wrapper_epoch_advanced": true,
+        "no_ui_save": true
+      }
+    },
+    "fixed": {
+      "injected_log_append": true,
+      "initial": {
+        "run_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "control_available": true,
+        "control_epoch": 3,
+        "control_reason": "기존 Sequence IR 입력·Save 경로와 저장 파일을 아직 확인하지 못했습니다.",
+        "reader_run_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "reader_path_selected": true,
+        "reader_offset": 280,
+        "reader_generation": 0,
+        "raw_run_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "raw_baseline_key": "4c81e5d5eab64357b4462225e30f4b1b68bac34c589ea36d1c112b0be7af08d0",
+        "raw_new_key": "1fc0a2b85b156cc8c7123a0870612ee726c991bf16eed772d7d7fc9edf9449f3",
+        "wrapper_pinned_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "wrapper_needs_baseline": false
+      },
+      "transient": {
+        "run_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "control_available": true,
+        "control_epoch": 3,
+        "control_reason": "기존 Sequence IR 입력·Save 경로와 저장 파일을 아직 확인하지 못했습니다.",
+        "reader_run_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "reader_path_selected": true,
+        "reader_offset": 280,
+        "reader_generation": 0,
+        "raw_run_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "raw_baseline_key": "4c81e5d5eab64357b4462225e30f4b1b68bac34c589ea36d1c112b0be7af08d0",
+        "raw_new_key": "1fc0a2b85b156cc8c7123a0870612ee726c991bf16eed772d7d7fc9edf9449f3",
+        "wrapper_pinned_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "wrapper_needs_baseline": false
+      },
+      "restored": {
+        "run_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "control_available": true,
+        "control_epoch": 3,
+        "control_reason": "기존 Sequence IR 입력·Save 경로와 저장 파일을 아직 확인하지 못했습니다.",
+        "reader_run_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "reader_path_selected": true,
+        "reader_offset": 280,
+        "reader_generation": 0,
+        "raw_run_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "raw_baseline_key": "4c81e5d5eab64357b4462225e30f4b1b68bac34c589ea36d1c112b0be7af08d0",
+        "raw_new_key": "1fc0a2b85b156cc8c7123a0870612ee726c991bf16eed772d7d7fc9edf9449f3",
+        "wrapper_pinned_key": "7763d4dea51a3548929dc27cd9b4d617d2b3bc6367c29ad79d0fe898e7627438",
+        "wrapper_needs_baseline": false
+      },
+      "checks": {
+        "initial_ready": true,
+        "transient_job_missing": false,
+        "transient_control_held": false,
+        "same_job_restored": true,
+        "reader_file_state_cleared": false,
+        "wrapper_epoch_advanced": false,
+        "no_ui_save": true
+      }
+    }
+  }
+}

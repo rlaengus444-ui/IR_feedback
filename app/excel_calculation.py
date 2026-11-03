@@ -25,6 +25,8 @@ class ExcelCalculation:
         self.diagnostic_reason = None
         self.accepted_stamp = None
         self._accepted_identity = None
+        self.history_reset_count = 0
+        self.last_history_reset = None
         self.last_calculation_seconds = None
         self._ticket = 0
         self._context = None
@@ -46,7 +48,16 @@ class ExcelCalculation:
         return (self._identity(snapshot), target_stamp, image_epoch,
                 tuple((heater, powers[heater]) for heater in heaters), self.maximum_ir_percent)
 
-    def reset(self):
+    def reset(self, reason='제어 조건 재확인'):
+        accepted_layer = self._accepted_identity[3] if self._accepted_identity is not None else None
+        if type(accepted_layer) is not int or accepted_layer < 0:
+            accepted_layer = None
+        else:
+            accepted_layer += 1
+        info = {'reason': reason, 'had_pending': self.pending,
+                'had_unconsumed': self._completed is not None,
+                'had_accepted': self._accepted_identity is not None,
+                'accepted_layer': accepted_layer}
         self.pending = False
         self._context = self._completed = self.accepted_stamp = None
         self._accepted_identity = None
@@ -56,6 +67,8 @@ class ExcelCalculation:
             self._ticket += 1
             if self.group.reset(self._ticket):
                 self._resetting = True
+                self.history_reset_count += 1
+                self.last_history_reset = info
         self._clean = True
 
     def watch(self, snapshot, *, eligible, powers, heaters, target_stamp, image_epoch, features=None,
@@ -113,11 +126,11 @@ class ExcelCalculation:
         environment = (getattr(snapshot, 'csv_generation', None), snapshot.run_key,
                        snapshot.control_epoch, image_epoch)
         if self._environment is not None and environment != self._environment:
-            self.reset()
+            self.reset('CSV 작업·설정·이미지 환경 변경')
         self._environment = environment
         context = self._context_for(snapshot, powers, heaters, target_stamp, image_epoch) if valid else None
         if (self.pending or self._completed is not None) and (not self._eligible or context != self._context):
-            self.reset()
+            self.reset('진행 중인 계산의 관측 또는 설정 변경')
         event = self.group.poll()
         if event:
             kind = event['kind']
@@ -157,7 +170,7 @@ class ExcelCalculation:
                     self._completed = event['results']
                     self._completed_elapsed = event.get('elapsed_seconds')
                 else:
-                    self.reset()
+                    self.reset('계산 결과의 관측 또는 설정 불일치')
         if valid and (self.group.state != 'ready' or self._resetting):
             self._baseline = identity
         if not self._eligible:
@@ -174,7 +187,7 @@ class ExcelCalculation:
                             and not self.pending and self._completed is None)
             if not idle_history:
                 if not self._clean or self.pending or self._completed is not None:
-                    self.reset()
+                    self.reset('관측 또는 제어 조건 충족 안 됨')
                 if valid:
                     self._baseline = identity
                 self._needs_baseline = True
@@ -189,7 +202,7 @@ class ExcelCalculation:
         context = self._context_for(snapshot, powers, tuple(heaters), target_stamp, image_epoch)
         if self._completed is not None:
             if context != self._context:
-                self.reset()
+                self.reset('완료 결과의 관측 또는 설정 불일치')
                 return None
             result, self._completed = self._completed, None
             self.last_calculation_seconds = self._completed_elapsed
@@ -252,6 +265,8 @@ class ExcelCalculation:
     def describe(self):
         result = dict(self.group.describe()) if self.group is not None else {'state': 'new'}
         result.update(recovery_state=self._recovery, fault_generation=self.fault_generation,
+                      history_reset_count=self.history_reset_count,
+                      last_history_reset=(dict(self.last_history_reset) if self.last_history_reset is not None else None),
                       failure_streak=self._failures,
                       next_retry_seconds=(max(0.0, self._retry_at - self._clock())
                                           if self._recovery == 'backoff' else None))

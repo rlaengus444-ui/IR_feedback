@@ -114,6 +114,46 @@ class CalculationTests(unittest.TestCase):
         self.assertEqual(self.group.jobs[-1][4], 110)
         self.assertEqual(len(self.group.jobs), 2)
 
+    def test_reset_diagnostics_count_actual_resets_and_coalesce(self):
+        self.calc.reset('초기 빈 이력')
+        self.assertEqual(0, self.calc.describe()['history_reset_count'])
+        self.watch(row('1'))
+        self.accept_second_row()
+        self.calc.reset('이미지 교체')
+        description = self.calc.describe()
+        self.assertEqual(1, description['history_reset_count'])
+        self.assertEqual({'reason': '이미지 교체', 'had_pending': False,
+                          'had_unconsumed': False, 'had_accepted': True,
+                          'accepted_layer': 3}, description['last_history_reset'])
+        description['last_history_reset']['reason'] = '수정'
+        self.calc.reset('중복 요청')
+        self.assertEqual(1, self.calc.describe()['history_reset_count'])
+        self.assertEqual('이미지 교체', self.calc.describe()['last_history_reset']['reason'])
+
+    def test_reset_diagnostics_capture_pending_and_unconsumed(self):
+        for completed in (False, True):
+            with self.subTest(completed=completed):
+                self.setUp()
+                self.calculate(row('2'))
+                if completed:
+                    ticket = self.group.jobs[-1][0]
+                    self.group.events.append({'kind': 'result', 'ticket': ticket, 'results': {1: 5, 2: 6}})
+                    self.watch(row('2', new=False))
+                self.calc.reset()
+                info = self.calc.describe()['last_history_reset']
+                self.assertEqual(not completed, info['had_pending'])
+                self.assertEqual(completed, info['had_unconsumed'])
+                self.assertFalse(info['had_accepted'])
+                self.assertIsNone(info['accepted_layer'])
+                self.assertEqual('제어 조건 재확인', info['reason'])
+
+    def test_rejected_group_reset_is_not_counted(self):
+        self.accept_second_row()
+        self.group.reset = lambda ticket: False
+        self.calc.reset('제어 대기')
+        self.assertEqual(0, self.calc.describe()['history_reset_count'])
+        self.assertIsNone(self.calc.describe()['last_history_reset'])
+
     def accept_second_row(self):
         self.calculate(row('2'))
         ticket = self.group.jobs[-1][0]

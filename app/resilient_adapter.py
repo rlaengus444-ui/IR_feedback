@@ -290,9 +290,25 @@ class ResilientUiAdapter:
                 self._epoch += 1
             self._failures = 0
         self._was_ready = ready
+        if self._sticky:
+            reason = self._sticky
+        elif not snap.measurement_valid:
+            reason = snap.invalid_reason or '유효하지 않은 온도 관측 · 새 측정 확인 대기'
+        elif not snap.control_available:
+            reason = snap.control_unavailable_reason
+        elif not snap.run_key:
+            reason = '현재 작업 식별 정보를 확인할 수 없어 IR 적용 대기'
+        elif self._pinned_job and snap.run_key != self._pinned_job:
+            reason = '관측된 작업이 처음 확인한 작업과 달라 IR 적용 대기'
+        elif not self._pinned_job:
+            reason = 'AUTO/RUNNING 상태와 작업 식별 확인 대기'
+        elif self._needs_baseline:
+            reason = '새 기준 및 새 관측 대기'
+        else:
+            reason = snap.control_unavailable_reason
         result = replace(snap, target=self._target, actual_target=self.current_target,
             control_available=ready, control_epoch=self._epoch,
-            control_unavailable_reason=self._sticky or ('새 기준 및 새 관측 대기' if not ready else snap.control_unavailable_reason),
+            control_unavailable_reason=reason,
             control_recoverable=not ready and not bool(self._sticky), actuation_barrier=bool(self._sticky))
         self._last_snapshot = result
         return result
