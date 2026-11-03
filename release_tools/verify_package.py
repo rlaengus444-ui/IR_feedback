@@ -13,7 +13,7 @@ REQUIRED_APP = (
     'sequence_field_audit.py', 'sequence_persistence.py', 'session.py', 'single_instance.py',
     'standalone_ir.py', 'target_temperature.py', 'UiaBridge.dll', 'windows_ui_adapter.py',
     'workbook-replay.settings.json', 'slice_data.py', 'slice_panel.py', 'slice_workbook.py',
-    'auto_slice_source.py', 'windows_slice_source.py',
+    'output_limit.py',
     'templates/IR_슬라이싱_수동계산.xlsx',
 )
 SOURCES = {**{'app/' + name: 'app/' + name for name in REQUIRED_APP},
@@ -21,7 +21,7 @@ SOURCES = {**{'app/' + name: 'app/' + name for name in REQUIRED_APP},
            'VALIDATION.ko.md': 'docs/SLICE_LIVE.ko.md',
            'docs/SLICE_LIVE.ko.md': 'docs/SLICE_LIVE.ko.md',
            'docs/LIVE_SETTINGS.ko.md': 'docs/LIVE_SETTINGS.ko.md',
-           'docs/AUTO_SLICE.ko.md': 'docs/AUTO_SLICE.ko.md',
+           'docs/IR_OUTPUT_LIMIT.ko.md': 'docs/IR_OUTPUT_LIMIT.ko.md',
            'docs/CSV_OBSERVATION_WAIT.ko.md': 'docs/CSV_OBSERVATION_WAIT.ko.md',
            'docs/validation/csv-observation-wait-2026.10.30-design-review.json': 'docs/validation/csv-observation-wait-2026.10.30-design-review.json',
            'docs/validation/auto-slice-2026.10.29-design-review.json': 'docs/validation/auto-slice-2026.10.29-design-review.json',
@@ -64,6 +64,8 @@ def verify(path, version, root=ROOT):
             check(not (info.external_attr >> 16 & 0o170000 == 0o120000), f'symlink ZIP entry: {name}')
         check(archive.testzip() is None, 'ZIP CRC error')
         files = {item.filename for item in infos if not item.is_dir()}
+        for removed in ('app/auto_slice_source.py', 'app/windows_slice_source.py'):
+            check(removed not in files, f'removed automatic source present: {removed}')
         for name in (*REQUIRED_RUNTIME, *SOURCES, MANIFEST):
             check(name in files, f'missing required file {name}')
         check(any(re.fullmatch(r'runtime/Lib/site-packages/PIL/_imaging(?:\.cp314-win_amd64)?\.pyd', n, re.I) for n in files), 'missing Pillow _imaging.pyd')

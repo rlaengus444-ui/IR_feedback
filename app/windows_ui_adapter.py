@@ -21,12 +21,12 @@ from pathlib import Path
 from typing import Callable
 
 try:
-    from .adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, SourceSuspended, ObservationSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
+    from .adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, ObservationSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
     from . import sequence_persistence
     from .sequence_field_audit import assert_fields_match_persisted, SequenceFieldAuditError
     from .csv_source import MonitoringCsvReader
 except ImportError:
-    from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, SourceSuspended, ObservationSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
+    from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, ObservationSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
     import sequence_persistence
     from sequence_field_audit import assert_fields_match_persisted, SequenceFieldAuditError
     from csv_source import MonitoringCsvReader
@@ -411,7 +411,7 @@ class WindowsUiAdapter:
             self._last_snapshot, self._last_read = snapshot, time.monotonic()
             return snapshot
 
-    def _verify_csv_observation(self, expected_key, expected_lineage=None):
+    def _verify_csv_observation(self, expected_key):
         with self._lock:
             reader, generation = self._csv, self._generation
         if reader is None:
@@ -429,8 +429,6 @@ class WindowsUiAdapter:
             raise ObservationSuspended("CSV 기록 중 · 이번 계산을 취소하고 완전한 완료 행을 기다립니다.")
         if sample is None or sample.key != expected_key:
             raise ObservationSuspended("CSV 완료 층 갱신 · 이전 계산을 취소하고 새 관찰을 확인합니다.")
-        if expected_lineage is not None and getattr(sample, 'slice_lineage', '') != expected_lineage:
-            raise SourceSuspended('CSV 이미지 경로 또는 리코팅 시각이 변경되어 자동 적용을 대기합니다.')
         age = time.time() - sample.finished.timestamp()
         if sample.key != self._new_sample_key or not -2 <= age <= MonitoringCsvReader.MAX_NEW_AGE_SECONDS:
             raise ControlUnavailable("오래된 CSV 기록은 새 제어 명령에 재사용하지 않습니다.")
@@ -439,23 +437,9 @@ class WindowsUiAdapter:
             raise ControlUnavailable("CSV 완료 층과 현재 운전 로그의 층이 일치하지 않습니다.")
         return source.token
 
-    def verify_image_observation(self, key, lineage, stop_event):
-        """Read-only pre-learning check. Critical CSV parse failures still raise."""
-        self._check_stopped(stop_event)
+    def apply_ir_power(self, heater: int, power_percent: int | float, expected_observation_key: str, stop_event) -> None:
         try:
-            self._verify_csv_observation(key,lineage)
-        except ObservationSuspended:
-            with self._lock:
-                self._last_snapshot = None
-                self._last_read = 0
-            return False
-        except ControlUnavailable:
-            return False  # A newer/different row needs a new baseline, no Save.
-        return True
-
-    def apply_ir_power(self, heater: int, power_percent: int | float, expected_observation_key: str, stop_event, *, source_guard=None) -> None:
-        try:
-            return self._apply_ir_power(heater, power_percent, expected_observation_key, stop_event, source_guard=source_guard)
+            return self._apply_ir_power(heater, power_percent, expected_observation_key, stop_event)
         except ObservationSuspended:
             with self._lock:
                 self._last_snapshot = None
@@ -465,7 +449,7 @@ class WindowsUiAdapter:
             self.suspend_control(str(error))
             raise
 
-    def _apply_ir_power(self, heater: int, power_percent: int | float, expected_observation_key: str, stop_event, *, source_guard=None) -> None:
+    def _apply_ir_power(self, heater: int, power_percent: int | float, expected_observation_key: str, stop_event) -> None:
         self._check_stopped(stop_event)
         if heater not in (1, 2) or isinstance(power_percent, bool) or not isinstance(power_percent, (int, float)) or not math.isfinite(power_percent) or not 0 <= power_percent <= 100:
             raise ValueError("Heater must be 1 or 2 and power must be finite in 0..100.")
@@ -501,10 +485,7 @@ class WindowsUiAdapter:
             raise ControlSuspended("기존 IR 또는 다른 저장 설정이 변경되어 자동 적용을 중단했습니다.")
         common = {"pid": target.pid, "hwnd": target.hwnd, "machine": target.machine, "image_path": target.image_path, "_generation": generation}
         guarded_at = time.monotonic()
-        expected_lineage = source_guard.get('lineage') if source_guard is not None else None
-        if source_guard is not None and not expected_lineage:
-            raise SourceSuspended('자동 이미지와 CSV의 대응 확인값이 필요합니다.')
-        csv_token = self._verify_csv_observation(expected_observation_key, expected_lineage)
+        csv_token = self._verify_csv_observation(expected_observation_key)
         fresh = self._request(dict(common, operation="verify_control", handles=handles,
                                    field_map=self._native_fields, observation=observation, layer_hint=layer_hint,
                                    csv_token=csv_token), stop_event)
@@ -525,7 +506,7 @@ class WindowsUiAdapter:
             raise ControlUnavailable("관측 확인 후 시간이 지나 이번 적용을 중단했습니다. 다시 연결해 새 관측을 확인하세요.")
         handles = dict(fresh.get("handles") or handles)
         native_fields = dict(fresh.get("field_map") or self._native_fields)
-        csv_token = self._verify_csv_observation(expected_observation_key, expected_lineage)
+        csv_token = self._verify_csv_observation(expected_observation_key)
         with tempfile.TemporaryDirectory(prefix="binderjet-save-") as directory:
             marker = Path(directory) / "save-started.txt"
             edit_marker = Path(directory) / "edit-started.txt"
@@ -536,7 +517,7 @@ class WindowsUiAdapter:
                                           "handles": handles, "field_map": native_fields,
                                           "csv_token": csv_token,
                                           "layer_hint": layer_hint,
-                                          "power": power_text, "source_guard": source_guard,
+                                          "power": power_text,
                                           "save_marker": str(marker), "edit_marker": str(edit_marker)}, stop_event)
                 readback = _number(response.get("setting"))
                 if not response.get("save_invoked") or readback is None or not math.isclose(readback, power_percent, rel_tol=0, abs_tol=1e-9):
@@ -549,7 +530,7 @@ class WindowsUiAdapter:
                     with self._lock:
                         self._control_fault = "자동 적용 결과를 확인할 수 없습니다. 다시 연결하기 전에 원본 설정을 확인하세요."
                     raise AmbiguousWriteError("IR 입력값이 수정되었거나 Save가 실행되었을 수 있으나 완료 여부를 확인하지 못했습니다. 같은 명령을 자동 재시도하지 않습니다. " + str(exc)) from exc
-                if not isinstance(exc, (ControlSuspended, SourceSuspended, ObservationSuspended)):
+                if not isinstance(exc, (ControlSuspended, ObservationSuspended)):
                     with self._lock:
                         self._control_fault = "자동 적용을 중단했습니다. 결과를 확인한 뒤 다시 연결하세요."
                 raise
@@ -593,8 +574,6 @@ class WindowsUiAdapter:
     def _response_error(request, response, fallback):
         response = response if isinstance(response, dict) else {}
         kind = response.get("error_kind")
-        if kind == 'slice_wait':
-            return SourceSuspended(str(response.get('error') or fallback))
         if kind == 'observation_wait':
             return ObservationSuspended(str(response.get('error') or fallback))
         error_type = ControlSuspended if kind == "control_wait" else TargetIdentityError if kind == "identity" else AdapterError

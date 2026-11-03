@@ -17,11 +17,6 @@ class ControlSuspended(ControlUnavailable):
     pass
 
 
-class SourceSuspended(ControlUnavailable):
-    """A read-only auto-image proof changed; keep settings recovery separate."""
-    pass
-
-
 class ObservationSuspended(ControlUnavailable):
     """CSV evidence changed before any edit; discard the decision, keep reading."""
     pass
@@ -90,7 +85,5 @@ class UiAdapter(Protocol):
     def suspend_control(self, reason: str) -> None: ...
 
     def validate_control_epoch(self, expected: int) -> None: ...
-
-    def verify_image_observation(self, key: str, lineage: str, stop_event) -> bool: ...
 
     def disconnect(self) -> None: ...

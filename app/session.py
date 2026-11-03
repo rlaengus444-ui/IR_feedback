@@ -8,11 +8,12 @@ from pathlib import Path
 import threading
 import time
 
-from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, SourceSuspended, ObservationSuspended, MachineWindow
+from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, ObservationSuspended, MachineWindow
 from layer_algorithm import LayerAdaptiveController, LayerSettings
 from target_temperature import TargetTemperatureSetting
 from excel_workbook import WorkbookController, WorkbookSpec
 from slice_data import SliceDataset
+from output_limit import validate_maximum_ir
 
 
 def finite(value):
@@ -71,7 +72,7 @@ class SessionOptions:
     settings_path: Path | None = None
     workbook_spec: WorkbookSpec | None = None
     slice_dataset: SliceDataset | None = None
-    auto_source: object = None
+    maximum_ir_percent: float = 100.0
     _target_temperature_setting: TargetTemperatureSetting = field(init=False, repr=False, compare=False)
     _slice_dataset_setting: SliceDatasetSetting = field(init=False, repr=False, compare=False)
 
@@ -82,6 +83,7 @@ class SessionOptions:
             raise ValueError("올바른 동작 모드를 선택하세요.")
         if self.mode == "control" and self.target.machine == "unknown":
             raise ValueError("장비 자동 식별이 안 된 창은 조회 또는 미리보기로만 연결할 수 있습니다.")
+        object.__setattr__(self, "maximum_ir_percent", validate_maximum_ir(self.maximum_ir_percent))
         if self.workbook_spec is not None:
             self.workbook_spec.validate()
         if self.slice_dataset is not None and not isinstance(self.slice_dataset, SliceDataset):
@@ -122,10 +124,8 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                            and options.workbook_spec.slice_start_cell)
     image_waiting = False
     image_baseline_layer = None
-    auto_source = options.auto_source
-    auto_baseline_pending = auto_source is not None and image_consuming
-    auto_baseline_layer = None
-    auto_reset_pending = False
+    maximum_ir = options.maximum_ir_percent
+    power_limit_holding = False
     def hold_feedback():
         nonlocal control_holding, recovery_baseline_pending, recovery_baseline_layer
         nonlocal baseline_seen, last_key, last_layer, known_run_key, wait_for_different_layer
@@ -146,13 +146,16 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             return
         if options.mode != "monitor":
             if options.workbook_spec is not None:
-                controllers = {1: WorkbookController(options.workbook_spec, options.target_temperature_c, stop_event=stop_event)}
+                controllers = {1: WorkbookController(options.workbook_spec, options.target_temperature_c,
+                    maximum_ir_percent=maximum_ir, stop_event=stop_event)}
             else:
                 path = options.settings_path or Path(__file__).with_name("workbook-replay.settings.json")
                 if Path(path).stat().st_size > 262144:
                     raise ValueError("설정 파일은 256 KiB 이하여야 합니다.")
                 settings = LayerSettings.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
-                settings = replace(settings, target_temperature_c=options.target_temperature_c)
+                settings = replace(settings, target_temperature_c=options.target_temperature_c,
+                    maximum_power_percent=min(settings.maximum_power_percent, maximum_ir))
+                maximum_ir = settings.maximum_power_percent
                 controllers = {heater: LayerAdaptiveController(settings) for heater in (1, 2)}
         if stop_event.is_set():
             return
@@ -160,8 +163,6 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
         adapter.connect(options.target, stop_event)
         if stop_event.is_set():
             return
-        if auto_source is not None:
-            auto_source.start(slice_setting)
         adapter.prepare_mode(options.mode, stop_event)
         if stop_event.is_set():
             return
@@ -216,7 +217,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                     status = "제어 불가: " + snapshot.control_unavailable_reason
             elif options.mode == "control":
                 control_admitted = True
-                if control_holding:
+                if control_holding and not power_limit_holding:
                     effective_mode = "control-waiting"
                     status = "연결 유지 · 변경된 설정의 재확인 대기"
             can_calculate = effective_mode in ("preview", "control")
@@ -226,7 +227,8 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                     and 2 not in controllers):
                 if stop_event.is_set():
                     break
-                controllers[2] = WorkbookController(options.workbook_spec, effective_target, stop_event=stop_event)
+                controllers[2] = WorkbookController(options.workbook_spec, effective_target,
+                    maximum_ir_percent=maximum_ir, stop_event=stop_event)
             if effective_mode == "control":
                 for heater in heaters:
                     if finite(values[heater]):
@@ -241,6 +243,20 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             valid = (snapshot.observation_key is not None and finite(snapshot.t_recoating_c)
                      and isinstance(snapshot.layer_index, int) and not isinstance(snapshot.layer_index, bool)
                      and snapshot.layer_index >= 0)
+            above_limit = any(finite(values[heater]) and values[heater] > maximum_ir for heater in heaters)
+            if options.mode != "monitor" and above_limit:
+                if not power_limit_holding:
+                    hold_feedback()
+                power_limit_holding = True
+                effective_mode = "power-limit-waiting"
+                can_calculate = False
+                status = (f"연결 유지 · 현재 IR이 최대 {maximum_ir:g}%를 초과합니다. "
+                          "장비 설정을 상한 이내로 확인한 뒤 새 층부터 재개합니다(저장 없음).")
+            elif power_limit_holding:
+                # External settings recovery still owns its normal guards.
+                # The first valid in-bound row is baseline only, never replayed.
+                power_limit_holding = False
+                control_holding = False
             # Editing/analysis is staged outside the active session. Only a
             # complete latest result requests a new epoch. Never mutate frozen
             # Excel rows or interrupt an already admitted Save to switch images.
@@ -255,73 +271,29 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 if slice_setting.activate(desired_epoch):
                     slice_epoch, slice_dataset = desired_epoch, desired_dataset
                     if image_consuming:
-                        if auto_source is not None:
-                            auto_baseline_pending = True;auto_baseline_layer = None
-                        baseline_seen = valid and auto_source is None
+                        baseline_seen = valid
                         last_key = snapshot.observation_key if valid else None
                         last_layer = None
                         known_run_key = snapshot.run_key
                         wait_for_different_layer = None
                         image_waiting = True
-                        image_baseline_layer = snapshot.layer_index if valid and auto_source is None else None
+                        image_baseline_layer = snapshot.layer_index if valid else None
                     emit("slice_activated", dict(epoch=slice_epoch, dataset=slice_dataset,
                          image_consuming=image_consuming))
                 else:
                     # A newer complete result superseded this handoff during
                     # reset. Wait; no calculation may use the intermediate one.
                     can_calculate = False
-            auto_admission = None
-            auto_barrier = False
-            if auto_source is not None and image_consuming:
-                verifier = getattr(adapter,'verify_image_observation',None)
-                auto_admission, auto_reason = auto_source.frame(snapshot, slice_epoch, slice_dataset,
-                    verify_lineage=(lambda: bool(verifier(snapshot.observation_key,snapshot.slice_lineage,stop_event)))
-                                   if verifier is not None else (lambda:False))
-                if auto_admission is not None and auto_reset_pending and (handoff_pending or
-                        (can_calculate and all(finite(values[heater]) for heater in heaters))):
-                    if not handoff_pending:
-                        for controller in controllers.values():controller.reset()
-                    auto_reset_pending = False
-                if auto_admission is None:
-                    if not auto_baseline_pending:auto_reset_pending = True
-                    auto_barrier = True; auto_baseline_pending = True; auto_baseline_layer = None
-                    held.clear(); reasons.clear()
-                    status = '연결 유지 · 자동 이미지 대기: ' + auto_reason
-                elif not valid:
-                    auto_barrier = True
-                    status = '자동 이미지 확인됨 · 새 T_recoating 기록 대기'
-                elif not can_calculate or not all(finite(values[heater]) for heater in heaters):
-                    auto_barrier = True; auto_baseline_pending = False
-                    auto_baseline_layer = snapshot.layer_index
-                    if image_waiting:image_baseline_layer = snapshot.layer_index
-                    held.clear();reasons.clear()
-                    status = '자동 이미지 확인 · AUTO/RUNNING 및 현재 IR 확인 후 다음 새 층 대기'
-                elif auto_baseline_pending:
-                    auto_barrier = True; auto_baseline_pending = False
-                    auto_baseline_layer = snapshot.layer_index
-                    if image_waiting:
-                        image_baseline_layer = snapshot.layer_index
-                    status = '자동 이미지 확인 · 첫 새 측정을 기준으로 대기(저장 없음)'
-                elif auto_baseline_layer is not None:
-                    if (valid and snapshot.observation_is_new is True
-                            and can_calculate and all(finite(values[heater]) for heater in heaters)
-                            and snapshot.layer_index != auto_baseline_layer and snapshot.observation_key != last_key):
-                        auto_baseline_layer = None
-                    else:
-                        auto_barrier = True
-                        status = '자동 이미지 확인 · 다음 새 층 대기(저장 없음)'
-                if auto_barrier and valid:
-                    last_key = snapshot.observation_key; known_run_key = snapshot.run_key
-            image_hold = image_consuming and (handoff_pending or image_waiting or auto_barrier)
+            image_hold = image_consuming and (handoff_pending or image_waiting)
             if image_waiting and not handoff_pending:
-                if valid and not auto_barrier and image_baseline_layer is None:
+                if valid and image_baseline_layer is None:
                     image_baseline_layer = snapshot.layer_index
                 elif (valid and snapshot.observation_is_new is True and
                       snapshot.layer_index != image_baseline_layer and snapshot.observation_key != last_key and
-                      not auto_barrier and can_calculate and all(finite(values[heater]) for heater in heaters)):
+                      can_calculate and all(finite(values[heater]) for heater in heaters)):
                     image_waiting = False
                     image_hold = False
-                if image_hold and valid and not auto_barrier:
+                if image_hold and valid:
                     image_baseline_layer = snapshot.layer_index
                     baseline_seen = True
                     last_key = snapshot.observation_key
@@ -329,12 +301,12 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             # Observations seen while readiness is absent are barriers too.
             # Restored AUTO/current-IR must not turn a cached held row into Save.
             if ((control_holding or recovery_baseline_pending or recovery_baseline_layer is not None)
-                    and effective_mode != "control" and valid):
+                    and effective_mode not in ("control", "preview") and valid):
                 recovery_baseline_layer = snapshot.layer_index
                 last_key = snapshot.observation_key
                 known_run_key = snapshot.run_key
-            control_barrier = effective_mode == "control-waiting"
-            if effective_mode == "control" and recovery_baseline_pending:
+            control_barrier = effective_mode in ("control-waiting", "power-limit-waiting")
+            if effective_mode in ("control", "preview") and recovery_baseline_pending:
                 control_barrier = True
                 status = "설정 확인 완료 · 첫 유효 관찰을 기준으로 대기(저장 없음)"
                 if valid and all(finite(values[heater]) for heater in heaters):
@@ -343,7 +315,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                     baseline_seen = True
                     last_key = snapshot.observation_key
                     known_run_key = snapshot.run_key
-            elif effective_mode == "control" and recovery_baseline_layer is not None:
+            elif effective_mode in ("control", "preview") and recovery_baseline_layer is not None:
                 if (valid and snapshot.observation_is_new is True
                         and snapshot.layer_index != recovery_baseline_layer
                         and snapshot.observation_key != last_key
@@ -361,8 +333,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             if control_barrier:
                 pass
             elif image_hold and effective_mode in ("preview", "control"):
-                if not auto_barrier:
-                    status = "이미지 교체 중 · 새 층의 T_recoating 대기(저장 없음)"
+                status = "이미지 교체 중 · 새 층의 T_recoating 대기(저장 없음)"
             elif effective_mode == "waiting":
                 pass
             elif not baseline_seen and not (valid and snapshot.observation_is_new is True):
@@ -405,8 +376,8 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                         for heater in heaters:
                             extra = {}
                             if options.workbook_spec is not None and options.workbook_spec.slice_start_cell:
-                                extra['slice_features'] = (auto_admission.features if auto_admission is not None
-                                    else slice_dataset.features(snapshot.layer_index + 1) if slice_dataset is not None else None)
+                                extra['slice_features'] = (slice_dataset.features(snapshot.layer_index + 1)
+                                    if slice_dataset is not None else None)
                             calculation_started = time.monotonic()
                             try:
                                 result = controllers[heater].process(snapshot.layer_index + 1,
@@ -431,13 +402,9 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                     reasons.clear()
                                     status = "이미지 교체 요청됨 · 이전 계산 적용 보류"
                                     break
-                                if auto_source is not None and image_consuming and not auto_source.admit(auto_admission):
-                                    held.clear(); reasons.clear()
-                                    source_write_held = True
-                                    status = '자동 이미지 경로 변경 · 이전 계산 적용 보류'
-                                    break
-                                if not finite(power) or not 0 <= power <= 100:
-                                    raise ControlUnavailable("기존 UI에 전달할 유효한 출력 범위를 벗어났습니다.")
+                                if (not finite(power) or not 0 <= power <= maximum_ir
+                                        or abs(power - values[heater]) > 5.0 + 1e-9):
+                                    raise ControlUnavailable("최대 IR 출력 또는 1회 최대 5%p 증감 제한을 벗어났습니다.")
                                 if math.isclose(power, values[heater], rel_tol=0, abs_tol=1e-9):
                                     continue  # Holding a value needs no redundant Save.
                                 apply_started = time.monotonic()
@@ -445,17 +412,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                     validate_epoch = getattr(adapter, "validate_control_epoch", None)
                                     if validate_epoch is not None:
                                         validate_epoch(snapshot.control_epoch)
-                                    if auto_admission is not None:
-                                        adapter.apply_ir_power(heater, power, snapshot.observation_key, stop_event,
-                                                               source_guard=auto_admission.guard)
-                                    else:
-                                        adapter.apply_ir_power(heater, power, snapshot.observation_key, stop_event)
-                                except SourceSuspended as error:
-                                    auto_source.guard_failed(str(error))
-                                    held.clear(); reasons.clear(); auto_baseline_pending = True
-                                    write_held = True
-                                    status = '연결 유지 · 이미지 대응 재확인: ' + str(error)
-                                    break
+                                    adapter.apply_ir_power(heater, power, snapshot.observation_key, stop_event)
                                 except ObservationSuspended as error:
                                     # No edit/Save started. Never retry the old
                                     # decision or retain its controller state.
@@ -492,8 +449,6 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 held.clear()
                 reasons.clear()
                 status = "이미지 교체 요청됨 · 이전 계산 적용 보류"
-            if auto_source is not None and image_consuming and not auto_source.admit(auto_admission):
-                held.clear(); reasons.clear(); auto_admission = None
             if last_status != (effective_mode, status):
                 emit("log", status)
                 last_status = (effective_mode, status)
@@ -503,9 +458,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                   display_target_c=display_target,
                                   slice_epoch=slice_epoch,
                                   slice_fingerprint=slice_dataset.fingerprint if slice_dataset is not None else None,
-                                  slice_features=(auto_admission.features if auto_admission is not None
-                                      else None if auto_source is not None and image_consuming
-                                      else slice_dataset.features(snapshot.layer_index + 1)
+                                  slice_features=(slice_dataset.features(snapshot.layer_index + 1)
                                       if slice_dataset is not None and valid else None)))
             interval = snapshot.minimum_poll_seconds
             if not finite(interval):
@@ -513,8 +466,6 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             stop_event.wait(max(0.0, max(0.1, min(5.0, interval)) - (time.monotonic() - started)))
     finally:
         try:
-            if auto_source is not None:
-                auto_source.stop()
             if adapter is not None:
                 adapter.disconnect()
         finally:

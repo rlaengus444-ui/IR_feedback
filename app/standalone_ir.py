@@ -19,8 +19,7 @@ from plot_archive import PlotArchive
 from target_temperature import parse_target_temperature
 from excel_workbook import WorkbookSpec
 from slice_panel import SlicePanel
-from auto_slice_source import AutoSliceSource
-from windows_slice_source import WindowsPathReader
+from output_limit import MaximumIrPreference, parse_maximum_ir
 
 
 MODE_LABELS = {"UI 자동 적용": "control"}
@@ -51,8 +50,15 @@ def discover_windows():
 class ThermalFeedbackWindow:
     CLOSE_GRACE_SECONDS = 4.0
 
-    def __init__(self, root, controller=None, discoverer=discover_windows, auto_discover=True, archive=None):
+    def __init__(self, root, controller=None, discoverer=discover_windows, auto_discover=True, archive=None, maximum_ir_preference=None):
         self.root = root
+        self.maximum_ir_preference = maximum_ir_preference or MaximumIrPreference()
+        preference_error = None
+        try:
+            maximum_ir = f"{self.maximum_ir_preference.load():g}"
+        except (ValueError, OSError) as error:
+            maximum_ir = ""
+            preference_error = f"최대 IR 출력 설정을 다시 입력하세요: {error}"
         self.controller = controller or SessionController(error_logger=write_error_log)
         self.archive = archive if archive is not None else PlotArchive()
         self._history_generation = 0
@@ -66,8 +72,6 @@ class ThermalFeedbackWindow:
         self.discovery_queue = queue.Queue(maxsize=1)
         self.searching = False
         self.discovery_thread = None
-        self._source_binding = None; self._auto_source = None
-        self._binding_serial = 0; self._binding_queue = queue.Queue()
         self.closing = False
         self.close_deadline = None
         self.configuration_widgets = []
@@ -75,6 +79,7 @@ class ThermalFeedbackWindow:
         self.host = tk.StringVar()
         self.mode = tk.StringVar(value="UI 자동 적용")
         self.target_temperature = tk.StringVar(value="65")
+        self.maximum_ir_percent = tk.StringVar(value=maximum_ir)
         self.settings_path = tk.StringVar()
         self.algorithm_type = tk.StringVar(value="기본 알고리즘")
         self.algorithm_path_label = tk.StringVar(value="설정 JSON(선택)")
@@ -96,6 +101,9 @@ class ThermalFeedbackWindow:
         self.root.minsize(940, 760)
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self._build()
+        if preference_error:
+            self._append_log(preference_error)
+            self.capability.set(preference_error)
         self._refresh_buttons()
         self.root.after(50, self._pump)
         if auto_discover:
@@ -140,8 +148,15 @@ class ThermalFeedbackWindow:
         self.target_apply_button = ttk.Button(options, text="목표 적용", command=self.apply_target_temperature)
         self.target_apply_button.pack(side="left", padx=(0, 12))
         ttk.Label(options, text="연결 중 변경 시 다음 새 층부터 반영", foreground="#536173").pack(side="left")
+        limits = ttk.Frame(connection)
+        limits.grid(row=3, column=0, columnspan=5, sticky="ew", pady=(8, 0))
+        ttk.Label(limits, text="최대 IR 출력 %").pack(side="left")
+        self.maximum_ir_entry = ttk.Entry(limits, textvariable=self.maximum_ir_percent, width=9)
+        self.maximum_ir_entry.pack(side="left", padx=(8, 12))
+        ttk.Label(limits, text="0~100 · 기본/Excel 공통 · 연결 전 설정", foreground="#536173").pack(side="left")
+        self.configuration_widgets.append((self.maximum_ir_entry, "normal"))
         advanced = ttk.Frame(connection)
-        advanced.grid(row=3, column=0, columnspan=5, sticky="ew", pady=(10, 0))
+        advanced.grid(row=4, column=0, columnspan=5, sticky="ew", pady=(10, 0))
         ttk.Label(advanced, text="알고리즘").pack(side="left")
         self.algorithm_box = ttk.Combobox(advanced, textvariable=self.algorithm_type,
             values=("기본 알고리즘", "Excel 수식 파일"), state="readonly", width=17)
@@ -154,7 +169,7 @@ class ThermalFeedbackWindow:
         self.browse_button.pack(side="left")
         self.configuration_widgets.extend(((self.algorithm_box, "readonly"), (self.settings_entry, "normal"), (self.browse_button, "normal")))
         self.excel_fields = ttk.Frame(connection)
-        self.excel_fields.grid(row=4, column=0, columnspan=5, sticky="ew", pady=(10, 0))
+        self.excel_fields.grid(row=5, column=0, columnspan=5, sticky="ew", pady=(10, 0))
         for index, (title, variable, width) in enumerate((("시트(빈칸: 첫 시트)", self.workbook_sheet, 15),
                 ("온도 시작셀", self.workbook_temperature_cell, 7),
                 ("IR 결과 시작셀", self.workbook_result_cell, 7),
@@ -207,99 +222,8 @@ class ThermalFeedbackWindow:
             workbook_busy=lambda: self.controller.thread is not None,
             use_workbook=self._use_slice_workbook,
             publish_dataset=self._publish_slice_dataset,
-            context_token=lambda: self.controller.generation,
-            bind_source=self._bind_source, auto_changed=self._sync_auto_source,
-            auto_refresh=self._refresh_auto_source, auto_cancel=self._cancel_auto_source,
-            confirm_reload=self._confirm_auto_reload)
+            context_token=lambda: self.controller.generation)
         notebook.add(self.slice_panel, text="슬라이싱 이미지")
-
-    def _sync_auto_source(self):
-        try:
-            config = self.slice_panel.read_auto_config()
-        except ValueError as error:
-            config = None
-            self.slice_panel.auto_status.set(str(error))
-        if self._auto_source is not None:
-            self._auto_source.configure(config)
-
-    def _refresh_auto_source(self):
-        self._sync_auto_source()
-        if self._auto_source is not None:
-            self._auto_source.refresh()
-        else:
-            self.slice_panel.auto_status.set('경로를 지정하고 연결하면 자동 분석을 시작합니다.')
-
-    def _cancel_auto_source(self):
-        if self._auto_source is not None:self._auto_source.cancel_analysis()
-
-    def _confirm_auto_reload(self):
-        try:
-            if self._auto_source is not None:self._auto_source.confirm_reload()
-        except ValueError as error:
-            self._append_log(str(error))
-
-    def _bind_source(self):
-        target = self.target_map.get(self.host.get())
-        if target is None or self.closing:
-            if not self.closing:
-                message='BJT 실행 창을 먼저 검색하고 선택하세요.'
-                self._append_log(message)
-                self.slice_panel.binding_status.set(message)
-                messagebox.showwarning('슬라이싱 경로 지정',message,parent=self.root)
-            return
-        self._binding_serial += 1; serial = self._binding_serial
-        context = self.controller.generation
-        if self._auto_source is not None:self._auto_source.pause_binding()
-        def countdown(left):
-            if self.closing or serial != self._binding_serial:return
-            if left:
-                self.slice_panel.binding_status.set(f'{left}초 안에 BJT 첫 탭 STATUS의 슬라이싱 경로 글자 위로 마우스를 옮기세요. 입력하거나 클릭할 필요는 없습니다.')
-                self.root.after(1000,lambda:countdown(left-1));return
-            def capture():
-                try:
-                    reader=WindowsPathReader(); x,y=reader.cursor()
-                    binding,source=reader.bind_at(target,x,y); error=None
-                except Exception as exc:
-                    binding=source=None;error=str(exc).strip() or '경로 표시 칸을 읽지 못했습니다. 다시 지정하세요.'
-                self._binding_queue.put((serial,context,target,binding,source,error))
-            threading.Thread(target=capture,name='IR-bind-image-path',daemon=True).start()
-        countdown(5)
-
-    def _poll_source_binding(self):
-        while True:
-            try:serial,context,target,binding,source,error=self._binding_queue.get_nowait()
-            except queue.Empty:break
-            if (self.closing or serial != self._binding_serial or context != self.controller.generation
-                    or target != self.target_map.get(self.host.get())):continue
-            if error or binding is None or source is None:
-                message=(str(error).strip() if error else '') or '경로 표시 칸을 읽지 못했습니다. 다시 지정하세요.'
-                self.slice_panel.binding_status.set('경로 지정 실패 · '+message)
-                self._append_log('슬라이싱 경로 지정 실패 · '+message)
-                write_error_log('슬라이싱 경로 지정 실패 · '+message)
-                if self._auto_source is not None and self._source_binding is not None:
-                    self._auto_source.rebind(self._source_binding)
-                messagebox.showerror('슬라이싱 경로 지정 실패',
-                    message+'\n\n첫 탭(Home)의 왼쪽 STATUS 영역에서 Browse 바로 왼쪽의 경로 글자를 지정하세요. 읽기 전용 표시 칸도 지정할 수 있습니다.',parent=self.root)
-                continue
-            accept = False
-            if not error:
-                accept=messagebox.askyesno('슬라이싱 경로 지정',
-                    f'{target.machine}의 이 표시 칸을 슬라이싱 경로로 사용할까요?\n\n표시 내용: {source.raw_text}\n\n가져올 폴더: {source.directory}\n이 폴더 안의 이미지 전체를 불러옵니다.',parent=self.root)
-            if (self.closing or serial != self._binding_serial or context != self.controller.generation
-                    or target != self.target_map.get(self.host.get())):continue
-            if accept:
-                self._source_binding=binding
-                self.slice_panel.auto_path.set('지정한 경로: '+source.directory)
-                self.slice_panel.binding_status.set('경로 지정 완료 · '+source.directory)
-                self.slice_panel.auto_status.set('경로 지정 완료 · 연결하면 자동으로 분석합니다.')
-                self._append_log('슬라이싱 경로 지정 완료 · '+source.directory)
-                if self.controller.thread is None:
-                    self.slice_panel.auto_enabled.set(True);self.slice_panel._mode_changed()
-                if self._auto_source is not None:self._auto_source.rebind(binding)
-            else:
-                self.slice_panel.binding_status.set('경로 지정 취소됨 · 기존 지정은 유지합니다.')
-                if self._auto_source is not None and self._source_binding is not None:
-                    self._auto_source.rebind(self._source_binding)
 
     def _publish_slice_dataset(self, dataset, token):
         if (self.closing or token != self.controller.generation or self.controller.thread is None
@@ -385,10 +309,9 @@ class ThermalFeedbackWindow:
             self._append_log("실행 중인 프로그램을 검색하고 창을 선택하세요.")
             return
         try:
-            auto_mode = self.slice_panel.auto_enabled.get()
-            if self.slice_panel.running and not auto_mode:
+            if self.slice_panel.running:
                 raise ValueError("슬라이싱 이미지 분석 완료 후 연결하세요.")
-            if self.slice_panel.paths and self.slice_panel.dataset is None and not auto_mode:
+            if self.slice_panel.paths and self.slice_panel.dataset is None:
                 raise ValueError("선택한 이미지 분석을 완료하거나 선택을 지운 후 연결하세요.")
             workbook = None
             settings = None
@@ -403,17 +326,14 @@ class ThermalFeedbackWindow:
                 workbook.validate()
             elif self.settings_path.get().strip():
                 settings = Path(self.settings_path.get().strip())
-            auto_source = None
-            if auto_mode:
-                if self._source_binding is None or self._source_binding.target != target:
-                    raise ValueError('선택한 BJT 첫 탭의 경로 표시 칸을 먼저 지정하세요.')
-                auto_source = AutoSliceSource(target,self.slice_panel.read_auto_config(),self._source_binding)
+            maximum_ir = parse_maximum_ir(self.maximum_ir_percent.get())
+            self.maximum_ir_preference.save(maximum_ir)
             options = SessionOptions(target=target, mode=MODE_LABELS[self.mode.get()],
+                maximum_ir_percent=maximum_ir,
                 target_temperature_c=parse_target_temperature(self.target_temperature.get()),
                 settings_path=settings, workbook_spec=workbook,
-                slice_dataset=None if auto_mode else self.slice_panel.dataset,auto_source=auto_source)
+                slice_dataset=self.slice_panel.dataset)
             if self.controller.connect(options):
-                self._auto_source=auto_source
                 self.charts.reset()
                 self._closing_charts_finalized = False
                 self.archive.submit(retry_failed=True)
@@ -422,6 +342,7 @@ class ThermalFeedbackWindow:
                 self._history_target_temperature = options.target_temperature_c
                 self.charts.set_target_temperature(options.target_temperature_c)
                 self.status.set("연결 중…")
+                self._append_log(f"최대 IR 출력 {maximum_ir:g}% · 연결 중 고정 · 기본 JSON 상한이 더 낮으면 해당 값 적용")
                 self.capability.set("CSV 저장 후 자동 적용 · 다른 탭/최소화 가능 · 수동 편집/원본 UI 응답 실패 시 적용 정지"
                     if options.mode == "control" else "읽기·제어 가능 여부를 확인하고 있습니다.")
         except (ValueError, KeyError, OSError) as error:
@@ -537,7 +458,7 @@ class ThermalFeedbackWindow:
             "CSV 자동 적용 중 · Process 표 접근 없음 · 다른 탭/최소화 가능"
             if payload["effective_mode"] == "control" else "기존 Sequences IR + Save 경로 확인됨")
         self.status.set("연결됨 · 제어 불가" if payload["effective_mode"] == "control-unavailable" else
-                        "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기", "control-waiting": "설정 확인·IR 적용 대기", "observation-waiting": "CSV 갱신·IR 적용 대기"}[payload["effective_mode"]])
+                        "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기", "control-waiting": "설정 확인·IR 적용 대기", "observation-waiting": "CSV 갱신·IR 적용 대기", "power-limit-waiting": "최대 IR 초과·적용 대기"}[payload["effective_mode"]])
         for heater, value in ((1, snapshot.heater1_setting_percent), (2, snapshot.heater2_setting_percent)):
             proposed = payload["proposed"].get(1 if snapshot.coupled_output else heater)
             self.outputs.item(f"heater{heater}", values=("—" if value is None else value,
@@ -585,8 +506,6 @@ class ThermalFeedbackWindow:
             # A canceled failed-export close leaves a read-only recovery window.
             self.root.after(50, self._pump)
             return
-        self._poll_source_binding()
-        if self._auto_source is not None:self.slice_panel.show_auto_view(self._auto_source.view())
         try:
             targets, error = self.discovery_queue.get_nowait()
         except queue.Empty:
@@ -627,8 +546,6 @@ class ThermalFeedbackWindow:
                 self._capture_current_plot()
                 self.archive.submit()
                 self.slice_panel.clear_session()
-                if self._auto_source is not None:self._auto_source.stop()
-                self._auto_source=None
                 self.status.set("연결 오류" if self.controller.error else "연결 해제됨")
                 self._append_log("외부 모듈 연결 종료. 원본 프로그램의 가열 ON/OFF는 변경하지 않습니다.")
         self._reconcile_slice_state()
@@ -636,6 +553,11 @@ class ThermalFeedbackWindow:
         self.root.after(50, self._pump)
 
     def close(self):
+        try:
+            self.maximum_ir_preference.save(parse_maximum_ir(self.maximum_ir_percent.get()))
+        except (ValueError, OSError) as error:
+            self._append_log(f"최대 IR 출력 설정 저장 실패 · 이전 저장값 유지: {error}")
+            write_error_log(f"최대 IR 출력 설정 저장 실패: {error}")
         if self.closing:
             return
         self.closing = True
