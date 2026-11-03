@@ -1,0 +1,67 @@
+{
+  "candidate_commit": "70c6c15be14c02ea740cee1ab65d2ec8f911cb30",
+  "run_id": 41568778381,
+  "run_url": "https://github.com/rlaengus444-ui/IR_feedback/actions/runs/41568778381",
+  "artifact_id": 13200651203,
+  "outer_sha256": "0f5b0aa670da20664f8e5afad6b8fa7d90222061ad3c79c28645da98f1369d46",
+  "outer_size_bytes": 34873435,
+  "zip_sha256": "8ab4037dd6fd15039ea222c3a70fbbcf30bbb4dc244db44897e08894c823c755",
+  "zip_size_bytes": 35365626,
+  "tests": {
+    "run": 280,
+    "skips": 0,
+    "passed": true,
+    "seconds": 69.245
+  },
+  "checks": {
+    "build": "success",
+    "tests": "success",
+    "smoke": "success",
+    "bridge": "success",
+    "csv_guard": "success",
+    "native_discovery": "success",
+    "slice_perf": "success",
+    "settings_recovery": "success",
+    "background": "success",
+    "excel": "failure",
+    "reverify": "success"
+  },
+  "background": {
+    "passed": true,
+    "cases": 8,
+    "native_saves": 4,
+    "connected_holds_without_save": 4,
+    "scope": "After connection and window/minimization setup; unrelated owned process foreground once; then new CSV, calculation and native edit/Save/persistence without refocusing",
+    "all_cases_foreground_samples_maintained": true,
+    "real_browser_or_equipment_tested": false
+  },
+  "excel_com": {
+    "excel_com_tested": false,
+    "release_ready": false,
+    "reason": "Excel COM is not registered"
+  },
+  "raw_readiness_preserved": true,
+  "expected_overall_ci_failure": "Excel COM unavailable; final release readiness remains false",
+  "earlier_failed_runs": [
+    {
+      "run_id": 41567840715,
+      "source_commit": "4461c64929c807e520b15b29f10d551e9183795a",
+      "failures": [
+        "Old Excel factory assertion missing new cap keyword",
+        "Minimized tests lost foreground during mixed setup/control observation; cause not determined"
+      ],
+      "raw_reports_preserved": true
+    },
+    {
+      "run_id": 41568187639,
+      "source_commit": "c1f3acccb4902c64007cb74ea49a072290579c49",
+      "note": "Factory expectation corrected; superseded by revised postconnection background scope and new full run"
+    }
+  ],
+  "known_test_log_diagnostics": [
+    "Two Tk teardown invalid-command _pump messages",
+    "One Pillow deprecation warning"
+  ],
+  "final_algorithm_approved": false,
+  "equipment_application_approved": false
+}
