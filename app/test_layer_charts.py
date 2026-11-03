@@ -4,6 +4,7 @@ from dataclasses import replace
 import csv
 from pathlib import Path
 import tempfile
+import threading
 import unittest
 from unittest.mock import Mock, patch
 
@@ -61,6 +62,67 @@ class HistoryTests(unittest.TestCase):
                             applied={1: 55, 2: 45}, proposed={1: 60}))
         point = history.points[0]
         self.assertEqual((52, 40, 55, 45), (point.ir1_observed, point.ir2_observed, point.ir1_saved, point.ir2_saved))
+
+    def test_same_observation_merges_confirmed_saves_without_changing_readings(self):
+        history = LayerHistory()
+        original = frame("pending", coupled_output=False, heater2_setting_percent=40)
+        self.assertTrue(history.record(dict(snapshot=original)))
+        later = replace(original, t_recoating_c=99, heater1_setting_percent=55,
+                        heater2_setting_percent=45)
+        self.assertTrue(history.record(dict(snapshot=later, applied={1: 55})))
+        point = history.points[0]
+        self.assertEqual((64, 52, 40, 55, None),
+                         (point.temperature, point.ir1_observed, point.ir2_observed,
+                          point.ir1_saved, point.ir2_saved))
+        self.assertFalse(history.record(dict(snapshot=later, applied={2: float("nan")})))
+        self.assertTrue(history.record(dict(snapshot=later, applied={2: 45})))
+        self.assertEqual((55, 45), (history.points[0].ir1_saved, history.points[0].ir2_saved))
+        self.assertFalse(history.record(dict(snapshot=later, applied={1: 55, 2: 45})))
+
+    def test_partial_save_is_preserved_in_archive_csv_and_plot_input(self):
+        history = LayerHistory()
+        snapshot = frame("pending", coupled_output=False, heater2_setting_percent=40)
+        history.record(dict(snapshot=snapshot))
+        history.record(dict(snapshot=snapshot, applied={1: 55}))
+        points = history.points
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "archive.csv"
+            _write_csv(path, points)
+            with path.open(encoding="utf-8-sig", newline="") as stream:
+                rows = list(csv.reader(stream))
+        self.assertEqual(["1", "64.0", "52.0", "40.0", "55.0", "", "아니오"], rows[1])
+        canvas = FakeCanvas()
+        index = LayerCharts._draw(canvas, points, True)
+        self.assertTrue(any("IR 1 저장값: 55.0%" in p[2] for p in index.points))
+        self.assertFalse(any("IR 2 저장값" in p[2] for p in index.points))
+
+    def test_same_key_save_reaches_archive_csv_and_both_png_inputs(self):
+        from plot_archive import PlotArchive
+        history = LayerHistory()
+        snapshot = frame("row", coupled_output=False, heater2_setting_percent=40)
+        history.record(dict(snapshot=snapshot))
+        history.record(dict(snapshot=snapshot, applied={1: 55, 2: 45}))
+        received = []
+        done = threading.Event()
+        def image_writer(path, points, kind, target):
+            received.append((kind, tuple(points)))
+            path.write_bytes(b"fake image")
+            if len(received) == 2:
+                done.set()
+        with tempfile.TemporaryDirectory() as directory:
+            archive = PlotArchive([directory], image_writer=image_writer)
+            self.assertTrue(archive.capture((1, 1), history.points))
+            archive.submit()
+            self.assertTrue(done.wait(3))
+            archive.close()
+            csv_path = next(Path(directory).glob("*.csv"))
+            with csv_path.open(encoding="utf-8-sig", newline="") as stream:
+                row = list(csv.reader(stream))[1]
+        self.assertEqual(["55.0", "45.0"], row[4:6])
+        self.assertEqual({"temperature", "ir"}, {kind for kind, _ in received})
+        for _, points in received:
+            self.assertEqual((52, 40, 55, 45), (points[0].ir1_observed,
+                points[0].ir2_observed, points[0].ir1_saved, points[0].ir2_saved))
 
     def test_new_run_and_reset_clear_prior_run_data(self):
         history = LayerHistory()

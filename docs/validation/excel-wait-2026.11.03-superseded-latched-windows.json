@@ -1,0 +1,59 @@
+{
+  "candidate_commit": "81bfadc5a71ae364e2555d4dd141237c3548ad0d",
+  "run_id": 41574150113,
+  "run_url": "https://github.com/rlaengus444-ui/IR_feedback/actions/runs/41574150113",
+  "artifact_id": 13202757229,
+  "outer_size_bytes": 34883222,
+  "outer_sha256": "fa21325ef266ce2c7531b31d6c42b9d5488e5058608ce5af7420c07825400df9",
+  "inner_zip_size_bytes": 35374300,
+  "inner_zip_sha256": "32acf14babbb29c8851a1e334874b313930cfcc64e2dd956389cac87ebb3c0fd",
+  "packaged_tests": {
+    "run": 322,
+    "passed": true,
+    "seconds": 68.921,
+    "skipped": 0
+  },
+  "checks": {
+    "build": "success",
+    "tests": "success",
+    "smoke": "success",
+    "bridge": "success",
+    "csv_guard": "success",
+    "native_discovery": "success",
+    "slice_perf": "success",
+    "settings_recovery": "success",
+    "background": "success",
+    "excel": "failure",
+    "reverify": "success"
+  },
+  "excel_wait_regressions": {
+    "real_thread_fake_calculators": 10,
+    "tk_gui_pump": 2,
+    "scope": "Synthetic calculators and fake BJT adapters; not actual Microsoft Excel COM."
+  },
+  "native_background": {
+    "passed": true,
+    "cases": 8,
+    "native_saves": 4,
+    "holds_without_save": 4,
+    "scope": "After connection/window setup; unrelated owned process foreground sampling; no equipment."
+  },
+  "excel_com": {
+    "excel_com_tested": false,
+    "release_ready": false,
+    "reason": "Excel COM is not registered"
+  },
+  "raw_readiness_preserved": true,
+  "expected_overall_ci_failure": "Missing Excel COM leaves automated_checks_passed/release_ready/device approval false",
+  "earlier_regression_failure": {
+    "source_commit": "0accc5c727a6d73f8cb7741838883e5f7750cfe0",
+    "linux_run": 276,
+    "failures": 1,
+    "cause": "CSV observation fixture did not use deterministic workbook-group fake; corrected in81bfadc, separate threaded tests retained",
+    "before_fix_logs_preserved": true
+  },
+  "actual_pc_cause_confirmed": false,
+  "connected_pc_available": false,
+  "final_algorithm_approved": false,
+  "equipment_application_approved": false
+}

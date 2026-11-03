@@ -19,6 +19,7 @@ import subprocess
 import tempfile
 import threading
 import time
+from types import MappingProxyType
 import zipfile
 from xml.etree import ElementTree as ET
 
@@ -299,8 +300,30 @@ def inspect_workbook(spec: WorkbookSpec, data: bytes, stop_event=None):
         raise ValueError("손상되었거나 지원하지 않는 .xlsx 파일입니다.") from error
 
 
+@dataclass(frozen=True, init=False)
+class PreparedWorkbook:
+    spec: WorkbookSpec
+    data: bytes
+    metadata: object
+
+    @classmethod
+    def from_bytes(cls, spec, data, stop_event=None):
+        data = bytes(data)
+        metadata = inspect_workbook(spec, data, stop_event=stop_event)
+        result = object.__new__(cls)
+        object.__setattr__(result, 'spec', spec)
+        object.__setattr__(result, 'data', data)
+        object.__setattr__(result, 'metadata', MappingProxyType(dict(metadata)))
+        return result
+
+    @classmethod
+    def from_file(cls, spec, stop_event=None):
+        with open(spec.path, 'rb') as source:
+            return cls.from_bytes(spec, source.read(_MAX_BYTES + 1), stop_event=stop_event)
+
+
 class WorkbookController:
-    def __init__(self, spec: WorkbookSpec, target_temperature_c: float, *, timeout=8.0, stop_event=None, maximum_ir_percent=100.0, on_created=None):
+    def __init__(self, spec: WorkbookSpec, target_temperature_c: float, *, timeout=8.0, stop_event=None, maximum_ir_percent=100.0, on_created=None, prepared_workbook=None):
         self.spec = spec
         self.maximum_ir_percent = validate_maximum_ir(maximum_ir_percent)
         self.timeout = float(timeout)
@@ -319,21 +342,31 @@ class WorkbookController:
         self._phase = None
         self._last_operation = None
         self._operation_started = None
+        self._retire_lock = threading.Lock()
+        self._constructor_done = threading.Event()
+        self._reader_done = threading.Event()
+        self._reader_done.set()
+        self._reader_thread = None
+        self._excel_ownership_known = True
+        self._excel_exited = True
+        self._init_requested = False
+        self._cleanup_active = False
+        self._retirement_reason = None
         try:
             if on_created is not None:
                 on_created(self)
             self._check_stopped()
-            with open(spec.path, "rb") as f:
-                data = f.read(_MAX_BYTES + 1)
-            self.metadata = inspect_workbook(spec, data, stop_event=self.stop_event)
+            prepared = prepared_workbook or PreparedWorkbook.from_file(spec, stop_event=self.stop_event)
+            if not isinstance(prepared, PreparedWorkbook) or prepared.spec != spec or hashlib.sha256(prepared.data).hexdigest() != prepared.metadata['sha256']:
+                raise ValueError('Excel 파일과 검사 정보가 일치하지 않습니다.')
+            data = prepared.data
+            self.metadata = dict(prepared.metadata)
             if self.stop_event is not None and self.stop_event.is_set():
                 raise InterruptedError("연결이 취소되어 Excel 계산을 시작하지 않았습니다.")
             temp = tempfile.TemporaryDirectory(prefix="IR-feedback-excel-")
             with self._lifecycle_lock:
-                if self._closed:
-                    temp.cleanup()
-                    raise InterruptedError("연결이 취소되어 Excel 계산을 시작하지 않았습니다.")
                 self._temp = temp
+            self._check_stopped()
             private_path = Path(temp.name) / "workbook.xlsx"
             private_path.write_bytes(data)
             worker = Path(__file__).with_name("excel_worker.ps1")
@@ -344,12 +377,10 @@ class WorkbookController:
                 text=True, encoding="utf-8", errors="replace", bufsize=1,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             with self._lifecycle_lock:
-                if self._closed:
-                    proc.kill()
-                    proc.wait(timeout=2)
-                    raise InterruptedError("연결이 취소되어 Excel 계산을 시작하지 않았습니다.")
                 self._proc = proc
-            threading.Thread(target=self._reader, args=(proc,), daemon=True).start()
+                self._reader_done.clear()
+                self._reader_thread = threading.Thread(target=self._reader, args=(proc,), daemon=True)
+                self._reader_thread.start()
             self._check_stopped()
             request = dict(op="init", path=str(private_path), sheet=self.metadata["sheet"],
                            temperature=spec.temperature_cell, actual=spec.actual_power_cell,
@@ -360,41 +391,61 @@ class WorkbookController:
         except Exception:
             self.close(force=True)
             raise
+        finally:
+            self._constructor_done.set()
+            if self._closed:
+                self.close(force=True)
 
     def _reader(self, proc):
         try:
             for line in proc.stdout:
                 try:
                     data = json.loads(line)
+                    if not isinstance(data, dict):
+                        raise ValueError('Excel response is not an object')
                 except Exception:
+                    with self._lifecycle_lock:
+                        if getattr(self, '_init_requested', False):
+                            self._excel_ownership_known = False
+                            self._excel_exited = False
                     self._queue.put({"error": "Excel 응답 형식이 올바르지 않습니다."})
                     continue
-                if data.get("event") == "progress":
+                if data.get("event") == "excel_starting":
+                    with self._lifecycle_lock:
+                        self._excel_ownership_known = False
+                        self._excel_exited = False
+                elif data.get("event") == "progress":
                     with self._lifecycle_lock:
                         self._phase = str(data.get("phase", ""))
                 elif data.get("event") == "excel_started":
                     try:
+                        pid = data.get("pid")
+                        if type(pid) is not int or not 1 <= pid <= 0xFFFFFFFF:
+                            raise ValueError("Invalid Excel process ID")
                         import ctypes
                         kernel = ctypes.WinDLL("kernel32", use_last_error=True)
                         kernel.OpenProcess.argtypes = [ctypes.c_uint, ctypes.c_int, ctypes.c_uint]
                         kernel.OpenProcess.restype = ctypes.c_void_p
-                        handle = kernel.OpenProcess(0x0001 | 0x1000, False, int(data["pid"]))
+                        handle = kernel.OpenProcess(0x0001 | 0x1000 | 0x00100000, False, pid)
                         if not handle:
+                            with self._lifecycle_lock:
+                                self._excel_ownership_known = False
+                                self._excel_exited = False
                             self._queue.put({"error": "전용 Excel 프로세스 관리 권한이 없습니다."})
                         else:
                             with self._lifecycle_lock:
-                                if self._closed:
-                                    kernel.TerminateProcess.argtypes = [ctypes.c_void_p, ctypes.c_uint]
-                                    kernel.CloseHandle.argtypes = [ctypes.c_void_p]
-                                    kernel.TerminateProcess(handle, 1)
-                                    kernel.CloseHandle(handle)
-                                else:
-                                    self._excel_handle = handle
+                                self._excel_handle = handle
+                                self._excel_ownership_known = True
+                                self._excel_exited = False
                     except Exception:
+                        with self._lifecycle_lock:
+                            self._excel_ownership_known = False
+                            self._excel_exited = False
                         self._queue.put({"error": "전용 Excel 프로세스를 확인할 수 없습니다."})
                 else:
                     self._queue.put(data)
         finally:
+            self._reader_done.set()
             self._queue.put({"transport_error": "Excel 계산 프로세스가 종료되었습니다."})
 
     def _check_stopped(self):
@@ -424,6 +475,9 @@ class WorkbookController:
         if not proc or proc.poll() is not None:
             raise failure(WorkbookTransportError, "Excel 계산 프로세스가 실행 중이 아닙니다.")
         try:
+            if operation == 'init':
+                with self._lifecycle_lock:
+                    self._init_requested = True
             proc.stdin.write(json.dumps(command, ensure_ascii=True) + "\n")
             proc.stdin.flush()
             while True:
@@ -511,40 +565,110 @@ class WorkbookController:
         self._last_layer = layer
         return LayerRecommendation(safe, "Excel 수식" if safe == value else "Excel 수식 · 최대 출력/증감 제한", {"excel_raw": value, "maximum_ir_percent": self.maximum_ir_percent})
 
-    def close(self, force=False):
-        with self._lifecycle_lock:
-            self._closed = True
-            excel_handle = self._excel_handle
-            self._excel_handle = None
+    def retirement_status(self):
+        if not self._lifecycle_lock.acquire(blocking=False):
+            return dict(complete=False, verified=False, reason='lifecycle state busy',
+                        worker_exited=False, reader_done=False, excel_ownership_known=False,
+                        excel_exited=False, temp_deleted=False)
+        try:
             proc = self._proc
-            self._proc = None
-            temp = self._temp
-            self._temp = None
-        if proc:
-            if not force and proc.poll() is None:
-                try:
-                    proc.stdin.write('{"op":"close"}\n')
-                    proc.stdin.flush()
-                    proc.wait(timeout=2)
-                except Exception:
-                    pass
-            if proc.poll() is None:
-                proc.kill()
-                try:
-                    proc.wait(timeout=2)
-                except Exception:
-                    pass
-        if excel_handle:
-            import ctypes
-            kernel = ctypes.WinDLL("kernel32", use_last_error=True)
-            kernel.TerminateProcess.argtypes = [ctypes.c_void_p, ctypes.c_uint]
-            kernel.CloseHandle.argtypes = [ctypes.c_void_p]
-            # An open process handle cannot be redirected by PID reuse. The
-            # worker only supplies a PID absent before its COM creation.
-            kernel.TerminateProcess(excel_handle, 1)
-            kernel.CloseHandle(excel_handle)
-        if temp:
+            worker_exited = proc is None or proc.poll() is not None
+            reader_done = getattr(self, '_reader_done', None)
+            reader_done = reader_done is None or reader_done.is_set()
+            constructor = getattr(self, '_constructor_done', None)
+            constructor_done = constructor is None or constructor.is_set()
+            ownership = getattr(self, '_excel_ownership_known', True)
+            excel_exited = getattr(self, '_excel_exited', self._excel_handle is None)
+            temp_deleted = self._temp is None
+            complete = self._closed and constructor_done and not getattr(self, '_cleanup_active', False)
+            verified = complete and worker_exited and reader_done and ownership and excel_exited and temp_deleted
+            reason = getattr(self, '_retirement_reason', None)
+            if not verified and not reason:
+                reason = ('constructor active' if not constructor_done else
+                          'cleanup in progress' if not complete else
+                          'worker exit unconfirmed' if not worker_exited else
+                          'reader not finished' if not reader_done else
+                          'Excel ownership unknown' if not ownership else
+                          'Excel exit unconfirmed' if not excel_exited else 'temporary files remain')
+            return dict(complete=complete, verified=verified, reason=None if verified else reason,
+                        worker_exited=worker_exited, reader_done=reader_done,
+                        excel_ownership_known=ownership, excel_exited=excel_exited,
+                        temp_deleted=temp_deleted)
+        finally:
+            self._lifecycle_lock.release()
+
+    def close(self, force=False):
+        # A separate lock serializes retirement attempts. Never hold the
+        # lifecycle lock while waiting for a process or the reader thread.
+        retire_lock = getattr(self, '_retire_lock', None)
+        if retire_lock is None:  # lightweight test fixtures created without __init__
+            retire_lock = self._retire_lock = threading.Lock()
+        with retire_lock:
+            with self._lifecycle_lock:
+                self._closed = True
+                self._cleanup_active = True
+                self._retirement_reason = None
+                proc = self._proc
+                reader = getattr(self, '_reader_thread', None)
+            reasons = []
             try:
-                temp.cleanup()
-            except OSError:
-                pass
+                if proc is not None:
+                    try:
+                        if not force and proc.poll() is None:
+                            proc.stdin.write('{"op":"close"}\n')
+                            proc.stdin.flush()
+                            proc.wait(timeout=2)
+                        if proc.poll() is None:
+                            proc.kill()
+                        proc.wait(timeout=2)
+                        if proc.poll() is not None:
+                            with self._lifecycle_lock:
+                                if self._proc is proc:
+                                    self._proc = None
+                        else:
+                            reasons.append('worker exit unconfirmed')
+                    except Exception:
+                        reasons.append('worker exit unconfirmed')
+                if reader is not None and reader is not threading.current_thread():
+                    reader.join(timeout=2)
+                if reader is not None and not self._reader_done.is_set():
+                    reasons.append('reader not finished')
+                # Drain stdout before inspecting the handle: excel_started can
+                # arrive after close begins, and its process must be retired too.
+                with self._lifecycle_lock:
+                    handle = self._excel_handle
+                if handle:
+                    try:
+                        import ctypes
+                        kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+                        kernel.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+                        kernel.WaitForSingleObject.restype = ctypes.c_uint
+                        kernel.TerminateProcess.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+                        kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+                        if kernel.WaitForSingleObject(handle, 0) != 0:
+                            kernel.TerminateProcess(handle, 1)
+                        if kernel.WaitForSingleObject(handle, 2000) != 0:
+                            reasons.append('Excel exit unconfirmed')
+                        elif not kernel.CloseHandle(handle):
+                            reasons.append('Excel handle close failed')
+                        else:
+                            with self._lifecycle_lock:
+                                if self._excel_handle == handle:
+                                    self._excel_handle = None
+                                    self._excel_exited = True
+                    except Exception:
+                        reasons.append('Excel exit unconfirmed')
+                with self._lifecycle_lock:
+                    temp = self._temp
+                if temp is not None:
+                    try:
+                        temp.cleanup()
+                        with self._lifecycle_lock:
+                            if self._temp is temp:
+                                self._temp = None
+                    except Exception:
+                        reasons.append('temporary file cleanup failed')
+            finally:
+                with self._lifecycle_lock:
+                    self._retirement_reason = '; '.join(reasons) or None
+                    self._cleanup_active = False

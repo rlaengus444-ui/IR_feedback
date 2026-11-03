@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from adapter_contracts import AmbiguousWriteError, MachineWindow, UiAdapter, UiSnapshot
-from excel_async import AsyncWorkbookGroup
+from excel_async import AsyncWorkbookGroup, ExcelGroupFence
 from excel_workbook import WorkbookSpec, WorkbookTimeout
 from session import SessionController, SessionOptions, run_ui_session
 from slice_data import SliceConfig, SliceDataset, SliceRecord
@@ -37,6 +37,7 @@ class Harness:
         self.timeout = timeout
         self.ambiguous = ambiguous
         self.group = None
+        self.fence = ExcelGroupFence()
         self.error = None
         self.stop = threading.Event()
         self.adapter = Mock(spec=UiAdapter)
@@ -49,6 +50,7 @@ class Harness:
 
         class Controller:
             def __init__(self, spec, target, **kwargs):
+                self.closed = False
                 harness.init_entered.set()
                 if harness.block_init and not harness.init_release.wait(4):
                     raise RuntimeError("test did not release init")
@@ -70,7 +72,9 @@ class Harness:
                                           deadline=1, phase='calculate', process_state='unknown')
                 return SimpleNamespace(power_percent=power + 1, reason='fake')
             def close(self, force=False):
-                pass
+                self.closed = True
+            def retirement_status(self):
+                return {"verified": self.closed}
         self.factory = Controller
 
     @staticmethod
@@ -97,7 +101,7 @@ class Harness:
             self.condition.notify_all()
 
     def group_factory(self, *args, **kwargs):
-        self.group = AsyncWorkbookGroup(*args, **kwargs)
+        self.group = AsyncWorkbookGroup(*args, fence=self.fence, **kwargs)
         return self.group
 
     def start(self, wait_ready=True):

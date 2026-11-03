@@ -27,9 +27,23 @@ class TargetIdentityError(AdapterError):
     pass
 
 
-class UiReadTimeout(AdapterError):
+class ReadTransportError(AdapterError):
+    """A read-only operation could not reach the native helper."""
+    def __init__(self, operation, message, actuation_possible=False, helper_retired=True):
+        super().__init__(message)
+        self.operation = operation
+        self.actuation_possible = actuation_possible
+        self.helper_retired = helper_retired
+
+
+class ProtocolError(AdapterError):
+    """The helper returned an invalid protocol response."""
+
+
+class UiReadTimeout(ReadTransportError):
     """A bounded helper timed out; only a known read-only operation may wait."""
-    pass
+    def __init__(self, message, operation="unknown", actuation_possible=False):
+        super().__init__(operation, message, actuation_possible)
 
 
 class AmbiguousWriteError(AdapterError):
@@ -68,6 +82,11 @@ class UiSnapshot:
     recoating_finished: object = None
     slice_lineage: str = ""
     csv_generation: str = ""
+    observation_fresh: bool = False
+    measurement_valid: bool = True
+    invalid_reason: str = ""
+    actual_target: MachineWindow | None = None
+    actuation_barrier: bool = False
 
 
 class UiAdapter(Protocol):

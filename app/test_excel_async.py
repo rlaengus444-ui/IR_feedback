@@ -2,8 +2,14 @@ import threading
 import time
 import unittest
 
-from excel_async import AsyncWorkbookGroup
+from excel_async import AsyncWorkbookGroup as RealGroup, ExcelGroupFence
 from excel_workbook import WorkbookTransportError
+
+
+class AsyncWorkbookGroup(RealGroup):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('fence', ExcelGroupFence())
+        super().__init__(*args, **kwargs)
 
 
 class FakeController:
@@ -78,6 +84,121 @@ class AsyncTests(unittest.TestCase):
         owners = {ident for c in FakeController.instances for _, ident in c.calls}
         self.assertEqual(len(owners), 1)
         self.assertNotIn(threading.get_ident(), owners)
+
+    def test_prepares_once_and_shares_frozen_workbook(self):
+        frozen = object()
+        prepares, received = [], []
+        def prepare(spec, *, stop_event):
+            prepares.append(spec)
+            return frozen
+        class PreparedController(FakeController):
+            def __init__(self, spec, target, *, prepared_workbook, **kwargs):
+                received.append(prepared_workbook)
+                super().__init__(spec, target, **kwargs)
+        group = AsyncWorkbookGroup('spec', 100, 100, threading.Event(), PreparedController,
+                                   prepare_factory=prepare)
+        self.addCleanup(group.close)
+        group.start(['A', 'B'])
+        wait_for(group.poll)
+        self.assertEqual(prepares, ['spec'])
+        self.assertEqual(received, [frozen, frozen])
+        self.assertIs(group.prepared_workbook, frozen)
+
+    def test_retirement_requires_verified_cleanup(self):
+        class Retiring(FakeController):
+            def __init__(self, *args, **kwargs):
+                self.verified = False
+                super().__init__(*args, **kwargs)
+            def retirement_status(self):
+                return {'verified': self.verified}
+        group = AsyncWorkbookGroup(None, 100, 100, threading.Event(), Retiring)
+        group.start(['A'])
+        wait_for(group.poll)
+        group.close()
+        wait_for(lambda: group._owner_done)
+        self.assertFalse(group.retirement_status()['verified'])
+        controller = group._owned[0]
+        controller.verified = True
+        with group._condition:
+            group._condition.notify_all()
+        wait_for(lambda: group.retirement_status()['verified'])
+
+    def test_fence_blocks_new_group_until_previous_verified(self):
+        class Retiring(FakeController):
+            def __init__(self, *args, **kwargs):
+                self.verified = False
+                super().__init__(*args, **kwargs)
+            def retirement_status(self):
+                return {'verified': self.verified}
+        fence = ExcelGroupFence()
+        first = RealGroup(None, 100, 100, threading.Event(), Retiring, fence=fence)
+        second = RealGroup(None, 100, 100, threading.Event(), Retiring, fence=fence)
+        self.addCleanup(first.close)
+        self.addCleanup(second.close)
+        first.start(['A'])
+        wait_for(first.poll)
+        first.close()
+        second.start(['A'])
+        self.assertEqual(second.state, 'waiting-retirement')
+        self.assertIsNone(second._thread)
+        self.assertEqual(len(FakeController.instances), 1)
+        FakeController.instances[0].verified = True
+        with first._condition:
+            first._condition.notify_all()
+        wait_for(lambda: first.retirement_status()['verified'])
+        wait_for(second.poll)
+        self.assertEqual(second.state, 'ready')
+        self.assertEqual(len(FakeController.instances), 2)
+
+    def test_cancel_after_claim_before_thread_start_releases_fence(self):
+        class PausedFence(ExcelGroupFence):
+            def __init__(self):
+                super().__init__()
+                self.claimed = threading.Event()
+                self.release = threading.Event()
+                self.first = True
+            def try_claim(self, group):
+                result = super().try_claim(group)
+                if result and self.first:
+                    self.first = False
+                    self.claimed.set()
+                    self.release.wait(2)
+                return result
+        fence = PausedFence()
+        stop = threading.Event()
+        first = RealGroup(None, 100, 100, stop, FakeController, fence=fence)
+        self.addCleanup(first.close)
+        starter = threading.Thread(target=first.start, args=(['A'],))
+        starter.start()
+        wait_for(fence.claimed.is_set)
+        stop.set()
+        first.poll()
+        fence.release.set()
+        starter.join(2)
+        self.assertEqual(first.state, 'closed')
+        self.assertIsNone(first._thread)
+        wait_for(lambda: first.retirement_status()['verified'])
+        second = RealGroup(None, 100, 100, threading.Event(), FakeController, fence=fence)
+        self.addCleanup(second.close)
+        second.start(['A'])
+        wait_for(second.poll)
+        self.assertEqual(second.state, 'ready')
+
+    def test_cancel_waiting_group_without_starting_thread(self):
+        fence = ExcelGroupFence()
+        first = RealGroup(None, 100, 100, threading.Event(), FakeController, fence=fence)
+        first.start(['A'])
+        wait_for(first.poll)
+        self.addCleanup(first.close)
+        stop = threading.Event()
+        waiting = RealGroup(None, 100, 100, stop, FakeController, fence=fence)
+        waiting.start(['A'])
+        self.assertEqual(waiting.state, 'waiting-retirement')
+        stop.set()
+        waiting.poll()
+        self.assertEqual(waiting.state, 'closed')
+        self.assertIsNone(waiting._thread)
+        wait_for(lambda: waiting.retirement_status()['verified'])
 
     def test_reset_supersedes_busy_and_discards_old_result(self):
         self.start()

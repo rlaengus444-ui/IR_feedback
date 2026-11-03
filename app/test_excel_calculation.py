@@ -144,7 +144,105 @@ class CalculationTests(unittest.TestCase):
                       'phase=reset:open_workbook', 'process_state=running'):
             self.assertIn(field, self.calc.diagnostic_reason)
         self.assertEqual(self.calc.waiting_status(),
-                         'Excel 응답 지연 · IR 적용 정지 · 연결 해제 후 재연결 필요')
+                         'Excel 종료 확인 대기 · 자동 적용 일시정지')
+
+    def test_recovery_requires_retirement_and_reuses_prepared_bytes(self):
+        now = [0]
+        class Recoverable(Group):
+            created = []
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.prepared_workbook = kwargs.get('prepared_workbook', object())
+                self.verified = False
+                self.created.append(self)
+            def retirement_status(self):
+                return {'verified': self.verified}
+        calc = ExcelCalculation(None, 100, 80, threading.Event(), group_factory=Recoverable,
+                                clock=lambda: now[0])
+        calc.watch(row('1'), **self.kw)
+        old = calc.group
+        old.events.append({'kind': 'ready'})
+        calc.watch(row('1'), **self.kw)
+        error = WorkbookTimeout('x', operation='step', elapsed=8, deadline=8,
+                                phase='step', process_state='running')
+        old.events.append({'kind': 'timeout', 'error': error})
+        calc.watch(row('2'), **self.kw)
+        now[0] = 100
+        calc.watch(row('3'), **self.kw)
+        self.assertIs(calc.group, old)
+        old.verified = True
+        calc.watch(row('3'), **self.kw)
+        now[0] += 1
+        calc.watch(row('3'), **self.kw)
+        self.assertIs(calc.group, old)
+        now[0] += 1
+        calc.watch(row('3'), **self.kw)
+        self.assertIsNot(calc.group, old)
+        self.assertIs(calc.group.prepared_workbook, old.prepared_workbook)
+        calc.group.events.append({'kind': 'ready'})
+        calc.watch(row('3'), **self.kw)
+        self.assertIsNone(calc.calculate(row('3'), self.kw['powers'], (1, 2), (1, 100), None))
+        self.assertEqual(calc.group.jobs, [])
+        calc.calculate(row('4'), self.kw['powers'], (1, 2), (1, 100), None)
+        self.assertEqual(len(calc.group.jobs), 1)
+
+    def test_repeated_failures_back_off_until_accepted_batch(self):
+        now = [0]
+        class Recoverable(Group):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.prepared_workbook = kwargs.get('prepared_workbook', object())
+            def retirement_status(self):
+                return {'verified': True}
+        calc = ExcelCalculation(None, 100, 80, threading.Event(), group_factory=Recoverable,
+                                clock=lambda: now[0])
+        calc.watch(row('1'), **self.kw)
+        for fault_number, delay in enumerate((2, 5, 15, 30, 60, 60), 1):
+            calc.group.events.append({'kind': 'ready'})
+            calc.watch(row('1'), **self.kw)
+            error = WorkbookTimeout('x', operation='step', elapsed=8, deadline=8,
+                                    phase='step', process_state='running')
+            calc.group.events.append({'kind': 'timeout', 'error': error})
+            calc.watch(row('1'), **self.kw)
+            self.assertEqual(calc.fault_generation, fault_number)
+            calc.watch(row('1'), **self.kw)
+            self.assertEqual(calc._retry_at, now[0] + delay)
+            now[0] += delay
+            calc.watch(row('1'), **self.kw)
+        calc.group.events.append({'kind': 'ready'})
+        calc.watch(row('1'), **self.kw)
+        calc.calculate(row('2'), self.kw['powers'], (1, 2), (1, 100), None)
+        ticket = calc.group.jobs[-1][0]
+        calc.group.events.append({'kind': 'result', 'ticket': ticket, 'results': {1: 5, 2: 6}})
+        calc.watch(row('2', new=False), **self.kw)
+        self.assertEqual(calc.calculate(row('2', new=False), self.kw['powers'], (1, 2), (1, 100), None), {1: 5, 2: 6})
+        self.assertEqual(calc._failures, 0)
+        self.assertEqual(calc.fault_generation, 6)
+
+    def test_topology_change_during_backoff_never_starts_old_group(self):
+        now = [0]
+        class Recoverable(Group):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.prepared_workbook = kwargs.get('prepared_workbook', object())
+            def retirement_status(self):
+                return {'verified': True}
+        calc = ExcelCalculation(None, 100, 80, threading.Event(), group_factory=Recoverable,
+                                clock=lambda: now[0])
+        calc.watch(row('1'), **self.kw)
+        old = calc.group
+        old.events.append({'kind': 'timeout', 'error': WorkbookTimeout('x', operation='step',
+                           elapsed=8, deadline=8, phase='step', process_state='running')})
+        calc.watch(row('1'), **self.kw)
+        calc.watch(row('1'), **self.kw)
+        now[0] = 3
+        calc.watch(row('2'), **(self.kw | {'heaters': (1,), 'powers': {1: 20}}))
+        self.assertIs(calc.group, old)
+        self.assertIn('히터 구성 변경', calc.waiting_status())
+        calc.watch(row('2'), **self.kw)
+        self.assertIsNot(calc.group, old)
+        self.assertEqual(calc.fault_generation, 1)
+        self.assertEqual(calc.describe()['failure_streak'], 1)
 
     def test_other_error_propagates(self):
         self.group.events.append({'kind': 'error', 'error': ValueError('bad formula')})
@@ -188,7 +286,7 @@ class CalculationTests(unittest.TestCase):
         self.assertTrue(self.calc._resetting)
 
     def test_real_owner_passes_one_based_layer_to_controller(self):
-        from excel_async import AsyncWorkbookGroup
+        from excel_async import AsyncWorkbookGroup, ExcelGroupFence
         calls = []
         class Controller:
             def __init__(self, spec, target, **kwargs):
@@ -200,8 +298,10 @@ class CalculationTests(unittest.TestCase):
                 return power
             def close(self, force=False):
                 pass
+        def group_factory(*args, **kwargs):
+            return AsyncWorkbookGroup(*args, **kwargs, fence=ExcelGroupFence())
         calc = ExcelCalculation(None, 100, 80, threading.Event(), controller_factory=Controller,
-                                group_factory=AsyncWorkbookGroup)
+                                group_factory=group_factory)
         self.addCleanup(calc.close)
         calc.watch(row('1'), **self.kw)
         deadline = time.monotonic() + 2

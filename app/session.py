@@ -97,11 +97,11 @@ class SessionOptions:
 
 def default_adapter_factory():
     # Importing or testing the controller never probes another application.
-    from windows_ui_adapter import WindowsUiAdapter
-    return WindowsUiAdapter()
+    from resilient_adapter import ResilientUiAdapter
+    return ResilientUiAdapter()
 
 
-def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_factory, *, workbook_group_factory=None):
+def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_factory, *, workbook_group_factory=None, preserve_adapter=False):
     """Only this worker reads BJT/CSV or writes IR; Excel has a separate owner."""
     adapter = None
     controllers = {}
@@ -215,7 +215,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 effective_mode = "waiting"
                 status = "비자동/미확인 상태 · 이력 초기화 후 AUTO/RUNNING 및 새 T_recoating 대기"
             elif options.mode == "control" and not snapshot.control_available:
-                if snapshot.control_recoverable:
+                if snapshot.control_recoverable or snapshot.actuation_barrier:
                     hold_feedback()
                     effective_mode = "control-waiting"
                     status = "연결 유지 · IR 적용 대기: " + snapshot.control_unavailable_reason
@@ -345,9 +345,9 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                     effective_mode = "calculation-hold"
                     can_calculate = False
                     status = excel_calc.waiting_status()
-                    if excel_hold_reported != excel_calc.latched_reason:
+                    if excel_hold_reported != excel_calc.fault_generation:
                         emit("calculation_hold", excel_calc.diagnostic_reason or excel_calc.latched_reason)
-                        excel_hold_reported = excel_calc.latched_reason
+                        excel_hold_reported = excel_calc.fault_generation
             # Existing historical rows at connection time are shown but do not
             # create a control action. Wait for receipt of a new T_recoating row.
             if control_barrier:
@@ -498,7 +498,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 reasons.clear()
                 status = "이미지 교체 요청됨 · 이전 계산 적용 보류"
             if (excel_calc is not None and effective_mode in ("control", "preview")
-                    and (excel_calc.pending or excel_calc.describe().get("state") in ("initializing", "resetting", "busy"))):
+                    and (excel_calc.pending or excel_calc.describe().get("state") in ("initializing", "resetting", "busy", "waiting-retirement"))):
                 effective_mode = "calculation-waiting"
                 status = excel_calc.waiting_status()
             if last_status != (effective_mode, status):
@@ -519,7 +519,10 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
     finally:
         try:
             if adapter is not None:
-                adapter.disconnect()
+                if preserve_adapter and not stop_event.is_set():
+                    adapter.drop_transport()
+                else:
+                    adapter.disconnect()
         finally:
             if excel_calc is not None:
                 excel_calc.close()
@@ -559,7 +562,10 @@ class BoundedEvents:
 class SessionController:
     """Call connect/disconnect/poll only on the view thread; worker emits data only."""
 
-    def __init__(self, runner=run_ui_session, thread_factory=threading.Thread, error_logger=None):
+    def __init__(self, runner=None, thread_factory=threading.Thread, error_logger=None):
+        if runner is None:
+            from observed_session import run_observed_session
+            runner = run_observed_session
         self.runner = runner
         self.thread_factory = thread_factory
         self.error_logger = error_logger
@@ -588,7 +594,7 @@ class SessionController:
         self.image_consuming = bool(options.mode != "monitor" and options.workbook_spec is not None
                                     and options.workbook_spec.slice_start_cell)
         def emit(kind, payload):
-            if kind == "calculation_hold" and self.error_logger is not None:
+            if kind in ("calculation_hold", "observer_hold", "actuation_barrier") and self.error_logger is not None:
                 try:
                     self.error_logger(str(payload))
                 except OSError:
@@ -624,14 +630,14 @@ class SessionController:
 
     def update_target_temperature(self, value):
         """Schedule a new target for the next new valid CSV observation."""
-        if (self.thread is None or self.closed or self.state not in ("connecting", "connected")
+        if (self.thread is None or self.closed or self.state not in ("connecting", "connected", "recovering")
                 or self.target_temperature_setting is None):
             raise ValueError("연결 중에만 목표 온도를 적용할 수 있습니다.")
         return self.target_temperature_setting.set(value)
 
     def update_slice_dataset(self, dataset):
         """Queue a complete dataset/clear; activation belongs to the worker."""
-        if (self.thread is None or self.closed or self.state not in ("connecting", "connected")
+        if (self.thread is None or self.closed or self.state not in ("connecting", "connected", "recovering")
                 or self.slice_dataset_setting is None):
             raise ValueError("연결 중에만 이미지 데이터 교체를 예약할 수 있습니다.")
         return self.slice_dataset_setting.request(dataset)
@@ -645,7 +651,11 @@ class SessionController:
         for event in self.events.drain():
             if event.generation != self.generation or self.closed:
                 continue
-            if event.kind == "connected" and self.state == "connecting":
+            if event.kind == "connected" and self.state in ("connecting", "recovering"):
+                self.state = "connected"
+            elif event.kind == "observer_hold":
+                self.state = "recovering"
+            elif event.kind == "snapshot" and self.state == "recovering":
                 self.state = "connected"
             elif event.kind == "error":
                 self.error = str(event.payload)

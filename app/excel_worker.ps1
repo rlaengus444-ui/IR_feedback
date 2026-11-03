@@ -48,6 +48,7 @@ try {
                     Send-Reply @{ event = 'progress'; phase = 'init:start' }
                     if ($null -ne $excel) { throw 'Excel already initialized.' }
                     $priorPids = @(Get-Process -Name EXCEL -ErrorAction SilentlyContinue | ForEach-Object { $_.Id })
+                    Send-Reply @{ event = 'excel_starting' }
                     try { $excel = New-Object -ComObject Excel.Application }
                     catch { throw 'Cannot start Microsoft Excel. Verify that Excel is installed.' }
                     [uint32]$excelPid = 0

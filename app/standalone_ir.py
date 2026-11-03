@@ -227,7 +227,7 @@ class ThermalFeedbackWindow:
 
     def _publish_slice_dataset(self, dataset, token):
         if (self.closing or token != self.controller.generation or self.controller.thread is None
-                or self.controller.state not in ("connecting", "connected")):
+                or self.controller.state not in ("connecting", "connected", "recovering")):
             return
         try:
             epoch = self.controller.update_slice_dataset(dataset)
@@ -370,7 +370,7 @@ class ThermalFeedbackWindow:
             widget.configure(state="disabled" if busy else idle_state)
         self.slice_panel.set_locked(self.closing or closed or self.controller.state == "disconnecting")
         target_ready = (self.controller.thread is not None and not self.closing
-                        and self.controller.state in ("connecting", "connected"))
+                        and self.controller.state in ("connecting", "connected", "recovering"))
         self.temperature_entry.configure(state="disabled" if self.closing or closed or self.controller.state == "disconnecting" else "normal")
         self.target_apply_button.configure(state="normal" if target_ready else "disabled")
         self.search_button.configure(state="disabled" if busy or self.searching else "normal")
@@ -391,7 +391,7 @@ class ThermalFeedbackWindow:
         # Activation events share a bounded display queue and may be dropped.
         # The immutable worker binding is authoritative, even after UI backlog.
         setting = self.controller.slice_dataset_setting
-        if setting is None or self.controller.state not in ("connecting", "connected"):
+        if setting is None or self.controller.state not in ("connecting", "connected", "recovering"):
             return
         epoch, dataset = setting.active()
         desired_epoch, _ = setting.desired()
@@ -458,7 +458,7 @@ class ThermalFeedbackWindow:
             "CSV 자동 적용 중 · Process 표 접근 없음 · 다른 탭/최소화 가능"
             if payload["effective_mode"] == "control" else "기존 Sequences IR + Save 경로 확인됨")
         self.status.set("연결됨 · 제어 불가" if payload["effective_mode"] == "control-unavailable" else
-                        "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기", "control-waiting": "설정 확인·IR 적용 대기", "observation-waiting": "CSV 갱신·IR 적용 대기", "power-limit-waiting": "최대 IR 초과·적용 대기", "calculation-waiting": "Excel 응답 대기", "calculation-hold": "Excel 오류·IR 적용 정지"}[payload["effective_mode"]])
+                        "연결됨 · " + {"monitor": "조회", "preview": "계산 미리보기", "control": "UI 자동 적용", "waiting": "자동 상태 대기", "control-waiting": "설정 확인·IR 적용 대기", "observation-waiting": "CSV 갱신·IR 적용 대기", "power-limit-waiting": "최대 IR 초과·적용 대기", "calculation-waiting": "Excel 응답 대기", "calculation-hold": "Excel 자동 복구·IR 적용 대기"}[payload["effective_mode"]])
         for heater, value in ((1, snapshot.heater1_setting_percent), (2, snapshot.heater2_setting_percent)):
             proposed = payload["proposed"].get(1 if snapshot.coupled_output else heater)
             self.outputs.item(f"heater{heater}", values=("—" if value is None else value,
@@ -536,7 +536,7 @@ class ThermalFeedbackWindow:
                 self._show_snapshot(event.payload)
             elif event.kind == "chart_snapshot":
                 self._record_chart_payload(event.payload)
-            elif event.kind in ("log", "calculation_hold"):
+            elif event.kind in ("log", "calculation_hold", "observer_hold", "actuation_barrier"):
                 self._append_log(event.payload)
             elif event.kind == "error":
                 self.status.set("연결 오류")

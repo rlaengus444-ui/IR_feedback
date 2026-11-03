@@ -28,6 +28,8 @@ def controller(proc):
     c = object.__new__(WorkbookController)
     c._proc, c._queue, c._excel_handle, c._temp = proc, queue.Queue(), None, None
     c._lifecycle_lock, c._closed = threading.Lock(), False
+    c._reader_done = threading.Event()
+    c._reader_done.set()
     c._phase = None
     c.timeout, c.stop_event = 0.02, threading.Event()
     return c

@@ -20,10 +20,45 @@ class _CombinedStop:
         return self.local.is_set() or (self.external is not None and self.external.is_set())
 
 
+class ExcelGroupFence:
+    """Keep the previous group alive until its owned resources are verified retired."""
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._owner = None
+
+    def try_claim(self, group):
+        with self._lock:
+            owner = self._owner
+            if owner is group:
+                return True
+            if owner is None:
+                self._owner = group
+                return True
+        if owner.state not in ('closed', 'timeout', 'error'):
+            return False
+        try:
+            retired = owner.retirement_status().get('verified', False)
+        except Exception:
+            retired = False
+        if not retired:
+            return False
+        with self._lock:
+            if self._owner is owner:
+                self._owner = group
+                return True
+            return self._owner is group
+
+
+_EXCEL_FENCE = ExcelGroupFence()
+
+
 class AsyncWorkbookGroup:
-    def __init__(self, spec, target_temperature, maximum_ir_percent, stop_event, factory=WorkbookController):
+    def __init__(self, spec, target_temperature, maximum_ir_percent, stop_event, factory=WorkbookController,
+                 prepared_workbook=None, prepare_factory=None, fence=None):
         self.spec, self.target = spec, target_temperature
         self.maximum_ir_percent, self.factory = maximum_ir_percent, factory
+        self.prepared_workbook, self.prepare_factory = prepared_workbook, prepare_factory
+        self._fence = _EXCEL_FENCE if fence is None else fence
         self._local_stop = threading.Event()
         self._stop = _CombinedStop(self._local_stop, stop_event)
         self._condition = threading.Condition()
@@ -44,6 +79,8 @@ class AsyncWorkbookGroup:
         self._active_controller = None
         self._abort_started = False
         self._owner_done = False
+        self._abort_done = False
+        self._owned = []
 
     @property
     def state(self):
@@ -57,11 +94,23 @@ class AsyncWorkbookGroup:
             self._heaters = tuple(heaters)
             if not self._heaters:
                 raise ValueError('At least one heater is required')
-            self._state = 'initializing'
+            self._state = 'waiting-retirement'
             self._pending = ('init', self._generation, None, None)
+        self._try_start()
+        return True
+
+    def _try_start(self):
+        with self._condition:
+            if self._state != 'waiting-retirement' or self._stop.is_set():
+                return
+        if not self._fence.try_claim(self):
+            return
+        with self._condition:
+            if self._state != 'waiting-retirement' or self._stop.is_set():
+                return
+            self._state = 'initializing'
             self._thread = threading.Thread(target=self._run, daemon=True, name='excel-owner')
             self._thread.start()
-            return True
 
     def submit(self, ticket, layer, temperature, powers, target, slice_features=None):
         with self._condition:
@@ -130,6 +179,8 @@ class AsyncWorkbookGroup:
     def _register(self, controller):
         with self._condition:
             self._partial = controller
+            if all(c is not controller for c in self._owned):
+                self._owned.append(controller)
             cancelled = self._stop.is_set()
             self._condition.notify_all()
         if cancelled:
@@ -142,25 +193,43 @@ class AsyncWorkbookGroup:
                 return
             self._abort_started = True
         def close_all():
-            seen = set()
             while True:
                 with self._condition:
-                    controllers = list(self._controllers.values())
-                    if self._partial is not None:
-                        controllers.append(self._partial)
-                    controllers = [c for c in controllers if id(c) not in seen]
-                    if not controllers:
-                        if self._owner_done:
-                            return
-                        self._condition.wait()
-                        continue
-                    seen.update(id(c) for c in controllers)
+                    controllers = tuple(self._owned)
+                    owner_done = self._owner_done
+                all_verified = True
                 for controller in controllers:
                     try:
-                        controller.close(force=True)
+                        check = getattr(controller, 'retirement_status', None)
+                        verified = check is not None and check().get('verified', False)
+                        if not verified:
+                            controller.close(force=True)
+                            verified = check is not None and check().get('verified', False)
                     except Exception:
-                        pass
+                        verified = False
+                    all_verified = all_verified and verified
+                with self._condition:
+                    if owner_done and all_verified and len(controllers) == len(self._owned):
+                        self._abort_done = True
+                        self._condition.notify_all()
+                        return
+                    self._condition.wait(timeout=5.0)
         threading.Thread(target=close_all, daemon=True, name='excel-abort').start()
+
+    def retirement_status(self):
+        with self._condition:
+            done = self._owner_done and (not self._abort_started or self._abort_done)
+            controllers = tuple(self._owned)
+        if not done:
+            return {'verified': False, 'reason': 'retirement pending'}
+        for controller in controllers:
+            check = getattr(controller, 'retirement_status', None)
+            if check is None:
+                return {'verified': False, 'reason': 'retirement unavailable'}
+            status = check()
+            if not status.get('verified'):
+                return status
+        return {'verified': True, 'reason': 'retired'}
 
     def close(self):
         with self._condition:
@@ -170,6 +239,8 @@ class AsyncWorkbookGroup:
             self._generation += 1
             self._pending = self._event = None
             self._local_stop.set()
+            if self._thread is None:
+                self._owner_done = True
             self._condition.notify_all()
         self._abort()
 
@@ -190,6 +261,7 @@ class AsyncWorkbookGroup:
 
     def poll(self):
         abort = False
+        self._try_start()
         diagnostic = self._diagnostic()
         with self._condition:
             if self._state not in ('new', 'closed', 'timeout', 'error'):
@@ -198,6 +270,8 @@ class AsyncWorkbookGroup:
                     self._generation += 1
                     self._pending = self._event = None
                     self._local_stop.set()
+                    if self._thread is None:
+                        self._owner_done = True
                     self._condition.notify_all()
                     abort = True
                 elif self._deadline is not None and time.monotonic() >= self._deadline:
@@ -222,6 +296,8 @@ class AsyncWorkbookGroup:
                 kwargs['on_created'] = self._register
         except (TypeError, ValueError):
             kwargs['on_created'] = self._register
+        if self.prepared_workbook is not None:
+            kwargs['prepared_workbook'] = self.prepared_workbook
         controller = self.factory(self.spec, self.target, **kwargs)
         self._register(controller)
         return controller
@@ -239,6 +315,17 @@ class AsyncWorkbookGroup:
                     self._active_ticket = ticket
                 try:
                     if kind == 'init':
+                        if self.prepared_workbook is None:
+                            prepare = self.prepare_factory
+                            if prepare is None and self.factory is WorkbookController:
+                                from excel_workbook import PreparedWorkbook
+                                prepare = PreparedWorkbook.from_file
+                            if prepare is not None:
+                                self._begin('init', 'inspect', 90.0)
+                                prepared = prepare(self.spec, stop_event=self._stop)
+                                self._check_deadline()
+                                with self._condition:
+                                    self.prepared_workbook = prepared
                         for heater in self._heaters:
                             self._begin('init', str(heater), 90.0)
                             controller = self._make_controller()

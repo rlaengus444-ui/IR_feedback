@@ -1,15 +1,24 @@
 """Freshness and admission rules for the asynchronous Excel owner."""
 from __future__ import annotations
 
+import time
 from excel_async import AsyncWorkbookGroup
 from excel_workbook import WorkbookController
 
 
 class ExcelCalculation:
     def __init__(self, spec, target, maximum_ir_percent, stop_event,
-                 controller_factory=WorkbookController, group_factory=AsyncWorkbookGroup):
+                 controller_factory=WorkbookController, group_factory=AsyncWorkbookGroup,
+                 clock=time.monotonic, retry_delays=(2, 5, 15, 30, 60)):
         self.spec, self.target, self.maximum_ir_percent = spec, target, maximum_ir_percent
         self.stop_event, self.controller_factory, self.group_factory = stop_event, controller_factory, group_factory
+        self._clock, self._retry_delays = clock, tuple(retry_delays)
+        self._failures = 0
+        self.fault_generation = 0
+        self._recovery = None
+        self._topology_wait = False
+        self._retry_at = None
+        self._prepared = None
         self.group = None
         self.pending = False
         self.latched_reason = None
@@ -52,6 +61,36 @@ class ExcelCalculation:
         valid = (snapshot.observation_key is not None and snapshot.layer_index is not None)
         identity = self._identity(snapshot) if valid else None
         self._eligible = bool(eligible and valid)
+        if self._recovery in ('retiring', 'backoff'):
+            if valid:
+                self._baseline = identity
+            self._environment = (getattr(snapshot, 'csv_generation', None), snapshot.run_key,
+                                 snapshot.control_epoch, image_epoch)
+            self._topology_wait = heaters != self._heaters
+            if self._topology_wait:
+                return
+            if self._recovery == 'retiring':
+                try:
+                    status = self.group.retirement_status()
+                except Exception:
+                    status = {'verified': False}
+                prepared = getattr(self.group, 'prepared_workbook', None)
+                if status.get('verified') and prepared is not None:
+                    self._prepared = prepared
+                    delay = self._retry_delays[min(self._failures - 1, len(self._retry_delays) - 1)]
+                    self._retry_at = self._clock() + delay
+                    self._recovery = 'backoff'
+            if self._recovery == 'backoff' and self._clock() >= self._retry_at and not self.stop_event.is_set():
+                self.group = self.group_factory(self.spec, self.target, self.maximum_ir_percent,
+                                                self.stop_event, factory=self.controller_factory,
+                                                prepared_workbook=self._prepared)
+                self.group.start(self._heaters)
+                self._recovery = 'starting'
+                self._resetting = False
+                self._clean = True
+                self._needs_baseline = True
+            else:
+                return
         if self.group is None:
             if self.latched_reason or self.stop_event.is_set():
                 return
@@ -61,7 +100,7 @@ class ExcelCalculation:
             self.group.start(heaters)
         if heaters != self._heaters:
             # A workbook group owns exactly the heater topology it was started with.
-            self.latched_reason = '히터 구성 변경 · IR 적용 정지 · 연결 해제 후 재연결 필요'
+            self.latched_reason = '히터 구성 변경 확인 대기 · 자동 적용 일시정지'
             self.diagnostic_reason = self.latched_reason
             self.group.close()
             self.pending = False
@@ -82,7 +121,7 @@ class ExcelCalculation:
                 error = event['error']
                 from excel_workbook import WorkbookTransportError
                 if kind == 'timeout' or isinstance(error, WorkbookTransportError):
-                    self.latched_reason = ('Excel 응답 지연' if kind == 'timeout' else 'Excel 통신 오류') + ' · IR 적용 정지 · 연결 해제 후 재연결 필요'
+                    self.latched_reason = ('Excel 응답 지연' if kind == 'timeout' else 'Excel 통신 오류') + ' · 자동 적용 일시정지'
                     self.diagnostic_reason = (f'{self.latched_reason} · operation={getattr(error, "operation", None)}'
                                               f' · elapsed={getattr(error, "elapsed", None)}'
                                               f' · deadline={getattr(error, "deadline", None)}'
@@ -92,6 +131,11 @@ class ExcelCalculation:
                     self.pending = False
                     self._completed = None
                     self._context = self.accepted_stamp = None
+                    self._failures += 1
+                    self.fault_generation += 1
+                    self._recovery = 'retiring'
+                    self._needs_baseline = True
+                    self._baseline = identity
                 else:
                     raise error
             elif kind == 'ready':
@@ -99,6 +143,9 @@ class ExcelCalculation:
                     self._resetting = False
                     self._clean = True
                     self._needs_baseline = True
+                    if self._recovery == 'starting':
+                        self._recovery = None
+                        self.latched_reason = None
             elif kind == 'result' and self.pending:
                 if event.get('ticket') == self._ticket and self._eligible and context == self._context:
                     self.pending = False
@@ -131,6 +178,7 @@ class ExcelCalculation:
             self.last_calculation_seconds = self._completed_elapsed
             self._completed_elapsed = None
             self.accepted_stamp = (target_stamp, image_epoch)
+            self._failures = 0
             return result
         if (self.pending or self._needs_baseline or self._resetting or
                 self.group.state != 'ready' or self._identity(snapshot) == self._baseline or
@@ -150,6 +198,16 @@ class ExcelCalculation:
         return None
 
     def waiting_status(self):
+        if self._topology_wait:
+            return '히터 구성 변경 확인 대기 · 자동 적용 일시정지'
+        if self.group is not None and self.group.state == 'waiting-retirement':
+            return '이전 Excel 종료 확인 대기 · 자동 적용 일시정지'
+        if self._recovery == 'retiring':
+            return 'Excel 종료 확인 대기 · 자동 적용 일시정지'
+        if self._recovery == 'backoff':
+            return f'Excel 자동 복구 대기 · {max(0, self._retry_at - self._clock()):.0f}초 · 자동 적용 일시정지'
+        if self._recovery == 'starting':
+            return 'Excel 자동 복구 중 · 자동 적용 일시정지'
         if self.latched_reason:
             return self.latched_reason
         if self.pending:
@@ -174,7 +232,12 @@ class ExcelCalculation:
         return f'{status} · {details + " · " if details else ""}{elapsed:.0f}초'
 
     def describe(self):
-        return self.group.describe() if self.group is not None else {'state': 'new'}
+        result = dict(self.group.describe()) if self.group is not None else {'state': 'new'}
+        result.update(recovery_state=self._recovery, fault_generation=self.fault_generation,
+                      failure_streak=self._failures,
+                      next_retry_seconds=(max(0.0, self._retry_at - self._clock())
+                                          if self._recovery == 'backoff' else None))
+        return result
 
     def close(self):
         if self.group is not None:

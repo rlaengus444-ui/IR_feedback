@@ -21,16 +21,19 @@ from pathlib import Path
 from typing import Callable
 
 try:
-    from .adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, ObservationSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
+    from .adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, ObservationSuspended, TargetIdentityError, UiReadTimeout, ReadTransportError, ProtocolError, MachineWindow, UiSnapshot
     from . import sequence_persistence
     from .sequence_field_audit import assert_fields_match_persisted, SequenceFieldAuditError
     from .csv_source import MonitoringCsvReader
 except ImportError:
-    from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, ObservationSuspended, TargetIdentityError, UiReadTimeout, MachineWindow, UiSnapshot
+    from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, ObservationSuspended, TargetIdentityError, UiReadTimeout, ReadTransportError, ProtocolError, MachineWindow, UiSnapshot
     import sequence_persistence
     from sequence_field_audit import assert_fields_match_persisted, SequenceFieldAuditError
     from csv_source import MonitoringCsvReader
 
+
+_NON_IR_OPERATIONS = frozenset({"discover", "validate", "read_status", "metadata",
+    "verify_control", "recover_control", "prepare_control", "enter_sequence"})
 
 CONTROL_REASON = "기존 Sequence IR 입력·Save 경로와 저장 파일을 아직 확인하지 못했습니다."
 
@@ -88,6 +91,9 @@ def _log_layer_hint(target: MachineWindow) -> tuple[int | None, str | None]:
 
 
 class WindowsUiAdapter:
+    _process_fence = threading.Lock()
+    _unretired_helper = None
+    _unretired_directory = None
     MINIMUM_POLL_SECONDS = 0.25
     RECOVERY_INTERVAL_SECONDS = 1.0
 
@@ -106,7 +112,7 @@ class WindowsUiAdapter:
         self._last_applied_key = None
         self._settings_at = 0.0
         self._lock = threading.Lock()
-        self._helper_lock = threading.Lock()
+        self._helper_lock = WindowsUiAdapter._process_fence
         self._active_helper: subprocess.Popen | None = None
         self._target: MachineWindow | None = None
         self._generation = 0
@@ -148,7 +154,7 @@ class WindowsUiAdapter:
         response = self._request({"operation": "validate", "pid": target.pid, "hwnd": target.hwnd, "machine": target.machine}, stop_event)
         reported = str(response.get("machine", "unknown")).upper()
         if target.machine in {"M1", "S3"} and reported in {"M1", "S3"} and reported != target.machine:
-            raise AdapterError("선택한 창의 장비 종류가 변경되었습니다. 다시 검색하세요.")
+            raise TargetIdentityError("선택한 창의 장비 종류가 변경되었습니다. 다시 검색하세요.")
         with self._lock:
             self._generation += 1
             self._target = target
@@ -318,6 +324,18 @@ class WindowsUiAdapter:
                 if power is not None and 0 < power <= 100:
                     self._last_settings[heater - 1] = power
 
+    def read_native_state(self, stop_event) -> str:
+        """Read native machine state without navigating or editing the UI."""
+        with self._lock:
+            target, generation = self._target, self._generation
+            handles = dict(self._native_handles)
+        if target is None:
+            raise TargetIdentityError("원본 프로그램에 연결되어 있지 않습니다.")
+        response = self._request({"operation": "read_status", "pid": target.pid,
+            "hwnd": target.hwnd, "machine": target.machine, "handles": handles,
+            "_generation": generation}, stop_event)
+        return str(response.get("state", "unknown"))
+
     def read_snapshot(self, stop_event) -> UiSnapshot:
         self._check_stopped(stop_event)
         with self._lock:
@@ -338,6 +356,8 @@ class WindowsUiAdapter:
                 self._check_stopped(stop_event)
                 self.suspend_control(str(error))
                 self._machine_state = "unknown"
+            except ReadTransportError:
+                raise
             except AdapterError as error:
                 self._check_stopped(stop_event)
                 if not any(text in str(error) for text in ("WM_GETTEXT", "UI 응답 제한", "not responding")):
@@ -382,7 +402,7 @@ class WindowsUiAdapter:
                     self._baseline_sample_key = sample.key
                 if source.is_new:
                     self._new_sample_key = sample.key
-            fresh = sample is not None and -2 <= time.time() - sample.finished.timestamp() <= MonitoringCsvReader.MAX_NEW_AGE_SECONDS
+            fresh = sample is not None and sample.finished is not None and -2 <= time.time() - sample.finished.timestamp() <= MonitoringCsvReader.MAX_NEW_AGE_SECONDS
             key = sample.key if sample and source.token and (
                 sample.key == self._baseline_sample_key or (sample.key == self._new_sample_key and fresh)) else None
             details = source.details
@@ -403,7 +423,9 @@ class WindowsUiAdapter:
                 slicing_image_path=getattr(sample, 'slicing_image_path', ''),
                 recoating_finished=getattr(sample, 'recoating_finished', None),
                 slice_lineage=getattr(sample, 'slice_lineage', ''),
-                csv_generation=getattr(sample, 'source_generation', ''))
+                csv_generation=getattr(sample, 'source_generation', ''),
+                observation_fresh=bool(fresh), measurement_valid=getattr(sample, 'measurement_valid', True),
+                invalid_reason=getattr(sample, 'invalid_reason', ''), actual_target=target)
             self._csv_token = source.token
             self._layer_hint = source.context.current_layer
             self._observation_row = {"row_index": sample.layer_index, "temperature": sample.temperature,
@@ -427,7 +449,8 @@ class WindowsUiAdapter:
             raise ControlUnavailable("CSV의 작업이 변경되어 이전 작업의 계산값을 저장하지 않았습니다.")
         if source.token is None:
             raise ObservationSuspended("CSV 기록 중 · 이번 계산을 취소하고 완전한 완료 행을 기다립니다.")
-        if sample is None or sample.key != expected_key:
+        if (sample is None or not getattr(sample, "measurement_valid", True)
+                or sample.finished is None or sample.key != expected_key):
             raise ObservationSuspended("CSV 완료 층 갱신 · 이전 계산을 취소하고 새 관찰을 확인합니다.")
         age = time.time() - sample.finished.timestamp()
         if sample.key != self._new_sample_key or not -2 <= age <= MonitoringCsvReader.MAX_NEW_AGE_SECONDS:
@@ -587,9 +610,15 @@ class WindowsUiAdapter:
             if expected_generation is not None and expected_generation != self._generation:
                 raise AdapterError("연결이 변경되어 이전 작업을 중단했습니다.")
         if self._runner is not None:
-            response = self._runner(request, stop_event)
+            try:
+                response = self._runner(request, stop_event)
+            except (OSError, TimeoutError) as exc:
+                operation = request.get("operation", "unknown")
+                if operation in _NON_IR_OPERATIONS:
+                    raise ReadTransportError(operation, str(exc)) from exc
+                raise
             if not isinstance(response, dict):
-                raise AdapterError("UI 읽기 도우미가 올바른 응답을 반환하지 않았습니다.")
+                raise ProtocolError("UI 읽기 도우미가 올바른 응답을 반환하지 않았습니다.")
             if not response.get("success", False):
                 raise self._response_error(request, response, "UI 읽기에 실패했습니다.")
             return response
@@ -600,6 +629,23 @@ class WindowsUiAdapter:
             raise AdapterError("이전 UI 읽기가 아직 종료되지 않았습니다.")
         process = None
         try:
+            previous = WindowsUiAdapter._unretired_helper
+            if previous is not None:
+                try:
+                    retired = previous.poll() is not None
+                except OSError:
+                    retired = False
+                if not retired:
+                    raise ReadTransportError(request.get("operation", "unknown"),
+                        "이전 UI 도우미의 종료를 확인할 수 없습니다.", helper_retired=False)
+                WindowsUiAdapter._unretired_helper = None
+                directory = WindowsUiAdapter._unretired_directory
+                WindowsUiAdapter._unretired_directory = None
+                if directory is not None:
+                    try:
+                        directory.cleanup()
+                    except OSError:
+                        pass
             helper_directory = tempfile.TemporaryDirectory(prefix="binderjet-uia-")
             helper_path = Path(helper_directory.name) / "reader.ps1"
             helper_source = _HELPER or Path(__file__).with_name("native_helper.ps1").read_text(encoding="utf-8-sig")
@@ -624,7 +670,7 @@ class WindowsUiAdapter:
                 self._check_stopped(stop_event)
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    raise UiReadTimeout(f"원본 UI 응답 제한 시간({deadline_seconds:g}초)을 초과했습니다.")
+                    raise UiReadTimeout(f"원본 UI 응답 제한 시간({deadline_seconds:g}초)을 초과했습니다.", request.get("operation", "unknown"), request.get("operation") not in _NON_IR_OPERATIONS)
                 try:
                     stdout, stderr = process.communicate(payload, timeout=min(0.05, remaining))
                     break
@@ -633,24 +679,45 @@ class WindowsUiAdapter:
             try:
                 response = json.loads(stdout.lstrip("\ufeff").strip())
             except (json.JSONDecodeError, TypeError) as exc:
-                raise AdapterError("Windows UI 읽기 도우미가 올바른 응답을 반환하지 않았습니다. " + stderr[-300:]) from exc
+                raise ProtocolError("Windows UI 읽기 도우미가 올바른 응답을 반환하지 않았습니다. " + stderr[-300:]) from exc
             if not isinstance(response, dict) or not response.get("success", False):
                 raise self._response_error(request, response, "Windows UI 읽기에 실패했습니다.")
             return response
+        except OSError as exc:
+            operation = request.get("operation", "unknown")
+            if operation in _NON_IR_OPERATIONS:
+                raise ReadTransportError(operation, str(exc)) from exc
+            raise
         finally:
+            retired = True
             if process is not None:
-                if process.poll() is None:
-                    try:
-                        process.kill()
-                    except OSError:
-                        pass
                 try:
-                    process.communicate(timeout=0.5)
-                except (OSError, subprocess.TimeoutExpired):
-                    pass
+                    if process.poll() is None:
+                        try:
+                            process.kill()
+                        except OSError:
+                            pass
+                    try:
+                        process.communicate(timeout=0.5)
+                    except (OSError, subprocess.TimeoutExpired):
+                        pass
+                    retired = process.poll() is not None
+                except OSError:
+                    retired = False
             with self._lock:
-                if self._active_helper is process:
+                if self._active_helper is process and retired:
                     self._active_helper = None
+            if not retired:
+                WindowsUiAdapter._unretired_helper = process
+                WindowsUiAdapter._unretired_directory = locals().get("helper_directory")
+            elif "helper_directory" in locals():
+                try:
+                    helper_directory.cleanup()
+                except OSError:
+                    pass
             self._helper_lock.release()
-            if "helper_directory" in locals():
-                helper_directory.cleanup()
+            if not retired:
+                operation = request.get("operation", "unknown")
+                if operation not in _NON_IR_OPERATIONS:
+                    raise AmbiguousWriteError("UI 도우미의 종료를 확인할 수 없어 입력 또는 Save 결과가 불확실합니다.")
+                raise ReadTransportError(operation, "UI 도우미의 종료를 확인할 수 없습니다.", helper_retired=False)

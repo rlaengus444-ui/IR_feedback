@@ -13,7 +13,7 @@ REQUIRED_APP = (
     'sequence_field_audit.py', 'sequence_persistence.py', 'session.py', 'single_instance.py',
     'standalone_ir.py', 'target_temperature.py', 'UiaBridge.dll', 'windows_ui_adapter.py',
     'workbook-replay.settings.json', 'slice_data.py', 'slice_panel.py', 'slice_workbook.py',
-    'output_limit.py',
+    'output_limit.py', 'resilient_adapter.py', 'observed_session.py',
     'templates/IR_슬라이싱_수동계산.xlsx',
 )
 SOURCES = {**{'app/' + name: 'app/' + name for name in REQUIRED_APP},
