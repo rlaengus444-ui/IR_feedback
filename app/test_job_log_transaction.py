@@ -108,16 +108,41 @@ class JobLogTransactionTests(unittest.TestCase):
 
     def test_rotation_during_read_retries_and_publishes_new_job(self):
         called = []
+        before = self.state()
+        replacement = self.path.with_suffix('.replacement')
         def rotate():
             if not called:
                 called.append(True)
-                replacement = self.path.with_suffix('.replacement')
                 replacement.write_bytes(START.replace(b'060139', b'060140') + LAYER)
                 os.replace(replacement, self.path)
-        with self.hook(rotate):
+        try:
+            with self.hook(rotate):
+                current = self.reader.read()
+        except JobLogReadUnavailable as exc:
+            if not (os.name == 'nt' and isinstance(exc.__cause__, PermissionError)
+                    and getattr(exc.__cause__, 'winerror', None) == 5):
+                raise
+            self.assertEqual('log I/O failure', exc.reason)
+            self.assertEqual(before, self.state())
+            # The shared handle is now closed, allowing the writer to rotate.
+            os.replace(replacement, self.path)
             current = self.reader.read()
         self.assertNotEqual(self.initial.run_key, current.run_key)
         self.assertEqual(1058, current.current_layer)
+
+    def test_denied_rotation_preserves_state_until_retry(self):
+        before = self.state()
+        replacement = self.path.with_suffix('.replacement')
+        replacement.write_bytes(START.replace(b'060139', b'060140') + LAYER)
+        def denied():
+            raise PermissionError('rotation denied while file is open')
+        with self.hook(denied):
+            with self.assertRaises(JobLogReadUnavailable) as caught:
+                self.reader.read()
+        self.assertEqual('log I/O failure', caught.exception.reason)
+        self.assertEqual(before, self.state())
+        os.replace(replacement, self.path)
+        self.assertNotEqual(self.initial.run_key, self.reader.read().run_key)
 
     def test_unavailable_log_does_not_clear_csv_state(self):
         csv_reader = MonitoringCsvReader(self.reader.target, roots=[self.base], log=self.reader)
