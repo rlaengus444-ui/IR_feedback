@@ -2,7 +2,7 @@
 
 python live_cap_native_probe.py PACKAGE_ROOT SOURCE_ROOT OUTPUT_JSON
 SOURCE_ROOT supplies validation/csv_route_probe.py and CsvRouteFixture.cs from
-frozen 069a57f. PACKAGE_ROOT is the extracted package from that same revision.
+the pinned reviewed commit. PACKAGE_ROOT is the extracted package from that same revision.
 No real machine, browser or equipment is accessed.
 """
 import ctypes

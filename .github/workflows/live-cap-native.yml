@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          ref: 069a57fca3cdf82b5a80b13ea74544390f73bb78
+          ref: 808b8cbc131c3072147eb0f79ceedd5ba8a4ef89
           path: frozen-source
       - uses: actions/setup-python@v5
         with:
@@ -24,8 +24,8 @@ jobs:
         with:
           github-token: ${{ github.token }}
           repository: rlaengus444-ui/IR_feedback
-          run-id: 41625262551
-          name: slice-candidate-069a57fca3cdf82b5a80b13ea74544390f73bb78
+          run-id: 41631423591
+          name: slice-candidate-808b8cbc131c3072147eb0f79ceedd5ba8a4ef89
           path: candidate
       - name: Verify and extract the immutable production candidate
         shell: pwsh
@@ -36,7 +36,7 @@ jobs:
           sys.path.insert(0,'frozen-source/release_tools')
           from verify_package import verify
           package=Path('candidate/IRFeedback-2026.11.03-live-cap.1.zip')
-          assert verify(package,'2026.11.03-live-cap.1',root=Path('frozen-source'))=='6914f86cdaa59eed91534bf468fb8fc034f0521df7cb08814cca5b4302f3177d'
+          assert verify(package,'2026.11.03-live-cap.1',root=Path('frozen-source'))=='51441d797dedd2011847e81bd250cfd7cb67ef0864e003f2b02e4cb0a04f91aa'
           with zipfile.ZipFile(package) as archive:
               assert len(archive.infolist())<5000
               assert sum(i.file_size for i in archive.infolist())<200*1024*1024
