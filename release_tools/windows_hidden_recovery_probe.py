@@ -20,6 +20,100 @@ import windows_settings_recovery_probe as fixture_tools
 FLAGS = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 
 
+def fixture_restore_control(executable, folder):
+    """Reproduce fixture window lifecycle with zero helper or adapter requests."""
+    marker = folder / 'no-helper-restore-control'
+    processes = []
+    result = {'helper_calls': 0, 'helper_intervals': [], 'poison_messages': [], 'restore_events': [], 'stages': [], 'passed': False}
+    def stage(label):
+        temp = Path(str(marker) + '.stage.tmp')
+        temp.write_text('control:' + label, encoding='utf-8')
+        os.replace(temp, Path(str(marker) + '.stage'))
+        result['stages'].append({'stage': label, 'utc': datetime.now(timezone.utc).isoformat()})
+    try:
+        stage('fixture-start')
+        proc = subprocess.Popen([str(executable), str(marker)], creationflags=FLAGS)
+        processes.append(proc)
+        ready = Path(str(marker) + '.ready')
+        deadline = time.monotonic() + 20
+        while not ready.exists() and time.monotonic() < deadline:
+            if proc.poll() is not None: raise RuntimeError('Control fixture exited')
+            time.sleep(.05)
+        if not ready.exists(): raise TimeoutError('Control fixture not ready')
+        pid, _ = map(int, ready.read_text().split(','))
+        if pid != proc.pid: raise RuntimeError('Control fixture PID mismatch')
+        def command(action):
+            stage('fixture-' + action)
+            done = Path(str(marker) + '.done'); done.unlink(missing_ok=True)
+            target = Path(str(marker) + '.command'); temp = Path(str(marker) + '.command.tmp')
+            temp.write_text(action); os.replace(temp, target)
+            deadline = time.monotonic() + 5
+            while not done.exists() and time.monotonic() < deadline: time.sleep(.05)
+            if not done.exists() or done.read_text() != action: raise TimeoutError(action)
+        command('focus')
+        command('clear')
+        command('hide_outer')
+        command('show_outer')
+        command('hide_outer_managed')
+        stage('other-foreground-start')
+        processes.append(subprocess.Popen([str(executable), '--foreground'], creationflags=FLAGS))
+        time.sleep(.6)
+        command('minimize')
+        command('restore')
+        time.sleep(.5)
+    except Exception as error:
+        result['error'] = str(error)
+    finally:
+        for process in reversed(processes):
+            if process.poll() is None:
+                process.terminate()
+                try: process.wait(timeout=5)
+                except subprocess.TimeoutExpired: process.kill(); process.wait(timeout=5)
+        poison = Path(str(marker) + '.poison')
+        result['poison_messages'] = poison.read_text().splitlines() if poison.exists() else []
+        events = Path(str(marker) + '.restore-events')
+        result['restore_events'] = events.read_text().splitlines() if events.exists() else []
+    result['passed'] = ('error' not in result and
+        normalize_restore_messages(result['poison_messages'], result['restore_events'], result['helper_intervals']) == ['D', 'D'])
+    return result
+
+
+def normalize_restore_messages(messages, restore_events, helper_intervals):
+    """Admit only WM_GETTEXT inside the measured, helper-free restore call."""
+    try:
+        if len(restore_events) != 2:
+            return None
+        begin, begin_kind = restore_events[0].split('|')
+        end, end_kind = restore_events[1].split('|')
+        if begin_kind != 'begin' or end_kind != 'end':
+            return None
+        def timestamp(value):
+            parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+            if parsed.utcoffset() is None:
+                raise ValueError('UTC offset missing')
+            return parsed.astimezone(timezone.utc)
+        start, finish = timestamp(begin), timestamp(end)
+        if finish < start:
+            return None
+        for interval in helper_intervals:
+            helper_start, helper_end = timestamp(interval['begin_utc']), timestamp(interval['end_utc'])
+            if helper_end < helper_start or (helper_start <= finish and helper_end >= start):
+                return None
+        codes = []
+        for line in messages:
+            parts = line.split('|')
+            if (len(parts) != 4 or not parts[1].endswith(':fixture-restore') or
+                    parts[2] != 'D' or parts[3] != '1'):
+                return None
+            when = timestamp(parts[0])
+            if not start <= when <= finish:
+                return None
+            codes.append(parts[2])
+        return codes
+    except (ValueError, TypeError, KeyError, OverflowError, AttributeError):
+        return None
+
+
 def full_hidden_profile(executable, folder, machine, hide_action):
     """Two actual adapter confirmations with full synthetic saved-field audit."""
     from adapter_contracts import MachineWindow
@@ -158,6 +252,7 @@ def run(root, output, old_root=None):
                        check=True, capture_output=True, timeout=30)
         marker = folder / 'fixture'
         report['probe_stages'] = []
+        report['helper_intervals'] = []
         stage_count = [0]
         def stage(label):
             stage_count[0] += 1
@@ -194,12 +289,18 @@ def run(root, output, old_root=None):
                        'handles':handles or {}, 'field_map':mapping or {}}
             payload.update(kwargs)
             started = time.monotonic()
+            interval = {'operation': operation, 'transport': 'candidate',
+                        'begin_utc': datetime.now(timezone.utc).isoformat()}
             try:
-                value = adapter._request(payload, threading.Event())
-            except AdapterError as error:
-                value = {'success':False, 'error':str(error), 'error_type': type(error).__name__, 'error_kind':
-                         'control_wait' if isinstance(error, ControlSuspended) else
-                         'identity' if isinstance(error, TargetIdentityError) else 'operation'}
+                try:
+                    value = adapter._request(payload, threading.Event())
+                except AdapterError as error:
+                    value = {'success':False, 'error':str(error), 'error_type': type(error).__name__, 'error_kind':
+                             'control_wait' if isinstance(error, ControlSuspended) else
+                             'identity' if isinstance(error, TargetIdentityError) else 'operation'}
+            finally:
+                interval['end_utc'] = datetime.now(timezone.utc).isoformat()
+                report['helper_intervals'].append(interval)
             value['transport_seconds'] = time.monotonic() - started
             return value
         def styles():
@@ -242,8 +343,14 @@ def run(root, output, old_root=None):
                 stage('old-helper-' + operation)
                 payload = {'operation':operation, 'pid':pid, 'hwnd':hwnd, 'machine':'M1', 'handles':handles or {}, 'field_map':mapping or {}}
                 payload.update(extra)
-                result = subprocess.run([sys.executable, '-c', old_code, str(old_root)], input=json.dumps(payload),
-                                        capture_output=True, text=True, timeout=12, creationflags=FLAGS)
+                interval = {'operation': operation, 'transport': 'old',
+                            'begin_utc': datetime.now(timezone.utc).isoformat()}
+                try:
+                    result = subprocess.run([sys.executable, '-c', old_code, str(old_root)], input=json.dumps(payload),
+                                            capture_output=True, text=True, timeout=12, creationflags=FLAGS)
+                finally:
+                    interval['end_utc'] = datetime.now(timezone.utc).isoformat()
+                    report['helper_intervals'].append(interval)
                 return json.loads(result.stdout.strip())
             old_meta = old_call('metadata')
             old_prepared = old_call('prepare_control', metadata=old_meta.get('records', []))
@@ -319,8 +426,15 @@ def run(root, output, old_root=None):
         checks['heartbeat_responsive'] = first.split(',')[0] != second.split(',')[0]
         checks['zero_save_or_navigation'] = second.split(',')[-2:] == ['0','0']
         poison = Path(str(marker) + '.poison')
-        checks['process_not_probed'] = not poison.exists() or not poison.read_text()
         report['poison_messages'] = poison.read_text().splitlines() if poison.exists() else []
+        restore_events = Path(str(marker) + '.restore-events')
+        report['restore_events'] = restore_events.read_text().splitlines() if restore_events.exists() else []
+        report['no_helper_restore_control'] = fixture_restore_control(executable, folder)
+        control = report['no_helper_restore_control']
+        checks['no_helper_restore_control_matches'] = bool(control['passed'] and report['helper_intervals'] and
+            normalize_restore_messages(report['poison_messages'], report['restore_events'], report['helper_intervals']) ==
+            normalize_restore_messages(control['poison_messages'], control['restore_events'], control['helper_intervals']) == ['D', 'D'])
+        checks['process_not_probed'] = checks['no_helper_restore_control_matches']
         report['full_profiles'] = {m + '_' + action:full_hidden_profile(executable, folder, m, action)
             for m in ('M1','S3') for action in ('hide_outer','hide_outer_managed')}
         checks['full_m1_s3_both_hide_modes_two_stable_audits'] = all(p['passed'] for p in report['full_profiles'].values())
@@ -336,8 +450,15 @@ def run(root, output, old_root=None):
         if marker is not None:
             poison = Path(str(marker) + '.poison')
             report['poison_messages'] = poison.read_text().splitlines() if poison.exists() else []
-            report['checks']['process_not_probed'] = not report['poison_messages']
-            report['passed'] = bool(report['passed'] and not report['poison_messages'])
+            restore_events = Path(str(marker) + '.restore-events')
+            report['restore_events'] = restore_events.read_text().splitlines() if restore_events.exists() else []
+            control = report.get('no_helper_restore_control', {})
+            matches = bool(control.get('passed') and report.get('helper_intervals') and
+                normalize_restore_messages(report['poison_messages'], report['restore_events'], report['helper_intervals']) ==
+                normalize_restore_messages(control.get('poison_messages', []), control.get('restore_events', []), control.get('helper_intervals', [])) == ['D', 'D'])
+            report['checks']['no_helper_restore_control_matches'] = matches
+            report['checks']['process_not_probed'] = matches
+            report['passed'] = bool(report['passed'] and matches)
         if tmp is not None: tmp.cleanup()
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')

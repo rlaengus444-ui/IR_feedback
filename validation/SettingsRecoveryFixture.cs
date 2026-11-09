@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 [assembly:System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8",FrameworkDisplayName=".NET Framework 4.8")]
 internal static class SettingsRecoveryFixture {
+    private static bool restoreActive = false;
     [DllImport("user32.dll")] private static extern IntPtr SetParent(IntPtr child, IntPtr parent);
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr window);
     [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr window, int command);
@@ -18,7 +19,7 @@ internal static class SettingsRecoveryFixture {
                 string stagePath = Marker.Substring(0, Marker.Length - ".poison".Length) + ".stage";
                 string stage = "unlabelled";
                 try { if (File.Exists(stagePath)) stage = File.ReadAllText(stagePath); } catch (IOException) { stage="stage-read-failed"; }
-                File.AppendAllText(Marker, DateTime.UtcNow.ToString("o") + "|" + stage + "|" + m.Msg.ToString("X") + "\n");
+                File.AppendAllText(Marker, DateTime.UtcNow.ToString("o") + "|" + stage + "|" + m.Msg.ToString("X") + "|" + (restoreActive ? "1" : "0") + "\n");
             }
             base.WndProc(ref m);
         }
@@ -110,7 +111,14 @@ internal static class SettingsRecoveryFixture {
                 else if (action=="hide_inner") { ShowWindow(inner.Handle, 0); }
                 else if (action=="show_inner") { ShowWindow(inner.Handle, 4); }
                 else if (action=="minimize") { root.WindowState=FormWindowState.Minimized; }
-                else if (action=="restore") { root.WindowState=FormWindowState.Normal; }
+                else if (action=="restore") {
+                    File.AppendAllText(marker+".restore-events", DateTime.UtcNow.ToString("o") + "|begin\n");
+                    try { restoreActive = true; root.WindowState=FormWindowState.Normal; }
+                    finally {
+                        restoreActive = false;
+                        File.AppendAllText(marker+".restore-events", DateTime.UtcNow.ToString("o") + "|end\n");
+                    }
+                }
                 else if (action=="blank_in_place") {
                     added = new TextBox { Name="", Text="1", Left=240, Top=5 };
                     panel.Controls.Add(added); var addedHandle=added.Handle;
