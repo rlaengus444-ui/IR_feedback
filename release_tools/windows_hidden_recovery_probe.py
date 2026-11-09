@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -96,13 +97,18 @@ def normalize_restore_messages(messages, restore_events, helper_intervals):
         if finish < start:
             return None
         for interval in helper_intervals:
+            if any(interval.get(key) is not True for key in ('helper_retired', 'active_helper_absent',
+                    'unretired_helper_absent', 'helper_fence_unlocked', 'shared_fence_verified')):
+                return None
+            if interval.get('transport') == 'old' and interval.get('child_exit_success') is not True:
+                return None
             helper_start, helper_end = timestamp(interval['begin_utc']), timestamp(interval['end_utc'])
             if helper_end < helper_start or (helper_start <= finish and helper_end >= start):
                 return None
         codes = []
         for line in messages:
             parts = line.split('|')
-            if (len(parts) != 4 or not parts[1].endswith(':fixture-restore') or
+            if (len(parts) != 4 or re.fullmatch(r'(?:[1-9][0-9]*|control):fixture-restore', parts[1]) is None or
                     parts[2] != 'D' or parts[3] != '1'):
                 return None
             when = timestamp(parts[0])
@@ -291,6 +297,7 @@ def run(root, output, old_root=None):
             started = time.monotonic()
             interval = {'operation': operation, 'transport': 'candidate',
                         'begin_utc': datetime.now(timezone.utc).isoformat()}
+            value = None
             try:
                 try:
                     value = adapter._request(payload, threading.Event())
@@ -300,7 +307,21 @@ def run(root, output, old_root=None):
                              'identity' if isinstance(error, TargetIdentityError) else 'operation'}
             finally:
                 interval['end_utc'] = datetime.now(timezone.utc).isoformat()
+                try:
+                    interval['active_helper_absent'] = adapter._active_helper is None
+                    interval['unretired_helper_absent'] = WindowsUiAdapter._unretired_helper is None
+                    interval['helper_fence_unlocked'] = not adapter._helper_lock.locked()
+                    interval['shared_fence_verified'] = adapter._helper_lock is WindowsUiAdapter._process_fence
+                    interval['helper_retired'] = all(interval[key] is True for key in
+                        ('active_helper_absent', 'unretired_helper_absent', 'helper_fence_unlocked', 'shared_fence_verified'))
+                except Exception as error:
+                    interval['helper_retired'] = False
+                    interval['lifecycle_error'] = str(error)
+                if not interval['helper_retired']:
+                    interval['transport_response'] = value
                 report['helper_intervals'].append(interval)
+            if not interval['helper_retired']:
+                raise RuntimeError('Candidate helper retirement uncertain: ' + repr(interval))
             value['transport_seconds'] = time.monotonic() - started
             return value
         def styles():
@@ -338,7 +359,7 @@ def run(root, output, old_root=None):
         command('clear')
         if old_root is not None:
             # Separate interpreter ensures old adapter actually loads old helper/DLL bytes.
-            old_code = '''import json,sys,threading\nsys.path.insert(0,sys.argv[1]+"/app")\nfrom windows_ui_adapter import WindowsUiAdapter\na=WindowsUiAdapter()\nr=json.loads(sys.stdin.read())\ntry:\n v=a._request(r,threading.Event())\nexcept Exception as e:\n v={"success":False,"error":str(e)}\nprint(json.dumps(v))'''
+            old_code = '''import json,sys,threading\nsys.path.insert(0,sys.argv[1]+"/app")\nfrom windows_ui_adapter import WindowsUiAdapter\na=WindowsUiAdapter()\nr=json.loads(sys.stdin.read())\ntry:\n v=a._request(r,threading.Event())\nexcept Exception as e:\n v={"success":False,"error":str(e)}\ntry:\n life={"active_helper_absent":a._active_helper is None,"unretired_helper_absent":WindowsUiAdapter._unretired_helper is None,"helper_fence_unlocked":not a._helper_lock.locked(),"shared_fence_verified":a._helper_lock is WindowsUiAdapter._process_fence}\n life["helper_retired"]=all(x is True for x in life.values())\nexcept Exception as e:\n life={"helper_retired":False,"lifecycle_error":str(e)}\nprint(json.dumps({"response":v,"lifecycle":life}))'''
             def old_call(operation, handles=None, mapping=None, **extra):
                 stage('old-helper-' + operation)
                 payload = {'operation':operation, 'pid':pid, 'hwnd':hwnd, 'machine':'M1', 'handles':handles or {}, 'field_map':mapping or {}}
@@ -348,10 +369,23 @@ def run(root, output, old_root=None):
                 try:
                     result = subprocess.run([sys.executable, '-c', old_code, str(old_root)], input=json.dumps(payload),
                                             capture_output=True, text=True, timeout=12, creationflags=FLAGS)
+                    interval['child_exit_success'] = result.returncode == 0
+                    interval['child_stderr'] = result.stderr[-4000:]
+                    interval['child_stdout'] = result.stdout[-8000:]
+                    if not interval['child_exit_success']:
+                        raise RuntimeError('Historical probe child failed: ' + repr(interval))
+                    child = json.loads(result.stdout.strip())
+                    interval.update(child['lifecycle'])
+                    if any(interval.get(key) is not True for key in ('helper_retired', 'active_helper_absent',
+                            'unretired_helper_absent', 'helper_fence_unlocked', 'shared_fence_verified')):
+                        raise RuntimeError('Historical helper retirement uncertain: ' + repr(interval))
+                except Exception as error:
+                    interval['raw_error'] = repr(error)
+                    raise
                 finally:
                     interval['end_utc'] = datetime.now(timezone.utc).isoformat()
                     report['helper_intervals'].append(interval)
-                return json.loads(result.stdout.strip())
+                return child['response']
             old_meta = old_call('metadata')
             old_prepared = old_call('prepare_control', metadata=old_meta.get('records', []))
             if not old_prepared.get('success'): raise RuntimeError('Old visible fixture prepare failed: ' + str(old_prepared))

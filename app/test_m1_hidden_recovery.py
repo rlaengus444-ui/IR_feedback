@@ -64,3 +64,39 @@ class HiddenRecoverySessionTests(unittest.TestCase):
             run_ui_session(SessionOptions(test_session.TARGET, mode='control'), stop, emit, lambda: adapter)
         adapter.apply_ir_power.assert_called_once()
         self.assertEqual('new', adapter.apply_ir_power.call_args.args[2])
+
+class RestoreClassifierTests(unittest.TestCase):
+    def test_retirement_stage_interval_and_message_fail_closed(self):
+        import sys
+        import os
+        from pathlib import Path
+        workspace = os.environ.get('GITHUB_WORKSPACE')
+        tools_dir = Path(workspace) / 'release_tools' if workspace else Path(__file__).resolve().parents[1] / 'release_tools'
+        self.assertTrue((tools_dir / 'windows_hidden_recovery_probe.py').is_file())
+        sys.path.insert(0, str(tools_dir))
+        self.addCleanup(sys.path.pop, 0)
+        from windows_hidden_recovery_probe import normalize_restore_messages as classify
+        events = ['2026-11-09T09:50:58.0000000Z|begin', '2026-11-09T09:50:59.0000000Z|end']
+        message = '2026-11-09T09:50:58.5000000Z|21:fixture-restore|D|1'
+        interval = {'transport':'candidate', 'begin_utc':'2026-11-09T09:50:57+00:00',
+            'end_utc':'2026-11-09T09:50:57.9+00:00', 'helper_retired':True,
+            'active_helper_absent':True, 'unretired_helper_absent':True,
+            'helper_fence_unlocked':True, 'shared_fence_verified':True}
+        self.assertEqual(['D','D'], classify([message,message], events, [interval]))
+        for key in ('helper_retired','active_helper_absent','unretired_helper_absent',
+                    'helper_fence_unlocked','shared_fence_verified'):
+            for value in (False, None):
+                with self.subTest(field=key, value=value):
+                    self.assertIsNone(classify([message,message], events, [dict(interval, **{key:value})]))
+            missing = dict(interval); del missing[key]
+            self.assertIsNone(classify([message,message], events, [missing]))
+        for invalid in (message[:-1]+'0', message.replace('58.500','59.500'),
+            message.replace('21:fixture-restore','arbitrary:fixture-restore'),
+            message.replace('21:fixture-restore','0:fixture-restore'),
+            message.replace('|D|','|3D|'), message.replace('|D|','|114|')):
+            with self.subTest(message=invalid):
+                self.assertIsNone(classify([message,invalid], events, [interval]))
+        overlap = dict(interval, begin_utc='2026-11-09T09:50:58.1+00:00', end_utc='2026-11-09T09:50:58.2+00:00')
+        self.assertIsNone(classify([message,message], events, [overlap]))
+        self.assertIsNone(classify([message,message], events[:1], [interval]))
+        self.assertIsNone(classify([message,message], events, [dict(interval, transport='old')]))
