@@ -5,6 +5,7 @@ Uses production adapter transport and deadlines. No device access, navigation,
 IR edit or Save; only the isolated fixture mutates its synthetic controls.
 """
 import hashlib
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -41,6 +42,10 @@ def full_hidden_profile(executable, folder, machine, hide_action):
     adapter = WindowsUiAdapter(source_factory=lambda target: None)
     result = {'machine':machine, 'hide_action':hide_action, 'passed':False}
     try:
+        def stage(label):
+            temporary = Path(str(marker) + '.stage.tmp')
+            temporary.write_text(label, encoding='utf-8')
+            os.replace(temporary, Path(str(marker) + '.stage'))
         ready = Path(str(marker) + '.ready')
         deadline = time.monotonic() + 20
         while not ready.exists() and time.monotonic() < deadline:
@@ -53,7 +58,9 @@ def full_hidden_profile(executable, folder, machine, hide_action):
         stop = threading.Event()
         adapter.connect(target, stop)
         common = {'pid':pid, 'hwnd':hwnd, 'machine':machine}
+        stage('initial-metadata')
         meta = adapter._request(dict(common, operation='metadata'), stop)
+        stage('initial-prepare')
         prepared = adapter._request(dict(common, operation='prepare_control', metadata=meta['records']), stop)
         if not prepared.get('handles', {}).get('scope_proof'): raise RuntimeError('No authorized scope proof')
         adapter._mode = 'control'
@@ -63,6 +70,7 @@ def full_hidden_profile(executable, folder, machine, hide_action):
         adapter._persisted_baseline = sequence_persistence.capture(target)
         adapter._expected_ir = str(prepared['setting'])
         def command(action):
+            stage('fixture-' + action)
             done = Path(str(marker) + '.done'); done.unlink(missing_ok=True)
             destination = Path(str(marker) + '.command'); temporary = Path(str(marker) + '.command.tmp')
             temporary.write_text(action); os.replace(temporary, destination)
@@ -74,12 +82,22 @@ def full_hidden_profile(executable, folder, machine, hide_action):
         adapter.suspend_control('fixture changed')
         command('hide_inner')
         result['explicit_inner_hidden_window_styles'] = Path(str(marker) + '.styles').read_text()
+        stage('hidden-inner-recover')
         adapter._recover_control(target, adapter._generation, stop)
         hidden_inner_held = adapter._control_hold_reason is not None and adapter._control_epoch == 0
         command('show_inner')
         time.sleep(1.05)
+        command('blank_in_place')
+        stage('unnamed-input-recover')
+        adapter._recover_control(target, adapter._generation, stop)
+        unnamed_reason = adapter._control_hold_reason
+        unnamed_held = (unnamed_reason is not None and '저장 매핑이 확인되지 않은 UI 필드' in unnamed_reason
+                        and adapter._control_epoch == 0)
+        command('remove_extra')
+        time.sleep(1.05)
         durations, epochs = [], []
         for attempt in range(2):
+            stage('stable-recover-' + str(attempt + 1))
             started = time.monotonic()
             adapter._recover_control(target, adapter._generation, stop)
             durations.append(time.monotonic() - started)
@@ -87,12 +105,15 @@ def full_hidden_profile(executable, folder, machine, hide_action):
             if attempt == 0: time.sleep(1.05)
         heartbeat = Path(str(marker) + '.heartbeat').read_text().split(',')
         poison = Path(str(marker) + '.poison')
-        result.update(epochs=epochs, recovery_seconds=durations, hidden_inner_held=hidden_inner_held, field_count=len(adapter._native_fields),
+        result.update(epochs=epochs, recovery_seconds=durations, hidden_inner_held=hidden_inner_held,
+                      unnamed_input_held=unnamed_held, unnamed_input_reason=unnamed_reason,
+                      field_count=len(adapter._native_fields),
                       settings_unchanged=hashlib.sha256(owner.read_bytes()).hexdigest() == sha,
                       zero_save_and_navigation=heartbeat[-2:] == ['0','0'],
                       process_not_probed=not poison.exists() or not poison.read_text(),
+                      poison_messages=poison.read_text().splitlines() if poison.exists() else [],
                       hold_reason=adapter._control_hold_reason)
-        result['passed'] = (hidden_inner_held and epochs == [0,1] and adapter._control_hold_reason is None and
+        result['passed'] = (hidden_inner_held and unnamed_held and epochs == [0,1] and adapter._control_hold_reason is None and
             len(adapter._native_fields) == len(bindings) and result['settings_unchanged'] and
             result['zero_save_and_navigation'] and result['process_not_probed'])
     except Exception as error:
@@ -102,14 +123,20 @@ def full_hidden_profile(executable, folder, machine, hide_action):
         process.terminate()
         try: process.wait(timeout=5)
         except subprocess.TimeoutExpired: process.kill(); process.wait(timeout=5)
+        poison = Path(str(marker) + '.poison')
+        result['poison_messages'] = poison.read_text().splitlines() if poison.exists() else []
+        result['process_not_probed'] = not result['poison_messages']
+        if result['poison_messages']:
+            result['passed'] = False
     return result
 
 
 def run(root, output, old_root=None):
     report = {'passed': False, 'checks': {}, 'responses': {}, 'no_equipment_writes': True,
               'scope': 'Owned synthetic WinForms fixture; recovery does not navigate, edit or Save.',
-              'untested': ['Real equipment, actual production BJT UI, Excel COM.']}
-    processes, tmp = [], None
+              'untested': ['Real equipment, actual production BJT UI, Excel COM.',
+                           'A truly blank UIA AutomationId: WinForms unnamed TextBox supplies a numeric AutomationId.']}
+    processes, tmp, marker = [], None, None
     try:
         if os.name != 'nt':
             raise RuntimeError('Windows required')
@@ -130,6 +157,16 @@ def run(root, output, old_root=None):
                         '/reference:System.Windows.Forms.dll', '/reference:System.Drawing.dll', str(fixture_tools.SOURCE)],
                        check=True, capture_output=True, timeout=30)
         marker = folder / 'fixture'
+        report['probe_stages'] = []
+        stage_count = [0]
+        def stage(label):
+            stage_count[0] += 1
+            text = str(stage_count[0]) + ':' + label
+            temporary = Path(str(marker) + '.stage.tmp')
+            temporary.write_text(text, encoding='utf-8')
+            os.replace(temporary, Path(str(marker) + '.stage'))
+            report['probe_stages'].append({'stage': text, 'utc': datetime.now(timezone.utc).isoformat()})
+        stage('fixture-start')
         process = subprocess.Popen([str(executable), str(marker)], creationflags=FLAGS)
         processes.append(process)
         ready = Path(str(marker) + '.ready')
@@ -141,6 +178,7 @@ def run(root, output, old_root=None):
         pid, hwnd = map(int, ready.read_text().split(','))
         if pid != process.pid: raise RuntimeError('Fixture PID mismatch')
         def command(action):
+            stage('fixture-' + action)
             done = Path(str(marker) + '.done')
             done.unlink(missing_ok=True)
             path = Path(str(marker) + '.command')
@@ -151,6 +189,7 @@ def run(root, output, old_root=None):
             while not done.exists() and time.monotonic() < deadline: time.sleep(.05)
             if not done.exists() or done.read_text() != action: raise TimeoutError(action)
         def request(operation, handles=None, mapping=None, **kwargs):
+            stage('helper-' + operation)
             payload = {'operation':operation, 'pid':pid, 'hwnd':hwnd, 'machine':'M1',
                        'handles':handles or {}, 'field_map':mapping or {}}
             payload.update(kwargs)
@@ -197,6 +236,7 @@ def run(root, output, old_root=None):
             # Separate interpreter ensures old adapter actually loads old helper/DLL bytes.
             old_code = '''import json,sys,threading\nsys.path.insert(0,sys.argv[1]+"/app")\nfrom windows_ui_adapter import WindowsUiAdapter\na=WindowsUiAdapter()\nr=json.loads(sys.stdin.read())\ntry:\n v=a._request(r,threading.Event())\nexcept Exception as e:\n v={"success":False,"error":str(e)}\nprint(json.dumps(v))'''
             def old_call(operation, handles=None, mapping=None, **extra):
+                stage('old-helper-' + operation)
                 payload = {'operation':operation, 'pid':pid, 'hwnd':hwnd, 'machine':'M1', 'handles':handles or {}, 'field_map':mapping or {}}
                 payload.update(extra)
                 result = subprocess.run([sys.executable, '-c', old_code, str(old_root)], input=json.dumps(payload),
@@ -255,7 +295,10 @@ def run(root, output, old_root=None):
         command('remove_extra')
         command('blank_in_place')
         responses['blank'] = request('recover_control', handles, mapping)
-        checks['blank_id_holds'] = not responses['blank'].get('success') and responses['blank'].get('error_kind') == 'control_wait'
+        unnamed_fields = set(responses['blank'].get('field_map', {})) - set(mapping)
+        checks['unnamed_input_inventoried'] = (responses['blank'].get('success') and len(unnamed_fields) == 1 and
+            all(str(responses['blank'].get('fields', {}).get(field)) == '1' for field in unnamed_fields))
+        report['unnamed_fixture_automation_ids'] = sorted(unnamed_fields)
         command('remove_extra')
         command('extra_in_place')
         responses['unknown'] = request('recover_control', handles, mapping)
@@ -274,6 +317,7 @@ def run(root, output, old_root=None):
         checks['zero_save_or_navigation'] = second.split(',')[-2:] == ['0','0']
         poison = Path(str(marker) + '.poison')
         checks['process_not_probed'] = not poison.exists() or not poison.read_text()
+        report['poison_messages'] = poison.read_text().splitlines() if poison.exists() else []
         report['full_profiles'] = {m + '_' + action:full_hidden_profile(executable, folder, m, action)
             for m in ('M1','S3') for action in ('hide_outer','hide_outer_managed')}
         checks['full_m1_s3_both_hide_modes_two_stable_audits'] = all(p['passed'] for p in report['full_profiles'].values())
@@ -286,6 +330,11 @@ def run(root, output, old_root=None):
                 process.terminate()
                 try: process.wait(timeout=5)
                 except subprocess.TimeoutExpired: process.kill(); process.wait(timeout=5)
+        if marker is not None:
+            poison = Path(str(marker) + '.poison')
+            report['poison_messages'] = poison.read_text().splitlines() if poison.exists() else []
+            report['checks']['process_not_probed'] = not report['poison_messages']
+            report['passed'] = bool(report['passed'] and not report['poison_messages'])
         if tmp is not None: tmp.cleanup()
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')

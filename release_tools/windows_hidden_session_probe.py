@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import hashlib
 import io
 import json
+import math
 import os
 from pathlib import Path
 import queue
@@ -176,6 +177,8 @@ def exercise(exe, cover_exe, folder, machine, minimized):
     runner_calls = []
     event_counts = {}
     snapshot_log = []
+    eligible_emitted_layers = set()
+    ineligible_emissions = []
     history = LayerHistory()
     history_lock = threading.Lock()
     history_segment = history.segment_id
@@ -204,12 +207,42 @@ def exercise(exe, cover_exe, folder, machine, minimized):
         event_counts[kind] = event_counts.get(kind, 0) + 1
         if kind == "snapshot":
             snap = payload["snapshot"]
+            layer_valid = type(snap.layer_index) is int and snap.layer_index >= 0
+            temperature = snap.t_recoating_c
+            temperature_valid = (isinstance(temperature, (int, float)) and not isinstance(temperature, bool)
+                and math.isfinite(temperature) and -273.15 <= temperature <= 2000)
+            key_present = snap.observation_key is not None
+            eligible = layer_valid and temperature_valid and key_present
+            expired_key = getattr(snap, "expired_observation_key", None)
+            measurement_valid = getattr(snap, "measurement_valid", None)
+            fresh = getattr(snap, "observation_fresh", None)
+            entry = {"phase": phase[0], "emitted_monotonic": time.monotonic(),
+                "layer_index": snap.layer_index, "observation_key_present": key_present,
+                "observation_fresh": fresh, "expired_observation_key": expired_key,
+                "t_recoating_c": temperature, "measurement_valid": measurement_valid,
+                "chart_eligible": eligible, "control_available": snap.control_available,
+                "epoch": snap.control_epoch, "effective_mode": payload.get("effective_mode"),
+                "status": payload.get("status"), "applied": dict(payload.get("applied", {})),
+                "reason": snap.control_unavailable_reason}
             with history_lock:
-                history.record(payload)
-            snapshot_log.append({"phase": phase[0], "layer_index": snap.layer_index,
-                "control_available": snap.control_available, "epoch": snap.control_epoch,
-                "effective_mode": payload.get("effective_mode"), "status": payload.get("status"),
-                "applied": dict(payload.get("applied", {})), "reason": snap.control_unavailable_reason})
+                if eligible:
+                    eligible_emitted_layers.add(snap.layer_index + 1)
+                else:
+                    if not layer_valid:
+                        cause = "No valid observed layer"
+                    elif not temperature_valid:
+                        cause = "No valid observed temperature"
+                    elif expired_key:
+                        cause = "Observation expired; production freshness guard removed its admitted key"
+                    elif measurement_valid is False:
+                        cause = "Invalid measurement has no admitted observation key"
+                    elif fresh is False:
+                        cause = "Observation is not fresh and has no admitted key"
+                    else:
+                        cause = "No admitted observation key; CSV validation or admission is pending"
+                    ineligible_emissions.append(dict(entry, ineligible_cause=cause))
+                entry["chart_record_accepted"] = history.record(payload)
+            snapshot_log.append(entry)
         events.put((kind, payload))
 
     def receive(layer, *, applied=None, predicate=None, timeout=15):
@@ -398,6 +431,9 @@ def exercise(exe, cover_exe, folder, machine, minimized):
             layer = append_fresh()
             payload = receive(layer, applied=expected)
             assert payload["snapshot"].t_recoating_c == 42
+            assert payload["snapshot"].observation_key is not None
+            assert payload["snapshot"].observation_fresh is True
+            assert payload["snapshot"].measurement_valid is True
             current = sequence_persistence.capture(target)
             powers.append(current.power)
             counts.append(save_count())
@@ -418,12 +454,24 @@ def exercise(exe, cover_exe, folder, machine, minimized):
         assert foreground["foreground_maintained"]
         with history_lock:
             final_layers = tuple(point.layer for point in history.points)
+            expected_observed_layers = tuple(sorted(eligible_emitted_layers))
             assert history.segment_id == history_segment
-        assert final_layers == tuple(range(1, next_layer[0] + 2)), final_layers
+        # A row can expire during the two bounded native recovery reads. Such a
+        # snapshot intentionally has no admitted key and is not a chart input.
+        # Require every eligible emitted observation to survive, without adding
+        # invented points for emitted-but-ineligible or unobserved CSV rows.
+        assert final_layers == expected_observed_layers, (final_layers, expected_observed_layers)
+        assert final_layers[:len(baseline_history)] == baseline_history
+        assert set(applied_layers).issubset(final_layers), (applied_layers, final_layers)
+        assert set(final_layers).issubset(range(1, next_layer[0] + 2)), final_layers
+        assert final_layers[-1] == next_layer[0] + 1
         assert not outages and len(runner_calls) == 1 and len(raw_adapters) == 1
         assert event_counts.get("connected") == 1 and not event_counts.get("actuation_barrier", 0)
         result.update(passed=True, powers=powers, save_counts=counts, applied_layers=applied_layers,
             no_duplicate_or_old_row_saves=True, final_history_layers=list(final_layers),
+            eligible_emitted_layers=list(expected_observed_layers),
+            emitted_but_ineligible=list(ineligible_emissions), all_eligible_chart_observations_preserved=True,
+            all_four_applied_fresh_layers_retained=True,
             non_ir_unchanged=True, process_table_accesses=0, background_state=state,
             cap_status=options._maximum_ir_setting.status(), **foreground)
     except BaseException as error:
@@ -447,8 +495,11 @@ def exercise(exe, cover_exe, folder, machine, minimized):
             with history_lock:
                 capture["history_layers"] = [point.layer for point in history.points]
                 capture["history_segment"] = history.segment_id
+                capture["eligible_emitted_layers"] = sorted(eligible_emitted_layers)
+                capture["emitted_but_ineligible"] = list(ineligible_emissions)
         except BaseException as error:
             capture["capture_error"] = type(error).__name__ + ": " + str(error)
+            result.update(passed=False, evidence_capture_error=capture["capture_error"])
         result["readonly_pre_teardown"] = capture
         stop.set()
         if worker is not None:

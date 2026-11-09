@@ -14,8 +14,12 @@ internal static class SettingsRecoveryFixture {
     private sealed class PoisonPanel : Panel {
         public string Marker;
         protected override void WndProc(ref Message m) {
-            if (m.Msg == 0x003D || m.Msg == 0x000D || m.Msg == 0x0114 || m.Msg == 0x0115)
-                File.AppendAllText(Marker, m.Msg.ToString("X") + "\n");
+            if (m.Msg == 0x003D || m.Msg == 0x000D || m.Msg == 0x0114 || m.Msg == 0x0115) {
+                string stagePath = Marker.Substring(0, Marker.Length - ".poison".Length) + ".stage";
+                string stage = "unlabelled";
+                try { if (File.Exists(stagePath)) stage = File.ReadAllText(stagePath); } catch (IOException) { stage="stage-read-failed"; }
+                File.AppendAllText(Marker, DateTime.UtcNow.ToString("o") + "|" + stage + "|" + m.Msg.ToString("X") + "\n");
+            }
             base.WndProc(ref m);
         }
     }

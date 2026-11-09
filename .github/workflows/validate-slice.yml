@@ -1,6 +1,11 @@
 name: Validate connected slice candidate
 on:
   workflow_dispatch:
+    inputs:
+      native_only:
+        description: Run only native diagnostic probes; never release ready
+        type: boolean
+        default: false
   push:
     branches: ['work/slice-release-*']
 permissions:
@@ -38,7 +43,7 @@ jobs:
           Expand-Archive $zip "$env:RUNNER_TEMP\slice-extracted"
       - name: Test packaged runtime and application
         id: tests
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && !inputs.native_only
         continue-on-error: true
         shell: pwsh
         run: |
@@ -76,7 +81,7 @@ jobs:
           } finally { Pop-Location }
       - name: Exercise launcher
         id: smoke
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && !inputs.native_only
         continue-on-error: true
         shell: pwsh
         run: |
@@ -84,7 +89,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Launcher smoke failed' }
       - name: Verify bridge loading with downloaded-file marking
         id: bridge
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && !inputs.native_only
         continue-on-error: true
         shell: pwsh
         run: |
@@ -92,7 +97,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Marked DLL production discovery/initialization probe failed' }
       - name: Verify S3 large native inventory and closed-failure cases
         id: native_discovery
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && !inputs.native_only
         continue-on-error: true
         shell: pwsh
         run: |
@@ -109,7 +114,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Large native inventory regression failed' }
       - name: Verify actual native CSV content guard
         id: csv_guard
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && !inputs.native_only
         continue-on-error: true
         shell: pwsh
         run: |
@@ -117,7 +122,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Native CSV content guard probe failed' }
       - name: Verify connected settings recovery without navigation or Save
         id: settings_recovery
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && !inputs.native_only
         continue-on-error: true
         shell: pwsh
         run: |
@@ -125,7 +130,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Connected settings recovery native probe failed' }
       - name: Crosscheck slice analysis parity and performance
         id: slice_perf
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && !inputs.native_only
         continue-on-error: true
         shell: pwsh
         run: |
@@ -133,7 +138,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Slice analysis parity/performance check failed' }
       - name: Verify background native Save in an isolated target
         id: background
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && !inputs.native_only
         continue-on-error: true
         shell: pwsh
         run: |
@@ -141,7 +146,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Background native Save probe failed' }
       - name: Exercise Excel COM
         id: excel
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && !inputs.native_only
         continue-on-error: true
         shell: pwsh
         run: |
@@ -192,7 +197,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: slice-candidate-${{ github.sha }}
+          name: ${{ inputs.native_only && 'native-diagnostic' || 'slice-candidate' }}-${{ github.sha }}
           path: ${{ runner.temp }}/slice-candidate/
           if-no-files-found: warn
       - name: Enforce release readiness
