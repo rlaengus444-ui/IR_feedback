@@ -1,0 +1,22 @@
+{
+  "publication_run_id": 42603148232,
+  "publication_workflow_succeeded": true,
+  "delivery_commit": "3a31ff79a5f89a888a0477edd2436367a0615870",
+  "reviewed_evidence_commit": "93c5fac0e1bac61d77f83cca9dec149e927dc0a0",
+  "release_id": 439008009,
+  "tag": "2026.11.09-m1-recovery.1",
+  "source_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+  "release_is_public": true,
+  "prerelease": true,
+  "zip_asset_id": 727116507,
+  "checksum_asset_id": 727116506,
+  "public_full_zip_download_sha256_verified": true,
+  "notion_page_id": "3f105e94-a225-801c-9cd6-c70784c2d9ec",
+  "notion_target": "3D printing team / 자료: 기기, 제품, 이론 등 / 스터디 / IR 출력 피드백 제어",
+  "notion_targeted_updates_succeeded": true,
+  "previous_live_cap_release_appended_as_toggle": true,
+  "existing_native_sheet_and_media_blocks_untouched_by_patch": true,
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false,
+  "excel_com_tested": false
+}
