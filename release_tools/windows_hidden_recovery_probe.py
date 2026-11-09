@@ -27,7 +27,7 @@ def full_hidden_profile(executable, folder, machine, hide_action):
     import sequence_persistence
     import threading
     bindings = field_bindings(machine)
-    spec = folder / ('hidden-' + machine + '.fields')
+    spec = folder / ('hidden-' + machine + '-' + hide_action + '.fields')
     spec.write_text('\n'.join(name + '\t' + kind for name, (_, _, kind) in bindings.items()))
     owner = folder / 'Machines' / machine / 'Configs' / 'BJT.parameters.json'
     owner.parent.mkdir(parents=True, exist_ok=True)
@@ -36,7 +36,7 @@ def full_hidden_profile(executable, folder, machine, hide_action):
                for field, (scope,name,kind) in bindings.items()]
     owner.write_text(json.dumps(entries), encoding='utf-8')
     sha = hashlib.sha256(owner.read_bytes()).hexdigest()
-    marker = folder / ('hidden-full-' + machine)
+    marker = folder / ('hidden-full-' + machine + '-' + hide_action)
     process = subprocess.Popen([str(executable), str(marker), str(spec), machine], creationflags=FLAGS)
     adapter = WindowsUiAdapter(source_factory=lambda target: None)
     result = {'machine':machine, 'hide_action':hide_action, 'passed':False}
@@ -180,6 +180,15 @@ def run(root, output, old_root=None):
         if not initial.get('success'): raise RuntimeError('Initial visible authorization failed: ' + str(initial))
         handles, mapping = initial['handles'], initial['field_map']
         checks['initial_scope_proof'] = bool(handles.get('scope_proof'))
+        # The valid visible Sequence would make broad root re-audit succeed.
+        # Forging the scope as the root must instead fail closed immediately.
+        forged = dict(handles)
+        forged['scope'] = hwnd
+        forged['scope_proof'] = dict(handles.get('scope_proof') or {})
+        forged['scope_proof']['scope_hwnd'] = hwnd
+        responses['forged_root_scope'] = request('recover_control', forged, mapping)
+        checks['forged_root_scope_holds'] = (not responses['forged_root_scope'].get('success') and
+                                              responses['forged_root_scope'].get('error_kind') == 'control_wait')
         command('focus')
         responses['editing'] = request('recover_control', handles, mapping)
         checks['focused_edit_holds'] = not responses['editing'].get('success') and responses['editing'].get('error_kind') == 'control_wait'

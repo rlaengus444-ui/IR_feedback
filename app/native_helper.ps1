@@ -337,6 +337,11 @@ function ScopeStructureMatches($root, $pidExpected, $handles) {
     AssertProofShape $handles
     $proof = ValueOf $handles 'scope_proof'
     if ($null -eq $proof) { throw 'Audited Sequence scope proof is unavailable.' }
+    $scope = HandleOf $handles 'scope'; $ir = HandleOf $handles 'ir'; $save = HandleOf $handles 'save'
+    if ($scope -eq $root -or $ir -eq $root -or $save -eq $root -or
+        $scope -eq $ir -or $scope -eq $save -or $ir -eq $save) {
+        throw 'The audited Sequence scope and leaf handles are malformed.'
+    }
     foreach ($name in @('scope','ir','save')) {
         $window = HandleOf $handles $name
         if ($window -eq [IntPtr]::Zero -or $window.ToInt64() -ne [long](ValueOf $proof ($name + '_hwnd'))) { throw 'Audited Sequence proof and handles disagree.' }
