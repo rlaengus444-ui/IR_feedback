@@ -236,7 +236,7 @@ function AssertOtherFields($actual, $baseline) {
 function ImportBundledBridge([string]$path) {
     # Pin the reviewed bridge bytes, including for Internet-zone downloads.
     # Rebuilding UiaBridge.dll requires review and updating this digest.
-    $expected = '181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f'
+    $expected = 'aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e'
     $stream = $null; $sha = $null
     try {
         if (-not [IO.File]::Exists($path)) { throw 'Bundled UI bridge file is missing.' }

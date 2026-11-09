@@ -19,6 +19,21 @@ def _default_directories():
     return (executable_dir / "records", user_dir / "IRFeedback" / "records")
 
 
+def _reserve_unique(directory, stem, suffix):
+    """Reserve a visible name atomically without replacing an existing file."""
+    number = 1
+    while True:
+        extra = "" if number == 1 else f"_{number:02d}"
+        path = directory / f"{stem}{extra}{suffix}"
+        try:
+            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            number += 1
+            continue
+        os.close(fd)
+        return str(path)
+
+
 class PlotArchive:
     """Owned by the GUI thread; file operations happen on one daemon worker."""
     def __init__(self, directories=None, writer=_write_csv, thread_factory=threading.Thread, image_writer=write_plot):
@@ -81,15 +96,13 @@ class PlotArchive:
             key, points, machine, directories, target, csv_path, plots, attempt = item
             errors = []
             safe_machine = re.sub(r"[^A-Za-z0-9_-]", "_", machine)[:40] or "machine"
-            safe_key = "-".join(re.sub(r"[^A-Za-z0-9_-]", "_", str(part))[:40] for part in key)
-            prefix = datetime.now().strftime("%Y%m%d_%H%M%S_%f") + f"_{safe_machine}_{safe_key}_"
+            stem = f"{safe_machine}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
             if csv_path is None:
                 for directory in directories:
                     reserved = None
                     try:
                         directory.mkdir(parents=True, exist_ok=True)
-                        fd, reserved = tempfile.mkstemp(prefix=prefix, suffix=".csv", dir=directory)
-                        os.close(fd)
+                        reserved = _reserve_unique(directory, stem, ".csv")
                         self.writer(Path(reserved), points)
                         csv_path = reserved
                         break
@@ -109,13 +122,8 @@ class PlotArchive:
                         try:
                             directory.mkdir(parents=True, exist_ok=True)
                             stem = Path(csv_path).stem
-                            desired = directory / f"{stem}_{kind}.png"
-                            try:
-                                fd = os.open(desired, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-                                reserved = str(desired)
-                            except FileExistsError:
-                                fd, reserved = tempfile.mkstemp(prefix=f"{stem}_{kind}_", suffix=".png", dir=directory)
-                            os.close(fd)
+                            label = "온도" if kind == "temperature" else "IR"
+                            reserved = _reserve_unique(directory, f"{stem}_{label}", ".png")
                             fd, temporary = tempfile.mkstemp(prefix=".ir-plot-", suffix=".tmp", dir=directory)
                             os.close(fd)
                             self.image_writer(Path(temporary), points, kind, target)

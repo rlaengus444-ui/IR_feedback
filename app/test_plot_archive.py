@@ -1,9 +1,11 @@
 import csv
+from datetime import datetime
 from pathlib import Path
 import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
 from layer_charts import LayerPoint, _write_csv
 from plot_archive import PlotArchive
@@ -98,6 +100,30 @@ class ArchiveTests(unittest.TestCase):
         self.assertTrue(all(e['kind'] == 'saved' and Path(e['path']).parent == output for e in events))
         self.assertEqual(2, len({e['path'] for e in events}))
         self.assertEqual('preserve', existing.read_text())
+
+    def test_names_use_machine_timestamp_and_atomic_numbered_collisions(self):
+        class FixedTime:
+            @staticmethod
+            def now():
+                return datetime(2026, 11, 9, 18, 30, 0)
+        existing = self.root / 'M1_2026-11-09_18-30-00.csv'
+        existing.write_text('preserve')
+        archive = self.archive()
+        for segment in (1, 2):
+            archive.capture((42, segment), [point(segment)], machine='M1')
+        archive.capture((42, 3), [point(3)], machine='S3')
+        with patch('plot_archive.datetime', FixedTime):
+            archive.submit()
+            events = wait(archive, 3)
+        self.assertEqual('preserve', existing.read_text())
+        for event, number in zip(events[:2], ('02', '03')):
+            stem = f'M1_2026-11-09_18-30-00_{number}'
+            self.assertEqual(stem + '.csv', Path(event['path']).name)
+            self.assertEqual(stem + '_온도.png', Path(event['plot_paths']['temperature']).name)
+            self.assertEqual(stem + '_IR.png', Path(event['plot_paths']['ir']).name)
+        self.assertEqual('S3_2026-11-09_18-30-00.csv', Path(events[2]['path']).name)
+        self.assertEqual('S3_2026-11-09_18-30-00_온도.png', Path(events[2]['plot_paths']['temperature']).name)
+        self.assertEqual('S3_2026-11-09_18-30-00_IR.png', Path(events[2]['plot_paths']['ir']).name)
 
     def test_failed_partial_write_retained_then_explicit_retry(self):
         attempts = []
@@ -246,7 +272,7 @@ class ArchiveComponentTests(unittest.TestCase):
             collision = []
             def writer(path, points):
                 _write_csv(path, points)
-                existing = path.with_name(path.stem + '_temperature.png')
+                existing = path.with_name(path.stem + '_온도.png')
                 existing.write_bytes(b'existing')
                 collision.append(existing)
             archive = PlotArchive(directories=[d], writer=writer)
@@ -255,9 +281,9 @@ class ArchiveComponentTests(unittest.TestCase):
             archive.submit()
             result = wait(archive)[0]
             self.assertEqual('saved', result['kind'])
-            self.assertNotEqual(str(collision[0]), result['plot_paths']['temperature'])
+            self.assertEqual(str(collision[0].with_name(collision[0].stem + '_02.png')), result['plot_paths']['temperature'])
             self.assertEqual(b'existing', collision[0].read_bytes())
-            self.assertEqual(Path(result['path']).stem + '_ir.png', Path(result['plot_paths']['ir']).name)
+            self.assertEqual(Path(result['path']).stem + '_IR.png', Path(result['plot_paths']['ir']).name)
 
     def test_png_fallback_keeps_csv_and_reports_separate_folder(self):
         from plot_images import write_plot
