@@ -77,6 +77,15 @@ public static class BinderJetNativeFields
         return name.IndexOf("BUTTON",StringComparison.OrdinalIgnoreCase)>=0 && Role(child)==44 ? "toggle" : "";
     }
 
+    public static void ValidateWritableIr(IntPtr root, IntPtr edit, int pid)
+    {
+        Validate(root, edit, pid);
+        EnabledChain(root, edit);
+        if (Class(edit).IndexOf("EDIT", StringComparison.OrdinalIgnoreCase) < 0 ||
+            (GetWindowLong(edit, -16) & 0x0800) != 0)
+            throw new InvalidOperationException("IR is not a verified writable native EDIT.");
+    }
+
     public static void ValidateSave(IntPtr root, IntPtr button, int pid)
     {
         Validate(root,button,pid);

@@ -275,6 +275,170 @@ function SequenceMetadata($root, $pidExpected) {
     return @([BinderJetLeafMetadata]::Collect($root, $pidExpected))
 }
 
+function ScopeProof($root, $pidExpected, $handles) {
+    $scope = HandleOf $handles 'scope'
+    $scopeId = [BinderJetLeafMetadata]::ScopeIdentity($root, $scope, $pidExpected)
+    $proof = @{scope_hwnd=$scope.ToInt64(); scope_class=[string]$scopeId.class_name; scope_parent=[long]$scopeId.parent; scope_thread=[long]$scopeId.thread; scope_control_id=[int]$scopeId.control_id}
+    foreach ($name in @('ir','save','machine','state')) {
+        $window = HandleOf $handles $name
+        $leaf = [BinderJetLeafMetadata]::LeafIdentity($root, $window, $pidExpected)
+        $expectedId = (@{ir='textBoxHeatingOutput';save='btnSave';machine='labelMachineName';state='labelTaskStatus'})[$name]
+        if ([string]$leaf.id -cne $expectedId) { throw 'An audited anchor AutomationId changed during preparation.' }
+        if ($name -in @('machine','state') -and [string]$leaf.class_name -notmatch '(?i)STATIC') { throw 'An audited global label class changed.' }
+        $proof[$name + '_hwnd'] = $window.ToInt64()
+        $proof[$name + '_class'] = [string]$leaf.class_name
+        $proof[$name + '_id'] = [string]$leaf.id
+        if ($name -in @('machine','state')) {
+            $proof[$name + '_parent'] = [long]$leaf.parent
+            $proof[$name + '_thread'] = [long]$leaf.thread
+            $proof[$name + '_control_id'] = [int]$leaf.control_id
+        }
+    }
+    return $proof
+}
+
+function AssertProofShape($handles) {
+    $proof = ValueOf $handles 'scope_proof'
+    if ($null -eq $proof) { throw 'Audited identity proof is unavailable.' }
+    foreach ($key in @('scope_hwnd','scope_parent','scope_thread','scope_control_id','scope_class',
+        'ir_hwnd','ir_class','ir_id','save_hwnd','save_class','save_id',
+        'machine_hwnd','machine_class','machine_id','machine_parent','machine_thread','machine_control_id',
+        'state_hwnd','state_class','state_id','state_parent','state_thread','state_control_id')) {
+        if ($null -eq (ValueOf $proof $key)) { throw 'Audited identity proof is incomplete.' }
+    }
+    foreach ($key in @('scope_hwnd','scope_parent','scope_thread','ir_hwnd','save_hwnd',
+        'machine_hwnd','machine_parent','machine_thread','state_hwnd','state_parent','state_thread')) {
+        if ([long](ValueOf $proof $key) -le 0) { throw 'Audited identity proof is invalid.' }
+    }
+    foreach ($key in @('scope_class','ir_class','save_class','machine_class','state_class')) {
+        if ([string]::IsNullOrWhiteSpace([string](ValueOf $proof $key))) { throw 'Audited identity class is missing.' }
+    }
+    foreach ($pair in @(@('ir','textBoxHeatingOutput'),@('save','btnSave'),@('machine','labelMachineName'),@('state','labelTaskStatus'))) {
+        if ([string](ValueOf $proof ($pair[0] + '_id')) -cne $pair[1]) { throw 'Audited identity AutomationId is invalid.' }
+    }
+}
+
+function AssertGlobalProof($root, $pidExpected, $handles) {
+    AssertProofShape $handles
+    $proof = ValueOf $handles 'scope_proof'
+    foreach ($name in @('machine','state')) {
+        $window = HandleOf $handles $name
+        if ($window -eq [IntPtr]::Zero -or $window.ToInt64() -ne [long](ValueOf $proof ($name + '_hwnd'))) { throw 'An audited global anchor changed.' }
+        $leaf = [BinderJetLeafMetadata]::LeafIdentity($root, $window, $pidExpected)
+        if ([string]$leaf.class_name -cne [string](ValueOf $proof ($name + '_class')) -or
+            [string]$leaf.id -cne [string](ValueOf $proof ($name + '_id')) -or
+            [long]$leaf.parent -ne [long](ValueOf $proof ($name + '_parent')) -or
+            [long]$leaf.thread -ne [long](ValueOf $proof ($name + '_thread')) -or
+            [int]$leaf.control_id -ne [int](ValueOf $proof ($name + '_control_id'))) { throw 'An audited global anchor identity changed.' }
+    }
+}
+
+function ScopeStructureMatches($root, $pidExpected, $handles) {
+    AssertProofShape $handles
+    $proof = ValueOf $handles 'scope_proof'
+    if ($null -eq $proof) { throw 'Audited Sequence scope proof is unavailable.' }
+    foreach ($name in @('scope','ir','save')) {
+        $window = HandleOf $handles $name
+        if ($window -eq [IntPtr]::Zero -or $window.ToInt64() -ne [long](ValueOf $proof ($name + '_hwnd'))) { throw 'Audited Sequence proof and handles disagree.' }
+    }
+    return [BinderJetLeafMetadata]::ScopeStructureMatches($root, (HandleOf $handles 'scope'),
+        (HandleOf $handles 'ir'), (HandleOf $handles 'save'), $pidExpected,
+        [string](ValueOf $proof 'scope_class'), [long](ValueOf $proof 'scope_parent'),
+        [long](ValueOf $proof 'scope_thread'), [int](ValueOf $proof 'scope_control_id'),
+        [string](ValueOf $proof 'ir_class'), [string](ValueOf $proof 'save_class'))
+}
+
+function VisibleReaudit($root, $pidExpected, $handles) {
+    # Only called for missing proof or positively identified structural staleness.
+    # This old collector admits visible controls only and never opens a view.
+    $hasProof = $null -ne (ValueOf $handles 'scope_proof')
+    if ($hasProof) {
+        AssertGlobalProof $root $pidExpected $handles
+        AssertAutomatic $root $pidExpected $handles
+    }
+    $script:controlWait = $true
+    $records = @(SequenceMetadata $root $pidExpected)
+    $fresh = PreparedControl $root $pidExpected $records
+    if ($hasProof) {
+        foreach ($name in @('machine','state')) {
+            if ((HandleOf $fresh.handles $name) -ne (HandleOf $handles $name)) { throw 'Visible re-audit changed an audited global anchor.' }
+        }
+        AssertGlobalProof $root $pidExpected $handles
+    }
+    AssertAutomatic $root $pidExpected $fresh.handles
+    $script:controlWait = $true
+    $fresh.state = ([BinderJetNativeProcess]::ReadText($root, (HandleOf $fresh.handles 'state'), $pidExpected)).Trim()
+    if ($fresh.state -notin @('AUTO','RUNNING')) { throw 'Automatic recipe updates require a fresh AUTO/RUNNING state.' }
+    return $fresh
+}
+
+function AssertScopeProof($root, $pidExpected, $handles) {
+    AssertGlobalProof $root $pidExpected $handles
+    $proof = ValueOf $handles 'scope_proof'
+    if ($null -eq $proof) { throw 'A previously audited Sequence scope proof is required.' }
+    $scope = HandleOf $handles 'scope'
+    if ($scope -eq [IntPtr]::Zero -or $scope -eq $root -or $scope.ToInt64() -ne [long](ValueOf $proof 'scope_hwnd')) { throw 'The audited Sequence scope changed.' }
+    $scopeId = [BinderJetLeafMetadata]::ScopeIdentity($root, $scope, $pidExpected)
+    if ([string]$scopeId.class_name -cne [string](ValueOf $proof 'scope_class') -or
+        [long]$scopeId.parent -ne [long](ValueOf $proof 'scope_parent') -or
+        [long]$scopeId.thread -ne [long](ValueOf $proof 'scope_thread') -or
+        [int]$scopeId.control_id -ne [int](ValueOf $proof 'scope_control_id')) { throw 'The audited Sequence scope identity changed.' }
+    foreach ($name in @('ir','save')) {
+        $window = HandleOf $handles $name
+        if ($window -eq [IntPtr]::Zero -or $window.ToInt64() -ne [long](ValueOf $proof ($name + '_hwnd'))) { throw 'An audited native anchor changed.' }
+        $leaf = [BinderJetLeafMetadata]::LeafIdentity($root, $window, $pidExpected)
+        if ([string]$leaf.class_name -cne [string](ValueOf $proof ($name + '_class')) -or
+            [string]$leaf.id -cne [string](ValueOf $proof ($name + '_id'))) { throw 'An audited native anchor identity changed.' }
+    }
+    $ir = HandleOf $handles 'ir'; $save = HandleOf $handles 'save'
+    if ([BinderJetLeafMetadata]::CommonAncestor($root, $ir, $save, $pidExpected) -ne $scope) { throw 'IR and Save left the audited Sequence scope.' }
+    [BinderJetNativeFields]::ValidateWritableIr($root, $ir, $pidExpected)
+    [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
+}
+
+function ScopedInventorySignature($records) {
+    return (@($records | Sort-Object { [long]$_.hwnd } | ForEach-Object {
+        @([long]$_.hwnd, [string]$_.class_name, [string]$_.id, [bool]$_.enabled)
+    }) | ConvertTo-Json -Depth 6 -Compress)
+}
+
+function ScopedPreparedControl($root, $pidExpected, $handles) {
+    $script:controlWait = $true
+    AssertScopeProof $root $pidExpected $handles
+    $machine = NativeMachine $root $pidExpected $handles
+    if ($machine -notin @('M1','S3') -or $machine -cne [string]$request.machine) { $script:identityFailure = $true; throw 'The selected machine identity changed.' }
+    AssertAutomatic $root $pidExpected $handles
+    $script:controlWait = $true
+    $scope = HandleOf $handles 'scope'
+    $records = @([BinderJetLeafMetadata]::CollectScoped($root, $scope, $pidExpected))
+    if ($records.Count -eq 0 -or $records.Count -gt 900) { throw 'A complete bounded Sequence inventory is required.' }
+    $ir = UniqueRecord $records 'textBoxHeatingOutput'
+    $save = UniqueRecord $records 'btnSave'
+    if ($null -eq $ir -or $null -eq $save -or [long]$ir.hwnd -ne (HandleOf $handles 'ir').ToInt64() -or
+        [long]$save.hwnd -ne (HandleOf $handles 'save').ToInt64()) { throw 'The audited IR or Save is hidden or changed.' }
+    $map = @{}
+    foreach ($record in $records) {
+        $window = [IntPtr][long]$record.hwnd
+        $kind = [BinderJetNativeFields]::Kind($root, $window, $pidExpected)
+        if ($kind -notin @('text','toggle')) { continue }
+        $id = [string]$record.id
+        if ([string]::IsNullOrWhiteSpace($id) -or $map.ContainsKey($id)) { throw 'A Sequence input has a blank or duplicate AutomationId.' }
+        $map[$id] = @{hwnd=$window.ToInt64();kind=$kind}
+    }
+    if ($map.Count -gt 256 -or -not $map.ContainsKey('textBoxHeatingOutput')) { throw 'The bounded Sequence input map is incomplete.' }
+    $fields = ReadFields $root $pidExpected $map $scope
+    $after = @([BinderJetLeafMetadata]::CollectScoped($root, $scope, $pidExpected))
+    if ((ScopedInventorySignature $records) -cne (ScopedInventorySignature $after)) { throw 'The Sequence inventory changed during field reads.' }
+    AssertScopeProof $root $pidExpected $handles
+    $afterMachine = NativeMachine $root $pidExpected $handles
+    if ($afterMachine -cne $machine) { $script:identityFailure = $true; throw 'The selected machine identity changed during recovery.' }
+    AssertAutomatic $root $pidExpected $handles
+    $script:controlWait = $true
+    $state = ([BinderJetNativeProcess]::ReadText($root, (HandleOf $handles 'state'), $pidExpected)).Trim()
+    if ($state -notin @('AUTO','RUNNING')) { throw 'Automatic recipe updates require a fresh AUTO/RUNNING state.' }
+    return @{success=$true;machine=$machine;fields=$fields;field_map=$map;handles=$handles;setting=$fields['textBoxHeatingOutput'];state=$state}
+}
+
 function PreparedControl($root, $pidExpected, $records) {
     $script:controlWait = $true
     if ($records.Count -eq 0 -or $records.Count -gt 900) { throw 'A bounded native leaf metadata snapshot is required.' }
@@ -304,6 +468,7 @@ function PreparedControl($root, $pidExpected, $records) {
     }
     $verifiedMachine = NativeMachine $root $pidExpected $newHandles
     if ($verifiedMachine -notin @('M1','S3') -or ($request.machine -and $verifiedMachine -cne [string]$request.machine)) { if ($verifiedMachine -in @('M1','S3')) { $script:identityFailure = $true }; throw 'Control requires a verified exact M1/S3 native machine label.' }
+    $newHandles['scope_proof'] = ScopeProof $root $pidExpected $newHandles
     return @{success=$true;machine=$verifiedMachine;fields=$fields;field_map=$map;handles=$newHandles;setting=$fields['textBoxHeatingOutput']}
 }
 
@@ -344,7 +509,13 @@ try {
         $script:identityFailure = $true
         [BinderJetNativeProcess]::ValidateWindow($root, $pidExpected)
         $script:identityFailure = $false
-        $machine = if ($request.operation -eq 'validate') { [string]$request.machine } elseif ($request.operation -eq 'recover_control') {
+        $machine = if ($request.operation -eq 'validate') { [string]$request.machine } elseif ($request.operation -eq 'recover_control' -and $null -ne (ValueOf $handles 'scope_proof')) {
+            # Validate exact cached global handles first; NativeMachine otherwise
+            # allows visible-root discovery when a machine handle is missing.
+            $script:controlWait = $true
+            AssertGlobalProof $root $pidExpected $handles
+            CheckMachine $root $pidExpected $handles
+        } elseif ($request.operation -eq 'recover_control') {
             try { CheckMachine $root $pidExpected $handles } catch {
                 if ($script:identityFailure) { throw }
                 CheckMachine $root $pidExpected @{}
@@ -379,12 +550,18 @@ try {
                 # A single bounded READ-ONLY operation; no navigation, IR edit or Save.
                 $script:controlWait = $true
                 if ([BinderJetQueuedNavigation]::IsUserEditing($root, $pidExpected)) { throw 'The user is editing a target field; automatic Save is suspended.' }
-                # Adoption always inventories the current visible input set.
-                # Cached HWNDs cannot reveal an in-place new/duplicate control.
-                $records = @(SequenceMetadata $root $pidExpected)
-                $response = PreparedControl $root $pidExpected $records
-                AssertAutomatic $root $pidExpected $response.handles
-                $response.state = ([BinderJetNativeProcess]::ReadText($root, (HandleOf $response.handles 'state'), $pidExpected)).Trim()
+                if ($null -ne (ValueOf $handles 'scope_proof')) {
+                    # No general catch: provider, global identity and scoped inventory
+                    # failures cannot fall back to a broader inventory.
+                    AssertGlobalProof $root $pidExpected $handles
+                    if (ScopeStructureMatches $root $pidExpected $handles) {
+                        $response = ScopedPreparedControl $root $pidExpected $handles
+                    } else {
+                        $response = VisibleReaudit $root $pidExpected $handles
+                    }
+                } else {
+                    $response = VisibleReaudit $root $pidExpected $handles
+                }
             }
             'verify_control' {
                 AssertAutomatic $root $pidExpected $handles

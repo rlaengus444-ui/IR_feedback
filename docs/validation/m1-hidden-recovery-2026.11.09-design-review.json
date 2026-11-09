@@ -1,0 +1,226 @@
+{
+  "review_stage": "DESIGN_PRE",
+  "date_utc": "2026-11-09T09:02:39.056153+00:00",
+  "reviewer_role": "sol_reviewer",
+  "invocation": {
+    "route": "official native collaboration.spawn_agent, repository reviewer role supplied by parent",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "final_response_required": true,
+    "independent_provider_identity_attestation": false,
+    "note": "Requested model and effort are task routing metadata; no independent provider/model identity tooling was used."
+  },
+  "target": {
+    "repository": "/workspace/IR_feedback_m1_recovery_nov9",
+    "commit": "57a80cfb9f21d922f01c39da09debfa7343ca67a",
+    "branch": "fix/m1-hidden-recovery-20261109",
+    "worktree_status_before": "",
+    "runtime_base": "808b8cbc131c3072147eb0f79ceedd5ba8a4ef89",
+    "runtime_diff_base_to_target": [],
+    "note": "App runtime is unchanged from released runtime base. The complete base-to-target diff also includes publisher tooling and evidence; it is not literally docs-only."
+  },
+  "decision": "APPROVE_SCOPED_RECOVERY_DESIGN_FOR_OFFLINE_IMPLEMENTATION_WITH_REQUIRED_CONSTRAINTS",
+  "scope": "Design critique of recovery after an already audited Sequence view becomes hidden; no production code edits, live UI actions, equipment changes or publication performed by this reviewer.",
+  "observed_log": {
+    "path": "/workspace/attachments/2813229f-44bc-4f8b-b26a-05451d6b2d33/붙여넣은 텍스트.txt",
+    "sha256": "535d2ea0e9b4854cdd8aa9d59a060533518f4018339e7c2b278ca3f24b0b3814",
+    "facts": [
+      "IDLE, MOVING and AUTO CLEANING holds precede the native recovery failures.",
+      "16:22:59 recover_control reports Collect candidate no longer a visible supported leaf.",
+      "16:23:01 and later recover_control repeatedly reports that Sequence Save is not visible.",
+      "User editing, owner files changed during aggregate read, and AUTO/RUNNING waits also occur.",
+      "The final shown 17:43:32 event remains a Save-visibility hold."
+    ],
+    "limits": [
+      "The log does not identify the initiating action or establish that the operator changed tabs.",
+      "No successful heater/Save actuation or hardware fault is established by this log.",
+      "The fix must preserve legitimate editing, owner-write and nonautomatic-state holds."
+    ]
+  },
+  "findings": [
+    {
+      "id": "PRE-01",
+      "priority": "P1",
+      "status": "required_design_constraint",
+      "locations": [
+        "app/native_helper.ps1:267",
+        "app/native_helper.ps1:278",
+        "app/native_helper.ps1:378",
+        "app/UiaBridge.metadata.part.cs:44",
+        "app/UiaBridge.process.part.cs:124"
+      ],
+      "finding": "Recovery is coupled to whole-root visible metadata and requires visible Save/IR and visible inputs. Normal apply already permits owned hidden controls, so a settings HOLD cannot be adopted when Sequence remains hidden.",
+      "required_resolution": "Add a distinct bounded collector restricted to the already audited non-root Sequence ancestor. Keep existing root collection visible-only; never add hidden whole-root discovery or navigation."
+    },
+    {
+      "id": "PRE-02",
+      "priority": "P1",
+      "status": "required_design_constraint",
+      "locations": [
+        "app/native_helper.ps1:213",
+        "app/native_helper.ps1:278",
+        "app/sequence_field_audit.py:162"
+      ],
+      "finding": "A cached field_map cannot reveal new, duplicate, renamed, removed or newly eligible inputs. Broad all-hidden enumeration can also treat explicitly unavailable Save/inputs as usable.",
+      "required_resolution": "Build a fresh full eligible-leaf inventory for each scoped recovery request. Use scope-relative WS_VISIBLE checks on each candidate and its inner ancestors up to but excluding the authenticated scope, ignoring only scope/outer hiding. Require unique nonblank saved-input IDs, unique IR/Save, complete unchanged Python persisted field audit, and before/after inventory/identity checks. Explicitly hidden Save/IR/required inner fields must remain HOLD."
+    },
+    {
+      "id": "PRE-03",
+      "priority": "P1",
+      "status": "required_design_constraint",
+      "locations": [
+        "app/native_helper.ps1:43",
+        "app/native_helper.ps1:65",
+        "app/native_helper.ps1:300",
+        "app/native_helper.ps1:347",
+        "app/UiaBridge.metadata.part.cs:85"
+      ],
+      "finding": "The hidden inventory cannot reacquire global machine/state labels, and mere ownership of an arbitrary scope or cached control is insufficient semantic authentication.",
+      "required_resolution": "Retain an audited scope identity proof plus separate audited global machine/state handles and expected leaf identities/classes. Validate PID/root/scope ancestry, non-root isolated CommonAncestor, expected classes and current leaf IDs/roles before and after collection. Recheck exact machine, fresh AUTO/RUNNING and editing focus. No hidden global/root fallback when proof is stale. A separate unchanged visible-only reacquisition may re-audit a recreated view without navigation."
+    },
+    {
+      "id": "PRE-04",
+      "priority": "P1",
+      "status": "required_before_delivery",
+      "locations": [
+        "app/build_uia_bridge.ps1:4",
+        "app/native_helper.ps1:236",
+        "release_tools/windows_bridge_probe.py:17",
+        "release_tools/windows_bridge_probe.py:95",
+        "release_tools/build_slice_package.py:47",
+        "release_tools/verify_package.py:102"
+      ],
+      "finding": "The new C# collector requires a real rebuilt bridge. The helper and marked-download probe pin the old DLL SHA-256, and the probe also pins size 21504. Existing packaging copies repository DLL bytes rather than building the bridge.",
+      "required_resolution": "Build from the reviewed five C# source files on Windows, preserve build/source/toolchain logs and previous DLL evidence, then update active helper/probe hash and actual size. Verify packaged runtime loads the new exact bytes with Internet-zone ADS and rejects tampered/oversize/missing DLLs. Bind source commit, C# hashes, DLL hash, manifest and exact ZIP hash to the final review. Preserve historical releases and evidence."
+    }
+  ],
+  "minimal_design": [
+    "At initial visible preparation record the isolated Sequence scope and the identity/class evidence needed to authenticate it later; keep global machine/state labels separate.",
+    "For connected recovery with a valid existing scope, enumerate only that scope using native HWND APIs. Keep 16384 native visits, 900 eligible leaves, 256 inputs, 64 parent-depth and 1024 AutomationId bounds; reject partial inventories and helper timeouts.",
+    "For eligibility, test WS_VISIBLE on the leaf and inner ancestor chain up to but excluding scope. Validate that every visited chain reaches that same owned scope. Ignore scope/outer visibility only. Confirm actual WinForms native-style behavior with tests before claiming this solves the M1 hidden-page case.",
+    "Read UIA AutomationId only through existing element-only CacheRequest/AutomationElementMode.None on supported STATIC/BUTTON/EDIT leaves; no root/container/grid FromHandle, Current, UIA patterns/tree traversal or Process table access.",
+    "Validate root/PID/scope and exact classes/ancestry before and after metadata acquisition, reject scope==root, confirm current IR/Save CommonAncestor equals the authenticated scope, compare pre/post native candidate membership, and reject identity/class/inner-visibility changes. Do not silently use cached field_map when metadata fails.",
+    "Rebuild the current text/toggle map from fresh eligible metadata, detect every new/duplicate/blank ID, require current unique IR EDIT and Save PUSHBUTTON with existing enabled/writable protections, read all eligible fields, and retain the unchanged required/unknown/unsaved field-to-persisted audit.",
+    "Use separately retained audited global labels with verified ownership, expected classes/leaf identities and fresh native reads. Require exact selected M1/S3 and AUTO/RUNNING plus no editing before and after recovery. Missing or changed global proof cannot be repaired by hidden root discovery.",
+    "Keep the current persisted-before / UI / persisted-after consistency check and two matching recovery signatures separated by the existing interval. A changed map/handle/signature, read failure, file mutation or identity uncertainty resets the recovery candidate.",
+    "Adopt only a new epoch after both stable reads. Preserve the session baseline then different fresh valid layer barrier, CSV job/age/hash/content gates, -1 invalid thermometer handling, output min/max and 5 percentage-point guards, settings/image/output-limit admission, and ambiguous-edit/Save sticky fault/no-retry behavior.",
+    "If authenticated scope is gone, reparented, recreated or semantically invalid, HOLD. An explicit existing visible-only fresh re-audit may reacquire a visible replacement; do not open tabs, force focus/AUTO or invent hidden profile mappings."
+  ],
+  "visibility_nuance": {
+    "schema_fact": "assert_fields_match_persisted already ignores UNBOUND_FIELDS plus FIELD_BINDINGS not active for the selected profile. Therefore checkBoxAdaptiveHeating for both profiles and textBoxSpreadingRollerRpm for M1 specifically do not cause unknown-field rejection if inventoried.",
+    "recommendation": "Prefer scope-relative WS_VISIBLE over unqualified all-hidden recovery because it preserves deliberate unavailability of Save and inner controls. Known inactive mappings remain unchanged; absent active saved fields still HOLD.",
+    "unresolved_empirical_question": "Actual WinForms may have provider/control-specific native visibility behavior. A real Windows fixture must show child WS_VISIBLE retention under outer scope hiding and distinguish explicit inner hiding; mock Python tests cannot establish this.",
+    "all_hidden_alternative": "All-hidden plus the unchanged strict schema is fail-closed for unknown fields, but by itself does not preserve explicitly hidden Save unavailability. Do not claim the M1 case fixed without applicable schema and visibility evidence."
+  },
+  "required_tests": {
+    "windows_synthetic_actual_production_transport": [
+      "Reproduce old failure with released bridge/helper: prepare visible full M1 schema; hide Sequence and/or outer parent without destroying HWNDs; trigger a settings HOLD. Old recovery should show Save not visible, while CSV observations, connection and chart history remain live.",
+      "With the exact rebuilt packaged bridge/helper and default production deadlines, same hidden scope recovers only after two coherent reads, then baseline plus a different fresh layer. Recovery itself performs zero edits, zero Saves and zero navigation; foreground unrelated application remains foreground throughout.",
+      "Record native WS_VISIBLE before/after outer hide, then explicitly hide Save alone, IR alone, a required inner field and a required inner panel. Each explicit unavailable case must HOLD and never Save; restoring it requires fresh full stable checks. Include hidden outer parent/root-minimized cases that existing background behavior supports.",
+      "Under hidden outer scope, add an eligible unknown input, blank-ID input, duplicate IR, duplicate non-IR, duplicate Save, remove a required input, reparent fields outside scope, and change ID/kind/class. No partial or cached-map adoption; unknown inputs must reach the Python schema audit and block.",
+      "Include known ignored inactive controls and intentionally hidden conditional controls; require the real M1/S3 active saved-input sets. No inference of extra mappings. Full profile tests must exercise initial visible preparation before hidden recovery, not start from an unaudited hidden scope.",
+      "Reparent/destroy/recreate scope or anchors, wrong PID/root/machine/global-label handle/class/ID, stale or conflicting scope, disabled/read-only IR and disabled/hidden Save. Hidden stale proof must HOLD; only separate visible-only re-audit may reacquire a visible recreated scope.",
+      "Mutate class, ancestry, inner visibility or inventory membership while metadata is collected; exceed visit/leaf/input/depth/ID bounds and simulate hung provider. Verify no partial adoption, bounded helper retirement and no Process/grid WM_GETTEXT/WM_GETOBJECT/UIA/tree/scroll calls.",
+      "Preserve IDLE, MOVING, AUTO CLEANING, PAUSED, unknown state, active editing, owner aggregate replacement/partial write, changed non-IR values and unsaved UI holds. Returning to AUTO alone must not bypass audit/baseline/fresh-layer gates.",
+      "One isolated synthetic hidden-page apply after full recovery must traverse normal CSV/sensor/setting/persistence guards and Save once only; stale/rewritten CSV, invalid -1, job/settings change and uncertain Save paths must never retry. No real equipment."
+    ],
+    "offline_regressions": [
+      "Existing recovery A-B-A signatures, recreated map, two stable reads, owner mutation, user edit, baseline and different-layer tests; add scoped-recovery identity/field-set response cases where Python changes are introduced.",
+      "Retain sensor invalid/stale/partial/duplicate/job-lineage cases, output bounds/change cap, initial prepare one-shot authority, and ambiguous write tests.",
+      "Run appropriate full application suite under supported platforms; identify Linux exclusions and do not report mocked Linux transport as native Windows validation.",
+      "Verify unchanged CSV and both PNG archive paths, retained chart history during HOLD, shutdown/disconnect export, fallback directory and partial-export retry protections."
+    ],
+    "bridge_and_exact_package_provenance": [
+      "Build reviewed C# sources with actual Windows framework compiler and pinned framework references; capture compiler exit/logs plus all five C# source hashes, build-script hash and produced DLL hash/size. Do not assume byte reproducibility from non-deterministic compiler output.",
+      "Update active DLL pins and size assertion consistently while preserving old release evidence; assert packaged DLL exposes the new collector API and helper uses it.",
+      "Run marked-download ADS initialization/discover and missing/tampered/oversize rejection probes on the exact extracted package with its runtime/python.exe.",
+      "Verify exact source bytes, full manifest, source commit, ZIP SHA-256 and exact-artifact Windows reports; repeat no provenance claim from a different candidate. Obtain CODE_POST and exact-artifact independent final reviews before delivery."
+    ]
+  },
+  "checks_executed": {
+    "repository_reads": "Actual repository files inspected independently; file digests below identify the PRE target.",
+    "git_status": "Clean target worktree at start; no application/source edits by reviewer.",
+    "runtime_source_comparison": "git diff base..target -- app returned no changes.",
+    "baseline_tests": {
+      "source_commit": "57a80cfb9f21d922f01c39da09debfa7343ca67a",
+      "modules": [
+        "test_live_settings",
+        "test_sequence_field_audit",
+        "test_sequence_persistence",
+        "test_windows_ui_adapter",
+        "test_sensor_recovery",
+        "test_hold_diagnostics",
+        "test_initial_prepare_recovery"
+      ],
+      "tests": 116,
+      "failures": 0,
+      "errors": 0,
+      "skipped": [],
+      "excluded": [
+        {
+          "id": "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed",
+          "reason": "Native transport Windows-only path: unchanged _request rejects os.name != nt before mocked Popen. Initial unfiltered run:117 tests,116passed,1failure at assertTrue(child.killed)."
+        }
+      ],
+      "elapsed_seconds": 5.817784724999001,
+      "platform": "Linux",
+      "scope": "Offline baseline Python tests only; no Windows bridge, Excel COM, real target or equipment."
+    },
+    "baseline_log": "/workspace/ir-m1-recovery-2026.11.09/sol-design-pre-baseline-tests.txt",
+    "baseline_log_sha256": "65b367cde33c2e90cb2b98f5463c0984a7f3864a73739249a5aab787bca82610",
+    "not_executed": [
+      "No new implementation exists yet for CODE_POST review.",
+      "No actual Windows synthetic bridge/provider/visibility or package tests performed by this reviewer in this PRE stage.",
+      "No Excel COM, live BinderJet application, physical sensor/PLC/lamp output, long duration printing or hardware safety validation."
+    ]
+  },
+  "user_questions_confirmed": {
+    "m2": "Current GUI, SessionOptions, native machine detection and saved-field mappings support M1/S3 only. M2 is unsupported; adding M2 is outside this fix.",
+    "automatic_archives": "Automatic whole-history CSV plus <CSV stem>_temperature.png and <CSV stem>_ir.png use the extracted application root/records first, fallback to %LOCALAPPDATA%/IRFeedback/records. Per-file fallback may place files in different folders; status log prints all full paths. Manual CSV Save uses the operator-selected path.",
+    "existing_behavior_to_preserve": [
+      "Connection, CSV observations and chart history remain during recoverable control HOLD.",
+      "No attempt to force AUTO, navigate, focus, resume the printer, or automatically commit user edits."
+    ]
+  },
+  "approval_boundaries": {
+    "offline_implementation_may_proceed": true,
+    "code_post_review_complete": false,
+    "exact_artifact_review_complete": false,
+    "software_delivery_approved_by_this_record": false,
+    "control_algorithm_final_approval": false,
+    "equipment_application_approved": false,
+    "publication_performed": false,
+    "note": "Standing evaluation-delivery authorization is reported by parent, not conferred by this PRE review. Explicit user algorithm/equipment HOLD remains."
+  },
+  "inspected_file_sha256": {
+    "AGENTS.md": "6fb54da337568540f6b6985b03b4dbd6050edba6ac91f65e9519977d3b483a3f",
+    "CODEX_REVIEW_PROTOCOL.md": "c434ff8d122c5e74a1b6123631562aeb71ea5beb984c65de57a147c3f08f49f7",
+    ".codex/agents/sol_reviewer.toml": "eacfe30f5f0ffb82321793ba0216ca7b45f12ce2daea5ee573c6d6912b273c51",
+    "README.md": "8810a2053f9e02207337a727e1cbdff3594ae0273c8662b1965e285e07a4cec6",
+    "app/README.ko.md": "3e2f21617ed4f0250ce8022ff6800e497e5ffc87c02fbc8dd5087a31306e105c",
+    "docs/VALIDATION.ko.md": "8459ce8c31a6878e0bba258da89a6fb624d3297ebe86eaa79a100b2db27d7288",
+    "app/native_helper.ps1": "79971445e975b5ef2d15eaef0aedf0a073fe95b8504cfd5e749eb0b912746621",
+    "app/UiaBridge.cs": "314b4e646d81160eae9be839eda7201a76fb99d6ab939363589f940e796d5013",
+    "app/UiaBridge.metadata.part.cs": "66f0fa82f40c53090a2266e33009e2afeadd1e516dd4fbd23053d0451b4e874f",
+    "app/UiaBridge.process.part.cs": "c2cf0912592664c3d614570f68672dcb747a53464ca3fd359a1868bdee355d98",
+    "app/UiaBridge.fields.part.cs": "ff24fa1f48de1c85506911433cf185d0407422cb9bf3a072bc3b17deb08c2a95",
+    "app/UiaBridge.navigation.part.cs": "8224937800f3aa7dd8a53fbeaa56e2afa1e3c41f8d4620d017ea36668cdf7a0b",
+    "app/build_uia_bridge.ps1": "38822a0856b26f32a905ccfebc0bfe3b2e512541f2856febda5a38b0a3e4e07b",
+    "app/UiaBridge.dll": "181d32dd5b13cee276553f6dd2347227fe9b44c288e717d0a399ec57d47b700f",
+    "app/windows_ui_adapter.py": "3230af99fcfabfba99efb045992ba28faf4fd446b4f2f50d10babd44f9ef0731",
+    "app/sequence_field_audit.py": "7baf56ded63c10d0ed07ef266aac9597835ecc92a13ca78f54de7ffc90372d42",
+    "app/sequence_persistence.py": "f56f9a18043746eb1c71027b32d0588b3848fcc83867d610bd85b507e0f090a6",
+    "app/test_live_settings.py": "995eea053481513266ddb1dc5e10d09bdbae1c287a0ddd1596ed3380e3b5d91a",
+    "app/test_windows_ui_adapter.py": "059ff089fcc6091d2831617ac1764064f92ee9d0f3943d422715c6348d330c4a",
+    "release_tools/windows_settings_recovery_probe.py": "e5623de9dc20fbad6ac46a1c264e450b65c9e52b231294026d2da2a1665faa6e",
+    "validation/SettingsRecoveryFixture.cs": "4f60ab77232693cf3df618619d96c968ab844d50bdc3bd635b762af742a5cd59",
+    "release_tools/windows_bridge_probe.py": "326e5ab09f908fa3840afe8f3ac2d0eacc291a381d911ecf598afebc8bb312e2",
+    "release_tools/windows_background_probe.py": "d470e90872072365528c569851e79f4e63e9b469b9935ba548273bfd3f6ac04c",
+    "release_tools/verify_package.py": "b32d4df0f233be2940bef9bca148ca984582838956384fcbfc9b56d76a1c3d76",
+    "release_tools/build_slice_package.py": "9c33e2bb8bf90f36c07ca92ec55c48f0d7e565abe97318ed9d5e0a8ca259705e",
+    ".github/workflows/validate-slice.yml": "917f7c21f35269c4e0ced65f9e822347e451d1a0ac9604a81e82db06d643287f",
+    "app/plot_archive.py": "e3023d6352355d1031c17632a334b720a1daffe2ffbbeb38cd326d0f2df39cb4",
+    "app/standalone_ir.py": "e269a045b1303f465594e927983f0b4d2c5a664b4fede6dbe3d26eb36470e7fb",
+    "docs/LIVE_SETTINGS.ko.md": "936467885a20755bf82e858e2d9eb87f1baa32d143c7ce752bed40349c059662"
+  }
+}

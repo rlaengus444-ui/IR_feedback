@@ -1,0 +1,65 @@
+name: Build scoped recovery bridge evidence
+on:
+  push:
+    branches: ['fix/m1-hidden-recovery-20261109']
+    paths:
+      - 'app/UiaBridge*.cs'
+      - 'app/build_uia_bridge.ps1'
+      - '.github/workflows/build-m1-recovery-bridge.yml'
+permissions:
+  contents: read
+jobs:
+  build-bridge:
+    runs-on: windows-2022
+    timeout-minutes: 5
+    steps:
+      - name: Preserve source bytes
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile reviewed bridge sources using installed Windows Framework
+        id: compile
+        shell: pwsh
+        run: |
+          Remove-Item app/UiaBridge.dll -ErrorAction Stop
+          powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File app/build_uia_bridge.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Bridge compilation failed; no success inferred' }
+      - name: Record exact source and compiler provenance
+        if: always()
+        env:
+          BRIDGE_COMPILE_OUTCOME: ${{ steps.compile.outcome }}
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          import hashlib,json,os,shutil
+          root=Path('.'); out=Path(os.environ['RUNNER_TEMP'])/'m1-recovery-bridge'
+          out.mkdir()
+          sources=['UiaBridge.cs','UiaBridge.navigation.part.cs','UiaBridge.process.part.cs','UiaBridge.metadata.part.cs','UiaBridge.fields.part.cs','build_uia_bridge.ps1']
+          record={'source_commit':os.environ['GITHUB_SHA'],'source_sha256':{},'build_succeeded':os.environ['BRIDGE_COMPILE_OUTCOME']=='success','equipment_application_approved':False,'review_status':'compile evidence only; validation pending'}
+          for name in sources:
+              path=root/'app'/name
+              record['source_sha256']['app/'+name]=hashlib.sha256(path.read_bytes()).hexdigest()
+              shutil.copyfile(path,out/name)
+          compiler=Path(os.environ['WINDIR'])/'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
+          record['compiler_sha256']=hashlib.sha256(compiler.read_bytes()).hexdigest()
+          for name in ['UiaBridge.build.stdout.log','UiaBridge.build.stderr.log']:
+              path=root/'app'/name
+              if path.exists():shutil.copyfile(path,out/name)
+          dll=root/'app/UiaBridge.dll'
+          if record['build_succeeded']:
+              assert dll.is_file(), 'Successful compiler produced no DLL'
+              record['dll_sha256']=hashlib.sha256(dll.read_bytes()).hexdigest()
+              record['dll_bytes']=dll.stat().st_size
+              shutil.copyfile(dll,out/'UiaBridge.dll')
+          (out/'build.json').write_text(json.dumps(record,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(record,indent=2))
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw 'Bridge provenance recording failed' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m1-recovery-bridge-${{ github.sha }}
+          path: ${{ runner.temp }}/m1-recovery-bridge/

@@ -32,6 +32,10 @@ public static class BinderJetNativeProcess
     private static extern bool IsWindowVisible(IntPtr window);
     [DllImport("user32.dll")]
     private static extern bool IsWindowEnabled(IntPtr window);
+    [DllImport("user32.dll", EntryPoint="GetWindowLongW")]
+    private static extern int GetWindowStyle(IntPtr window, int index);
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetParent(IntPtr window);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern int GetClassName(IntPtr window, StringBuilder value, int maximum);
     [DllImport("user32.dll")]
@@ -128,6 +132,62 @@ public static class BinderJetNativeProcess
         if (!IsWindowVisible(window) || !IsLeafClass(className, includeEdits))
             throw new InvalidOperationException("A native discovery candidate is no longer a visible supported leaf.");
         return className;
+    }
+
+    // Scope itself and its outer ancestors may be hidden by tab selection.
+    // A leaf or an inner ancestor explicitly hidden by the application is not eligible.
+    internal static bool RelativeVisible(IntPtr root, IntPtr scope, IntPtr window, int expectedPid)
+    {
+        ValidateChild(root, scope, expectedPid);
+        ValidateChild(root, window, expectedPid);
+        if (scope == root || window == scope || !IsChild(scope, window))
+            throw new InvalidOperationException("A native candidate left the authenticated Sequence scope.");
+        bool visible = true;
+        IntPtr current = window;
+        for (int depth = 0; depth < 64; depth++)
+        {
+            ValidateChild(root, current, expectedPid);
+            if (current == scope) return visible;
+            if ((GetWindowStyle(current, -16) & 0x10000000) == 0) visible = false;
+            current = GetParent(current);
+        }
+        throw new InvalidOperationException("The native Sequence parent chain exceeds its bound or lost the scope.");
+    }
+
+    internal static string ValidateRelativeLeaf(IntPtr root, IntPtr scope, IntPtr window, int expectedPid)
+    {
+        if (!RelativeVisible(root, scope, window, expectedPid))
+            throw new InvalidOperationException("A Sequence leaf or inner ancestor became hidden.");
+        string name = ClassName(window);
+        if (!IsLeafClass(name, true)) throw new InvalidOperationException("A Sequence candidate class changed.");
+        return name;
+    }
+
+    internal static IntPtr[] RelativeLeafHandles(IntPtr root, IntPtr scope, int expectedPid)
+    {
+        ValidateChild(root, scope, expectedPid);
+        if (scope == root) throw new InvalidOperationException("A non-root Sequence scope is required.");
+        var handles = new List<IntPtr>();
+        int visits = 0; bool visitLimit = false, candidateLimit = false, invalid = false;
+        ChildCallback callback = delegate(IntPtr window, IntPtr unused)
+        {
+            if (++visits > MaximumWindowVisits) { visitLimit = true; return false; }
+            try {
+                if (!RelativeVisible(root, scope, window, expectedPid)) return true;
+                string name = ClassName(window);
+                if (name.Length == 0) { invalid = true; return false; }
+                if (!IsLeafClass(name, true)) return true;
+                if (handles.Count >= MaximumChildren) { candidateLimit = true; return false; }
+                handles.Add(window);
+            } catch { invalid = true; return false; }
+            return true;
+        };
+        EnumChildWindows(scope, callback, IntPtr.Zero);
+        GC.KeepAlive(callback);
+        if (visitLimit || candidateLimit || invalid)
+            throw new InvalidOperationException("The bounded Sequence inventory was incomplete or changed.");
+        ValidateChild(root, scope, expectedPid);
+        return handles.ToArray();
     }
 
     public static Hashtable[] Enumerate(IntPtr root, int expectedPid)
