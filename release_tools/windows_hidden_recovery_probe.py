@@ -197,7 +197,7 @@ def run(root, output, old_root=None):
             try:
                 value = adapter._request(payload, threading.Event())
             except AdapterError as error:
-                value = {'success':False, 'error':str(error), 'error_kind':
+                value = {'success':False, 'error':str(error), 'error_type': type(error).__name__, 'error_kind':
                          'control_wait' if isinstance(error, ControlSuspended) else
                          'identity' if isinstance(error, TargetIdentityError) else 'operation'}
             value['transport_seconds'] = time.monotonic() - started
@@ -214,6 +214,9 @@ def run(root, output, old_root=None):
         checks, responses = report['checks'], report['responses']
         report['native_window_styles'] = {'initial_visible': styles()}
         metadata = request('metadata')
+        responses['initial_metadata'] = metadata
+        if not metadata.get('success'):
+            raise RuntimeError('Initial visible metadata failed: ' + str(metadata))
         initial = request('prepare_control', metadata=metadata.get('records', []))
         responses['initial'] = initial
         if not initial.get('success'): raise RuntimeError('Initial visible authorization failed: ' + str(initial))

@@ -89,7 +89,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Launcher smoke failed' }
       - name: Verify bridge loading with downloaded-file marking
         id: bridge
-        if: steps.build.outcome == 'success' && !inputs.native_only
+        if: steps.build.outcome == 'success'
         continue-on-error: true
         shell: pwsh
         run: |
