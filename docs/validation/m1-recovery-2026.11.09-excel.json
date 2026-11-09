@@ -1,0 +1,5 @@
+{
+  "excel_com_tested": false,
+  "release_ready": false,
+  "reason": "Excel COM is not registered"
+}

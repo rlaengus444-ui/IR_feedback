@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "checks": {
+    "original_hash_and_size": true,
+    "ads_supported_and_zone_3": true,
+    "actual_adapter_discover": true,
+    "actual_bridge_initialize": true,
+    "tampered_rejected": true,
+    "oversize_rejected": true,
+    "missing_rejected": true,
+    "dll_bytes_restored": true,
+    "ads_preserved": true
+  },
+  "no_equipment_writes": true,
+  "source_dll_sha256_before": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+  "ads_before": "[ZoneTransfer]\r\nZoneId=3\r\n",
+  "old_loader": {
+    "exception": "Could not load file or assembly 'file:///D:\\a\\_temp\\slice-extracted\\app\\UiaBridge.dll' or one of its dependencies. Operation is not supported. (Exception from HRESULT: 0x80131515)",
+    "succeeded": false,
+    "reproduced_0x80131515": true,
+    "hresults": [
+      "0x80131515",
+      "0x80131515"
+    ]
+  },
+  "new_discover_seconds": 1.0228743000000122,
+  "new_discover_count": 0,
+  "initialized": true,
+  "tampered_rejected": "[discover] Bundled UI bridge SHA-256 verification failed. Extract the complete trusted release again.",
+  "oversize_rejected": "[discover] Bundled UI bridge exceeds its verified size bound.",
+  "missing_rejected": "[discover] Bundled UI bridge file is missing.",
+  "source_dll_sha256_after": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+  "ads_after": "[ZoneTransfer]\r\nZoneId=3\r\n"
+}

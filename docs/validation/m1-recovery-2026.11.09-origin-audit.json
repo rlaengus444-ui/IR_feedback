@@ -1,0 +1,114 @@
+{
+  "inspection": "EXACT_EXISTING_ARTIFACT_AND_BYTE_ORIGIN_AUDIT",
+  "candidate_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+  "workflow_run_id": 42601104496,
+  "artifact_id": 13666271765,
+  "artifact_sha256": "13a4316f3bd330eb59ba996617b4d7f732e9413afa198626368d54d56aa355f7",
+  "artifact_size": 34940496,
+  "candidate_zip_sha256": "a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d",
+  "candidate_zip_bytes": 35398906,
+  "manifest_sha256": "e3fa4b6b1ad79380f621f03de04790b68b44872059f00b6b037cc861a2fe9382",
+  "manifest_entries": 3660,
+  "entry_origins": {
+    "exact-reviewed-source": 50,
+    "immutable-base-runtime": 3490,
+    "pinned-Pillow-wheel": 120
+  },
+  "all_entry_origin_hashes_equal": true,
+  "native_dll_sha256": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+  "native_dll_bytes": 26112,
+  "native_reports": {
+    "bridge.json": {
+      "passed": true,
+      "sha256": "5613978cf1bbae46ee688ab2bbf8cee0196465e2716d14399b764466111b37bf"
+    },
+    "csv-guard.json": {
+      "passed": true,
+      "sha256": "e216acc7391f23d27a65a4d036b3ab975bda3a1f21114bf5404efd8f18da6121"
+    },
+    "discovery.json": {
+      "passed": true,
+      "sha256": "fa424f5510ffa114c2fe89614361b5bb8c02c22bf3a41c4c7600e1fc62548518"
+    },
+    "slice-performance.json": {
+      "passed": true,
+      "sha256": "820bff1e34c105eba503069566cae7625a264f29a4f4d939dd034443c6ad36e0"
+    },
+    "settings-recovery.json": {
+      "passed": true,
+      "sha256": "f22e21e52cb7e250ac9d891af40cd75e84d202e2eb6d5892b9f1ff2babac35f0"
+    },
+    "background.json": {
+      "passed": true,
+      "sha256": "67936e99e44367d6206008f0f7e6828184b6f9c12b5ba558c53384d55e45c3dd"
+    },
+    "hidden-recovery.json": {
+      "passed": true,
+      "sha256": "a2ed41838857c7499d52d28afbd9c3c186c463f12cabb4141cfb11f44b3300c2"
+    },
+    "hidden-session.json": {
+      "passed": true,
+      "sha256": "cf19d1cf2e567ed2a82c8b32e25d76ff8dce87629b5b7077b952febfee1f4310"
+    }
+  },
+  "windows_application_tests": 511,
+  "readiness": {
+    "device_application_approved": false,
+    "checks": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "settings_recovery": "success",
+      "background": "success",
+      "hidden_recovery": "success",
+      "hidden_session": "success",
+      "excel": "failure",
+      "reverify": "success"
+    },
+    "final_sol_review": "pending",
+    "release_ready": false,
+    "source_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+    "automated_checks_passed": false
+  },
+  "diagnostic_audit_of_failed_readiness": false,
+  "all_non_excel_gates_passed": true,
+  "evaluation_distribution_allowed": false,
+  "excel": {
+    "excel_com_tested": false,
+    "release_ready": false,
+    "reason": "Excel COM is not registered"
+  },
+  "evidence_sha256": {
+    "bridge.json": "5613978cf1bbae46ee688ab2bbf8cee0196465e2716d14399b764466111b37bf",
+    "background.txt": "67936e99e44367d6206008f0f7e6828184b6f9c12b5ba558c53384d55e45c3dd",
+    "background.json": "67936e99e44367d6206008f0f7e6828184b6f9c12b5ba558c53384d55e45c3dd",
+    "candidate.json": "66296abbf5b38d030c1ab7f062ecf426d6d40fb10b599a4b820827692098b588",
+    "csv-guard.json": "e216acc7391f23d27a65a4d036b3ab975bda3a1f21114bf5404efd8f18da6121",
+    "discovery.json": "fa424f5510ffa114c2fe89614361b5bb8c02c22bf3a41c4c7600e1fc62548518",
+    "discovery.txt": "fa424f5510ffa114c2fe89614361b5bb8c02c22bf3a41c4c7600e1fc62548518",
+    "excel.json": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03",
+    "hidden-recovery.json": "a2ed41838857c7499d52d28afbd9c3c186c463f12cabb4141cfb11f44b3300c2",
+    "hidden-recovery.txt": "c82d253ecc67bf1c2dfc4e5b59e85e21f32b8fa2b72107383a5fa9ce4da70a3c",
+    "hidden-session.json": "cf19d1cf2e567ed2a82c8b32e25d76ff8dce87629b5b7077b952febfee1f4310",
+    "hidden-session.txt": "0cb14ba1469a24b55bb9f8efcf7d5c85706c6ac7809f66c58a3fd6e247cb63ec",
+    "IRFeedback-2026.11.09-m1-recovery.1.zip": "a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d",
+    "readiness.json": "c45a0db41327aa703c4f693838b29ef7cdcab8fe93be76c131132656cc6469bb",
+    "settings-recovery.json": "f22e21e52cb7e250ac9d891af40cd75e84d202e2eb6d5892b9f1ff2babac35f0",
+    "settings-recovery.txt": "f22e21e52cb7e250ac9d891af40cd75e84d202e2eb6d5892b9f1ff2babac35f0",
+    "SHA256.txt": "2ca55791eda90efa48d7afc721a68488ee5ace4003403b5c184f77efaa8f1efe",
+    "slice-performance.json": "820bff1e34c105eba503069566cae7625a264f29a4f4d939dd034443c6ad36e0",
+    "slice-performance.txt": "820bff1e34c105eba503069566cae7625a264f29a4f4d939dd034443c6ad36e0",
+    "smoke.txt": "61a645f5f65ec84f3601e75a10fe4dbb917524c46ea8e2c3eeb5a94f6f191914",
+    "tests.txt": "a8e3e7223b6ba081eb692ae994bb78757c06442b4183082f7f68e445221c1f17"
+  },
+  "package_verifier_sha256": "c45e7d6d0f0cc52592ff38f451b8ce4810fe710c9c6cea07c764a11768aeb99e",
+  "reviewer_ran_windows_or_excel": false,
+  "reviewer_ran_equipment": false,
+  "actual_publication_performed": false,
+  "equipment_application_approved": false,
+  "note": "Byte/provenance audit only; independent final review is recorded separately."
+}

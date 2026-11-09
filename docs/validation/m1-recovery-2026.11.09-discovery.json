@@ -1,0 +1,529 @@
+{
+  "passed": true,
+  "checks": {
+    "bulk_machine_and_navigation": true,
+    "actual_enter_sequence_succeeds": true,
+    "wrong_pid_rejected": true,
+    "bulk_metadata_and_prepare": true,
+    "disabled_field_included": true,
+    "stale_visible_leaf_rejected": true,
+    "late_conflicting_machine_rejected": true,
+    "duplicate_navigation_rejected": true,
+    "duplicate_id_rejected": true,
+    "shared_leaf_selector_900_accepted": true,
+    "shared_leaf_selector_901_rejected": true,
+    "fixtures_responsive_and_unchanged": true,
+    "hidden_and_unsupported_controls_not_probed": true,
+    "old_900_child_failure_reproduced": true
+  },
+  "cases": {
+    "bulk": {
+      "durations_seconds": {
+        "direct": 1.1276669000000084,
+        "enter_sequence": 0.4227190999999948,
+        "metadata": 0.3416722999999706,
+        "prepare": 0.4150728999999842,
+        "old_direct": 0.22188570000002983
+      },
+      "direct": {
+        "wrong_pid": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"The selected process/window identity changed.\" ---> System.InvalidOperationException: The selected process/window identity changed.\r\n   at BinderJetNativeProcess.ValidateRoot(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.VisibleLeafHandles(IntPtr root, Int32 expectedPid, Boolean includeEdits)\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "navigation": {
+          "value": 70914,
+          "success": true
+        },
+        "metadata": {
+          "value": 6,
+          "success": true
+        },
+        "machine": {
+          "value": "S3",
+          "success": true
+        }
+      },
+      "enter_sequence": {
+        "entered": true,
+        "success": true,
+        "machine": "S3"
+      },
+      "metadata": {
+        "records": [
+          {
+            "enabled": true,
+            "class_name": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 70910,
+            "id": "labelMachineName"
+          },
+          {
+            "enabled": true,
+            "class_name": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 70912,
+            "id": "labelTaskStatus"
+          },
+          {
+            "enabled": true,
+            "class_name": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 70914,
+            "id": "btnSequences"
+          },
+          {
+            "enabled": true,
+            "class_name": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 70918,
+            "id": "textBoxHeatingOutput"
+          },
+          {
+            "enabled": false,
+            "class_name": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 70920,
+            "id": "textBoxUnrelated"
+          },
+          {
+            "enabled": true,
+            "class_name": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 70922,
+            "id": "btnSave"
+          }
+        ],
+        "success": true
+      },
+      "prepare": {
+        "fields": {
+          "textBoxUnrelated": "5",
+          "textBoxHeatingOutput": "62"
+        },
+        "field_map": {
+          "textBoxUnrelated": {
+            "kind": "text",
+            "hwnd": 70920
+          },
+          "textBoxHeatingOutput": {
+            "kind": "text",
+            "hwnd": 70918
+          }
+        },
+        "setting": "62",
+        "handles": {
+          "machine": 70910,
+          "sequences": 70914,
+          "scope_proof": {
+            "scope_parent": 70906,
+            "state_control_id": 70912,
+            "ir_hwnd": 70918,
+            "save_hwnd": 70922,
+            "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+            "state_parent": 70906,
+            "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+            "state_id": "labelTaskStatus",
+            "scope_hwnd": 70916,
+            "machine_hwnd": 70910,
+            "ir_id": "textBoxHeatingOutput",
+            "machine_control_id": 70910,
+            "state_hwnd": 70912,
+            "scope_control_id": 70916,
+            "state_thread": 2496,
+            "machine_parent": 70906,
+            "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+            "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+            "scope_thread": 2496,
+            "machine_id": "labelMachineName",
+            "machine_thread": 2496,
+            "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+            "save_id": "btnSave"
+          },
+          "state": 70912,
+          "scope": 70916,
+          "ir": 70918,
+          "save": 70922
+        },
+        "success": true,
+        "machine": "S3"
+      },
+      "old_direct": {
+        "wrong_pid": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"The selected process/window identity changed.\" ---> System.InvalidOperationException: The selected process/window identity changed.\r\n   at BinderJetNativeProcess.ValidateRoot(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "navigation": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"FindNavigation\" with \"3\" argument(s): \"Native control discovery exceeds the 900-child bound.\" ---> System.InvalidOperationException: Native control discovery exceeds the 900-child bound.\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.FindNavigation(IntPtr root, Int32 expectedPid, String id)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object , String )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "metadata": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"Collect\" with \"2\" argument(s): \"Native leaf discovery exceeds the 900-child bound.\" ---> System.InvalidOperationException: Native leaf discovery exceeds the 900-child bound.\r\n   at BinderJetLeafMetadata.Collect(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "machine": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"Native control discovery exceeds the 900-child bound.\" ---> System.InvalidOperationException: Native control discovery exceeds the 900-child bound.\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        }
+      },
+      "heartbeat_progress": true,
+      "ir_and_saves": [
+        "62",
+        "0"
+      ],
+      "unsupported_messages": "",
+      "startup_message_counts": {
+        "D": 4804
+      },
+      "navigation_clicks": "1"
+    },
+    "conflict": {
+      "durations_seconds": {
+        "direct": 0.2867094999999722
+      },
+      "direct": {
+        "wrong_pid": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"The selected process/window identity changed.\" ---> System.InvalidOperationException: The selected process/window identity changed.\r\n   at BinderJetNativeProcess.ValidateRoot(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.VisibleLeafHandles(IntPtr root, Int32 expectedPid, Boolean includeEdits)\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "navigation": {
+          "value": 136438,
+          "success": true
+        },
+        "metadata": {
+          "value": 7,
+          "success": true
+        },
+        "machine": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"The selected window exposes conflicting machine labels.\" ---> System.InvalidOperationException: The selected window exposes conflicting machine labels.\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        }
+      },
+      "heartbeat_progress": true,
+      "ir_and_saves": [
+        "62",
+        "0"
+      ],
+      "unsupported_messages": "",
+      "startup_message_counts": {},
+      "navigation_clicks": "0"
+    },
+    "duplicate_nav": {
+      "durations_seconds": {
+        "direct": 0.2907738999999765
+      },
+      "direct": {
+        "wrong_pid": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"The selected process/window identity changed.\" ---> System.InvalidOperationException: The selected process/window identity changed.\r\n   at BinderJetNativeProcess.ValidateRoot(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.VisibleLeafHandles(IntPtr root, Int32 expectedPid, Boolean includeEdits)\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "navigation": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"FindNavigation\" with \"3\" argument(s): \"The audited navigation caption is ambiguous.\" ---> System.InvalidOperationException: The audited navigation caption is ambiguous.\r\n   at BinderJetNativeProcess.FindNavigation(IntPtr root, Int32 expectedPid, String id)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object , String )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "metadata": {
+          "value": 7,
+          "success": true
+        },
+        "machine": {
+          "value": "S3",
+          "success": true
+        }
+      },
+      "heartbeat_progress": true,
+      "ir_and_saves": [
+        "62",
+        "0"
+      ],
+      "unsupported_messages": "",
+      "startup_message_counts": {},
+      "navigation_clicks": "0"
+    },
+    "duplicate_id": {
+      "durations_seconds": {
+        "direct": 0.27372529999996686,
+        "metadata": 0.3386563000000251,
+        "prepare": 0.30124560000001566
+      },
+      "direct": {
+        "wrong_pid": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"The selected process/window identity changed.\" ---> System.InvalidOperationException: The selected process/window identity changed.\r\n   at BinderJetNativeProcess.ValidateRoot(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.VisibleLeafHandles(IntPtr root, Int32 expectedPid, Boolean includeEdits)\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "navigation": {
+          "value": 459246,
+          "success": true
+        },
+        "metadata": {
+          "value": 7,
+          "success": true
+        },
+        "machine": {
+          "value": "S3",
+          "success": true
+        }
+      },
+      "metadata": {
+        "records": [
+          {
+            "enabled": true,
+            "class_name": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 722048,
+            "id": "labelMachineName"
+          },
+          {
+            "enabled": true,
+            "class_name": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 524454,
+            "id": "labelTaskStatus"
+          },
+          {
+            "enabled": true,
+            "class_name": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 459246,
+            "id": "btnSequences"
+          },
+          {
+            "enabled": true,
+            "class_name": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 265682,
+            "id": "textBoxHeatingOutput"
+          },
+          {
+            "enabled": false,
+            "class_name": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 265684,
+            "id": "textBoxUnrelated"
+          },
+          {
+            "enabled": true,
+            "class_name": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 265686,
+            "id": "btnSave"
+          },
+          {
+            "enabled": true,
+            "class_name": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+            "visible": true,
+            "hwnd": 265688,
+            "id": "textBoxHeatingOutput"
+          }
+        ],
+        "success": true
+      },
+      "prepare": {
+        "error": "A unique visible control 'textBoxHeatingOutput' is required.",
+        "error_kind": "control_wait",
+        "success": false
+      },
+      "heartbeat_progress": true,
+      "ir_and_saves": [
+        "62",
+        "0"
+      ],
+      "unsupported_messages": "",
+      "startup_message_counts": {},
+      "navigation_clicks": "0"
+    },
+    "limit900": {
+      "durations_seconds": {
+        "direct": 0.3314566999999897
+      },
+      "direct": {
+        "wrong_pid": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"The selected process/window identity changed.\" ---> System.InvalidOperationException: The selected process/window identity changed.\r\n   at BinderJetNativeProcess.ValidateRoot(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.VisibleLeafHandles(IntPtr root, Int32 expectedPid, Boolean includeEdits)\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "navigation": {
+          "value": 853054,
+          "success": true
+        },
+        "metadata": {
+          "value": 900,
+          "success": true
+        },
+        "machine": {
+          "value": "S3",
+          "success": true
+        }
+      },
+      "heartbeat_progress": true,
+      "ir_and_saves": [
+        "62",
+        "0"
+      ],
+      "unsupported_messages": "",
+      "startup_message_counts": {
+        "D": 3
+      },
+      "navigation_clicks": "0"
+    },
+    "limit901": {
+      "durations_seconds": {
+        "direct": 0.32532489999999825
+      },
+      "direct": {
+        "wrong_pid": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"The selected process/window identity changed.\" ---> System.InvalidOperationException: The selected process/window identity changed.\r\n   at BinderJetNativeProcess.ValidateRoot(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.VisibleLeafHandles(IntPtr root, Int32 expectedPid, Boolean includeEdits)\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "navigation": {
+          "value": 918564,
+          "success": true
+        },
+        "metadata": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"Invoke\" with \"2\" argument(s): \"Visible native leaf discovery exceeds the 900-control bound; no partial inventory was used.\" ---> System.InvalidOperationException: Visible native leaf discovery exceeds the 900-control bound; no partial inventory was used.\r\n   at BinderJetNativeProcess.VisibleLeafHandles(IntPtr root, Int32 expectedPid, Boolean includeEdits)\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "machine": {
+          "value": "S3",
+          "success": true
+        }
+      },
+      "heartbeat_progress": true,
+      "ir_and_saves": [
+        "62",
+        "0"
+      ],
+      "unsupported_messages": "",
+      "startup_message_counts": {
+        "D": 3
+      },
+      "navigation_clicks": "0"
+    },
+    "stale_hide": {
+      "durations_seconds": {
+        "direct": 0.2839733999999794,
+        "stale_before": 0.25483550000001287,
+        "stale_after": 0.21003680000001168
+      },
+      "direct": {
+        "wrong_pid": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"The selected process/window identity changed.\" ---> System.InvalidOperationException: The selected process/window identity changed.\r\n   at BinderJetNativeProcess.ValidateRoot(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.VisibleLeafHandles(IntPtr root, Int32 expectedPid, Boolean includeEdits)\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "navigation": {
+          "value": 655854,
+          "success": true
+        },
+        "metadata": {
+          "value": 7,
+          "success": true
+        },
+        "machine": {
+          "value": "S3",
+          "success": true
+        }
+      },
+      "stale_before": {
+        "value": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+        "success": true
+      },
+      "stale_after": {
+        "error": "System.Management.Automation.MethodInvocationException: Exception calling \"Invoke\" with \"2\" argument(s): \"A native discovery candidate is no longer a visible supported leaf.\" ---> System.InvalidOperationException: A native discovery candidate is no longer a visible supported leaf.\r\n   at BinderJetNativeProcess.ValidateVisibleLeaf(IntPtr root, IntPtr window, Int32 expectedPid, Boolean includeEdits)\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+        "success": false
+      },
+      "heartbeat_progress": true,
+      "ir_and_saves": [
+        "62",
+        "0"
+      ],
+      "unsupported_messages": "",
+      "startup_message_counts": {},
+      "navigation_clicks": "0"
+    },
+    "stale_reparent": {
+      "durations_seconds": {
+        "direct": 0.28041339999998627,
+        "stale_before": 0.20354939999998578,
+        "stale_after": 0.21029190000001563
+      },
+      "direct": {
+        "wrong_pid": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"The selected process/window identity changed.\" ---> System.InvalidOperationException: The selected process/window identity changed.\r\n   at BinderJetNativeProcess.ValidateRoot(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.VisibleLeafHandles(IntPtr root, Int32 expectedPid, Boolean includeEdits)\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "navigation": {
+          "value": 1049662,
+          "success": true
+        },
+        "metadata": {
+          "value": 7,
+          "success": true
+        },
+        "machine": {
+          "value": "S3",
+          "success": true
+        }
+      },
+      "stale_before": {
+        "value": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+        "success": true
+      },
+      "stale_after": {
+        "error": "System.Management.Automation.MethodInvocationException: Exception calling \"Invoke\" with \"2\" argument(s): \"The cached native control no longer belongs to the selected window.\" ---> System.InvalidOperationException: The cached native control no longer belongs to the selected window.\r\n   at BinderJetNativeProcess.ValidateChild(IntPtr root, IntPtr child, Int32 expectedPid)\r\n   at BinderJetNativeProcess.ValidateVisibleLeaf(IntPtr root, IntPtr window, Int32 expectedPid, Boolean includeEdits)\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+        "success": false
+      },
+      "heartbeat_progress": true,
+      "ir_and_saves": [
+        "62",
+        "0"
+      ],
+      "unsupported_messages": "",
+      "startup_message_counts": {},
+      "navigation_clicks": "0"
+    },
+    "stale_destroy": {
+      "durations_seconds": {
+        "direct": 0.27427710000000616,
+        "stale_before": 0.20421609999999646,
+        "stale_after": 0.21383240000000114
+      },
+      "direct": {
+        "wrong_pid": {
+          "error": "System.Management.Automation.MethodInvocationException: Exception calling \"IdentifyMachine\" with \"2\" argument(s): \"The selected process/window identity changed.\" ---> System.InvalidOperationException: The selected process/window identity changed.\r\n   at BinderJetNativeProcess.ValidateRoot(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.VisibleLeafHandles(IntPtr root, Int32 expectedPid, Boolean includeEdits)\r\n   at BinderJetNativeProcess.Enumerate(IntPtr root, Int32 expectedPid)\r\n   at BinderJetNativeProcess.IdentifyMachine(IntPtr root, Int32 expectedPid)\r\n   at CallSite.Target(Closure , CallSite , Type , Object , Object )\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+          "success": false
+        },
+        "navigation": {
+          "value": 1049728,
+          "success": true
+        },
+        "metadata": {
+          "value": 7,
+          "success": true
+        },
+        "machine": {
+          "value": "S3",
+          "success": true
+        }
+      },
+      "stale_before": {
+        "value": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+        "success": true
+      },
+      "stale_after": {
+        "error": "System.Management.Automation.MethodInvocationException: Exception calling \"Invoke\" with \"2\" argument(s): \"The cached native control no longer belongs to the selected window.\" ---> System.InvalidOperationException: The cached native control no longer belongs to the selected window.\r\n   at BinderJetNativeProcess.ValidateChild(IntPtr root, IntPtr child, Int32 expectedPid)\r\n   at BinderJetNativeProcess.ValidateVisibleLeaf(IntPtr root, IntPtr window, Int32 expectedPid, Boolean includeEdits)\r\n   --- End of inner exception stack trace ---\r\n   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)\r\n   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)\r\n   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)",
+        "success": false
+      },
+      "heartbeat_progress": true,
+      "ir_and_saves": [
+        "62",
+        "0"
+      ],
+      "unsupported_messages": "",
+      "startup_message_counts": {},
+      "navigation_clicks": "0"
+    }
+  },
+  "no_equipment_writes": true,
+  "boundary_check": "Shared VisibleLeafHandles(includeEdits=True), not 900 UIA Collect calls",
+  "untested": [
+    "Raw 16384 HWND overflow: normal per-process Windows USER handle quota prevents creating enough windows; no synthetic substitute claimed."
+  ],
+  "bridge_sha256": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e"
+}

@@ -1,0 +1,1361 @@
+{
+  "passed": true,
+  "checks": {
+    "initial_scope_proof": true,
+    "forged_root_scope_holds": true,
+    "focused_edit_holds": true,
+    "native_hide_style_evidence": true,
+    "old_hidden_failure_reproduced": true,
+    "hidden_scope_recovery": true,
+    "winforms_hide_style_evidence": true,
+    "winforms_hidden_scope_recovery": true,
+    "hidden_unproven_holds": true,
+    "global_anchor_invalid_rejected": true,
+    "other_foreground_recovery": true,
+    "minimized_recovery": true,
+    "explicit_hide_ir_style_cleared": true,
+    "explicit_hidden_ir_holds": true,
+    "explicit_hide_save_style_cleared": true,
+    "explicit_hidden_save_holds": true,
+    "explicit_hide_inner_style_cleared": true,
+    "explicit_hidden_inner_holds": true,
+    "duplicate_id_holds": true,
+    "unnamed_input_inventoried": true,
+    "unknown_id_in_inventory": true,
+    "paused_holds": true,
+    "reparented_scope_holds": true,
+    "heartbeat_responsive": true,
+    "zero_save_or_navigation": true,
+    "process_not_probed": true,
+    "full_m1_s3_both_hide_modes_two_stable_audits": true,
+    "stayed_minimized": true
+  },
+  "responses": {
+    "initial_metadata": {
+      "records": [
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 1379786,
+          "id": "labelMachineName"
+        },
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 1379788,
+          "id": "labelTaskStatus"
+        },
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 1445326,
+          "id": "btnSequences"
+        },
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 1901630,
+          "id": "textBoxHeatingOutput"
+        },
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 852580,
+          "id": "textBoxSpeed"
+        },
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 1246232,
+          "id": "btnSave"
+        }
+      ],
+      "success": true,
+      "transport_seconds": 0.3539397999999778
+    },
+    "initial": {
+      "fields": {
+        "textBoxSpeed": "5",
+        "textBoxHeatingOutput": "62"
+      },
+      "field_map": {
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 852580
+        },
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 1901630
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 1379786,
+        "sequences": 1445326,
+        "scope_proof": {
+          "scope_parent": 1379792,
+          "state_control_id": 1379788,
+          "ir_hwnd": 1901630,
+          "save_hwnd": 1246232,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1836160,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 1379794,
+          "machine_hwnd": 1379786,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 1379786,
+          "state_hwnd": 1379788,
+          "scope_control_id": 1379794,
+          "state_thread": 2076,
+          "machine_parent": 1836160,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2076,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2076,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 1379788,
+        "scope": 1379794,
+        "ir": 1901630,
+        "save": 1246232
+      },
+      "success": true,
+      "machine": "M1",
+      "transport_seconds": 0.388485199999991
+    },
+    "forged_root_scope": {
+      "success": false,
+      "error": "[recover_control] The audited Sequence scope and leaf handles are malformed.",
+      "error_type": "ControlSuspended",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.37198199999994586
+    },
+    "editing": {
+      "success": false,
+      "error": "[recover_control] The user is editing a target field; automatic Save is suspended.",
+      "error_type": "ControlSuspended",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.3578910000000519
+    },
+    "old_hidden": {
+      "success": false,
+      "error": "[recover_control] The Sequence Save button is not visible; leaf metadata was not collected."
+    },
+    "hidden": {
+      "fields": {
+        "textBoxSpeed": "5",
+        "textBoxHeatingOutput": "62"
+      },
+      "field_map": {
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 852580
+        },
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 1901630
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 1379786,
+        "sequences": 1445326,
+        "scope_proof": {
+          "scope_parent": 1379792,
+          "state_control_id": 1379788,
+          "ir_hwnd": 1901630,
+          "save_hwnd": 1246232,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1836160,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 1379794,
+          "machine_hwnd": 1379786,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 1379786,
+          "state_hwnd": 1379788,
+          "scope_control_id": 1379794,
+          "state_thread": 2076,
+          "machine_parent": 1836160,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2076,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2076,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 1379788,
+        "scope": 1379794,
+        "ir": 1901630,
+        "save": 1246232
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.49588410000001204
+    },
+    "winforms_hidden": {
+      "fields": {
+        "textBoxSpeed": "5",
+        "textBoxHeatingOutput": "62"
+      },
+      "field_map": {
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 852580
+        },
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 1901630
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 1379786,
+        "sequences": 1445326,
+        "scope_proof": {
+          "scope_parent": 1379792,
+          "state_control_id": 1379788,
+          "ir_hwnd": 1901630,
+          "save_hwnd": 1246232,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1836160,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 1379794,
+          "machine_hwnd": 1379786,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 1379786,
+          "state_hwnd": 1379788,
+          "scope_control_id": 1379794,
+          "state_thread": 2076,
+          "machine_parent": 1836160,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2076,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2076,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 1379788,
+        "scope": 1379794,
+        "ir": 1901630,
+        "save": 1246232
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.5035508999999934
+    },
+    "hidden_unproven": {
+      "success": false,
+      "error": "[recover_control] The Sequence Save button is not visible; leaf metadata was not collected.",
+      "error_type": "ControlSuspended",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.30548320000002605
+    },
+    "wrong_anchor": {
+      "success": false,
+      "error": "[recover_control] An audited global anchor changed.",
+      "error_type": "ControlSuspended",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.29593840000001137
+    },
+    "other_foreground": {
+      "fields": {
+        "textBoxSpeed": "5",
+        "textBoxHeatingOutput": "62"
+      },
+      "field_map": {
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 852580
+        },
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 1901630
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 1379786,
+        "sequences": 1445326,
+        "scope_proof": {
+          "scope_parent": 1379792,
+          "state_control_id": 1379788,
+          "ir_hwnd": 1901630,
+          "save_hwnd": 1246232,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1836160,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 1379794,
+          "machine_hwnd": 1379786,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 1379786,
+          "state_hwnd": 1379788,
+          "scope_control_id": 1379794,
+          "state_thread": 2076,
+          "machine_parent": 1836160,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2076,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2076,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 1379788,
+        "scope": 1379794,
+        "ir": 1901630,
+        "save": 1246232
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.49549049999995987
+    },
+    "minimized": {
+      "fields": {
+        "textBoxSpeed": "5",
+        "textBoxHeatingOutput": "62"
+      },
+      "field_map": {
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 852580
+        },
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 1901630
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 1379786,
+        "sequences": 1445326,
+        "scope_proof": {
+          "scope_parent": 1379792,
+          "state_control_id": 1379788,
+          "ir_hwnd": 1901630,
+          "save_hwnd": 1246232,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1836160,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 1379794,
+          "machine_hwnd": 1379786,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 1379786,
+          "state_hwnd": 1379788,
+          "scope_control_id": 1379794,
+          "state_thread": 2076,
+          "machine_parent": 1836160,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2076,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2076,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 1379788,
+        "scope": 1379794,
+        "ir": 1901630,
+        "save": 1246232
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.4975468999999748
+    },
+    "hidden_ir": {
+      "success": false,
+      "error": "[recover_control] The audited IR or Save is hidden or changed.",
+      "error_type": "ControlSuspended",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.44121050000001105
+    },
+    "hidden_save": {
+      "success": false,
+      "error": "[recover_control] The audited IR or Save is hidden or changed.",
+      "error_type": "ControlSuspended",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.4409469999999942
+    },
+    "hidden_inner": {
+      "fields": {
+        "textBoxHeatingOutput": "62"
+      },
+      "field_map": {
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 1901630
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 1379786,
+        "sequences": 1445326,
+        "scope_proof": {
+          "scope_parent": 1379792,
+          "state_control_id": 1379788,
+          "ir_hwnd": 1901630,
+          "save_hwnd": 1246232,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1836160,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 1379794,
+          "machine_hwnd": 1379786,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 1379786,
+          "state_hwnd": 1379788,
+          "scope_control_id": 1379794,
+          "state_thread": 2076,
+          "machine_parent": 1836160,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2076,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2076,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 1379788,
+        "scope": 1379794,
+        "ir": 1901630,
+        "save": 1246232
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.48735150000004523
+    },
+    "duplicate": {
+      "success": false,
+      "error": "[recover_control] Control 'textBoxHeatingOutput' is ambiguous.",
+      "error_type": "ControlSuspended",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.4353302000000099
+    },
+    "blank": {
+      "fields": {
+        "1183216": "1",
+        "textBoxHeatingOutput": "62",
+        "textBoxSpeed": "5"
+      },
+      "field_map": {
+        "1183216": {
+          "kind": "text",
+          "hwnd": 1183216
+        },
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 1901630
+        },
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 852580
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 1379786,
+        "sequences": 1445326,
+        "scope_proof": {
+          "scope_parent": 1379792,
+          "state_control_id": 1379788,
+          "ir_hwnd": 1901630,
+          "save_hwnd": 1246232,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1836160,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 1379794,
+          "machine_hwnd": 1379786,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 1379786,
+          "state_hwnd": 1379788,
+          "scope_control_id": 1379794,
+          "state_thread": 2076,
+          "machine_parent": 1836160,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2076,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2076,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 1379788,
+        "scope": 1379794,
+        "ir": 1901630,
+        "save": 1246232
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.5023519000000078
+    },
+    "unknown": {
+      "fields": {
+        "textBoxHeatingOutput": "62",
+        "textBoxUnexpected": "1",
+        "textBoxSpeed": "5"
+      },
+      "field_map": {
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 1901630
+        },
+        "textBoxUnexpected": {
+          "kind": "text",
+          "hwnd": 1248752
+        },
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 852580
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 1379786,
+        "sequences": 1445326,
+        "scope_proof": {
+          "scope_parent": 1379792,
+          "state_control_id": 1379788,
+          "ir_hwnd": 1901630,
+          "save_hwnd": 1246232,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1836160,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 1379794,
+          "machine_hwnd": 1379786,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 1379786,
+          "state_hwnd": 1379788,
+          "scope_control_id": 1379794,
+          "state_thread": 2076,
+          "machine_parent": 1836160,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2076,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2076,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 1379788,
+        "scope": 1379794,
+        "ir": 1901630,
+        "save": 1246232
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.5036866000000373
+    },
+    "paused": {
+      "success": false,
+      "error": "[recover_control] Automatic recipe updates require a fresh AUTO/RUNNING state.",
+      "error_type": "ControlSuspended",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.4168980000000033
+    },
+    "reparented": {
+      "success": false,
+      "error": "[recover_control] The Sequence Save button is not visible; leaf metadata was not collected.",
+      "error_type": "ControlSuspended",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.39112449999998944
+    }
+  },
+  "no_equipment_writes": true,
+  "scope": "Owned synthetic WinForms fixture; recovery does not navigate, edit or Save.",
+  "untested": [
+    "Real equipment, actual production BJT UI, Excel COM.",
+    "A truly blank UIA AutomationId: WinForms unnamed TextBox supplies a numeric AutomationId.",
+    "Restoring the minimized fixture is not exercised in this probe."
+  ],
+  "default_helper_timeout_seconds": 3.0,
+  "bridge_sha256": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+  "helper_sha256": "395f2d0d076e8fcb172410d6f9892036c1bde2eda85e1c04e065da34781d2936",
+  "probe_stages": [
+    {
+      "stage": "1:fixture-start",
+      "utc": "2026-11-09T10:32:39.056647+00:00"
+    },
+    {
+      "stage": "2:helper-metadata",
+      "utc": "2026-11-09T10:32:39.580862+00:00"
+    },
+    {
+      "stage": "3:helper-prepare_control",
+      "utc": "2026-11-09T10:32:39.935411+00:00"
+    },
+    {
+      "stage": "4:helper-recover_control",
+      "utc": "2026-11-09T10:32:40.324481+00:00"
+    },
+    {
+      "stage": "5:fixture-focus",
+      "utc": "2026-11-09T10:32:40.697158+00:00"
+    },
+    {
+      "stage": "6:helper-recover_control",
+      "utc": "2026-11-09T10:32:40.799194+00:00"
+    },
+    {
+      "stage": "7:fixture-clear",
+      "utc": "2026-11-09T10:32:41.157720+00:00"
+    },
+    {
+      "stage": "8:old-helper-metadata",
+      "utc": "2026-11-09T10:32:41.209333+00:00"
+    },
+    {
+      "stage": "9:old-helper-prepare_control",
+      "utc": "2026-11-09T10:32:41.648652+00:00"
+    },
+    {
+      "stage": "10:fixture-hide_outer",
+      "utc": "2026-11-09T10:32:42.079367+00:00"
+    },
+    {
+      "stage": "11:old-helper-recover_control",
+      "utc": "2026-11-09T10:32:42.232022+00:00"
+    },
+    {
+      "stage": "12:helper-recover_control",
+      "utc": "2026-11-09T10:32:42.627487+00:00"
+    },
+    {
+      "stage": "13:fixture-show_outer",
+      "utc": "2026-11-09T10:32:43.124025+00:00"
+    },
+    {
+      "stage": "14:fixture-hide_outer_managed",
+      "utc": "2026-11-09T10:32:43.226160+00:00"
+    },
+    {
+      "stage": "15:helper-recover_control",
+      "utc": "2026-11-09T10:32:43.429762+00:00"
+    },
+    {
+      "stage": "16:helper-recover_control",
+      "utc": "2026-11-09T10:32:43.933902+00:00"
+    },
+    {
+      "stage": "17:helper-recover_control",
+      "utc": "2026-11-09T10:32:44.239959+00:00"
+    },
+    {
+      "stage": "18:helper-recover_control",
+      "utc": "2026-11-09T10:32:45.139111+00:00"
+    },
+    {
+      "stage": "19:fixture-minimize",
+      "utc": "2026-11-09T10:32:45.635229+00:00"
+    },
+    {
+      "stage": "20:helper-recover_control",
+      "utc": "2026-11-09T10:32:45.889384+00:00"
+    },
+    {
+      "stage": "21:fixture-hide_ir",
+      "utc": "2026-11-09T10:32:46.387602+00:00"
+    },
+    {
+      "stage": "22:helper-recover_control",
+      "utc": "2026-11-09T10:32:46.489728+00:00"
+    },
+    {
+      "stage": "23:fixture-show_ir",
+      "utc": "2026-11-09T10:32:46.931533+00:00"
+    },
+    {
+      "stage": "24:fixture-hide_save",
+      "utc": "2026-11-09T10:32:47.083796+00:00"
+    },
+    {
+      "stage": "25:helper-recover_control",
+      "utc": "2026-11-09T10:32:47.287060+00:00"
+    },
+    {
+      "stage": "26:fixture-show_save",
+      "utc": "2026-11-09T10:32:47.728604+00:00"
+    },
+    {
+      "stage": "27:fixture-hide_inner",
+      "utc": "2026-11-09T10:32:47.931700+00:00"
+    },
+    {
+      "stage": "28:helper-recover_control",
+      "utc": "2026-11-09T10:32:48.135239+00:00"
+    },
+    {
+      "stage": "29:fixture-show_inner",
+      "utc": "2026-11-09T10:32:48.623268+00:00"
+    },
+    {
+      "stage": "30:fixture-duplicate_in_place",
+      "utc": "2026-11-09T10:32:48.725277+00:00"
+    },
+    {
+      "stage": "31:helper-recover_control",
+      "utc": "2026-11-09T10:32:48.928854+00:00"
+    },
+    {
+      "stage": "32:fixture-remove_extra",
+      "utc": "2026-11-09T10:32:49.364789+00:00"
+    },
+    {
+      "stage": "33:fixture-blank_in_place",
+      "utc": "2026-11-09T10:32:49.567803+00:00"
+    },
+    {
+      "stage": "34:helper-recover_control",
+      "utc": "2026-11-09T10:32:49.770586+00:00"
+    },
+    {
+      "stage": "35:fixture-remove_extra",
+      "utc": "2026-11-09T10:32:50.273544+00:00"
+    },
+    {
+      "stage": "36:fixture-extra_in_place",
+      "utc": "2026-11-09T10:32:50.375530+00:00"
+    },
+    {
+      "stage": "37:helper-recover_control",
+      "utc": "2026-11-09T10:32:50.578510+00:00"
+    },
+    {
+      "stage": "38:fixture-remove_extra",
+      "utc": "2026-11-09T10:32:51.082840+00:00"
+    },
+    {
+      "stage": "39:fixture-pause",
+      "utc": "2026-11-09T10:32:51.185023+00:00"
+    },
+    {
+      "stage": "40:helper-recover_control",
+      "utc": "2026-11-09T10:32:51.388282+00:00"
+    },
+    {
+      "stage": "41:fixture-auto",
+      "utc": "2026-11-09T10:32:51.805762+00:00"
+    },
+    {
+      "stage": "42:fixture-missing",
+      "utc": "2026-11-09T10:32:52.008558+00:00"
+    },
+    {
+      "stage": "43:helper-recover_control",
+      "utc": "2026-11-09T10:32:52.211479+00:00"
+    }
+  ],
+  "helper_intervals": [
+    {
+      "operation": "metadata",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:39.580882+00:00",
+      "end_utc": "2026-11-09T10:32:39.934802+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "prepare_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:39.935423+00:00",
+      "end_utc": "2026-11-09T10:32:40.323897+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:40.324491+00:00",
+      "end_utc": "2026-11-09T10:32:40.696467+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:40.799213+00:00",
+      "end_utc": "2026-11-09T10:32:41.157097+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "metadata",
+      "transport": "old",
+      "begin_utc": "2026-11-09T10:32:41.209349+00:00",
+      "child_exit_success": true,
+      "child_stderr": "",
+      "child_stdout": "{\"response\": {\"records\": [{\"enabled\": true, \"class_name\": \"WindowsForms10.STATIC.app.0.141b42a_r7_ad1\", \"visible\": true, \"hwnd\": 1379786, \"id\": \"labelMachineName\"}, {\"enabled\": true, \"class_name\": \"WindowsForms10.STATIC.app.0.141b42a_r7_ad1\", \"visible\": true, \"hwnd\": 1379788, \"id\": \"labelTaskStatus\"}, {\"enabled\": true, \"class_name\": \"WindowsForms10.BUTTON.app.0.141b42a_r7_ad1\", \"visible\": true, \"hwnd\": 1445326, \"id\": \"btnSequences\"}, {\"enabled\": true, \"class_name\": \"WindowsForms10.EDIT.app.0.141b42a_r7_ad1\", \"visible\": true, \"hwnd\": 1901630, \"id\": \"textBoxHeatingOutput\"}, {\"enabled\": true, \"class_name\": \"WindowsForms10.EDIT.app.0.141b42a_r7_ad1\", \"visible\": true, \"hwnd\": 852580, \"id\": \"textBoxSpeed\"}, {\"enabled\": true, \"class_name\": \"WindowsForms10.BUTTON.app.0.141b42a_r7_ad1\", \"visible\": true, \"hwnd\": 1246232, \"id\": \"btnSave\"}], \"success\": true}, \"lifecycle\": {\"active_helper_absent\": true, \"unretired_helper_absent\": true, \"helper_fence_unlocked\": true, \"shared_fence_verified\": true, \"helper_retired\": true}}\n",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true,
+      "end_utc": "2026-11-09T10:32:41.648021+00:00"
+    },
+    {
+      "operation": "prepare_control",
+      "transport": "old",
+      "begin_utc": "2026-11-09T10:32:41.648663+00:00",
+      "child_exit_success": true,
+      "child_stderr": "",
+      "child_stdout": "{\"response\": {\"fields\": {\"textBoxSpeed\": \"5\", \"textBoxHeatingOutput\": \"62\"}, \"field_map\": {\"textBoxSpeed\": {\"kind\": \"text\", \"hwnd\": 852580}, \"textBoxHeatingOutput\": {\"kind\": \"text\", \"hwnd\": 1901630}}, \"setting\": \"62\", \"handles\": {\"machine\": 1379786, \"sequences\": 1445326, \"state\": 1379788, \"scope\": 1379794, \"ir\": 1901630, \"save\": 1246232}, \"success\": true, \"machine\": \"M1\"}, \"lifecycle\": {\"active_helper_absent\": true, \"unretired_helper_absent\": true, \"helper_fence_unlocked\": true, \"shared_fence_verified\": true, \"helper_retired\": true}}\n",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true,
+      "end_utc": "2026-11-09T10:32:42.078742+00:00"
+    },
+    {
+      "operation": "recover_control",
+      "transport": "old",
+      "begin_utc": "2026-11-09T10:32:42.232038+00:00",
+      "child_exit_success": true,
+      "child_stderr": "",
+      "child_stdout": "{\"response\": {\"success\": false, \"error\": \"[recover_control] The Sequence Save button is not visible; leaf metadata was not collected.\"}, \"lifecycle\": {\"active_helper_absent\": true, \"unretired_helper_absent\": true, \"helper_fence_unlocked\": true, \"shared_fence_verified\": true, \"helper_retired\": true}}\n",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true,
+      "end_utc": "2026-11-09T10:32:42.626817+00:00"
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:42.627497+00:00",
+      "end_utc": "2026-11-09T10:32:43.123378+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:43.429779+00:00",
+      "end_utc": "2026-11-09T10:32:43.933326+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:43.933913+00:00",
+      "end_utc": "2026-11-09T10:32:44.239385+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:44.239970+00:00",
+      "end_utc": "2026-11-09T10:32:44.535897+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:45.139131+00:00",
+      "end_utc": "2026-11-09T10:32:45.634616+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:45.889401+00:00",
+      "end_utc": "2026-11-09T10:32:46.386941+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:46.489745+00:00",
+      "end_utc": "2026-11-09T10:32:46.930947+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:47.287079+00:00",
+      "end_utc": "2026-11-09T10:32:47.728015+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:48.135256+00:00",
+      "end_utc": "2026-11-09T10:32:48.622600+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:48.928873+00:00",
+      "end_utc": "2026-11-09T10:32:49.364193+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:49.770604+00:00",
+      "end_utc": "2026-11-09T10:32:50.272946+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:50.578528+00:00",
+      "end_utc": "2026-11-09T10:32:51.082204+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:51.388300+00:00",
+      "end_utc": "2026-11-09T10:32:51.805185+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    },
+    {
+      "operation": "recover_control",
+      "transport": "candidate",
+      "begin_utc": "2026-11-09T10:32:52.211497+00:00",
+      "end_utc": "2026-11-09T10:32:52.602609+00:00",
+      "active_helper_absent": true,
+      "unretired_helper_absent": true,
+      "helper_fence_unlocked": true,
+      "shared_fence_verified": true,
+      "helper_retired": true
+    }
+  ],
+  "native_window_styles": {
+    "initial_visible": {
+      "outer": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": true
+      },
+      "scope": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": true
+      },
+      "ir": {
+        "style": 1442906304,
+        "ws_visible": true,
+        "effective_visible": true
+      },
+      "save": {
+        "style": 1442906123,
+        "ws_visible": true,
+        "effective_visible": true
+      },
+      "inner": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": true
+      }
+    },
+    "native_hidden_outer": {
+      "outer": {
+        "style": 1174405120,
+        "ws_visible": false,
+        "effective_visible": false
+      },
+      "scope": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "ir": {
+        "style": 1442906304,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "save": {
+        "style": 1442906123,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "inner": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      }
+    },
+    "winforms_property_hidden_outer": {
+      "outer": {
+        "style": 1174405120,
+        "ws_visible": false,
+        "effective_visible": false
+      },
+      "scope": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "ir": {
+        "style": 1442906304,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "save": {
+        "style": 1442906123,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "inner": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      }
+    },
+    "before_explicit_hide_ir": {
+      "outer": {
+        "style": 1174405120,
+        "ws_visible": false,
+        "effective_visible": false
+      },
+      "scope": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "ir": {
+        "style": 1442906304,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "save": {
+        "style": 1442906123,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "inner": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      }
+    },
+    "explicit_hidden_ir": {
+      "outer": {
+        "style": 1174405120,
+        "ws_visible": false,
+        "effective_visible": false
+      },
+      "scope": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "ir": {
+        "style": 1174470848,
+        "ws_visible": false,
+        "effective_visible": false
+      },
+      "save": {
+        "style": 1442906123,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "inner": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      }
+    },
+    "before_explicit_hide_save": {
+      "outer": {
+        "style": 1174405120,
+        "ws_visible": false,
+        "effective_visible": false
+      },
+      "scope": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "ir": {
+        "style": 1442906304,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "save": {
+        "style": 1442906123,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "inner": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      }
+    },
+    "explicit_hidden_save": {
+      "outer": {
+        "style": 1174405120,
+        "ws_visible": false,
+        "effective_visible": false
+      },
+      "scope": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "ir": {
+        "style": 1442906304,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "save": {
+        "style": 1174470667,
+        "ws_visible": false,
+        "effective_visible": false
+      },
+      "inner": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      }
+    },
+    "before_explicit_hide_inner": {
+      "outer": {
+        "style": 1174405120,
+        "ws_visible": false,
+        "effective_visible": false
+      },
+      "scope": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "ir": {
+        "style": 1442906304,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "save": {
+        "style": 1442906123,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "inner": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      }
+    },
+    "explicit_hidden_inner": {
+      "outer": {
+        "style": 1174405120,
+        "ws_visible": false,
+        "effective_visible": false
+      },
+      "scope": {
+        "style": 1442840576,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "ir": {
+        "style": 1442906304,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "save": {
+        "style": 1442906123,
+        "ws_visible": true,
+        "effective_visible": false
+      },
+      "inner": {
+        "style": 1174405120,
+        "ws_visible": false,
+        "effective_visible": false
+      }
+    }
+  },
+  "minimized_after_command": true,
+  "unnamed_fixture_automation_ids": [
+    "1183216"
+  ],
+  "poison_messages": [],
+  "full_profiles": {
+    "M1_hide_outer": {
+      "machine": "M1",
+      "hide_action": "hide_outer",
+      "passed": true,
+      "hidden_window_styles": "outer=1174405120,False\nscope=1442840576,False\nir=1442906304,False\nsave=1442906123,False\ninner=1442840576,False",
+      "explicit_inner_hidden_window_styles": "outer=1174405120,False\nscope=1442840576,False\nir=1442906304,False\nsave=1442906123,False\ninner=1174405120,False",
+      "epochs": [
+        0,
+        1
+      ],
+      "recovery_seconds": [
+        1.1908544999999435,
+        1.1391787000000022
+      ],
+      "hidden_inner_held": true,
+      "unnamed_input_held": true,
+      "unnamed_input_reason": "저장 매핑이 확인되지 않은 UI 필드: 396974",
+      "field_count": 73,
+      "settings_unchanged": true,
+      "zero_save_and_navigation": true,
+      "process_not_probed": true,
+      "poison_messages": [],
+      "hold_reason": null
+    },
+    "M1_hide_outer_managed": {
+      "machine": "M1",
+      "hide_action": "hide_outer_managed",
+      "passed": true,
+      "hidden_window_styles": "outer=1174405120,False\nscope=1442840576,False\nir=1442906304,False\nsave=1442906123,False\ninner=1442840576,False",
+      "explicit_inner_hidden_window_styles": "outer=1174405120,False\nscope=1442840576,False\nir=1442906304,False\nsave=1442906123,False\ninner=1174405120,False",
+      "epochs": [
+        0,
+        1
+      ],
+      "recovery_seconds": [
+        1.148461999999995,
+        1.1411591999999473
+      ],
+      "hidden_inner_held": true,
+      "unnamed_input_held": true,
+      "unnamed_input_reason": "저장 매핑이 확인되지 않은 UI 필드: 462510",
+      "field_count": 73,
+      "settings_unchanged": true,
+      "zero_save_and_navigation": true,
+      "process_not_probed": true,
+      "poison_messages": [],
+      "hold_reason": null
+    },
+    "S3_hide_outer": {
+      "machine": "S3",
+      "hide_action": "hide_outer",
+      "passed": true,
+      "hidden_window_styles": "outer=1174405120,False\nscope=1442840576,False\nir=1442906304,False\nsave=1442906123,False\ninner=1442840576,False",
+      "explicit_inner_hidden_window_styles": "outer=1174405120,False\nscope=1442840576,False\nir=1442906304,False\nsave=1442906123,False\ninner=1174405120,False",
+      "epochs": [
+        0,
+        1
+      ],
+      "recovery_seconds": [
+        1.1667494999999803,
+        1.1842739999999594
+      ],
+      "hidden_inner_held": true,
+      "unnamed_input_held": true,
+      "unnamed_input_reason": "저장 매핑이 확인되지 않은 UI 필드: 396976",
+      "field_count": 74,
+      "settings_unchanged": true,
+      "zero_save_and_navigation": true,
+      "process_not_probed": true,
+      "poison_messages": [],
+      "hold_reason": null
+    },
+    "S3_hide_outer_managed": {
+      "machine": "S3",
+      "hide_action": "hide_outer_managed",
+      "passed": true,
+      "hidden_window_styles": "outer=1174405120,False\nscope=1442840576,False\nir=1442906304,False\nsave=1442906123,False\ninner=1442840576,False",
+      "explicit_inner_hidden_window_styles": "outer=1174405120,False\nscope=1442840576,False\nir=1442906304,False\nsave=1442906123,False\ninner=1174405120,False",
+      "epochs": [
+        0,
+        1
+      ],
+      "recovery_seconds": [
+        1.157923100000005,
+        1.2789127000000349
+      ],
+      "hidden_inner_held": true,
+      "unnamed_input_held": true,
+      "unnamed_input_reason": "저장 매핑이 확인되지 않은 UI 필드: 462512",
+      "field_count": 74,
+      "settings_unchanged": true,
+      "zero_save_and_navigation": true,
+      "process_not_probed": true,
+      "poison_messages": [],
+      "hold_reason": null
+    }
+  },
+  "minimized_before_teardown": true
+}

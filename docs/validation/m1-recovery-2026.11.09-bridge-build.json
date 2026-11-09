@@ -1,0 +1,17 @@
+{
+  "source_commit": "6f378742c99eaf4d16ac760183612eaf1581806d",
+  "source_sha256": {
+    "app/UiaBridge.cs": "314b4e646d81160eae9be839eda7201a76fb99d6ab939363589f940e796d5013",
+    "app/UiaBridge.navigation.part.cs": "8224937800f3aa7dd8a53fbeaa56e2afa1e3c41f8d4620d017ea36668cdf7a0b",
+    "app/UiaBridge.process.part.cs": "d57ba84055445b3e02c9c3fd79f6a0aa54089284a0d071f952f6660e71ca080b",
+    "app/UiaBridge.metadata.part.cs": "3fc5bd3a4c42f3c36fbd0a707de5a7aa29a2399a976cd1a903dfbd1373208f97",
+    "app/UiaBridge.fields.part.cs": "bcd12720e73f1e953ef4305e2e010e689c5942a1ebe54f996c290af94eeae064",
+    "app/build_uia_bridge.ps1": "38822a0856b26f32a905ccfebc0bfe3b2e512541f2856febda5a38b0a3e4e07b"
+  },
+  "build_succeeded": true,
+  "equipment_application_approved": false,
+  "review_status": "compile evidence only; validation pending",
+  "compiler_sha256": "baef2676444878d5818628f46483f4e55241d6380ecff0bbb855c470852e1872",
+  "dll_sha256": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+  "dll_bytes": 26112
+}

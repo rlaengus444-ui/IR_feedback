@@ -1,0 +1,100 @@
+{
+  "passed": true,
+  "no_equipment_writes": true,
+  "cases": {
+    "duplicate": {
+      "layers": 96,
+      "unique_bytes": 3,
+      "pixels": [
+        4096,
+        4096
+      ],
+      "zip_sha256": "880fec52c0d8c8c48cd037a2366ba66f08a64f47fc8ecf4291889754cc73a54d",
+      "exact_parity": true,
+      "fingerprint": "c454135316f87a8f9a84d5c752010ebc57411386b7be953978b26f8959202e3a",
+      "seconds": {
+        "baseline": [
+          1.7059519000000023,
+          1.671289999999999,
+          1.6906112000000348
+        ],
+        "candidate": [
+          0.05383430000000544,
+          0.05396509999997079,
+          0.05721089999997275
+        ]
+      },
+      "median_seconds": {
+        "baseline": 1.6906112000000348,
+        "candidate": 0.05396509999997079
+      },
+      "speedup": 31.32786189594664
+    },
+    "unique": {
+      "layers": 48,
+      "unique_bytes": 48,
+      "pixels": [
+        4096,
+        4096
+      ],
+      "zip_sha256": "9ae63e44cabf34c621c0cd805bb7ebb3594c3092887b05cd2a17b3c0703fd8aa",
+      "exact_parity": true,
+      "fingerprint": "c6015372f4050b04f9287fed5d11b1e6c096d7f94e072808011f77c29ee0235c",
+      "seconds": {
+        "baseline": [
+          0.8352565999999797,
+          0.8471711000000255,
+          0.8387735999999677
+        ],
+        "candidate": [
+          0.6747240000000261,
+          0.6931854000000044,
+          0.6836860999999885
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.8387735999999677,
+        "candidate": 0.6836860999999885
+      },
+      "speedup": 1.2268402121967694
+    },
+    "palette": {
+      "layers": 24,
+      "unique_bytes": 4,
+      "pixels": [
+        4096,
+        4096
+      ],
+      "zip_sha256": "6822b7fadeb572acc66408c6b6d340e51536a6dfbeff6a0b364f76140ece96e2",
+      "exact_parity": true,
+      "fingerprint": "a2596d75f226e693f11ec9890e9a523e55516a59da7646cbbf3597ecde5b6fa2",
+      "seconds": {
+        "baseline": [
+          0.9198155999999926,
+          0.911970800000006,
+          0.9154783999999836
+        ],
+        "candidate": [
+          0.15342509999999265,
+          0.15682720000000927,
+          0.15703550000000632
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.9154783999999836,
+        "candidate": 0.15682720000000927
+      },
+      "speedup": 5.837497576950487
+    }
+  },
+  "python": "3.14.5 (tags/v3.14.5:5607950, May 10 2026, 10:43:50) [MSC v.1944 64 bit (AMD64)]",
+  "pillow": "13.0.0",
+  "baseline_source_sha256": "df8381be1ec0b2b29a73ed18d39760f928bd2bcf07fc42eb5278de8fefcc1881",
+  "candidate_source_sha256": "c9e16e8f95be8bdee1742910bf2d9fd3dd4f90d9460e3a4765714d60cff8f652",
+  "timing_method": "Paired interleaved runs; median, same ZIP bytes and configuration",
+  "synthetic_polling": {
+    "samples": 7,
+    "maximum_gap_seconds": 0.10950609999997596,
+    "real_device_latency_tested": false
+  }
+}

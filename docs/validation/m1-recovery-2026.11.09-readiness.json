@@ -1,0 +1,22 @@
+{
+  "device_application_approved": false,
+  "checks": {
+    "build": "success",
+    "tests": "success",
+    "smoke": "success",
+    "bridge": "success",
+    "csv_guard": "success",
+    "native_discovery": "success",
+    "slice_perf": "success",
+    "settings_recovery": "success",
+    "background": "success",
+    "hidden_recovery": "success",
+    "hidden_session": "success",
+    "excel": "failure",
+    "reverify": "success"
+  },
+  "final_sol_review": "pending",
+  "release_ready": false,
+  "source_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+  "automated_checks_passed": false
+}

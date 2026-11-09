@@ -1,0 +1,38 @@
+{
+  "review_stage": "CODE_POST_CP1252_CONSOLE_FIX",
+  "time_utc": "2026-11-09T10:27:39.971761+00:00",
+  "route": "Official native collaboration sol_reviewer followup, requested gpt-6.1-sol/max; no independent provider/model identity attestation.",
+  "reviewed_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+  "base_reviewed_commit": "40ada081c0523ae1f967a6fb8111fe68347130e5",
+  "decision": "APPROVE_ONE_LINE_TEST_CONSOLE_FIX; FULL_NATIVE_STEP_STATUS_AND_ARTIFACT_PENDING",
+  "unresolved_source_findings": [],
+  "change": "Console print JSON uses ensure_asciiTrue. Actual UTF8 artifact write remains ensure_asciiFalse and explicitUTF8; runtimeapp and all guard/oracle semantics unchanged.",
+  "checks": {
+    "old_cp1252_failure_reproduced": true,
+    "actual_new_console_expression_cp1252_success": true,
+    "console_ascii_only": true,
+    "console_json_exact_roundtrip": true,
+    "actual_utf8_file_exact_roundtrip": true,
+    "utf8_file_keeps_unicode": true,
+    "runtime_app_unchanged": true,
+    "one_line_only_change": true
+  },
+  "regression_scope": "Executed actual frozen output.write_text and print AST statements with the real40ada native report under strictCP1252. Original print raised UnicodeEncodeError; new ASCII console bytes and unchangedUTF8 file both deserialize exactly to original Unicode report.",
+  "historical_full40_evidence": {
+    "raw_directory": "/workspace/ir-m1-recovery-2026.11.09/final-ci",
+    "hidden_report_passed": true,
+    "raw_step_status": "hidden_recovery failure preserved; console UnicodeEncodeError occurs after UTF8 report is written. Excel remains unavailable/failed.",
+    "native_findings": "Raw hidden report confirms strictemptyProcess list, both actualminimized checks, all4profiles and all4session cases. This does not retroactively turn rawCI green or establishe975 native execution."
+  },
+  "approval_boundaries": {
+    "source_post_complete": true,
+    "full_ci_dispatch_may_proceed": true,
+    "artifact_approved": false,
+    "software_delivery_approved": false,
+    "algorithm_final_approval": false,
+    "equipment_application_approved": false
+  },
+  "source_sha256": "0b800cfebb170c2ca160a53585920bbaa45655aa5f90a6dc1ba1987214c2b462",
+  "input_native_report_sha256": "f50ed82b045c650e8388dac042f0735c79fd5fd998e80c9c6712d5416bb02a46",
+  "note": "No production source edits or native/equipment action by reviewer. Prior failed CI/raw readiness preserved. Await exact final full run and artifact review."
+}

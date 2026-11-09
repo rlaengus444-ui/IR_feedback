@@ -1,0 +1,796 @@
+{
+  "passed": true,
+  "checks": {
+    "eight_fixture_cases_passed": true,
+    "four_background_native_saves": true,
+    "four_dirty_or_paused_hold_without_save": true
+  },
+  "cases": [
+    {
+      "machine": "M1",
+      "case": "normal",
+      "page": "webcam",
+      "minimized": false,
+      "passed": true,
+      "saveCount": 1,
+      "processTableAccesses": 0,
+      "nonIrUnchanged": true,
+      "completeCsvToSessionSeconds": [
+        0.403,
+        0.576,
+        1.326
+      ],
+      "uiOperations": [
+        {
+          "operation": "validate",
+          "seconds": 0.274
+        },
+        {
+          "operation": "enter_sequence",
+          "seconds": 0.401
+        },
+        {
+          "operation": "metadata",
+          "seconds": 0.64
+        },
+        {
+          "operation": "prepare_control",
+          "seconds": 0.46
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.284
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.286
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.441
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.646
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.283
+        }
+      ],
+      "connected_dirty_hold_observed": null,
+      "different_process_foreground": true,
+      "foreground_samples": 99,
+      "foreground_transitions": [
+        {
+          "seconds": 0.02,
+          "stage": "csv-layer:1",
+          "hwnd": 527984,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.554,
+          "stage": "csv-layer:2",
+          "hwnd": 527984,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.048,
+          "stage": "native:read_status",
+          "hwnd": 527984,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.33,
+          "stage": "csv-layer:3",
+          "hwnd": 527984,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.601,
+          "stage": "native:verify_control",
+          "hwnd": 527984,
+          "owner": "cover"
+        },
+        {
+          "seconds": 2.07,
+          "stage": "native:apply",
+          "hwnd": 527984,
+          "owner": "cover"
+        },
+        {
+          "seconds": 2.711,
+          "stage": "native:read_status",
+          "hwnd": 527984,
+          "owner": "cover"
+        }
+      ],
+      "cover_pid": 5684,
+      "cover_hwnd": 527984,
+      "target_pid": 5716,
+      "target_hwnd": 1311858,
+      "foreground_at_end": true
+    },
+    {
+      "machine": "M1",
+      "case": "normal",
+      "page": "webcam",
+      "minimized": true,
+      "passed": true,
+      "saveCount": 1,
+      "processTableAccesses": 0,
+      "nonIrUnchanged": true,
+      "completeCsvToSessionSeconds": [
+        0.125,
+        0.702,
+        1.535
+      ],
+      "uiOperations": [
+        {
+          "operation": "validate",
+          "seconds": 0.265
+        },
+        {
+          "operation": "enter_sequence",
+          "seconds": 0.41
+        },
+        {
+          "operation": "metadata",
+          "seconds": 0.611
+        },
+        {
+          "operation": "prepare_control",
+          "seconds": 0.465
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.286
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.281
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.453
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.651
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.286
+        }
+      ],
+      "connected_dirty_hold_observed": null,
+      "different_process_foreground": true,
+      "foreground_samples": 98,
+      "foreground_transitions": [
+        {
+          "seconds": 0.027,
+          "stage": "csv-layer:1",
+          "hwnd": 659054,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.283,
+          "stage": "csv-layer:2",
+          "hwnd": 659054,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.8,
+          "stage": "native:read_status",
+          "hwnd": 659054,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.081,
+          "stage": "csv-layer:3",
+          "hwnd": 659054,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.606,
+          "stage": "native:verify_control",
+          "hwnd": 659054,
+          "owner": "cover"
+        },
+        {
+          "seconds": 2.075,
+          "stage": "native:apply",
+          "hwnd": 659054,
+          "owner": "cover"
+        },
+        {
+          "seconds": 2.733,
+          "stage": "native:read_status",
+          "hwnd": 659054,
+          "owner": "cover"
+        }
+      ],
+      "cover_pid": 6128,
+      "cover_hwnd": 659054,
+      "target_pid": 6048,
+      "target_hwnd": 1377394,
+      "foreground_at_end": true
+    },
+    {
+      "machine": "M1",
+      "case": "dirty",
+      "page": "webcam",
+      "minimized": false,
+      "passed": true,
+      "saveCount": 0,
+      "processTableAccesses": 0,
+      "nonIrUnchanged": true,
+      "completeCsvToSessionSeconds": [
+        0.207,
+        0.579,
+        0.942
+      ],
+      "uiOperations": [
+        {
+          "operation": "validate",
+          "seconds": 0.263
+        },
+        {
+          "operation": "enter_sequence",
+          "seconds": 0.406
+        },
+        {
+          "operation": "metadata",
+          "seconds": 0.642
+        },
+        {
+          "operation": "prepare_control",
+          "seconds": 0.463
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.285
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.28
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.457
+        },
+        {
+          "operation": "recover_control",
+          "seconds": 0.0
+        }
+      ],
+      "connected_dirty_hold_observed": true,
+      "different_process_foreground": true,
+      "foreground_samples": 71,
+      "foreground_transitions": [
+        {
+          "seconds": 0.02,
+          "stage": "csv-layer:1",
+          "hwnd": 659056,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.365,
+          "stage": "csv-layer:2",
+          "hwnd": 659056,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.868,
+          "stage": "native:read_status",
+          "hwnd": 659056,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.15,
+          "stage": "csv-layer:3",
+          "hwnd": 659056,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.666,
+          "stage": "native:verify_control",
+          "hwnd": 659056,
+          "owner": "cover"
+        }
+      ],
+      "cover_pid": 1116,
+      "cover_hwnd": 659056,
+      "target_pid": 4048,
+      "target_hwnd": 458928,
+      "foreground_at_end": true
+    },
+    {
+      "machine": "M1",
+      "case": "paused",
+      "page": "webcam",
+      "minimized": false,
+      "passed": true,
+      "saveCount": 0,
+      "processTableAccesses": 0,
+      "nonIrUnchanged": true,
+      "completeCsvToSessionSeconds": [
+        0.755,
+        0.446,
+        0.631
+      ],
+      "uiOperations": [
+        {
+          "operation": "validate",
+          "seconds": 0.297
+        },
+        {
+          "operation": "enter_sequence",
+          "seconds": 0.415
+        },
+        {
+          "operation": "metadata",
+          "seconds": 0.617
+        },
+        {
+          "operation": "prepare_control",
+          "seconds": 0.481
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.285
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.284
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.282
+        }
+      ],
+      "connected_dirty_hold_observed": null,
+      "different_process_foreground": true,
+      "foreground_samples": 71,
+      "foreground_transitions": [
+        {
+          "seconds": 0.027,
+          "stage": "csv-layer:1",
+          "hwnd": 790126,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.645,
+          "stage": "native:read_status",
+          "hwnd": 790126,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.91,
+          "stage": "csv-layer:2",
+          "hwnd": 790126,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.428,
+          "stage": "csv-layer:3",
+          "hwnd": 790126,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.915,
+          "stage": "native:read_status",
+          "hwnd": 790126,
+          "owner": "cover"
+        }
+      ],
+      "cover_pid": 7892,
+      "cover_hwnd": 790126,
+      "target_pid": 6088,
+      "target_hwnd": 1310886,
+      "foreground_at_end": true
+    },
+    {
+      "machine": "S3",
+      "case": "normal",
+      "page": "webcam",
+      "minimized": false,
+      "passed": true,
+      "saveCount": 1,
+      "processTableAccesses": 0,
+      "nonIrUnchanged": true,
+      "completeCsvToSessionSeconds": [
+        0.145,
+        0.731,
+        1.57
+      ],
+      "uiOperations": [
+        {
+          "operation": "validate",
+          "seconds": 0.268
+        },
+        {
+          "operation": "enter_sequence",
+          "seconds": 0.418
+        },
+        {
+          "operation": "metadata",
+          "seconds": 0.642
+        },
+        {
+          "operation": "prepare_control",
+          "seconds": 0.46
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.282
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.282
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.445
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.661
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.286
+        }
+      ],
+      "connected_dirty_hold_observed": null,
+      "different_process_foreground": true,
+      "foreground_samples": 98,
+      "foreground_transitions": [
+        {
+          "seconds": 0.036,
+          "stage": "csv-layer:1",
+          "hwnd": 1052274,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.32,
+          "stage": "csv-layer:2",
+          "hwnd": 1052274,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.821,
+          "stage": "native:read_status",
+          "hwnd": 1052274,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.102,
+          "stage": "csv-layer:3",
+          "hwnd": 1052274,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.634,
+          "stage": "native:verify_control",
+          "hwnd": 1052274,
+          "owner": "cover"
+        },
+        {
+          "seconds": 2.072,
+          "stage": "native:apply",
+          "hwnd": 1052274,
+          "owner": "cover"
+        },
+        {
+          "seconds": 2.745,
+          "stage": "native:read_status",
+          "hwnd": 1052274,
+          "owner": "cover"
+        }
+      ],
+      "cover_pid": 7372,
+      "cover_hwnd": 1052274,
+      "target_pid": 2568,
+      "target_hwnd": 1639486,
+      "foreground_at_end": true
+    },
+    {
+      "machine": "S3",
+      "case": "normal",
+      "page": "webcam",
+      "minimized": true,
+      "passed": true,
+      "saveCount": 1,
+      "processTableAccesses": 0,
+      "nonIrUnchanged": true,
+      "completeCsvToSessionSeconds": [
+        0.141,
+        0.714,
+        1.275
+      ],
+      "uiOperations": [
+        {
+          "operation": "validate",
+          "seconds": 0.267
+        },
+        {
+          "operation": "enter_sequence",
+          "seconds": 0.4
+        },
+        {
+          "operation": "metadata",
+          "seconds": 0.629
+        },
+        {
+          "operation": "prepare_control",
+          "seconds": 0.458
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.284
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.287
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.443
+        },
+        {
+          "operation": "apply",
+          "seconds": 0.643
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.281
+        }
+      ],
+      "connected_dirty_hold_observed": null,
+      "different_process_foreground": true,
+      "foreground_samples": 90,
+      "foreground_transitions": [
+        {
+          "seconds": 0.027,
+          "stage": "csv-layer:1",
+          "hwnd": 855664,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.299,
+          "stage": "csv-layer:2",
+          "hwnd": 855664,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.819,
+          "stage": "native:read_status",
+          "hwnd": 855664,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.1,
+          "stage": "csv-layer:3",
+          "hwnd": 855664,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.372,
+          "stage": "native:verify_control",
+          "hwnd": 855664,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.841,
+          "stage": "native:apply",
+          "hwnd": 855664,
+          "owner": "cover"
+        },
+        {
+          "seconds": 2.499,
+          "stage": "native:read_status",
+          "hwnd": 855664,
+          "owner": "cover"
+        }
+      ],
+      "cover_pid": 7504,
+      "cover_hwnd": 855664,
+      "target_pid": 5476,
+      "target_hwnd": 1705022,
+      "foreground_at_end": true
+    },
+    {
+      "machine": "S3",
+      "case": "dirty",
+      "page": "webcam",
+      "minimized": false,
+      "passed": true,
+      "saveCount": 0,
+      "processTableAccesses": 0,
+      "nonIrUnchanged": true,
+      "completeCsvToSessionSeconds": [
+        0.757,
+        0.447,
+        1.064
+      ],
+      "uiOperations": [
+        {
+          "operation": "validate",
+          "seconds": 0.273
+        },
+        {
+          "operation": "enter_sequence",
+          "seconds": 0.402
+        },
+        {
+          "operation": "metadata",
+          "seconds": 0.635
+        },
+        {
+          "operation": "prepare_control",
+          "seconds": 0.459
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.289
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.284
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.283
+        },
+        {
+          "operation": "verify_control",
+          "seconds": 0.447
+        },
+        {
+          "operation": "recover_control",
+          "seconds": 0.0
+        }
+      ],
+      "connected_dirty_hold_observed": true,
+      "different_process_foreground": true,
+      "foreground_samples": 85,
+      "foreground_transitions": [
+        {
+          "seconds": 0.026,
+          "stage": "csv-layer:1",
+          "hwnd": 1183346,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.606,
+          "stage": "native:read_status",
+          "hwnd": 1183346,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.888,
+          "stage": "csv-layer:2",
+          "hwnd": 1183346,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.404,
+          "stage": "csv-layer:3",
+          "hwnd": 1183346,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.892,
+          "stage": "native:read_status",
+          "hwnd": 1183346,
+          "owner": "cover"
+        },
+        {
+          "seconds": 2.206,
+          "stage": "native:verify_control",
+          "hwnd": 1183346,
+          "owner": "cover"
+        }
+      ],
+      "cover_pid": 5052,
+      "cover_hwnd": 1183346,
+      "target_pid": 3148,
+      "target_hwnd": 1770532,
+      "foreground_at_end": true
+    },
+    {
+      "machine": "S3",
+      "case": "paused",
+      "page": "webcam",
+      "minimized": false,
+      "passed": true,
+      "saveCount": 0,
+      "processTableAccesses": 0,
+      "nonIrUnchanged": true,
+      "completeCsvToSessionSeconds": [
+        0.741,
+        0.4,
+        0.577
+      ],
+      "uiOperations": [
+        {
+          "operation": "validate",
+          "seconds": 0.267
+        },
+        {
+          "operation": "enter_sequence",
+          "seconds": 0.409
+        },
+        {
+          "operation": "metadata",
+          "seconds": 0.628
+        },
+        {
+          "operation": "prepare_control",
+          "seconds": 0.457
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.286
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.283
+        },
+        {
+          "operation": "read_status",
+          "seconds": 0.281
+        }
+      ],
+      "connected_dirty_hold_observed": null,
+      "different_process_foreground": true,
+      "foreground_samples": 73,
+      "foreground_transitions": [
+        {
+          "seconds": 0.027,
+          "stage": "csv-layer:1",
+          "hwnd": 986736,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.632,
+          "stage": "native:read_status",
+          "hwnd": 986736,
+          "owner": "cover"
+        },
+        {
+          "seconds": 0.913,
+          "stage": "csv-layer:2",
+          "hwnd": 986736,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.401,
+          "stage": "csv-layer:3",
+          "hwnd": 986736,
+          "owner": "cover"
+        },
+        {
+          "seconds": 1.902,
+          "stage": "native:read_status",
+          "hwnd": 986736,
+          "owner": "cover"
+        }
+      ],
+      "cover_pid": 924,
+      "cover_hwnd": 986736,
+      "target_pid": 6504,
+      "target_hwnd": 1836094,
+      "foreground_at_end": true
+    }
+  ],
+  "scope": "After connection baseline and target page/minimize transition settle, an unrelated owned process takes foreground once; all subsequent CSV observations, calculations, native edit/Save and persistence run without refocusing. Synthetic WinForms target and temporary files only.",
+  "untested": [
+    "Real BJT, hardware, thermal response, locked desktop and hidden windows.",
+    "Connection preparation or minimize transition while another process owns foreground."
+  ],
+  "harness_sha256": "b6e7b57fd7a4c4e55c7a7cf91c0e74f336534362738371b981bb5aaea3b13c10",
+  "bridge_sha256": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+  "helper_sha256": "395f2d0d076e8fcb172410d6f9892036c1bde2eda85e1c04e065da34781d2936"
+}

@@ -1,0 +1,407 @@
+{
+  "review_stage": "FINAL_EXACT_ARTIFACT_AND_EVALUATION_DELIVERY_POST",
+  "review_time_utc": "2026-11-09T10:42:45.773053+00:00",
+  "reviewer_role": "sol_reviewer",
+  "invocation": {
+    "route": "Official native collaboration.spawn_agent / followup_task to repository sol_reviewer role",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "actual_final_review_response": true,
+    "independent_provider_identity_attestation": false
+  },
+  "candidate_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+  "candidate_zip_sha256": "a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d",
+  "candidate_zip_bytes": 35398906,
+  "candidate_version": "2026.11.09-m1-recovery.1",
+  "publisher_sha256": "568e33f9c93983de23b7c564ae84570e879cd039b3a2bb81fc9e2944f3706e02",
+  "workflow_template_sha256": "eb252d318787763b42fea55bb4c432bbfa6a5d8b4d4d9ee1bc565a8976558b51",
+  "workflow_run_id": 42601104496,
+  "artifact_id": 13666271765,
+  "artifact_archive_sha256": "13a4316f3bd330eb59ba996617b4d7f732e9413afa198626368d54d56aa355f7",
+  "artifact_archive_bytes": 34940496,
+  "decision": "APPROVE_EXACT_REVIEWED_EVALUATION_PRERELEASE_DELIVERY; ALGORITHM_AND_EQUIPMENT_HOLD_REMAINS",
+  "independent_post_review_complete": true,
+  "exact_artifact_review_complete": true,
+  "evaluation_distribution_allowed": true,
+  "equipment_application_approved": false,
+  "algorithm_final_approval": false,
+  "stable_release_approved": false,
+  "publication_performed": false,
+  "unresolved_release_findings": [],
+  "review_scope": [
+    "Inspected repository rules and prior actual source/design/post review records. Source58ec runtime approval and40ada strict-zero probe approval remain applicable; e975 only changes console JSON escaping, with its own actual source Sol POST.",
+    "Bound the exact existing CI archive, nested EXE ZIP and all21raw evidence files to direct GitHub API metadata and independent GitHub connector reads. Reviewed clean immutablee975 source checkout; no rebuilding or artifact modification.",
+    "Verified complete ZIP manifest and every one of3660files against independent origin hashes:50reviewed source/doc/template files,3490original base-runtime/launcher files,120pinnedPillow wheel files.",
+    "Inspected all actual native reports, all12successful nonExcel raw outcomes and511-test OK log. Executed actual frozen publisher with the real evidence and mocked external calls; independently inspected strict-zero/minimized/lifecycle/full-profile/four-session behavior.",
+    "Reviewed actual final publisher/template diff and immutable source/run/artifact/archive pins, separate independent review gate, preserved Excel/readiness failure, immutable tag/release and asset readback, evaluation prerelease and make_latestfalse behavior."
+  ],
+  "provenance": {
+    "repository": "rlaengus444-ui/IR_feedback",
+    "repository_id": 1434868115,
+    "workflow_path": ".github/workflows/validate-slice.yml",
+    "run_status": "completed",
+    "run_conclusion": "failure",
+    "run_conclusion_reason": "Final enforcement remains failed because Excel COM is not registered; all12nonExcel raw checks succeeded.",
+    "immutable_source_checkout": "/workspace/IR_feedback_m1_reviewed_final",
+    "source_checkout_clean": true,
+    "artifact_name": "slice-candidate-e97564fb998f31cce27328bc4e326b164869c649",
+    "artifact_unexpired_at_review": true,
+    "artifact_metadata_matches_connector_and_direct_api": true,
+    "outer_archive_and_all21local_files_exact": true,
+    "source_reviews": {
+      "sol-code-post-58ec4ed.json": "593fb08f52a33737835332b462913144ad24ba7f3a9c49c3ffbb4eb678143774",
+      "sol-no-restore-40ada08-review.json": "6a59a0df7f5facb1f55b50772eebb796da6b262af189cdc6cd7843673fe6af94",
+      "sol-cp1252-e97564f-review.json": "3f02bcb9f4ccf7c28f389b2495d30192c669243e5f51e230460ddffe29efb104"
+    }
+  },
+  "package_audit": {
+    "manifest_entries": 3660,
+    "manifest_sha256": "e3fa4b6b1ad79380f621f03de04790b68b44872059f00b6b037cc861a2fe9382",
+    "entry_origins": {
+      "exact-reviewed-source": 50,
+      "immutable-base-runtime": 3490,
+      "pinned-Pillow-wheel": 120
+    },
+    "all_file_origin_hashes_match": true,
+    "complete_manifest_verified": true,
+    "exact_source_json_and_dll_verified": true,
+    "base_runtime_zip_sha256": "ff216aaca807a47b44de34f47194aff88f28dd0f08a9874f330cdd8c67be5e84",
+    "pillow_wheel_sha256": "f7cbb7a64e7ec664775195e4f81923bc8a93d9451b963f844e59118f63147a7a",
+    "native_dll_sha256": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+    "native_dll_bytes": 26112,
+    "verifier_sha256": "c45e7d6d0f0cc52592ff38f451b8ce4810fe710c9c6cea07c764a11768aeb99e"
+  },
+  "windows_evidence_inspected_not_executed_by_reviewer": {
+    "application_unit_tests": 511,
+    "unit_test_summary": "OK; every publisher-required critical regression has exactly one passed log line.",
+    "all12nonExcel_gates_passed": true,
+    "native_json_reports": {
+      "bridge.json": {
+        "passed": true,
+        "sha256": "5613978cf1bbae46ee688ab2bbf8cee0196465e2716d14399b764466111b37bf"
+      },
+      "csv-guard.json": {
+        "passed": true,
+        "sha256": "e216acc7391f23d27a65a4d036b3ab975bda3a1f21114bf5404efd8f18da6121"
+      },
+      "discovery.json": {
+        "passed": true,
+        "sha256": "fa424f5510ffa114c2fe89614361b5bb8c02c22bf3a41c4c7600e1fc62548518"
+      },
+      "slice-performance.json": {
+        "passed": true,
+        "sha256": "820bff1e34c105eba503069566cae7625a264f29a4f4d939dd034443c6ad36e0"
+      },
+      "settings-recovery.json": {
+        "passed": true,
+        "sha256": "f22e21e52cb7e250ac9d891af40cd75e84d202e2eb6d5892b9f1ff2babac35f0"
+      },
+      "background.json": {
+        "passed": true,
+        "sha256": "67936e99e44367d6206008f0f7e6828184b6f9c12b5ba558c53384d55e45c3dd"
+      },
+      "hidden-recovery.json": {
+        "passed": true,
+        "sha256": "a2ed41838857c7499d52d28afbd9c3c186c463f12cabb4141cfb11f44b3300c2"
+      },
+      "hidden-session.json": {
+        "passed": true,
+        "sha256": "cf19d1cf2e567ed2a82c8b32e25d76ff8dce87629b5b7077b952febfee1f4310"
+      }
+    },
+    "launcher_smoke": "Observed owned launcher and packaged pythonw plus expected window; closed normally after WM_CLOSE.",
+    "bridge_marked_file": {
+      "passed": true,
+      "before_after_dll_sha256": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+      "ads_before_after_equal": true,
+      "actual_discover_seconds": 1.0228743000000122,
+      "default_helper_timeout_seconds": 3.0,
+      "load_initialization_tamper_oversize_missing_restore_ads_checks_passed": true
+    },
+    "strict_hidden_recovery": {
+      "passed": true,
+      "raw_process_messages": [],
+      "actual_minimized_boundaries": [
+        true,
+        true
+      ],
+      "stayed_minimized": true,
+      "helper_intervals": 21,
+      "both_candidate_and_historical_helpers_verified_retired": true,
+      "all5retirement_facts_strict_true_and_old_child_exit_required": true,
+      "full_profiles": {
+        "M1_hide_outer": {
+          "passed": true,
+          "epochs": [
+            0,
+            1
+          ],
+          "poison_messages": []
+        },
+        "M1_hide_outer_managed": {
+          "passed": true,
+          "epochs": [
+            0,
+            1
+          ],
+          "poison_messages": []
+        },
+        "S3_hide_outer": {
+          "passed": true,
+          "epochs": [
+            0,
+            1
+          ],
+          "poison_messages": []
+        },
+        "S3_hide_outer_managed": {
+          "passed": true,
+          "epochs": [
+            0,
+            1
+          ],
+          "poison_messages": []
+        }
+      },
+      "restore_allowance_or_message_filter": false
+    },
+    "four_real_session_stack_cases": [
+      {
+        "machine": "M1",
+        "minimized": false,
+        "passed": true,
+        "powers": [
+          75.0,
+          70.0,
+          65.0,
+          60.0
+        ],
+        "save_counts": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "process_table_accesses": 0,
+        "eligible_observation_history_exactly_retained": true,
+        "all_four_fresh_applied_layers_retained": true,
+        "recovery_saves": 0,
+        "recovery_navigation": 0
+      },
+      {
+        "machine": "M1",
+        "minimized": true,
+        "passed": true,
+        "powers": [
+          75.0,
+          70.0,
+          65.0,
+          60.0
+        ],
+        "save_counts": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "process_table_accesses": 0,
+        "eligible_observation_history_exactly_retained": true,
+        "all_four_fresh_applied_layers_retained": true,
+        "recovery_saves": 0,
+        "recovery_navigation": 0
+      },
+      {
+        "machine": "S3",
+        "minimized": false,
+        "passed": true,
+        "powers": [
+          75.0,
+          70.0,
+          65.0,
+          60.0
+        ],
+        "save_counts": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "process_table_accesses": 0,
+        "eligible_observation_history_exactly_retained": true,
+        "all_four_fresh_applied_layers_retained": true,
+        "recovery_saves": 0,
+        "recovery_navigation": 0
+      },
+      {
+        "machine": "S3",
+        "minimized": true,
+        "passed": true,
+        "powers": [
+          75.0,
+          70.0,
+          65.0,
+          60.0
+        ],
+        "save_counts": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "process_table_accesses": 0,
+        "eligible_observation_history_exactly_retained": true,
+        "all_four_fresh_applied_layers_retained": true,
+        "recovery_saves": 0,
+        "recovery_navigation": 0
+      }
+    ]
+  },
+  "checks_executed_by_reviewer": [
+    {
+      "name": "Exact package/source/manifest/runtime/Pillow origin audit",
+      "passed": true,
+      "record": "e97564f-final-artifact-origin-audit.json"
+    },
+    {
+      "name": "Whole final publisher with actual immutable evidence; all network and publication calls mocked",
+      "tests": 246,
+      "passed": true,
+      "independent_review_permission_gate_mocked_for_test": true,
+      "actual_package_verifier_executed_before_mocked_main_cases": true,
+      "record": "final-568e33f9c939/mock-publisher-results.json",
+      "report_sha256": "ce2e6156462272e9e724eb190e6523f69b4892f7c554c0cd834e3eb7c6d31368",
+      "independent_result_identical_to_owner_report": true
+    },
+    {
+      "name": "Supplied offline bridge-template, strict-zero Process/lifecycle and session-report tests",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "passed": true
+    },
+    {
+      "name": "Actual final artifact-template positive/tamper execution",
+      "tests": 27,
+      "passed": true,
+      "record": "artifact-template-checks-eb252d318787.json",
+      "scope": "Synthetic artifact pin values only; exacte975source/run preserved, allghmocked. Tests metadata, bytes, traversal, duplicates/case collisions, symlink and size/count limits."
+    },
+    {
+      "name": "Exact fully pinned final download/extraction template with actual archive and metadata, no pin substitution",
+      "passed": true,
+      "record": "e97564f-actual-pinned-template-check.json"
+    },
+    {
+      "name": "Historical genuine failed40CI full-publisher rejection",
+      "passed": true,
+      "raw_readiness_modified": false,
+      "rejection_reason": "A required Windows validation step failed",
+      "record": "40ada08-native-inspection-and-publisher-rejection.json"
+    }
+  ],
+  "raw_readiness_preserved": {
+    "device_application_approved": false,
+    "checks": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "settings_recovery": "success",
+      "background": "success",
+      "hidden_recovery": "success",
+      "hidden_session": "success",
+      "excel": "failure",
+      "reverify": "success"
+    },
+    "final_sol_review": "pending",
+    "release_ready": false,
+    "source_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+    "automated_checks_passed": false
+  },
+  "raw_excel_preserved": {
+    "excel_com_tested": false,
+    "release_ready": false,
+    "reason": "Excel COM is not registered"
+  },
+  "publication_constraints": {
+    "release_kind": "evaluation prerelease",
+    "prerelease": true,
+    "make_latest": false,
+    "overwrite_existing_version_or_assets": false,
+    "allowed_assets": [
+      "IRFeedback-2026.11.09-m1-recovery.1.zip",
+      "SHA256.txt"
+    ],
+    "workflow_template_remaining_placeholder": "__PUBLISH_SOURCE__",
+    "permitted_rendering": "Replace only __PUBLISH_SOURCE__ with a full immutable Git commit containing the exact reviewed publisher568e33f9..., unchanged verifierc45e7d6..., and this completed review record. Other publisher/template behavior changes require review.",
+    "existing_user_authorization_required_and_reported_by_parent": true
+  },
+  "unexecuted_limits": [
+    "Reviewer inspected genuine Windows CI evidence but did not independently run a Windows machine, Excel COM, actual BJT UI, physical sensor, PLC or lamp.",
+    "Excel COM is not registered on CI and remains untested/failed. No claim of an Excel-installed PC test.",
+    "Actual equipment application and final control-algorithm approval remain explicitly held; no hardware or long-duration thermal validation.",
+    "Restoring the minimized fixture, a genuinely blank UIA AutomationId, and previously listed provider/race/resource-bound permutations remain untested.",
+    "Normal-looking stale sensor readings cannot be independently identified from CSV alone.",
+    "Provider/model identity was not independently attested."
+  ],
+  "prior_failed_evidence_preserved": [
+    "first-ci",
+    "second-ci",
+    "native-diagnostic",
+    "native-diagnostic-2",
+    "restore-full",
+    "final-ci (40ada failed readiness)"
+  ],
+  "evidence_file_sha256": {
+    "bridge.json": "5613978cf1bbae46ee688ab2bbf8cee0196465e2716d14399b764466111b37bf",
+    "background.txt": "67936e99e44367d6206008f0f7e6828184b6f9c12b5ba558c53384d55e45c3dd",
+    "background.json": "67936e99e44367d6206008f0f7e6828184b6f9c12b5ba558c53384d55e45c3dd",
+    "candidate.json": "66296abbf5b38d030c1ab7f062ecf426d6d40fb10b599a4b820827692098b588",
+    "csv-guard.json": "e216acc7391f23d27a65a4d036b3ab975bda3a1f21114bf5404efd8f18da6121",
+    "discovery.json": "fa424f5510ffa114c2fe89614361b5bb8c02c22bf3a41c4c7600e1fc62548518",
+    "discovery.txt": "fa424f5510ffa114c2fe89614361b5bb8c02c22bf3a41c4c7600e1fc62548518",
+    "excel.json": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03",
+    "hidden-recovery.json": "a2ed41838857c7499d52d28afbd9c3c186c463f12cabb4141cfb11f44b3300c2",
+    "hidden-recovery.txt": "c82d253ecc67bf1c2dfc4e5b59e85e21f32b8fa2b72107383a5fa9ce4da70a3c",
+    "hidden-session.json": "cf19d1cf2e567ed2a82c8b32e25d76ff8dce87629b5b7077b952febfee1f4310",
+    "hidden-session.txt": "0cb14ba1469a24b55bb9f8efcf7d5c85706c6ac7809f66c58a3fd6e247cb63ec",
+    "IRFeedback-2026.11.09-m1-recovery.1.zip": "a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d",
+    "readiness.json": "c45a0db41327aa703c4f693838b29ef7cdcab8fe93be76c131132656cc6469bb",
+    "settings-recovery.json": "f22e21e52cb7e250ac9d891af40cd75e84d202e2eb6d5892b9f1ff2babac35f0",
+    "settings-recovery.txt": "f22e21e52cb7e250ac9d891af40cd75e84d202e2eb6d5892b9f1ff2babac35f0",
+    "SHA256.txt": "2ca55791eda90efa48d7afc721a68488ee5ace4003403b5c184f77efaa8f1efe",
+    "slice-performance.json": "820bff1e34c105eba503069566cae7625a264f29a4f4d939dd034443c6ad36e0",
+    "slice-performance.txt": "820bff1e34c105eba503069566cae7625a264f29a4f4d939dd034443c6ad36e0",
+    "smoke.txt": "61a645f5f65ec84f3601e75a10fe4dbb917524c46ea8e2c3eeb5a94f6f191914",
+    "tests.txt": "a8e3e7223b6ba081eb692ae994bb78757c06442b4183082f7f68e445221c1f17"
+  },
+  "external_review_records_sha256": {
+    "e97564f-final-artifact-origin-audit.json": "e3fa1929dc941e3034c0e4290095f62117ed92c9680f258e83531aa03d00cbf2",
+    "e97564f-artifact-metadata.json": "f9baef6217ef8cf7a0714582d7ac605df2c3fe6615fbdaae6d810d67f98fbf34",
+    "e97564f-run-metadata.json": "867914833834b3b597569ec886a65cf337ca582c47d7cf2ebe8ef3067abb3b6d",
+    "e97564f-connector-artifacts.json": "985215dfd58a00e437f71ee87410dc55cd76b6d64a38264f143db558268a030a",
+    "e97564f-connector-jobs.json": "6b8ed8973c0feab69d84c7ac8577c9fd2556f195e2a4f9ae0fdbd02c418cdacb",
+    "artifact-template-checks-eb252d318787.json": "a4925a9ac2c32ea2aabbf4ae45ca2a635ac5ac5b577d83a0977a6bfa5c451846",
+    "e97564f-actual-pinned-template-check.json": "31240ce2e5975372b4b491d84cca6f49830a059ad7b73139cccef478550d8dc2",
+    "40ada08-failed-readiness-origin-audit.json": "9895d029b104f719b75918155e29798e4ea36010b83b18f2a3781051c2b41b63",
+    "40ada08-native-inspection-and-publisher-rejection.json": "1050c6d452b8e913f6c671186a5d4ea0a7769ef2877f0fbdb4c9d1f57e27d7c7"
+  },
+  "frozen_reviewed_publisher_files_sha256": {
+    "test_process_evidence.py": "ec8431833c2a07b0ebd5ab3b8ea230a8d2af622761a010b31f12e6fdc457f6fc",
+    "publish_m1_recovery_candidate.py": "568e33f9c93983de23b7c564ae84570e879cd039b3a2bb81fc9e2944f3706e02",
+    "test_bridge_template.py": "7337808c3c3cedc53b937447acb00be1b04847e17f91393481d745e87c759b1c",
+    "verify_package.py": "c45e7d6d0f0cc52592ff38f451b8ce4810fe710c9c6cea07c764a11768aeb99e",
+    "publish_m1_recovery_workflow.template.yml": "eb252d318787763b42fea55bb4c432bbfa6a5d8b4d4d9ee1bc565a8976558b51",
+    "test_session_report.py": "608137d2a52e2635f593702f4d6e535bafebde21562e0cb04abd8d88b995bc0c",
+    "mock_publisher_checks.py": "11ab464b9cf087c670b3d883860d7c283fec4a3434091b4bca00c9e952133344"
+  },
+  "final_integrity_check": {
+    "final_publisher_and_template_match_frozen_bytes": true,
+    "all21raw_evidence_files_unchanged": true,
+    "immutable_source_checkout_clean": true
+  },
+  "note": "This completed independent review approves the exact pinned software for the user-authorized evaluation prerelease delivery. It leaves raw CI/readiness/Excel evidence unchanged and does not approve algorithm final acceptance or physical equipment use. Reviewer made no production/publisher/artifact edits and performed no external publication."
+}

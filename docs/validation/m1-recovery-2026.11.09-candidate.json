@@ -1,0 +1,6 @@
+{
+  "version": "2026.11.09-m1-recovery.1",
+  "zip_sha256": "a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d",
+  "source_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+  "pillow_sha256": "f7cbb7a64e7ec664775195e4f81923bc8a93d9451b963f844e59118f63147a7a"
+}

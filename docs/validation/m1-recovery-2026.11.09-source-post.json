@@ -1,0 +1,206 @@
+{
+  "review_stage": "CODE_POST",
+  "review_time_utc": "2026-11-09T09:40:26.986260+00:00",
+  "reviewer_role": "sol_reviewer",
+  "invocation": {
+    "route": "Official native collaboration.spawn_agent and followup_task to repository sol_reviewer",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "actual_final_review_response": true,
+    "independent_provider_identity_attestation": false
+  },
+  "target": {
+    "repository": "/workspace/IR_feedback_m1_recovery_nov9",
+    "base_commit": "57a80cfb9f21d922f01c39da09debfa7343ca67a",
+    "reviewed_commit": "58ec4edd392684ef279217bf228a298abd1293e9",
+    "branch": "fix/m1-hidden-recovery-20261109",
+    "worktree_clean": true,
+    "version": "2026.11.09-m1-recovery.1",
+    "diff_sha256": "f3516afb56806418ab9ff271b56f80e063d3d32ce633e8cd2d42525a96505628"
+  },
+  "decision": "APPROVE_SOURCE_IMPLEMENTATION; EXACT_ARTIFACT_AND_WINDOWS_NATIVE_VALIDATION_PENDING",
+  "unresolved_source_findings": [],
+  "review_scope": [
+    "Actual base-to-target C#/PowerShell bridge and dispatcher diff, Python archive rename change, native and offline test sources, packaging verifier, CI gates and current user documentation.",
+    "Read prior DESIGN_PRE and WIP findings; checked final follow-up diff and bridge build/source/pin identity.",
+    "No production source or binary edit was made by reviewer. Only external review/test evidence was created."
+  ],
+  "resolved_findings": [
+    {
+      "id": "PRE-01",
+      "resolution": "Existing Collect(root) remains visible-only. New CollectScoped enumerates only the authenticated non-root Sequence ancestor and admits relative native visibility, ignoring scope/outer hiding while preserving inner hiding."
+    },
+    {
+      "id": "PRE-02",
+      "resolution": "Fresh current scoped metadata is collected twice around full native field reads, with bounded candidate membership checks inside each collection, unique input IDs and unchanged Python full saved-field audit. Cached field_map alone is never used for recovery adoption."
+    },
+    {
+      "id": "PRE-03",
+      "resolution": "Scope/global proof captures exact native scope identity and global label HWND/class/AutomationId/parent/thread/control ID. Strict global validation precedes CheckMachine and either recovery path. Current selected machine, fresh AUTO/RUNNING, editing and IR/Save writable/enabled role checks remain enforced."
+    },
+    {
+      "id": "PRE-04",
+      "resolution": "The actual Windows-built 26112-byte bridge is present. All five C# sources and build-script hashes match build evidence. Helper and downloaded-file probe use the new exact DLL hash and size. Exact package loading/ADS verification remains a later gate."
+    },
+    {
+      "id": "WIP-01",
+      "resolution": "VisibleReaudit is selected through an explicit native structural status, never a broad catch of scoped metadata/global/field failures. A stale view can be re-audited only if a complete unique replacement is genuinely visible. Retained audited global handles cannot be replaced. Hidden stale scopes remain HOLD."
+    },
+    {
+      "id": "WIP-02",
+      "resolution": "Machine/state leaf proof now binds parent, thread and control ID, checked before and after recovery; same-root reparenting fails authentication."
+    },
+    {
+      "id": "WIP-03",
+      "resolution": "Fixture/probe source now contains both native ShowWindow and actual WinForms Visible=false/true outer hiding, with WS_VISIBLE/effective visibility evidence and full M1/S3 profiles. These added native cases have not yet been executed by reviewer."
+    },
+    {
+      "id": "WIP-04",
+      "resolution": "Compile step removes the tracked prior DLL in disposable Windows checkout; build.json records explicit compile outcome and copies a DLL only following successful compilation. Downloaded successful build evidence was checked."
+    },
+    {
+      "id": "POST-01",
+      "priority": "P2",
+      "found_at": "9011e0628f8e9c0a6cae4a56715502a7b6d7f44b",
+      "finding": "Malformed proof with scope==root could request visible fallback.",
+      "resolution": "58ec4ed rejects root or aliased scope/IR/Save before structural decision; native probe adds forged-root proof while a valid visible Sequence would otherwise allow re-audit."
+    },
+    {
+      "id": "POST-02",
+      "priority": "P1_validation",
+      "found_at": "9011e0628f8e9c0a6cae4a56715502a7b6d7f44b",
+      "finding": "Two hide-mode full-profile runs reused marker files, allowing the second run to read the prior PID from .ready.",
+      "resolution": "58ec4ed includes hide_action in both marker and spec paths, isolating per-mode fixture evidence. Follow-up Windows execution remains pending."
+    },
+    {
+      "id": "POST-03",
+      "priority": "P2_documentation",
+      "found_at": "9011e0628f8e9c0a6cae4a56715502a7b6d7f44b",
+      "finding": "Documentation incorrectly implied disabled non-IR required inputs always HOLD.",
+      "resolution": "58ec4ed accurately describes required-input hiding and IR/Save disabled/read-only checks without claiming a broader enabled-field policy."
+    }
+  ],
+  "source_behavior_review": {
+    "hidden_recovery": "Scope-relative WS_VISIBLE checks inspect each candidate/inner parent chain before and after cached-ID collection. Scope==root and aliased anchors are rejected; native provider/root trees, Process table and navigation are not introduced.",
+    "scope_recreation": "Strict proof/global validation precedes structural re-audit. Visible reacquisition uses existing visible metadata and complete fresh preparation; no partial/cached-map fallback. Changed proof/map/handles remain part of the two-read Python recovery signature.",
+    "bounds": "16384 native visits,900 eligible leaf candidates,256 mapped inputs,64 parent depth,1024 AutomationId characters and existing disposable-helper deadlines remain enforced. Incomplete scans and scoped metadata failures HOLD.",
+    "saved_inputs": "The unchanged Python audit requires every active M1/S3 saved field, rejects unknown or unsaved fields and ambiguous owner identities, and explicitly ignores only existing known inactive/unbound mappings.",
+    "actuation_protections": "CSV job/age/hash/content validation, invalid -1 sensor handling, persisted before/after checks, two matching recovery reads, baseline then different fresh valid layer, output min/max/change cap and edit/Save ambiguity markers are unchanged. Recovery itself performs no IR edit, Save, navigation or focus change.",
+    "archive_names": "CSV names now use sanitized machine and local save time; PNG suffixes are 온도 and IR. Atomic O_EXCL reservation prevents collisions/overwrites and uses numbered suffixes. Existing fallback paths, completed-file preservation and missing-component-only retry remain intact.",
+    "support_and_limits": "M1/S3 support remains; M2 support was not added. Documentation does not infer the initiating log trigger and preserves legitimate nonautomatic/editing/owner-change holds."
+  },
+  "checks_executed_by_reviewer": [
+    {
+      "name": "Independent targeted offline suite",
+      "evidence": "/workspace/ir-m1-recovery-2026.11.09/sol-code-post-9011e06-tests.json",
+      "log": "/workspace/ir-m1-recovery-2026.11.09/sol-code-post-9011e06-tests.txt",
+      "log_sha256": "0f34a356010b0c66b99238569f2bb7ce3ac5eee7c6d33941d8ff989025daae05",
+      "tests": 143,
+      "failures": 0,
+      "errors": 0,
+      "skipped": [],
+      "excluded": [
+        {
+          "id": "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed",
+          "reason": "Unchanged test expects native Windows transport but Linux os.name rejection precedes Popen."
+        }
+      ],
+      "test_commit": "9011e0628f8e9c0a6cae4a56715502a7b6d7f44b",
+      "applicability_to_final": "git diff9011e06..58ec4ed -- app/*.py is empty; all tested runtime/test Python files are byte-identical. Final changes are PowerShell scope guard, native probe marker/negative case and documentation."
+    },
+    {
+      "name": "Frozen follow-up actual diff review",
+      "result": "Reviewed all four follow-up changes; original code/validation/doc findings addressed."
+    },
+    {
+      "name": "Python syntax compilation",
+      "result": "Changed Python archive/test/probe sources parsed and compiled in memory; embedded historical old-adapter child code also compiled successfully."
+    },
+    {
+      "name": "Bridge/source/pin byte checks",
+      "result": "All5 C# sources, build script and current DLL match downloaded Windows build evidence; helper SHA pin, probe SHA pin and26112 size match."
+    },
+    {
+      "name": "Portable suite source equivalence",
+      "result": "All application_source_sha256 entries from the parent-run portable9011 report match final58ec4ed sources. All tested Python files remain unchanged."
+    }
+  ],
+  "evidence_inspected_not_executed_by_reviewer": {
+    "bridge_build": {
+      "path": "/workspace/ir-m1-recovery-2026.11.09/bridge-build/build.json",
+      "sha256": "7dbe51e42232b4b5c3ae00935235e8c2a0862d2914752c54d5452cd20c0e1012",
+      "reported_github_run": "42592342935",
+      "build_succeeded": true,
+      "source_commit": "6f378742c99eaf4d16ac760183612eaf1581806d",
+      "source_hashes_match_final": true,
+      "compiler_sha256": "baef2676444878d5818628f46483f4e55241d6380ecff0bbb855c470852e1872",
+      "dll_sha256": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+      "dll_bytes": 26112,
+      "notes": "Successful compile evidence only. Reviewer did not invoke Windows compiler or prove a reproducible/hermetic build; standard framework reference paths are recorded in the checked build script."
+    },
+    "parent_portable_suite": {
+      "path": "/workspace/ir-m1-recovery-2026.11.09/portable-9011e06.json",
+      "report_sha256": "f4fc5d1e979791e9f5becabe0e9793c16a4e4a7cc3c8554f67c033be1a78979a",
+      "raw_log_path": "/workspace/ir-m1-recovery-2026.11.09/portable-9011e06.txt",
+      "raw_log_sha256": "d318c9bb1801b702d96f9957a07802edc7b5380a6ca0acb324315a94fa786a42",
+      "source_commit": "9011e0628f8e9c0a6cae4a56715502a7b6d7f44b",
+      "tests": 460,
+      "failures": 0,
+      "errors": 0,
+      "skipped": [
+        [
+          "test_excel_retirement_windows.WindowsRetirementTests.test_owned_process_handle_is_terminated_and_verified",
+          "requires Windows process handles"
+        ]
+      ],
+      "excluded": 51,
+      "scope": "Linux offline, mocked and real-file tests; no Excel COM or equipment"
+    }
+  },
+  "pending_or_unexecuted_limits": [
+    "Full Windows CI on exact58ec4ed, including all application/GUI tests, bridge ADS loading, CSV guards, native discovery, unchanged visible settings-rebind tests, background Save, hidden recovery and real observed-session hidden recovery. First9011 run is a historical attempt, not final58ec4ed validation.",
+    "Actual native hidden recovery semantics, WinForms style retention, inner hiding and provider timings are not established by Linux mocks or compilation. Current fixture/probe source is reviewed, execution pending.",
+    "The added native probes do not exhaust every PRE negative permutation: deliberate ID/class/parent mutation during collection, scoped resource-bound overflow, all role/disabled/read-only permutations, and conditional/new control creation under a managed hidden parent without native visibility forcing remain unexecuted. Do not claim exhaustive race/provider coverage.",
+    "Exact final ZIP/source/manifest/hash identity, packaged runtime module provenance and independent artifact review remain pending.",
+    "Reviewer did not run Excel COM, actual BJT UI, sensors, PLCs, physical lamps, locked-desktop testing or long-duration thermal printing. Normal-looking stale sensor values remain a CSV limitation."
+  ],
+  "approval_boundaries": {
+    "source_code_review_complete": true,
+    "native_windows_validation_complete": false,
+    "exact_artifact_review_complete": false,
+    "software_delivery_approved_by_this_record": false,
+    "algorithm_final_approval": false,
+    "equipment_application_approved": false,
+    "publication_performed": false,
+    "note": "This source review does not authorize equipment application or lift the explicit user algorithm/equipment HOLD. Evaluation delivery remains subject to successful exact-artifact validation and final review under existing user authorization."
+  },
+  "reviewed_changed_file_sha256": {
+    ".github/workflows/build-m1-recovery-bridge.yml": "33de291e6c311623e87f50b4992e5dc6a2863ee31ccdc1c81068c1345b3dab11",
+    ".github/workflows/validate-slice.yml": "06ba2405ac610db5a98d757af3d441f0d1c56ea5ec2c39fde53ca6dcfd3cba1b",
+    "README.md": "b0049632b74ca523495f1f4b2be80744735c43befe60f6fa8e59c1892766963d",
+    "VERSION.txt": "3e681c68b7262cdf6020b2f638229f43f5b42fdb957363282374fd6d226d7d41",
+    "app/README.ko.md": "21488bf2b25b51660acc9be3d4f2b2e36a65e4b0c4d7e59d4950f97a3808fbc9",
+    "app/UiaBridge.dll": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+    "app/UiaBridge.fields.part.cs": "bcd12720e73f1e953ef4305e2e010e689c5942a1ebe54f996c290af94eeae064",
+    "app/UiaBridge.metadata.part.cs": "3fc5bd3a4c42f3c36fbd0a707de5a7aa29a2399a976cd1a903dfbd1373208f97",
+    "app/UiaBridge.process.part.cs": "d57ba84055445b3e02c9c3fd79f6a0aa54089284a0d071f952f6660e71ca080b",
+    "app/native_helper.ps1": "395f2d0d076e8fcb172410d6f9892036c1bde2eda85e1c04e065da34781d2936",
+    "app/plot_archive.py": "47bf60771feeaec4f57e76a2f7027a437ddc5a652b09905ac6330022e56ccdd5",
+    "app/test_m1_hidden_recovery.py": "fcf63f369b5a3061083da16b21426866b96ed5d07980147051ad7dbd22735065",
+    "app/test_plot_archive.py": "bd0ee427a581d8900b2c99ed599126776a2d0b608ae177935ffcaebd0bf2c380",
+    "docs/LIVE_SETTINGS.ko.md": "47565292fbd0837f96bc52693558a8b2795a52859b08cc02c437ea3df458fd5c",
+    "docs/M1_HIDDEN_RECOVERY.ko.md": "539303c00d770a9b3c721f0023fa05ea321e3c1c4160e880a755138d91a95c75",
+    "docs/validation/m1-hidden-recovery-2026.11.09-design-review.json": "b1f2b86e7f085120992cbc3f68c8705970a0f7163d550a5f5a9dd431f268a252",
+    "release_tools/verify_package.py": "c45e7d6d0f0cc52592ff38f451b8ce4810fe710c9c6cea07c764a11768aeb99e",
+    "release_tools/windows_bridge_probe.py": "a43be02a348a02361eef8db9a8947c2ff88192e3ac0608d9bffb3d6047e54544",
+    "release_tools/windows_hidden_recovery_probe.py": "d298790b84bc422b06718104145888bf6507bbb29546494e38dbfd44ef682b73",
+    "release_tools/windows_hidden_session_probe.py": "ff7d154b5d83407aba775976d47e9bf87df4a9a448585e1de02555b5442fbcc8",
+    "validation/SettingsRecoveryFixture.cs": "26cb31dca488d4e0f35efa678aec4532955ef07761fc31f6dd527e7cfd361c80"
+  },
+  "retained_previous_evidence": [
+    "sol-design-pre.json",
+    "sol-wip-precompile-review.json",
+    "sol-code-post-9011e06-tests.json",
+    "sol-code-post-9011e06-tests.txt"
+  ]
+}

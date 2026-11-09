@@ -1,0 +1,1499 @@
+test_close_deadline_drains_confirmed_saves_and_ignores_proposals (test_auto_archive_ui.ArchiveViewTests.test_close_deadline_drains_confirmed_saves_and_ignores_proposals) ... ok
+test_close_waits_for_all_retained_chart_event_batches (test_auto_archive_ui.ArchiveViewTests.test_close_waits_for_all_retained_chart_event_batches) ... ok
+test_csv_wait_keeps_pump_alive_and_delivers_later_snapshot (test_auto_archive_ui.ArchiveViewTests.test_csv_wait_keeps_pump_alive_and_delivers_later_snapshot) ... ok
+test_disconnect_chart_only_and_old_generation_events (test_auto_archive_ui.ArchiveViewTests.test_disconnect_chart_only_and_old_generation_events) ... ok
+test_disconnect_drains_batches_then_finished_archives_full_history_once (test_auto_archive_ui.ArchiveViewTests.test_disconnect_drains_batches_then_finished_archives_full_history_once) ... ok
+test_empty_finished_has_no_archive (test_auto_archive_ui.ArchiveViewTests.test_empty_finished_has_no_archive) ... ok
+test_error_does_not_archive_before_finished (test_auto_archive_ui.ArchiveViewTests.test_error_does_not_archive_before_finished) ... ok
+test_failed_archive_survives_reconnect_and_cancel_then_retry (test_auto_archive_ui.ArchiveViewTests.test_failed_archive_survives_reconnect_and_cancel_then_retry) ... ok
+test_failed_close_retry_keeps_original_cutoff_after_late_snapshot (test_auto_archive_ui.ArchiveViewTests.test_failed_close_retry_keeps_original_cutoff_after_late_snapshot) ... ok
+test_pending_export_does_not_block_reconnect_or_close (test_auto_archive_ui.ArchiveViewTests.test_pending_export_does_not_block_reconnect_or_close) ... ok
+test_retired_run_png_uses_outgoing_target_and_both_plots_exist (test_auto_archive_ui.ArchiveViewTests.test_retired_run_png_uses_outgoing_target_and_both_plots_exist) ... ok
+test_run_a_b_a_yields_distinct_segments (test_auto_archive_ui.ArchiveViewTests.test_run_a_b_a_yields_distinct_segments) ... ok
+test_settings_hold_keeps_graph_connection_until_explicit_finish (test_auto_archive_ui.ArchiveViewTests.test_settings_hold_keeps_graph_connection_until_explicit_finish) ... ok
+test_same_semantic_csv_key_cannot_hide_changed_image_or_recoat_metadata (test_csv_lineage.CsvLineageTests.test_same_semantic_csv_key_cannot_hide_changed_image_or_recoat_metadata) ... ok
+test_job_changes_and_parser_errors_remain_terminal (test_csv_observation_wait.ObservationAdapterTests.test_job_changes_and_parser_errors_remain_terminal) ... ok
+test_known_native_wait_only_recovers_before_markers (test_csv_observation_wait.ObservationAdapterTests.test_known_native_wait_only_recovers_before_markers) ... ok
+test_native_preflight_wait_does_not_enter_apply (test_csv_observation_wait.ObservationAdapterTests.test_native_preflight_wait_does_not_enter_apply) ... ok
+test_newer_complete_row_cancels_old_decision_and_preserves_new_key (test_csv_observation_wait.ObservationAdapterTests.test_newer_complete_row_cancels_old_decision_and_preserves_new_key) ... ok
+test_partial_append_waits_then_receives_completed_row (test_csv_observation_wait.ObservationAdapterTests.test_partial_append_waits_then_receives_completed_row) ... ok
+test_baseline_cached_same_layer_and_fresh_layer_before_resume (test_csv_observation_wait.ObservationSessionTests.test_baseline_cached_same_layer_and_fresh_layer_before_resume) ... ok
+test_no_new_layer_keeps_observing_without_retry (test_csv_observation_wait.ObservationSessionTests.test_no_new_layer_keeps_observing_without_retry) ... ok
+test_other_terminal_errors_are_not_swallowed (test_csv_observation_wait.ObservationSessionTests.test_other_terminal_errors_are_not_swallowed) ... ok
+test_second_channel_success_record_survives_later_preedit_wait (test_csv_observation_wait.ObservationSessionTests.test_second_channel_success_record_survives_later_preedit_wait) ... ok
+test_actual_adapter_reconnect_baseline_then_one_mocked_save (test_csv_reconnect.ReconnectTests.test_actual_adapter_reconnect_baseline_then_one_mocked_save) ... ok
+test_anchor_tolerance_and_history_cutoff_boundaries (test_csv_reconnect.ReconnectTests.test_anchor_tolerance_and_history_cutoff_boundaries) ... ok
+test_appended_history_after_anchor_is_rejected (test_csv_reconnect.ReconnectTests.test_appended_history_after_anchor_is_rejected) ... ok
+test_contradictory_bounds_and_missing_anchor_fail_closed (test_csv_reconnect.ReconnectTests.test_contradictory_bounds_and_missing_anchor_fail_closed) ... ok
+test_current_only_later_first_row_remains_supported (test_csv_reconnect.ReconnectTests.test_current_only_later_first_row_remains_supported) ... ok
+test_invalid_history_is_not_silently_skipped (test_csv_reconnect.ReconnectTests.test_invalid_history_is_not_silently_skipped) ... ok
+test_job_change_clears_unverified_prefix (test_csv_reconnect.ReconnectTests.test_job_change_clears_unverified_prefix) ... ok
+test_prefix_and_partial_anchor_never_produce_sample_or_token (test_csv_reconnect.ReconnectTests.test_prefix_and_partial_anchor_never_produce_sample_or_token) ... ok
+test_real_job_log_resume_baselines_then_accepts_fresh_row (test_csv_reconnect.ReconnectTests.test_real_job_log_resume_baselines_then_accepts_fresh_row) ... ok
+test_same_size_rewrite_rebaselines_and_revalidates_history (test_csv_reconnect.ReconnectTests.test_same_size_rewrite_rebaselines_and_revalidates_history) ... ok
+test_session_reconnect_never_calculates_or_saves_history_or_baseline (test_csv_reconnect.ReconnectTests.test_session_reconnect_never_calculates_or_saves_history_or_baseline) ... ok
+test_chunked_append_first_sample_is_still_baseline_at_full_token (test_csv_resume_anchor.ResumeAnchorTests.test_chunked_append_first_sample_is_still_baseline_at_full_token) ... ok
+test_current_only_later_row_remains_compatible (test_csv_resume_anchor.ResumeAnchorTests.test_current_only_later_row_remains_compatible) ... ok
+test_incomplete_anchor_and_sample_in_same_batch_baseline (test_csv_resume_anchor.ResumeAnchorTests.test_incomplete_anchor_and_sample_in_same_batch_baseline) ... ok
+test_incomplete_metadata_formats_anchor_and_later_first_sample_is_baseline (test_csv_resume_anchor.ResumeAnchorTests.test_incomplete_metadata_formats_anchor_and_later_first_sample_is_baseline) ... ok
+test_malformed_or_contradictory_anchor_is_rejected (test_csv_resume_anchor.ResumeAnchorTests.test_malformed_or_contradictory_anchor_is_rejected) ... ok
+test_mock_session_uses_only_new_row_for_calculation_and_save (test_csv_resume_anchor.ResumeAnchorTests.test_mock_session_uses_only_new_row_for_calculation_and_save) ... ok
+test_partial_tail_does_not_consume_first_baseline (test_csv_resume_anchor.ResumeAnchorTests.test_partial_tail_does_not_consume_first_baseline) ... ok
+test_real_adapter_mock_transport_incomplete_anchor_baseline_and_one_save (test_csv_resume_anchor.ResumeAnchorTests.test_real_adapter_mock_transport_incomplete_anchor_baseline_and_one_save) ... ok
+test_resumed_layer_500_with_unstarted_gap_and_zero_first_temperature (test_csv_resume_anchor.ResumeAnchorTests.test_resumed_layer_500_with_unstarted_gap_and_zero_first_temperature) ... ok
+test_rewrite_and_job_change_do_not_carry_anchor (test_csv_resume_anchor.ResumeAnchorTests.test_rewrite_and_job_change_do_not_carry_anchor) ... ok
+test_sentinel_anchor_is_an_invalid_observation (test_csv_resume_anchor.ResumeAnchorTests.test_sentinel_anchor_is_an_invalid_observation) ... ok
+test_zero_temperature_completed_history_after_anchor_is_rejected (test_csv_resume_anchor.ResumeAnchorTests.test_zero_temperature_completed_history_after_anchor_is_rejected) ... ok
+test_ambiguous_matching_csv_is_not_chosen_by_newest_mtime (test_csv_source.CsvSourceTests.test_ambiguous_matching_csv_is_not_chosen_by_newest_mtime) ... ok
+test_csv_reader_works_without_any_ui_transport (test_csv_source.CsvSourceTests.test_csv_reader_works_without_any_ui_transport) ... ok
+test_disabled_thermometer_sentinel_stops_control_for_both_machines (test_csv_source.CsvSourceTests.test_disabled_thermometer_sentinel_stops_control_for_both_machines) ... ok
+test_duplicate_header_is_ambiguous (test_csv_source.CsvSourceTests.test_duplicate_header_is_ambiguous) ... ok
+test_exact_recoating_header_required_without_substituting_other_temperature (test_csv_source.CsvSourceTests.test_exact_recoating_header_required_without_substituting_other_temperature) ... ok
+test_future_default_rows_do_not_become_temperature_samples (test_csv_source.CsvSourceTests.test_future_default_rows_do_not_become_temperature_samples) ... ok
+test_initial_history_is_baseline_then_new_complete_row_is_received (test_csv_source.CsvSourceTests.test_initial_history_is_baseline_then_new_complete_row_is_received) ... ok
+test_invalid_temperature_and_non_finite_values_stop_reading (test_csv_source.CsvSourceTests.test_invalid_temperature_and_non_finite_values_stop_reading) ... ok
+test_job_change_clears_selected_path_and_old_observation (test_csv_source.CsvSourceTests.test_job_change_clears_selected_path_and_old_observation) ... ok
+test_multiple_new_rows_only_return_latest_without_replaying_backlog (test_csv_source.CsvSourceTests.test_multiple_new_rows_only_return_latest_without_replaying_backlog) ... ok
+test_new_file_created_after_connect_can_be_a_new_observation (test_csv_source.CsvSourceTests.test_new_file_created_after_connect_can_be_a_new_observation) ... ok
+test_partial_row_is_not_a_measurement_or_a_save_token (test_csv_source.CsvSourceTests.test_partial_row_is_not_a_measurement_or_a_save_token) ... ok
+test_quoted_comma_newline_and_split_quote_are_not_extra_rows (test_csv_source.CsvSourceTests.test_quoted_comma_newline_and_split_quote_are_not_extra_rows) ... ok
+test_replacement_or_truncation_does_not_replay_old_samples (test_csv_source.CsvSourceTests.test_replacement_or_truncation_does_not_replay_old_samples) ... ok
+test_rewritten_prefix_and_fresh_append_are_rebaselined (test_csv_source.CsvSourceTests.test_rewritten_prefix_and_fresh_append_are_rebaselined) ... ok
+test_same_layer_correction_and_reversed_order_reject_control (test_csv_source.CsvSourceTests.test_same_layer_correction_and_reversed_order_reject_control) ... ok
+test_same_size_rewrite_with_restored_mtime_rejects_invalid_sensor (test_csv_source.CsvSourceTests.test_same_size_rewrite_with_restored_mtime_rejects_invalid_sensor) ... ok
+test_stale_appended_record_is_not_new_control_input (test_csv_source.CsvSourceTests.test_stale_appended_record_is_not_new_control_input) ... ok
+test_unrelated_newer_job_is_not_selected (test_csv_source.CsvSourceTests.test_unrelated_newer_job_is_not_selected) ... ok
+test_unstable_same_size_snapshot_is_not_accepted (test_csv_source.CsvSourceTests.test_unstable_same_size_snapshot_is_not_accepted) ... ok
+test_korean_am_pm_timestamp_is_twelve_hour_clock (test_csv_source.JobLogTests.test_korean_am_pm_timestamp_is_twelve_hour_clock) ... ok
+test_log_binds_first_layer_and_retains_context_when_tail_advances (test_csv_source.JobLogTests.test_log_binds_first_layer_and_retains_context_when_tail_advances) ... ok
+test_other_machine_log_is_not_used (test_csv_source.JobLogTests.test_other_machine_log_is_not_used) ... ok
+test_same_size_log_rewrite_with_preserved_mtime_rebaselines (test_csv_source.JobLogTests.test_same_size_log_rewrite_with_preserved_mtime_rebaselines) ... ok
+test_both_heaters_owned_and_result_atomic (test_excel_async.AsyncTests.test_both_heaters_owned_and_result_atomic) ... ok
+test_cancel_after_claim_before_thread_start_releases_fence (test_excel_async.AsyncTests.test_cancel_after_claim_before_thread_start_releases_fence) ... ok
+test_cancel_waiting_group_without_starting_thread (test_excel_async.AsyncTests.test_cancel_waiting_group_without_starting_thread) ... ok
+test_close_is_nonblocking_during_initialization (test_excel_async.AsyncTests.test_close_is_nonblocking_during_initialization) ... ok
+test_completion_after_deadline_is_rejected_without_poll (test_excel_async.AsyncTests.test_completion_after_deadline_is_rejected_without_poll) ... ok
+test_fence_blocks_new_group_until_previous_verified (test_excel_async.AsyncTests.test_fence_blocks_new_group_until_previous_verified) ... ok
+test_prepares_once_and_shares_frozen_workbook (test_excel_async.AsyncTests.test_prepares_once_and_shares_frozen_workbook) ... ok
+test_reset_can_stall_without_blocking_poll_or_close (test_excel_async.AsyncTests.test_reset_can_stall_without_blocking_poll_or_close) ... ok
+test_reset_supersedes_busy_and_discards_old_result (test_excel_async.AsyncTests.test_reset_supersedes_busy_and_discards_old_result) ... ok
+test_retirement_requires_verified_cleanup (test_excel_async.AsyncTests.test_retirement_requires_verified_cleanup) ... ok
+test_transport_error_is_not_a_timeout (test_excel_async.AsyncTests.test_transport_error_is_not_a_timeout) ... ok
+test_unexpected_topology_rejected_before_any_calculation (test_excel_async.AsyncTests.test_unexpected_topology_rejected_before_any_calculation) ... ok
+test_watchdog_latches_and_ignores_late_results (test_excel_async.AsyncTests.test_watchdog_latches_and_ignores_late_results) ... ok
+test_watchdog_reports_controller_operation_and_phase (test_excel_async.AsyncTests.test_watchdog_reports_controller_operation_and_phase) ... ok
+test_baseline_same_layer_correction_is_not_fresh (test_excel_calculation.CalculationTests.test_baseline_same_layer_correction_is_not_fresh) ... ok
+test_expired_history_requires_explicit_permission_and_exact_proof (test_excel_calculation.CalculationTests.test_expired_history_requires_explicit_permission_and_exact_proof) ... ok
+test_idle_target_change_retains_accepted_history (test_excel_calculation.CalculationTests.test_idle_target_change_retains_accepted_history) ... ok
+test_image_change_resets_even_with_exact_expired_identity (test_excel_calculation.CalculationTests.test_image_change_resets_even_with_exact_expired_identity) ... ok
+test_immediate_result_returned_without_waiting (test_excel_calculation.CalculationTests.test_immediate_result_returned_without_waiting) ... ok
+test_layer_first_seen_with_ready_is_fresh (test_excel_calculation.CalculationTests.test_layer_first_seen_with_ready_is_fresh) ... ok
+test_layer_seen_before_ready_is_baseline (test_excel_calculation.CalculationTests.test_layer_seen_before_ready_is_baseline) ... ok
+test_matching_expired_idle_row_preserves_history_and_next_layer (test_excel_calculation.CalculationTests.test_matching_expired_idle_row_preserves_history_and_next_layer) ... ok
+test_new_row_while_busy_discards_and_resets_then_requires_fresh (test_excel_calculation.CalculationTests.test_new_row_while_busy_discards_and_resets_then_requires_fresh) ... ok
+test_other_error_propagates (test_excel_calculation.CalculationTests.test_other_error_propagates) ... ok
+test_pending_and_unconsumed_results_are_never_kept_on_expiration (test_excel_calculation.CalculationTests.test_pending_and_unconsumed_results_are_never_kept_on_expiration) ... ok
+test_ready_baseline_then_atomic_result_on_same_ticket (test_excel_calculation.CalculationTests.test_ready_baseline_then_atomic_result_on_same_ticket) ... ok
+test_real_owner_passes_one_based_layer_to_controller (test_excel_calculation.CalculationTests.test_real_owner_passes_one_based_layer_to_controller) ... ok
+test_recovery_requires_retirement_and_reuses_prepared_bytes (test_excel_calculation.CalculationTests.test_recovery_requires_retirement_and_reuses_prepared_bytes) ... ok
+test_rejected_group_reset_is_not_counted (test_excel_calculation.CalculationTests.test_rejected_group_reset_is_not_counted) ... ok
+test_repeated_failures_back_off_until_accepted_batch (test_excel_calculation.CalculationTests.test_repeated_failures_back_off_until_accepted_batch) ... ok
+test_reset_diagnostics_capture_pending_and_unconsumed (test_excel_calculation.CalculationTests.test_reset_diagnostics_capture_pending_and_unconsumed) ... ok
+test_reset_diagnostics_count_actual_resets_and_coalesce (test_excel_calculation.CalculationTests.test_reset_diagnostics_count_actual_resets_and_coalesce) ... ok
+test_stale_ready_does_not_finish_reset (test_excel_calculation.CalculationTests.test_stale_ready_does_not_finish_reset) ... ok
+test_target_aba_invalidates_pending (test_excel_calculation.CalculationTests.test_target_aba_invalidates_pending) ... ok
+test_timeout_retains_transport_diagnostics (test_excel_calculation.CalculationTests.test_timeout_retains_transport_diagnostics) ... ok
+test_topology_change_during_backoff_never_starts_old_group (test_excel_calculation.CalculationTests.test_topology_change_during_backoff_never_starts_old_group) ... ok
+test_topology_change_latches (test_excel_calculation.CalculationTests.test_topology_change_latches) ... ok
+test_transport_failure_latches_and_other_failure_raises (test_excel_calculation.CalculationTests.test_transport_failure_latches_and_other_failure_raises) ... ok
+test_expired_accepted_rows_preserve_consecutive_history_and_third_save (test_excel_history_continuity.HistoryContinuityTests.test_expired_accepted_rows_preserve_consecutive_history_and_third_save) ... ok
+test_expiry_while_calculation_pending_discards_result_and_resets (test_excel_history_continuity.HistoryContinuityTests.test_expiry_while_calculation_pending_discards_result_and_resets) ... ok
+test_unknown_invalid_and_readiness_loss_reset_accepted_history (test_excel_history_continuity.HistoryContinuityTests.test_unknown_invalid_and_readiness_loss_reset_accepted_history) ... ok
+test_synthetic_history_only_300_layers_expire_between_rows (test_excel_history_continuity.SyntheticHistoryReplayTests.test_synthetic_history_only_300_layers_expire_between_rows)
+Exercise frozen-row bookkeeping, not Excel formulas or equipment behavior. ... ok
+test_disconnect_in_backoff_prevents_restart (test_excel_recovery_integration.RecoveryIntegrationTests.test_disconnect_in_backoff_prevents_restart) ... ok
+test_recovers_same_session_using_same_prepared_workbook_and_fresh_row (test_excel_recovery_integration.RecoveryIntegrationTests.test_recovers_same_session_using_same_prepared_workbook_and_fresh_row) ... ok
+test_repeated_fault_backoff_is_not_reset_by_changes (test_excel_recovery_integration.RecoveryIntegrationTests.test_repeated_fault_backoff_is_not_reset_by_changes) ... ok
+test_two_heaters_recovered_before_save (test_excel_recovery_integration.RecoveryIntegrationTests.test_two_heaters_recovered_before_save) ... ok
+test_unknown_retirement_keeps_polling_and_prevents_restart (test_excel_recovery_integration.RecoveryIntegrationTests.test_unknown_retirement_keeps_polling_and_prevents_restart) ... ok
+test_snapshot_survives_source_replacement_and_deletion (test_excel_retirement.PreparedTests.test_snapshot_survives_source_replacement_and_deletion) ... ok
+test_constructor_in_flight_never_verifies (test_excel_retirement.RetirementTests.test_constructor_in_flight_never_verifies) ... ok
+test_eof_before_starting_event_is_known_no_excel (test_excel_retirement.RetirementTests.test_eof_before_starting_event_is_known_no_excel) ... ok
+test_invalid_pid_never_opens_process_and_ownership_stays_unknown (test_excel_retirement.RetirementTests.test_invalid_pid_never_opens_process_and_ownership_stays_unknown) ... ok
+test_known_excel_exit_is_waited_before_handle_close (test_excel_retirement.RetirementTests.test_known_excel_exit_is_waited_before_handle_close) ... ok
+test_late_pid_is_drained_then_retired_with_synchronize_access (test_excel_retirement.RetirementTests.test_late_pid_is_drained_then_retired_with_synchronize_access) ... ok
+test_malformed_stdout_during_init_cannot_imply_no_excel (test_excel_retirement.RetirementTests.test_malformed_stdout_during_init_cannot_imply_no_excel) ... ok
+test_open_process_denied_remains_unknown (test_excel_retirement.RetirementTests.test_open_process_denied_remains_unknown) ... ok
+test_starting_without_pid_stays_unknown (test_excel_retirement.RetirementTests.test_starting_without_pid_stays_unknown) ... ok
+test_status_returns_conservative_busy_without_waiting (test_excel_retirement.RetirementTests.test_status_returns_conservative_busy_without_waiting) ... ok
+test_unconfirmed_excel_exit_keeps_handle_and_cannot_verify (test_excel_retirement.RetirementTests.test_unconfirmed_excel_exit_keeps_handle_and_cannot_verify) ... ok
+test_unknown_ownership_and_live_reader_block_replacement (test_excel_retirement.RetirementTests.test_unknown_ownership_and_live_reader_block_replacement) ... ok
+test_worker_kill_failure_and_temp_failure_do_not_verify (test_excel_retirement.RetirementTests.test_worker_kill_failure_and_temp_failure_do_not_verify) ... ok
+test_owned_process_handle_is_terminated_and_verified (test_excel_retirement_windows.WindowsRetirementTests.test_owned_process_handle_is_terminated_and_verified) ... ok
+test_blocked_excel_does_not_block_csv_or_save (test_excel_session_async.SessionAsyncTests.test_blocked_excel_does_not_block_csv_or_save) ... ok
+test_blocked_initialization_continues_polling (test_excel_session_async.SessionAsyncTests.test_blocked_initialization_continues_polling) ... ok
+test_blocked_reset_continues_polling (test_excel_session_async.SessionAsyncTests.test_blocked_reset_continues_polling) ... ok
+test_context_changes_invalidate_pending_result (test_excel_session_async.SessionAsyncTests.test_context_changes_invalidate_pending_result) ... ok
+test_hold_logged_without_terminating_controller (test_excel_session_async.SessionAsyncTests.test_hold_logged_without_terminating_controller) ... ok
+test_image_handoff_discards_pending_features_and_waits_for_new_layer (test_excel_session_async.SessionAsyncTests.test_image_handoff_discards_pending_features_and_waits_for_new_layer) ... ok
+test_target_aba_during_process_invalidates_result_and_requires_fresh_row (test_excel_session_async.SessionAsyncTests.test_target_aba_during_process_invalidates_result_and_requires_fresh_row) ... ok
+test_two_heaters_finish_before_save_and_report_partial_ambiguous_save (test_excel_session_async.SessionAsyncTests.test_two_heaters_finish_before_save_and_report_partial_ambiguous_save) ... ok
+test_typed_timeout_holds_session_until_disconnect (test_excel_session_async.SessionAsyncTests.test_typed_timeout_holds_session_until_disconnect) ... ok
+test_watchdog_discards_late_result (test_excel_session_async.SessionAsyncTests.test_watchdog_discards_late_result) ... ok
+test_broken_pipe_is_transport_failure (test_excel_transport.TransportTests.test_broken_pipe_is_transport_failure) ... ok
+test_callback_can_abort_before_open_or_spawn (test_excel_transport.TransportTests.test_callback_can_abort_before_open_or_spawn) ... ok
+test_cancel_before_write_closes_owned_worker (test_excel_transport.TransportTests.test_cancel_before_write_closes_owned_worker) ... ok
+test_deadline_closes_and_late_reply_cannot_be_reused (test_excel_transport.TransportTests.test_deadline_closes_and_late_reply_cannot_be_reused) ... ok
+test_eof_and_progress_are_not_normal_responses (test_excel_transport.TransportTests.test_eof_and_progress_are_not_normal_responses) ... ok
+test_formula_error_is_terminal_not_timeout_or_transport (test_excel_transport.TransportTests.test_formula_error_is_terminal_not_timeout_or_transport) ... ok
+test_reset_has_longer_budget (test_excel_transport.TransportTests.test_reset_has_longer_budget) ... ok
+test_calculation_hold_event_is_logged_without_finishing_or_clearing_records (test_excel_wait_ui.ExcelWaitUITests.test_calculation_hold_event_is_logged_without_finishing_or_clearing_records) ... ok
+test_observer_recovery_preserves_chart_and_does_not_archive_until_stop (test_excel_wait_ui.ExcelWaitUITests.test_observer_recovery_preserves_chart_and_does_not_archive_until_stop) ... ok
+test_wait_and_automatic_recovery_keep_connection_then_next_snapshot_reaches_chart (test_excel_wait_ui.ExcelWaitUITests.test_wait_and_automatic_recovery_keep_connection_then_next_snapshot_reaches_chart) ... ok
+test_above_cap_actual_and_invalid_raw_result_are_rejected (test_excel_workbook.WorkbookControlTest.test_above_cap_actual_and_invalid_raw_result_are_rejected) ... ok
+test_bad_results_never_advance (test_excel_workbook.WorkbookControlTest.test_bad_results_never_advance) ... ok
+test_caps_and_target_applies_only_to_new_observation (test_excel_workbook.WorkbookControlTest.test_caps_and_target_applies_only_to_new_observation) ... ok
+test_discontinuity_resets_and_layer_count_is_bounded (test_excel_workbook.WorkbookControlTest.test_discontinuity_resets_and_layer_count_is_bounded) ... ok
+test_stop_event_interrupts_response_wait_and_stops_helper (test_excel_workbook.WorkbookControlTest.test_stop_event_interrupts_response_wait_and_stops_helper) ... ok
+test_user_cap_and_step_limit_apply_to_valid_workbook_results (test_excel_workbook.WorkbookControlTest.test_user_cap_and_step_limit_apply_to_valid_workbook_results) ... ok
+test_first_sheet_and_metadata (test_excel_workbook.WorkbookInspectionTest.test_first_sheet_and_metadata) ... ok
+test_input_cells_same_row_and_distinct (test_excel_workbook.WorkbookInspectionTest.test_input_cells_same_row_and_distinct) ... ok
+test_named_sheet_validation (test_excel_workbook.WorkbookInspectionTest.test_named_sheet_validation) ... ok
+test_only_dependencies_need_to_be_independent_of_current_history (test_excel_workbook.WorkbookInspectionTest.test_only_dependencies_need_to_be_independent_of_current_history) ... ok
+test_other_sheet_cannot_reference_target_or_history_ranges (test_excel_workbook.WorkbookInspectionTest.test_other_sheet_cannot_reference_target_or_history_ranges) ... ok
+test_reject_external_link_and_unsafe_formula (test_excel_workbook.WorkbookInspectionTest.test_reject_external_link_and_unsafe_formula) ... ok
+test_reject_formula_free_recommendation_and_macro (test_excel_workbook.WorkbookInspectionTest.test_reject_formula_free_recommendation_and_macro) ... ok
+test_reject_formula_inside_input_history (test_excel_workbook.WorkbookInspectionTest.test_reject_formula_inside_input_history) ... ok
+test_reject_formula_that_uses_a_future_layer (test_excel_workbook.WorkbookInspectionTest.test_reject_formula_that_uses_a_future_layer) ... ok
+test_reject_undeclared_old_layer_values (test_excel_workbook.WorkbookInspectionTest.test_reject_undeclared_old_layer_values) ... ok
+test_excel_reset_records_specific_reason_only_once (test_hold_diagnostics.HoldDiagnosticsTests.test_excel_reset_records_specific_reason_only_once) ... ok
+test_fault_transitions_are_logged_before_queue_even_during_close (test_hold_diagnostics.HoldDiagnosticsTests.test_fault_transitions_are_logged_before_queue_even_during_close) ... ok
+test_unknown_state_preserves_original_reason_and_logs_transition_once (test_hold_diagnostics.HoldDiagnosticsTests.test_unknown_state_preserves_original_reason_and_logs_transition_once) ... ok
+test_discovery_failure_retries_only_when_retired_and_read_only (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_discovery_failure_retries_only_when_retired_and_read_only) ... ok
+test_each_original_identity_component_is_bound (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_each_original_identity_component_is_bound) ... ok
+test_factory_and_disconnect_failures_cannot_resurrect_grant (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_factory_and_disconnect_failures_cannot_resurrect_grant) ... ok
+test_grant_consumed_before_failed_preparation (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_grant_consumed_before_failed_preparation) ... ok
+test_monitor_prepare_validate_error_does_not_grant (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_monitor_prepare_validate_error_does_not_grant) ... ok
+test_monitor_preview_and_stop_do_not_prepare (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_monitor_preview_and_stop_do_not_prepare) ... ok
+test_rebind_and_ambiguous_identity_revoke_grant (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_rebind_and_ambiguous_identity_revoke_grant) ... ok
+test_reconnect_prepares_once_then_baseline_and_fresh_layer (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_reconnect_prepares_once_then_baseline_and_fresh_layer) ... ok
+test_repeated_validated_failures_keep_one_shot (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_repeated_validated_failures_keep_one_shot) ... ok
+test_revocation_cannot_be_recreated_on_same_object (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_revocation_cannot_be_recreated_on_same_object) ... ok
+test_sticky_fault_revokes_unused_grant (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_sticky_fault_revokes_unused_grant) ... ok
+test_unsafe_or_wrong_phase_never_grants (test_initial_prepare_recovery.InitialPrepareRecoveryTests.test_unsafe_or_wrong_phase_never_grants) ... ok
+test_validate_timeout_retains_cap_and_requires_new_observations (test_initial_prepare_recovery.InitialPrepareSessionTests.test_validate_timeout_retains_cap_and_requires_new_observations) ... ok
+test_append_new_job_during_parse_is_retried (test_job_log_transaction.JobLogTransactionTests.test_append_new_job_during_parse_is_retried) ... ok
+test_backlog_progresses_without_publishing_partial (test_job_log_transaction.JobLogTransactionTests.test_backlog_progresses_without_publishing_partial) ... ok
+test_denied_rotation_preserves_state_until_retry (test_job_log_transaction.JobLogTransactionTests.test_denied_rotation_preserves_state_until_retry) ... ok
+test_incomplete_tail_never_publishes_and_then_completes (test_job_log_transaction.JobLogTransactionTests.test_incomplete_tail_never_publishes_and_then_completes) ... ok
+test_korean_message_keeps_stable_reason (test_job_log_transaction.JobLogTransactionTests.test_korean_message_keeps_stable_reason) ... ok
+test_missing_anchor_and_missing_log_are_unavailable (test_job_log_transaction.JobLogTransactionTests.test_missing_anchor_and_missing_log_are_unavailable) ... ok
+test_new_latest_file_during_parse_is_selected (test_job_log_transaction.JobLogTransactionTests.test_new_latest_file_during_parse_is_selected) ... ok
+test_one_race_retries_and_keeps_same_run (test_job_log_transaction.JobLogTransactionTests.test_one_race_retries_and_keeps_same_run) ... ok
+test_parser_failure_does_not_commit_cursor (test_job_log_transaction.JobLogTransactionTests.test_parser_failure_does_not_commit_cursor) ... ok
+test_retry_exhaustion_preserves_state_and_recovers (test_job_log_transaction.JobLogTransactionTests.test_retry_exhaustion_preserves_state_and_recovers) ... ok
+test_rewrite_with_same_mtime_discards_provisional (test_job_log_transaction.JobLogTransactionTests.test_rewrite_with_same_mtime_discards_provisional) ... ok
+test_rotation_during_read_retries_and_publishes_new_job (test_job_log_transaction.JobLogTransactionTests.test_rotation_during_read_retries_and_publishes_new_job) ... ok
+test_same_mtime_prefix_rewrite_during_parse_is_detected (test_job_log_transaction.JobLogTransactionTests.test_same_mtime_prefix_rewrite_during_parse_is_detected) ... ok
+test_unavailable_log_does_not_clear_csv_state (test_job_log_transaction.JobLogTransactionTests.test_unavailable_log_does_not_clear_csv_state) ... ok
+test_67_input_examples_cover_alpha_switch_and_source_resets (test_layer_algorithm.LayerAlgorithmTests.test_67_input_examples_cover_alpha_switch_and_source_resets) ... ok
+test_all_80_source_rows_and_every_numeric_helper_column (test_layer_algorithm.LayerAlgorithmTests.test_all_80_source_rows_and_every_numeric_helper_column) ... ok
+test_beta_completed_block_crossing_reduces_and_slow_approach_increases (test_layer_algorithm.LayerAlgorithmTests.test_beta_completed_block_crossing_reduces_and_slow_approach_increases) ... ok
+test_first_two_layers_and_explicit_reset_hold_actual_setting (test_layer_algorithm.LayerAlgorithmTests.test_first_two_layers_and_explicit_reset_hold_actual_setting) ... ok
+test_missing_layer_resets_and_actual_applied_power_drives_wait (test_layer_algorithm.LayerAlgorithmTests.test_missing_layer_resets_and_actual_applied_power_drives_wait) ... ok
+test_settings_and_nonfinite_inputs_fail_before_advancing_history (test_layer_algorithm.LayerAlgorithmTests.test_settings_and_nonfinite_inputs_fail_before_advancing_history) ... ok
+test_bounded_history_and_sorted_layers_with_correction (test_layer_charts.HistoryTests.test_bounded_history_and_sorted_layers_with_correction) ... ok
+test_invalid_inputs_and_unavailable_ir_are_not_misrepresented (test_layer_charts.HistoryTests.test_invalid_inputs_and_unavailable_ir_are_not_misrepresented) ... ok
+test_new_run_and_reset_clear_prior_run_data (test_layer_charts.HistoryTests.test_new_run_and_reset_clear_prior_run_data) ... ok
+test_only_explicit_successful_save_is_a_marker (test_layer_charts.HistoryTests.test_only_explicit_successful_save_is_a_marker) ... ok
+test_partial_save_is_preserved_in_archive_csv_and_plot_input (test_layer_charts.HistoryTests.test_partial_save_is_preserved_in_archive_csv_and_plot_input) ... ok
+test_record_first_value_once_per_observation_and_never_infer_save (test_layer_charts.HistoryTests.test_record_first_value_once_per_observation_and_never_infer_save) ... ok
+test_same_key_save_reaches_archive_csv_and_both_png_inputs (test_layer_charts.HistoryTests.test_same_key_save_reaches_archive_csv_and_both_png_inputs) ... ok
+test_same_observation_merges_confirmed_saves_without_changing_readings (test_layer_charts.HistoryTests.test_same_observation_merges_confirmed_saves_without_changing_readings) ... ok
+test_changing_effective_target_redraws_even_without_a_new_observation (test_layer_charts.PlotTests.test_changing_effective_target_redraws_even_without_a_new_observation) ... ok
+test_current_target_is_visible_when_empty_and_outside_temperature_range (test_layer_charts.PlotTests.test_current_target_is_visible_when_empty_and_outside_temperature_range) ... ok
+test_empty_and_populated_temperature_plot (test_layer_charts.PlotTests.test_empty_and_populated_temperature_plot) ... ok
+test_hover_returns_exact_layer_value_for_temperature_and_saved_power (test_layer_charts.PlotTests.test_hover_returns_exact_layer_value_for_temperature_and_saved_power) ... ok
+test_missing_power_is_not_a_hover_target_and_many_points_are_bounded (test_layer_charts.PlotTests.test_missing_power_is_not_a_hover_target_and_many_points_are_bounded) ... ok
+test_overlapping_observed_and_saved_values_are_both_shown (test_layer_charts.PlotTests.test_overlapping_observed_and_saved_values_are_both_shown) ... ok
+test_power_plot_only_marks_explicit_save (test_layer_charts.PlotTests.test_power_plot_only_marks_explicit_save) ... ok
+test_cancel_and_save_failure_do_not_delete_history_or_existing_file (test_layer_charts.TkHoverTests.test_cancel_and_save_failure_do_not_delete_history_or_existing_file) ... invalid command name "2272846851712_pump"
+    while executing
+"2272846851712_pump"
+    ("after" script)
+invalid command name "2272846848384_pump"
+    while executing
+"2272846848384_pump"
+    ("after" script)
+invalid command name "2272846412160_pump"
+    while executing
+"2272846412160_pump"
+    ("after" script)
+invalid command name "2272846409536_pump"
+    while executing
+"2272846409536_pump"
+    ("after" script)
+invalid command name "2272846405248_pump"
+    while executing
+"2272846405248_pump"
+    ("after" script)
+invalid command name "2272846398912_pump"
+    while executing
+"2272846398912_pump"
+    ("after" script)
+invalid command name "2272846399168_pump"
+    while executing
+"2272846399168_pump"
+    ("after" script)
+invalid command name "2272847111808_pump"
+    while executing
+"2272847111808_pump"
+    ("after" script)
+invalid command name "2272841921216_pump"
+    while executing
+"2272841921216_pump"
+    ("after" script)
+invalid command name "2272847110080_pump"
+    while executing
+"2272847110080_pump"
+    ("after" script)
+invalid command name "2272847106496_pump"
+    while executing
+"2272847106496_pump"
+    ("after" script)
+invalid command name "2272847103296_pump"
+    while executing
+"2272847103296_pump"
+    ("after" script)
+invalid command name "2272847103232_pump"
+    while executing
+"2272847103232_pump"
+    ("after" script)
+invalid command name "2272847116928_pump"
+    while executing
+"2272847116928_pump"
+    ("after" script)
+invalid command name "2272847118272_pump"
+    while executing
+"2272847118272_pump"
+    ("after" script)
+invalid command name "2272847118016_pump"
+    while executing
+"2272847118016_pump"
+    ("after" script)
+invalid command name "2272847290304_pump"
+    while executing
+"2272847290304_pump"
+    ("after" script)
+invalid command name "2272847298048_pump"
+    while executing
+"2272847298048_pump"
+    ("after" script)
+invalid command name "2272847282240_pump"
+    while executing
+"2272847282240_pump"
+    ("after" script)
+invalid command name "2272844882752_pump"
+    while executing
+"2272844882752_pump"
+    ("after" script)
+invalid command name "2272844881472_pump"
+    while executing
+"2272844881472_pump"
+    ("after" script)
+invalid command name "2272844881408_pump"
+    while executing
+"2272844881408_pump"
+    ("after" script)
+invalid command name "2272844409792_pump"
+    while executing
+"2272844409792_pump"
+    ("after" script)
+invalid command name "2272846829184_pump"
+    while executing
+"2272846829184_pump"
+    ("after" script)
+invalid command name "2272846828608_pump"
+    while executing
+"2272846828608_pump"
+    ("after" script)
+invalid command name "2272846835648_pump"
+    while executing
+"2272846835648_pump"
+    ("after" script)
+invalid command name "2272844882304_pump"
+    while executing
+"2272844882304_pump"
+    ("after" script)
+invalid command name "2272847294976_pump"
+    while executing
+"2272847294976_pump"
+    ("after" script)
+invalid command name "2272839540608_pump"
+    while executing
+"2272839540608_pump"
+    ("after" script)
+invalid command name "2272847290880_pump"
+    while executing
+"2272847290880_pump"
+    ("after" script)
+invalid command name "2272846059968_pump"
+    while executing
+"2272846059968_pump"
+    ("after" script)
+invalid command name "2272846057856_pump"
+    while executing
+"2272846057856_pump"
+    ("after" script)
+invalid command name "2272845520832_pump"
+    while executing
+"2272845520832_pump"
+    ("after" script)
+invalid command name "2272846060928_pump"
+    while executing
+"2272846060928_pump"
+    ("after" script)
+invalid command name "2272819811072_pump"
+    while executing
+"2272819811072_pump"
+    ("after" script)
+invalid command name "2272845522624_pump"
+    while executing
+"2272845522624_pump"
+    ("after" script)
+invalid command name "2272846059456_pump"
+    while executing
+"2272846059456_pump"
+    ("after" script)
+invalid command name "2272846058560_pump"
+    while executing
+"2272846058560_pump"
+    ("after" script)
+invalid command name "2272845519680_pump"
+    while executing
+"2272845519680_pump"
+    ("after" script)
+invalid command name "2272847282368_pump"
+    while executing
+"2272847282368_pump"
+    ("after" script)
+invalid command name "2272847293952_pump"
+    while executing
+"2272847293952_pump"
+    ("after" script)
+invalid command name "2272847290240_pump"
+    while executing
+"2272847290240_pump"
+    ("after" script)
+invalid command name "2272845408320_pump"
+    while executing
+"2272845408320_pump"
+    ("after" script)
+invalid command name "2272846410176_pump"
+    while executing
+"2272846410176_pump"
+    ("after" script)
+invalid command name "2272846138176_pump"
+    while executing
+"2272846138176_pump"
+    ("after" script)
+invalid command name "2272840955072_pump"
+    while executing
+"2272840955072_pump"
+    ("after" script)
+invalid command name "2272840957888_pump"
+    while executing
+"2272840957888_pump"
+    ("after" script)
+invalid command name "2272845254144_pump"
+    while executing
+"2272845254144_pump"
+    ("after" script)
+invalid command name "2272845253632_pump"
+    while executing
+"2272845253632_pump"
+    ("after" script)
+invalid command name "2272845256960_pump"
+    while executing
+"2272845256960_pump"
+    ("after" script)
+invalid command name "2272845169664_pump"
+    while executing
+"2272845169664_pump"
+    ("after" script)
+invalid command name "2272840878464_pump"
+    while executing
+"2272840878464_pump"
+    ("after" script)
+invalid command name "2272843389632_pump"
+    while executing
+"2272843389632_pump"
+    ("after" script)
+invalid command name "2272843383616_pump"
+    while executing
+"2272843383616_pump"
+    ("after" script)
+invalid command name "2272843385280_pump"
+    while executing
+"2272843385280_pump"
+    ("after" script)
+invalid command name "2272843384256_pump"
+    while executing
+"2272843384256_pump"
+    ("after" script)
+invalid command name "2272843933504_pump"
+    while executing
+"2272843933504_pump"
+    ("after" script)
+invalid command name "2272843939776_pump"
+    while executing
+"2272843939776_pump"
+    ("after" script)
+invalid command name "2272843932416_pump"
+    while executing
+"2272843932416_pump"
+    ("after" script)
+invalid command name "2272845409408_pump"
+    while executing
+"2272845409408_pump"
+    ("after" script)
+invalid command name "2272845408192_pump"
+    while executing
+"2272845408192_pump"
+    ("after" script)
+invalid command name "2272845414208_pump"
+    while executing
+"2272845414208_pump"
+    ("after" script)
+invalid command name "2272845398208_pump"
+    while executing
+"2272845398208_pump"
+    ("after" script)
+invalid command name "2272846270528_pump"
+    while executing
+"2272846270528_pump"
+    ("after" script)
+invalid command name "2272846270464_pump"
+    while executing
+"2272846270464_pump"
+    ("after" script)
+invalid command name "2272847003456_pump"
+    while executing
+"2272847003456_pump"
+    ("after" script)
+invalid command name "2272847405504_pump"
+    while executing
+"2272847405504_pump"
+    ("after" script)
+invalid command name "2272847405376_pump"
+    while executing
+"2272847405376_pump"
+    ("after" script)
+invalid command name "2272846409664_pump"
+    while executing
+"2272846409664_pump"
+    ("after" script)
+invalid command name "2272846907200_pump"
+    while executing
+"2272846907200_pump"
+    ("after" script)
+invalid command name "2272845171328_pump"
+    while executing
+"2272845171328_pump"
+    ("after" script)
+invalid command name "2272882477632_pump"
+    while executing
+"2272882477632_pump"
+    ("after" script)
+invalid command name "2272882479808_pump"
+    while executing
+"2272882479808_pump"
+    ("after" script)
+invalid command name "2272846412288_pump"
+    while executing
+"2272846412288_pump"
+    ("after" script)
+invalid command name "2272882434816_pump"
+    while executing
+"2272882434816_pump"
+    ("after" script)
+invalid command name "2272882436992_pump"
+    while executing
+"2272882436992_pump"
+    ("after" script)
+invalid command name "2272882213632_pump"
+    while executing
+"2272882213632_pump"
+    ("after" script)
+invalid command name "2272882214784_pump"
+    while executing
+"2272882214784_pump"
+    ("after" script)
+invalid command name "2272846271360_pump"
+    while executing
+"2272846271360_pump"
+    ("after" script)
+invalid command name "2272847404736_pump"
+    while executing
+"2272847404736_pump"
+    ("after" script)
+invalid command name "2272847402496_pump"
+    while executing
+"2272847402496_pump"
+    ("after" script)
+invalid command name "2272882455936_pump"
+    while executing
+"2272882455936_pump"
+    ("after" script)
+invalid command name "2272882487168_pump"
+    while executing
+"2272882487168_pump"
+    ("after" script)
+invalid command name "2272847695424_pump"
+    while executing
+"2272847695424_pump"
+    ("after" script)
+invalid command name "2272847694336_pump"
+    while executing
+"2272847694336_pump"
+    ("after" script)
+invalid command name "2272847699456_pump"
+    while executing
+"2272847699456_pump"
+    ("after" script)
+invalid command name "2272820886656_pump"
+    while executing
+"2272820886656_pump"
+    ("after" script)
+invalid command name "2272846588864_pump"
+    while executing
+"2272846588864_pump"
+    ("after" script)
+invalid command name "2272843812928_pump"
+    while executing
+"2272843812928_pump"
+    ("after" script)
+invalid command name "2272846618112_pump"
+    while executing
+"2272846618112_pump"
+    ("after" script)
+invalid command name "2272882148800_pump"
+    while executing
+"2272882148800_pump"
+    ("after" script)
+invalid command name "2272882150976_pump"
+    while executing
+"2272882150976_pump"
+    ("after" script)
+invalid command name "2272882154496_pump"
+    while executing
+"2272882154496_pump"
+    ("after" script)
+invalid command name "2272882155008_pump"
+    while executing
+"2272882155008_pump"
+    ("after" script)
+invalid command name "2272882159872_pump"
+    while executing
+"2272882159872_pump"
+    ("after" script)
+invalid command name "2272882163008_pump"
+    while executing
+"2272882163008_pump"
+    ("after" script)
+invalid command name "2272882162112_pump"
+    while executing
+"2272882162112_pump"
+    ("after" script)
+invalid command name "2272882180800_pump"
+    while executing
+"2272882180800_pump"
+    ("after" script)
+invalid command name "2272882187968_pump"
+    while executing
+"2272882187968_pump"
+    ("after" script)
+invalid command name "2272882189632_pump"
+    while executing
+"2272882189632_pump"
+    ("after" script)
+invalid command name "2272882191360_pump"
+    while executing
+"2272882191360_pump"
+    ("after" script)
+invalid command name "2272882191040_pump"
+    while executing
+"2272882191040_pump"
+    ("after" script)
+invalid command name "2272882193664_pump"
+    while executing
+"2272882193664_pump"
+    ("after" script)
+invalid command name "2272882195264_pump"
+    while executing
+"2272882195264_pump"
+    ("after" script)
+invalid command name "2272882195072_pump"
+    while executing
+"2272882195072_pump"
+    ("after" script)
+invalid command name "2272847700480_pump"
+    while executing
+"2272847700480_pump"
+    ("after" script)
+invalid command name "2272847698752_pump"
+    while executing
+"2272847698752_pump"
+    ("after" script)
+invalid command name "2272842703040_pump"
+    while executing
+"2272842703040_pump"
+    ("after" script)
+invalid command name "2272882159232_pump"
+    while executing
+"2272882159232_pump"
+    ("after" script)
+invalid command name "2272882161600_pump"
+    while executing
+"2272882161600_pump"
+    ("after" script)
+invalid command name "2272882161216_pump"
+    while executing
+"2272882161216_pump"
+    ("after" script)
+invalid command name "2272882163648_pump"
+    while executing
+"2272882163648_pump"
+    ("after" script)
+invalid command name "2272882229696_pump"
+    while executing
+"2272882229696_pump"
+    ("after" script)
+invalid command name "2272847698432_pump"
+    while executing
+"2272847698432_pump"
+    ("after" script)
+invalid command name "2272847697600_pump"
+    while executing
+"2272847697600_pump"
+    ("after" script)
+invalid command name "2272847697216_pump"
+    while executing
+"2272847697216_pump"
+    ("after" script)
+invalid command name "2272882233536_pump"
+    while executing
+"2272882233536_pump"
+    ("after" script)
+invalid command name "2272882234112_pump"
+    while executing
+"2272882234112_pump"
+    ("after" script)
+invalid command name "2272882241856_pump"
+    while executing
+"2272882241856_pump"
+    ("after" script)
+invalid command name "2272882242944_pump"
+    while executing
+"2272882242944_pump"
+    ("after" script)
+invalid command name "2272882242432_pump"
+    while executing
+"2272882242432_pump"
+    ("after" script)
+invalid command name "2272882241600_pump"
+    while executing
+"2272882241600_pump"
+    ("after" script)
+invalid command name "2272882233344_pump"
+    while executing
+"2272882233344_pump"
+    ("after" script)
+invalid command name "2272882296704_pump"
+    while executing
+"2272882296704_pump"
+    ("after" script)
+invalid command name "2272882182272_pump"
+    while executing
+"2272882182272_pump"
+    ("after" script)
+invalid command name "2272882180352_pump"
+    while executing
+"2272882180352_pump"
+    ("after" script)
+invalid command name "2272840944000_pump"
+    while executing
+"2272840944000_pump"
+    ("after" script)
+invalid command name "2272882182144_pump"
+    while executing
+"2272882182144_pump"
+    ("after" script)
+invalid command name "2272882295616_pump"
+    while executing
+"2272882295616_pump"
+    ("after" script)
+invalid command name "2272882296320_pump"
+    while executing
+"2272882296320_pump"
+    ("after" script)
+invalid command name "2272882301120_pump"
+    while executing
+"2272882301120_pump"
+    ("after" script)
+invalid command name "2272882234816_pump"
+    while executing
+"2272882234816_pump"
+    ("after" script)
+invalid command name "2272882488000_pump"
+    while executing
+"2272882488000_pump"
+    ("after" script)
+invalid command name "2272882309312_pump"
+    while executing
+"2272882309312_pump"
+    ("after" script)
+invalid command name "2272882365120_pump"
+    while executing
+"2272882365120_pump"
+    ("after" script)
+invalid command name "2272882364608_pump"
+    while executing
+"2272882364608_pump"
+    ("after" script)
+invalid command name "2272882367104_pump"
+    while executing
+"2272882367104_pump"
+    ("after" script)
+invalid command name "2272846281920_pump"
+    while executing
+"2272846281920_pump"
+    ("after" script)
+invalid command name "2272882366912_pump"
+    while executing
+"2272882366912_pump"
+    ("after" script)
+invalid command name "2272882365440_pump"
+    while executing
+"2272882365440_pump"
+    ("after" script)
+invalid command name "2272843318720_pump"
+    while executing
+"2272843318720_pump"
+    ("after" script)
+invalid command name "2272882231744_pump"
+    while executing
+"2272882231744_pump"
+    ("after" script)
+invalid command name "2272882364224_pump"
+    while executing
+"2272882364224_pump"
+    ("after" script)
+invalid command name "2272882364096_pump"
+    while executing
+"2272882364096_pump"
+    ("after" script)
+invalid command name "2272882365888_pump"
+    while executing
+"2272882365888_pump"
+    ("after" script)
+invalid command name "2272882363328_pump"
+    while executing
+"2272882363328_pump"
+    ("after" script)
+invalid command name "2272845724288_pump"
+    while executing
+"2272845724288_pump"
+    ("after" script)
+invalid command name "2272882159936_pump"
+    while executing
+"2272882159936_pump"
+    ("after" script)
+invalid command name "2272882155584_pump"
+    while executing
+"2272882155584_pump"
+    ("after" script)
+invalid command name "2272882371328_pump"
+    while executing
+"2272882371328_pump"
+    ("after" script)
+invalid command name "2272882371776_pump"
+    while executing
+"2272882371776_pump"
+    ("after" script)
+invalid command name "2272840417024_pump"
+    while executing
+"2272840417024_pump"
+    ("after" script)
+invalid command name "2272882374272_pump"
+    while executing
+"2272882374272_pump"
+    ("after" script)
+invalid command name "2272882371520_pump"
+    while executing
+"2272882371520_pump"
+    ("after" script)
+invalid command name "2272882370304_pump"
+    while executing
+"2272882370304_pump"
+    ("after" script)
+invalid command name "2272882370048_pump"
+    while executing
+"2272882370048_pump"
+    ("after" script)
+invalid command name "2272882370624_pump"
+    while executing
+"2272882370624_pump"
+    ("after" script)
+invalid command name "2272882365952_pump"
+    while executing
+"2272882365952_pump"
+    ("after" script)
+invalid command name "2272882364864_pump"
+    while executing
+"2272882364864_pump"
+    ("after" script)
+invalid command name "2272882370816_pump"
+    while executing
+"2272882370816_pump"
+    ("after" script)
+invalid command name "2272882364160_pump"
+    while executing
+"2272882364160_pump"
+    ("after" script)
+invalid command name "2272882364608_pump"
+    while executing
+"2272882364608_pump"
+    ("after" script)
+invalid command name "2272819386624_pump"
+    while executing
+"2272819386624_pump"
+    ("after" script)
+invalid command name "2272882364544_pump"
+    while executing
+"2272882364544_pump"
+    ("after" script)
+invalid command name "2272882303680_pump"
+    while executing
+"2272882303680_pump"
+    ("after" script)
+invalid command name "2272882300480_pump"
+    while executing
+"2272882300480_pump"
+    ("after" script)
+invalid command name "2272882310784_pump"
+    while executing
+"2272882310784_pump"
+    ("after" script)
+invalid command name "2272882296448_pump"
+    while executing
+"2272882296448_pump"
+    ("after" script)
+invalid command name "2272882442688_pump"
+    while executing
+"2272882442688_pump"
+    ("after" script)
+invalid command name "2272882457088_pump"
+    while executing
+"2272882457088_pump"
+    ("after" script)
+invalid command name "2272843822976_pump"
+    while executing
+"2272843822976_pump"
+    ("after" script)
+invalid command name "2272882488000_pump"
+    while executing
+"2272882488000_pump"
+    ("after" script)
+invalid command name "2272882488576_pump"
+    while executing
+"2272882488576_pump"
+    ("after" script)
+invalid command name "2272846068736_pump"
+    while executing
+"2272846068736_pump"
+    ("after" script)
+invalid command name "2272882484736_pump"
+    while executing
+"2272882484736_pump"
+    ("after" script)
+invalid command name "2272882490624_pump"
+    while executing
+"2272882490624_pump"
+    ("after" script)
+invalid command name "2272882491008_pump"
+    while executing
+"2272882491008_pump"
+    ("after" script)
+invalid command name "2272846403904_pump"
+    while executing
+"2272846403904_pump"
+    ("after" script)
+invalid command name "2272845183168_pump"
+    while executing
+"2272845183168_pump"
+    ("after" script)
+invalid command name "2272847017408_pump"
+    while executing
+"2272847017408_pump"
+    ("after" script)
+invalid command name "2272847010880_pump"
+    while executing
+"2272847010880_pump"
+    ("after" script)
+invalid command name "2272847016704_pump"
+    while executing
+"2272847016704_pump"
+    ("after" script)
+invalid command name "2272846588864_pump"
+    while executing
+"2272846588864_pump"
+    ("after" script)
+invalid command name "2272840956608_pump"
+    while executing
+"2272840956608_pump"
+    ("after" script)
+invalid command name "2272882490240_pump"
+    while executing
+"2272882490240_pump"
+    ("after" script)
+invalid command name "2272882300288_pump"
+    while executing
+"2272882300288_pump"
+    ("after" script)
+invalid command name "2272847011456_pump"
+    while executing
+"2272847011456_pump"
+    ("after" script)
+invalid command name "2272882453632_pump"
+    while executing
+"2272882453632_pump"
+    ("after" script)
+invalid command name "2272882451904_pump"
+    while executing
+"2272882451904_pump"
+    ("after" script)
+invalid command name "2272882449792_pump"
+    while executing
+"2272882449792_pump"
+    ("after" script)
+invalid command name "2272882449664_pump"
+    while executing
+"2272882449664_pump"
+    ("after" script)
+invalid command name "2272882451584_pump"
+    while executing
+"2272882451584_pump"
+    ("after" script)
+invalid command name "2272882447616_pump"
+    while executing
+"2272882447616_pump"
+    ("after" script)
+invalid command name "2272882443840_pump"
+    while executing
+"2272882443840_pump"
+    ("after" script)
+invalid command name "2272882456640_pump"
+    while executing
+"2272882456640_pump"
+    ("after" script)
+invalid command name "2272843822976_pump"
+    while executing
+"2272843822976_pump"
+    ("after" script)
+invalid command name "2272882430400_pump"
+    while executing
+"2272882430400_pump"
+    ("after" script)
+invalid command name "2272882430144_pump"
+    while executing
+"2272882430144_pump"
+    ("after" script)
+invalid command name "2272882366464_pump"
+    while executing
+"2272882366464_pump"
+    ("after" script)
+invalid command name "2272882436864_pump"
+    while executing
+"2272882436864_pump"
+    ("after" script)
+invalid command name "2272882429952_pump"
+    while executing
+"2272882429952_pump"
+    ("after" script)
+invalid command name "2272847008640_pump"
+    while executing
+"2272847008640_pump"
+    ("after" script)
+invalid command name "2272819421248_pump"
+    while executing
+"2272819421248_pump"
+    ("after" script)
+invalid command name "2272882449920_pump"
+    while executing
+"2272882449920_pump"
+    ("after" script)
+invalid command name "2272882935936_pump"
+    while executing
+"2272882935936_pump"
+    ("after" script)
+invalid command name "2272967585024_pump"
+    while executing
+"2272967585024_pump"
+    ("after" script)
+invalid command name "2272967576064_pump"
+    while executing
+"2272967576064_pump"
+    ("after" script)
+invalid command name "2272967528384_pump"
+    while executing
+"2272967528384_pump"
+    ("after" script)
+invalid command name "2272967537728_pump"
+    while executing
+"2272967537728_pump"
+    ("after" script)
+invalid command name "2272882308736_pump"
+    while executing
+"2272882308736_pump"
+    ("after" script)
+invalid command name "2272967573952_pump"
+    while executing
+"2272967573952_pump"
+    ("after" script)
+invalid command name "2272967585600_pump"
+    while executing
+"2272967585600_pump"
+    ("after" script)
+invalid command name "2272967020544_pump"
+    while executing
+"2272967020544_pump"
+    ("after" script)
+invalid command name "2272899679040_pump"
+    while executing
+"2272899679040_pump"
+    ("after" script)
+invalid command name "2272899678272_pump"
+    while executing
+"2272899678272_pump"
+    ("after" script)
+ok
+test_csv_saves_all_layers_and_distinguishes_settings_and_successful_saves (test_layer_charts.TkHoverTests.test_csv_saves_all_layers_and_distinguishes_settings_and_successful_saves) ... ok
+test_motion_and_leave_show_correct_temperature_and_overlapping_ir (test_layer_charts.TkHoverTests.test_motion_and_leave_show_correct_temperature_and_overlapping_ir) ... ok
+test_recent_100_and_live_full_window_preserve_all_received_layers (test_layer_charts.TkHoverTests.test_recent_100_and_live_full_window_preserve_all_received_layers) ... ok
+test_recent_window_boundary (test_layer_charts.TkHoverTests.test_recent_window_boundary) ... ok
+test_resize_rebuilds_hover_coordinates (test_layer_charts.TkHoverTests.test_resize_rebuilds_hover_coordinates) ... ok
+test_change_after_gate_does_not_repeat_or_cancel_admitted_save (test_live_limit_admission.AdmissionTests.test_change_after_gate_does_not_repeat_or_cancel_admitted_save) ... ok
+test_denied_created_helper_is_reaped_without_payload (test_live_limit_admission.AdmissionTests.test_denied_created_helper_is_reaped_without_payload) ... ok
+test_denied_unretired_helper_fences_without_ambiguous_write (test_live_limit_admission.AdmissionTests.test_denied_unretired_helper_fences_without_ambiguous_write) ... ok
+test_forwarding_survives_rebind_and_nonapply_does_not_gate (test_live_limit_admission.AdmissionTests.test_forwarding_survives_rebind_and_nonapply_does_not_gate) ... ok
+test_gate_runs_once_even_if_communication_polls (test_live_limit_admission.AdmissionTests.test_gate_runs_once_even_if_communication_polls) ... ok
+test_lowered_during_real_preflight_denies_before_edit (test_live_limit_admission.AdmissionTests.test_lowered_during_real_preflight_denies_before_edit) ... ok
+test_beta_saturation_survives_raising_or_lowering_cap (test_live_limit_algorithm.LiveLimitAlgorithmTests.test_beta_saturation_survives_raising_or_lowering_cap) ... ok
+test_bounds_zero_and_smaller_step (test_live_limit_algorithm.LiveLimitAlgorithmTests.test_bounds_zero_and_smaller_step) ... ok
+test_cap_state_is_transactional_and_reset (test_live_limit_algorithm.LiveLimitAlgorithmTests.test_cap_state_is_transactional_and_reset) ... ok
+test_original_actual_bounds_remain_enforced (test_live_limit_algorithm.LiveLimitAlgorithmTests.test_original_actual_bounds_remain_enforced) ... ok
+test_ramp_history_and_fractional_cap (test_live_limit_algorithm.LiveLimitAlgorithmTests.test_ramp_history_and_fractional_cap) ... ok
+test_idle_cap_change_keeps_accepted_history (test_live_limit_excel.LimitExcelTests.test_idle_cap_change_keeps_accepted_history) ... ok
+test_immediate_result_retains_cap_stamp_through_recursive_poll (test_live_limit_excel.LimitExcelTests.test_immediate_result_retains_cap_stamp_through_recursive_poll) ... ok
+test_pending_cap_aba_discards_result_and_resets (test_live_limit_excel.LimitExcelTests.test_pending_cap_aba_discards_result_and_resets) ... ok
+test_physical_ceiling_allows_later_increase_above_initial_user_cap (test_live_limit_excel.LimitExcelTests.test_physical_ceiling_allows_later_increase_above_initial_user_cap) ... ok
+test_unconsumed_cap_change_discards_completed_result (test_live_limit_excel.LimitExcelTests.test_unconsumed_cap_change_discards_completed_result) ... ok
+test_basic_controller_cap_aba_during_batch_resets_both_histories (test_live_limit_runtime.LiveLimitRuntimeTests.test_basic_controller_cap_aba_during_batch_resets_both_histories) ... ok
+test_cap_aba_while_excel_busy_discards_old_result (test_live_limit_runtime.LiveLimitRuntimeTests.test_cap_aba_while_excel_busy_discards_old_result) ... ok
+test_change_between_heaters_keeps_first_save_and_blocks_second (test_live_limit_runtime.LiveLimitRuntimeTests.test_change_between_heaters_keeps_first_save_and_blocks_second) ... ok
+test_fractional_actual_ramps_to_zero_without_overshoot (test_live_limit_runtime.LiveLimitRuntimeTests.test_fractional_actual_ramps_to_zero_without_overshoot) ... ok
+test_idle_cap_change_preserves_accepted_excel_history (test_live_limit_runtime.LiveLimitRuntimeTests.test_idle_cap_change_preserves_accepted_excel_history) ... ok
+test_increase_above_initial_limit_applies_on_fresh_observation (test_live_limit_runtime.LiveLimitRuntimeTests.test_increase_above_initial_limit_applies_on_fresh_observation) ... ok
+test_json_minimum_rejection_and_custom_two_percent_step (test_live_limit_runtime.LiveLimitRuntimeTests.test_json_minimum_rejection_and_custom_two_percent_step) ... ok
+test_lower_limit_ramps_on_distinct_fresh_layers_only (test_live_limit_runtime.LiveLimitRuntimeTests.test_lower_limit_ramps_on_distinct_fresh_layers_only) ... ok
+test_workbook_recovery_keeps_requested_limit (test_live_limit_runtime.LiveLimitRuntimeTests.test_workbook_recovery_keeps_requested_limit) ... ok
+test_cap_change_at_activation_discards_decision_and_waits_fresh (test_live_limit_session_ack.CapAcknowledgementTests.test_cap_change_at_activation_discards_decision_and_waits_fresh) ... ok
+test_initial_and_changed_cap_remain_pending_during_old_calculation (test_live_limit_session_ack.CapAcknowledgementTests.test_initial_and_changed_cap_remain_pending_during_old_calculation) ... ok
+test_legacy_snapshot_without_decision_tag_is_not_filtered (test_live_limit_session_ack.CapAcknowledgementTests.test_legacy_snapshot_without_decision_tag_is_not_filtered) ... ok
+test_stale_queued_decision_is_hidden_but_confirmed_save_remains (test_live_limit_session_ack.CapAcknowledgementTests.test_stale_queued_decision_is_hidden_but_confirmed_save_remains) ... ok
+test_aba_and_admission (test_live_limit_setting.LiveLimitSettingTests.test_aba_and_admission) ... ok
+test_bounds_and_status (test_live_limit_setting.LiveLimitSettingTests.test_bounds_and_status) ... ok
+test_no_lock_held_during_admission (test_live_limit_setting.LiveLimitSettingTests.test_no_lock_held_during_admission) ... ok
+test_ramp_and_validation (test_live_limit_setting.LiveLimitSettingTests.test_ramp_and_validation) ... ok
+test_candidate_a_b_a_and_recreated_map_need_two_matching_checks (test_live_settings.RecoveryAdapterTests.test_candidate_a_b_a_and_recreated_map_need_two_matching_checks) ... ok
+test_full_real_field_audit_blocks_unsaved_then_accepts_stable_match (test_live_settings.RecoveryAdapterTests.test_full_real_field_audit_blocks_unsaved_then_accepts_stable_match) ... ok
+test_partial_settings_writes_at_both_preedit_captures_hold (test_live_settings.RecoveryAdapterTests.test_partial_settings_writes_at_both_preedit_captures_hold) ... ok
+test_preedit_suspension_is_recoverable_but_marker_is_ambiguous (test_live_settings.RecoveryAdapterTests.test_preedit_suspension_is_recoverable_but_marker_is_ambiguous) ... ok
+test_read_timeout_holds_and_stop_prevents_adoption (test_live_settings.RecoveryAdapterTests.test_read_timeout_holds_and_stop_prevents_adoption) ... ok
+test_recovery_poll_throttles_and_disconnect_prevents_adoption (test_live_settings.RecoveryAdapterTests.test_recovery_poll_throttles_and_disconnect_prevents_adoption) ... ok
+test_saved_ir_and_non_ir_change_stable_two_checks_then_save (test_live_settings.RecoveryAdapterTests.test_saved_ir_and_non_ir_change_stable_two_checks_then_save) ... ok
+test_unverified_ui_and_unavailable_persistence_stay_on_hold (test_live_settings.RecoveryAdapterTests.test_unverified_ui_and_unavailable_persistence_stay_on_hold) ... ok
+test_wrong_identity_and_unknown_native_error_are_terminal (test_live_settings.RecoveryAdapterTests.test_wrong_identity_and_unknown_native_error_are_terminal) ... ok
+test_cached_different_layer_does_not_bypass_recovery_barrier (test_live_settings.RecoverySessionTests.test_cached_different_layer_does_not_bypass_recovery_barrier) ... ok
+test_each_heater_save_checks_image_epoch_and_stops_after_handoff (test_live_settings.RecoverySessionTests.test_each_heater_save_checks_image_epoch_and_stops_after_handoff) ... ok
+test_hold_resumes_only_after_baseline_and_fresh_different_layer (test_live_settings.RecoverySessionTests.test_hold_resumes_only_after_baseline_and_fresh_different_layer) ... ok
+test_nonready_observations_are_consumed_before_auto_or_ir_returns (test_live_settings.RecoverySessionTests.test_nonready_observations_are_consumed_before_auto_or_ir_returns) ... ok
+test_second_heater_rechecks_control_epoch_before_save (test_live_settings.RecoverySessionTests.test_second_heater_rechecks_control_epoch_before_save) ... ok
+test_simultaneous_image_and_control_handoff_both_wait_for_fresh_layer (test_live_settings.RecoverySessionTests.test_simultaneous_image_and_control_handoff_both_wait_for_fresh_layer) ... ok
+test_exhausted_preflight_does_not_save_or_replay_and_preserves_previous_save (test_log_session_continuity.LogSessionContinuityTests.test_exhausted_preflight_does_not_save_or_replay_and_preserves_previous_save) ... ok
+test_stable_new_job_rejects_old_decision_and_preserves_previous_save (test_log_session_continuity.LogSessionContinuityTests.test_stable_new_job_rejects_old_decision_and_preserves_previous_save) ... ok
+test_transient_log_append_preserves_history_at_idle_and_preflight (test_log_session_continuity.LogSessionContinuityTests.test_transient_log_append_preserves_history_at_idle_and_preflight) ... ok
+test_scope_proof_is_carried_and_change_requires_two_new_checks (test_m1_hidden_recovery.HiddenRecoveryAdapterTests.test_scope_proof_is_carried_and_change_requires_two_new_checks) ... ok
+test_held_cached_and_same_layer_rows_do_not_save (test_m1_hidden_recovery.HiddenRecoverySessionTests.test_held_cached_and_same_layer_rows_do_not_save) ... ok
+test_retired_source_modules_are_not_imported (test_manual_slice_ui.ManualSliceStructureTests.test_retired_source_modules_are_not_imported) ... ok
+test_connected_replacement_and_old_generation_rejection (test_manual_slice_ui.ManualSliceUITests.test_connected_replacement_and_old_generation_rejection) ... ok
+test_manual_file_dialogs_and_no_automatic_controls (test_manual_slice_ui.ManualSliceUITests.test_manual_file_dialogs_and_no_automatic_controls) ... ok
+test_excel_controller_is_used_once_for_each_new_row_and_closed (test_new_features.ExcelSessionTests.test_excel_controller_is_used_once_for_each_new_row_and_closed) ... ok
+test_invalid_excel_stops_before_any_save (test_new_features.ExcelSessionTests.test_invalid_excel_stops_before_any_save) ... ok
+test_invalid_workbook_recommendation_is_never_saved (test_new_features.ExcelSessionTests.test_invalid_workbook_recommendation_is_never_saved) ... ok
+test_default_session_uses_existing_algorithm_without_excel (test_new_features.FeatureViewTests.test_default_session_uses_existing_algorithm_without_excel) ... ok
+test_excel_cells_pass_to_session_and_target_can_change_while_connected (test_new_features.FeatureViewTests.test_excel_cells_pass_to_session_and_target_can_change_while_connected) ... ok
+test_invalid_target_does_not_update_worker (test_new_features.FeatureViewTests.test_invalid_target_does_not_update_worker) ... ok
+test_reference_line_follows_applied_target_not_just_requested_target (test_new_features.FeatureViewTests.test_reference_line_follows_applied_target_not_just_requested_target) ... ok
+test_view_records_completed_layer_graph_without_applying (test_new_features.FeatureViewTests.test_view_records_completed_layer_graph_without_applying) ... ok
+test_barrier_is_logged_before_queue_even_during_close (test_observed_session.ObservedSessionTests.test_barrier_is_logged_before_queue_even_during_close) ... ok
+test_bound_limit_survives_monitor_fallback (test_observed_session.ObservedSessionTests.test_bound_limit_survives_monitor_fallback) ... ok
+test_default_session_controller_keeps_generation_until_stop (test_observed_session.ObservedSessionTests.test_default_session_controller_keeps_generation_until_stop) ... ok
+test_faults_stay_monitor_only_and_preserve_shared_settings (test_observed_session.ObservedSessionTests.test_faults_stay_monitor_only_and_preserve_shared_settings) ... ok
+test_invalid_control_bounds_remain_unbound_in_monitor_fallback (test_observed_session.ObservedSessionTests.test_invalid_control_bounds_remain_unbound_in_monitor_fallback) ... ok
+test_stop_during_backoff_wakes_without_another_attempt (test_observed_session.ObservedSessionTests.test_stop_during_backoff_wakes_without_another_attempt) ... ok
+test_invalid_values (test_output_limit.MaximumIrValidationTests.test_invalid_values) ... ok
+test_session_option_rejects_invalid_limit (test_output_limit.MaximumIrValidationTests.test_session_option_rejects_invalid_limit) ... ok
+test_valid_numeric_and_user_text (test_output_limit.MaximumIrValidationTests.test_valid_numeric_and_user_text) ... ok
+test_above_json_hard_bound_holds_until_baseline_and_fresh_row (test_output_limit.SessionMaximumIrTests.test_above_json_hard_bound_holds_until_baseline_and_fresh_row) ... ok
+test_above_user_limit_ramps_on_each_fresh_layer (test_output_limit.SessionMaximumIrTests.test_above_user_limit_ramps_on_each_fresh_layer) ... ok
+test_adversarial_controller_cannot_save_outside_limit_or_step (test_output_limit.SessionMaximumIrTests.test_adversarial_controller_cannot_save_outside_limit_or_step) ... ok
+test_builtin_history_uses_effective_cap_for_saturation (test_output_limit.SessionMaximumIrTests.test_builtin_history_uses_effective_cap_for_saturation) ... ok
+test_json_minimum_above_user_cap_is_rejected (test_output_limit.SessionMaximumIrTests.test_json_minimum_above_user_cap_is_rejected) ... ok
+test_lower_json_maximum_is_effective_controller_bound (test_output_limit.SessionMaximumIrTests.test_lower_json_maximum_is_effective_controller_bound) ... ok
+test_zero_and_decimal_limits_in_preview_and_control_for_both_heaters (test_output_limit.SessionMaximumIrTests.test_zero_and_decimal_limits_in_preview_and_control_for_both_heaters) ... ok
+test_cap_remains_editable_and_apply_only_requests_next_layer (test_output_limit_ui.MaximumIrUITests.test_cap_remains_editable_and_apply_only_requests_next_layer) ... ok
+test_close_saves_last_requested_limit_not_an_unapplied_draft (test_output_limit_ui.MaximumIrUITests.test_close_saves_last_requested_limit_not_an_unapplied_draft) ... ok
+test_corrupt_preference_requires_explicit_input_and_close_stores_valid_cap (test_output_limit_ui.MaximumIrUITests.test_corrupt_preference_requires_explicit_input_and_close_stores_valid_cap) ... ok
+test_invalid_cap_never_starts_a_worker_and_wait_mode_keeps_pumping (test_output_limit_ui.MaximumIrUITests.test_invalid_cap_never_starts_a_worker_and_wait_mode_keeps_pumping) ... ok
+test_minimum_rejection_preserves_active_cap_and_saved_preference (test_output_limit_ui.MaximumIrUITests.test_minimum_rejection_preserves_active_cap_and_saved_preference) ... ok
+test_stale_ui_ack_keeps_pending_request_and_confirmed_save_marker (test_output_limit_ui.MaximumIrUITests.test_stale_ui_ack_keeps_pending_request_and_confirmed_save_marker) ... ok
+test_storage_failure_does_not_rollback_accepted_cap_request (test_output_limit_ui.MaximumIrUITests.test_storage_failure_does_not_rollback_accepted_cap_request) ... ok
+test_missing_default_atomic_roundtrip_and_invalid_file (test_output_limit_ui.PreferenceTests.test_missing_default_atomic_roundtrip_and_invalid_file) ... ok
+test_existing_png_is_preserved_and_unique_path_selected (test_plot_archive.ArchiveComponentTests.test_existing_png_is_preserved_and_unique_path_selected) ... ok
+test_ir_failure_keeps_temperature_and_csv (test_plot_archive.ArchiveComponentTests.test_ir_failure_keeps_temperature_and_csv) ... ok
+test_png_failure_preserves_completed_and_retries_only_missing (test_plot_archive.ArchiveComponentTests.test_png_failure_preserves_completed_and_retries_only_missing) ... ok
+test_png_fallback_keeps_csv_and_reports_separate_folder (test_plot_archive.ArchiveComponentTests.test_png_fallback_keeps_csv_and_reports_separate_folder) ... ok
+test_all_rows_and_fields_with_bom (test_plot_archive.ArchiveTests.test_all_rows_and_fields_with_bom) ... ok
+test_blocked_worker_does_not_block_capture_or_submit (test_plot_archive.ArchiveTests.test_blocked_worker_does_not_block_capture_or_submit) ... ok
+test_empty_duplicates_and_rapid_segments (test_plot_archive.ArchiveTests.test_empty_duplicates_and_rapid_segments) ... ok
+test_failed_partial_write_retained_then_explicit_retry (test_plot_archive.ArchiveTests.test_failed_partial_write_retained_then_explicit_retry) ... ok
+test_fallback_unique_files_preserve_existing (test_plot_archive.ArchiveTests.test_fallback_unique_files_preserve_existing) ... ok
+test_names_use_machine_timestamp_and_atomic_numbered_collisions (test_plot_archive.ArchiveTests.test_names_use_machine_timestamp_and_atomic_numbered_collisions) ... ok
+test_retry_before_old_failure_is_polled_stays_busy_and_writes_once (test_plot_archive.ArchiveTests.test_retry_before_old_failure_is_polled_stays_busy_and_writes_once) ... ok
+test_worker_start_failure_retains_data_for_a_later_retry (test_plot_archive.ArchiveTests.test_worker_start_failure_retains_data_for_a_later_retry) ... ok
+test_full_extent_png_metadata_and_resolution (test_plot_images.PlotImagesTests.test_full_extent_png_metadata_and_resolution) ... D:\a\_temp\slice-extracted\app\test_plot_images.py:22: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  self.assertGreater(sum(1 for color in image.getdata() if color == (239,139,38)), 0)
+ok
+test_missing_values_and_layer_gaps_break_lines (test_plot_images.PlotImagesTests.test_missing_values_and_layer_gaps_break_lines) ... ok
+test_real_reader_expiry_preserves_workbook_history (test_raw_history_continuity.RawHistoryContinuityTests.test_real_reader_expiry_preserves_workbook_history) ... ok
+test_live_helper_fences_all_new_helpers_and_uncertain_write_latches (test_resilient_adapter.HelperRetirementTests.test_live_helper_fences_all_new_helpers_and_uncertain_write_latches) ... ok
+test_non_ir_prepare_timeout_is_recoverable_when_helper_retires (test_resilient_adapter.HelperRetirementTests.test_non_ir_prepare_timeout_is_recoverable_when_helper_retires) ... ok
+test_ambiguous_save_latches_and_rebind_preserves_identity (test_resilient_adapter.ResilienceTests.test_ambiguous_save_latches_and_rebind_preserves_identity) ... ok
+test_baseline_requires_different_layer (test_resilient_adapter.ResilienceTests.test_baseline_requires_different_layer) ... ok
+test_fault_registered_after_latch_delivers_original_once (test_resilient_adapter.ResilienceTests.test_fault_registered_after_latch_delivers_original_once) ... ok
+test_hold_reason_identifies_actual_cause (test_resilient_adapter.ResilienceTests.test_hold_reason_identifies_actual_cause) ... ok
+test_independent_heaters_have_separate_high_water (test_resilient_adapter.ResilienceTests.test_independent_heaters_have_separate_high_water) ... ok
+test_invalid_requires_baseline_then_another_fresh_sample (test_resilient_adapter.ResilienceTests.test_invalid_requires_baseline_then_another_fresh_sample) ... ok
+test_log_read_unavailable_preserves_specific_reason (test_resilient_adapter.ResilienceTests.test_log_read_unavailable_preserves_specific_reason) ... ok
+test_other_job_never_armed (test_resilient_adapter.ResilienceTests.test_other_job_never_armed) ... ok
+test_rebind_prep_uses_native_auto_even_if_log_state_unknown (test_resilient_adapter.ResilienceTests.test_rebind_prep_uses_native_auto_even_if_log_state_unknown) ... ok
+test_running_state_authorizes_job (test_resilient_adapter.ResilienceTests.test_running_state_authorizes_job) ... ok
+test_stale_first_job_remains_pinned_after_outage (test_resilient_adapter.ResilienceTests.test_stale_first_job_remains_pinned_after_outage) ... ok
+test_temporary_settings_failure_during_prepare_retries (test_resilient_adapter.ResilienceTests.test_temporary_settings_failure_during_prepare_retries) ... ok
+test_temporary_settings_read_failure_recovers (test_resilient_adapter.ResilienceTests.test_temporary_settings_read_failure_recovers) ... ok
+test_uncertain_save_records_original_error_even_when_stop_is_set (test_resilient_adapter.ResilienceTests.test_uncertain_save_records_original_error_even_when_stop_is_set) ... ok
+test_wrong_job_after_rebind_never_prepares_control (test_resilient_adapter.ResilienceTests.test_wrong_job_after_rebind_never_prepares_control) ... ok
+test_session_resumes_saving_after_rebind (test_resilient_adapter.SessionRecoveryTests.test_session_resumes_saving_after_rebind) ... ok
+test_ambiguous_matching_csv_is_not_chosen_by_newest_mtime (test_csv_source.CsvSourceTests.test_ambiguous_matching_csv_is_not_chosen_by_newest_mtime) ... ok
+test_csv_reader_works_without_any_ui_transport (test_csv_source.CsvSourceTests.test_csv_reader_works_without_any_ui_transport) ... ok
+test_disabled_thermometer_sentinel_stops_control_for_both_machines (test_csv_source.CsvSourceTests.test_disabled_thermometer_sentinel_stops_control_for_both_machines) ... ok
+test_duplicate_header_is_ambiguous (test_csv_source.CsvSourceTests.test_duplicate_header_is_ambiguous) ... ok
+test_exact_recoating_header_required_without_substituting_other_temperature (test_csv_source.CsvSourceTests.test_exact_recoating_header_required_without_substituting_other_temperature) ... ok
+test_future_default_rows_do_not_become_temperature_samples (test_csv_source.CsvSourceTests.test_future_default_rows_do_not_become_temperature_samples) ... ok
+test_initial_history_is_baseline_then_new_complete_row_is_received (test_csv_source.CsvSourceTests.test_initial_history_is_baseline_then_new_complete_row_is_received) ... ok
+test_invalid_temperature_and_non_finite_values_stop_reading (test_csv_source.CsvSourceTests.test_invalid_temperature_and_non_finite_values_stop_reading) ... ok
+test_job_change_clears_selected_path_and_old_observation (test_csv_source.CsvSourceTests.test_job_change_clears_selected_path_and_old_observation) ... ok
+test_multiple_new_rows_only_return_latest_without_replaying_backlog (test_csv_source.CsvSourceTests.test_multiple_new_rows_only_return_latest_without_replaying_backlog) ... ok
+test_new_file_created_after_connect_can_be_a_new_observation (test_csv_source.CsvSourceTests.test_new_file_created_after_connect_can_be_a_new_observation) ... ok
+test_partial_row_is_not_a_measurement_or_a_save_token (test_csv_source.CsvSourceTests.test_partial_row_is_not_a_measurement_or_a_save_token) ... ok
+test_quoted_comma_newline_and_split_quote_are_not_extra_rows (test_csv_source.CsvSourceTests.test_quoted_comma_newline_and_split_quote_are_not_extra_rows) ... ok
+test_replacement_or_truncation_does_not_replay_old_samples (test_csv_source.CsvSourceTests.test_replacement_or_truncation_does_not_replay_old_samples) ... ok
+test_rewritten_prefix_and_fresh_append_are_rebaselined (test_csv_source.CsvSourceTests.test_rewritten_prefix_and_fresh_append_are_rebaselined) ... ok
+test_same_layer_correction_and_reversed_order_reject_control (test_csv_source.CsvSourceTests.test_same_layer_correction_and_reversed_order_reject_control) ... ok
+test_same_size_rewrite_with_restored_mtime_rejects_invalid_sensor (test_csv_source.CsvSourceTests.test_same_size_rewrite_with_restored_mtime_rejects_invalid_sensor) ... ok
+test_stale_appended_record_is_not_new_control_input (test_csv_source.CsvSourceTests.test_stale_appended_record_is_not_new_control_input) ... ok
+test_unrelated_newer_job_is_not_selected (test_csv_source.CsvSourceTests.test_unrelated_newer_job_is_not_selected) ... ok
+test_unstable_same_size_snapshot_is_not_accepted (test_csv_source.CsvSourceTests.test_unstable_same_size_snapshot_is_not_accepted) ... ok
+test_ambiguous_matching_csv_is_not_chosen_by_newest_mtime (test_sensor_recovery.SensorRecoveryTests.test_ambiguous_matching_csv_is_not_chosen_by_newest_mtime) ... ok
+test_csv_reader_works_without_any_ui_transport (test_sensor_recovery.SensorRecoveryTests.test_csv_reader_works_without_any_ui_transport) ... ok
+test_disabled_thermometer_sentinel_stops_control_for_both_machines (test_sensor_recovery.SensorRecoveryTests.test_disabled_thermometer_sentinel_stops_control_for_both_machines) ... ok
+test_duplicate_header_is_ambiguous (test_sensor_recovery.SensorRecoveryTests.test_duplicate_header_is_ambiguous) ... ok
+test_exact_recoating_header_required_without_substituting_other_temperature (test_sensor_recovery.SensorRecoveryTests.test_exact_recoating_header_required_without_substituting_other_temperature) ... ok
+test_future_default_rows_do_not_become_temperature_samples (test_sensor_recovery.SensorRecoveryTests.test_future_default_rows_do_not_become_temperature_samples) ... ok
+test_incomplete_sentinel_is_not_a_measurement (test_sensor_recovery.SensorRecoveryTests.test_incomplete_sentinel_is_not_a_measurement) ... ok
+test_initial_history_is_baseline_then_new_complete_row_is_received (test_sensor_recovery.SensorRecoveryTests.test_initial_history_is_baseline_then_new_complete_row_is_received) ... ok
+test_invalid_is_exposed_before_later_row_in_same_read (test_sensor_recovery.SensorRecoveryTests.test_invalid_is_exposed_before_later_row_in_same_read) ... ok
+test_invalid_rows_still_validate_time_and_job (test_sensor_recovery.SensorRecoveryTests.test_invalid_rows_still_validate_time_and_job) ... ok
+test_invalid_temperature_and_non_finite_values_stop_reading (test_sensor_recovery.SensorRecoveryTests.test_invalid_temperature_and_non_finite_values_stop_reading) ... ok
+test_invalid_then_fresh_higher_layer (test_sensor_recovery.SensorRecoveryTests.test_invalid_then_fresh_higher_layer) ... ok
+test_job_change_clears_selected_path_and_old_observation (test_sensor_recovery.SensorRecoveryTests.test_job_change_clears_selected_path_and_old_observation) ... ok
+test_multiple_new_rows_only_return_latest_without_replaying_backlog (test_sensor_recovery.SensorRecoveryTests.test_multiple_new_rows_only_return_latest_without_replaying_backlog) ... ok
+test_new_file_created_after_connect_can_be_a_new_observation (test_sensor_recovery.SensorRecoveryTests.test_new_file_created_after_connect_can_be_a_new_observation) ... ok
+test_os_error_is_typed_and_does_not_reset_reader (test_sensor_recovery.SensorRecoveryTests.test_os_error_is_typed_and_does_not_reset_reader) ... ok
+test_partial_row_is_not_a_measurement_or_a_save_token (test_sensor_recovery.SensorRecoveryTests.test_partial_row_is_not_a_measurement_or_a_save_token) ... ok
+test_quoted_comma_newline_and_split_quote_are_not_extra_rows (test_sensor_recovery.SensorRecoveryTests.test_quoted_comma_newline_and_split_quote_are_not_extra_rows) ... ok
+test_replacement_or_truncation_does_not_replay_old_samples (test_sensor_recovery.SensorRecoveryTests.test_replacement_or_truncation_does_not_replay_old_samples) ... ok
+test_rewritten_prefix_and_fresh_append_are_rebaselined (test_sensor_recovery.SensorRecoveryTests.test_rewritten_prefix_and_fresh_append_are_rebaselined) ... ok
+test_same_layer_correction_and_reversed_order_reject_control (test_sensor_recovery.SensorRecoveryTests.test_same_layer_correction_and_reversed_order_reject_control) ... ok
+test_same_size_rewrite_with_restored_mtime_rejects_invalid_sensor (test_sensor_recovery.SensorRecoveryTests.test_same_size_rewrite_with_restored_mtime_rejects_invalid_sensor) ... ok
+test_stale_appended_record_is_not_new_control_input (test_sensor_recovery.SensorRecoveryTests.test_stale_appended_record_is_not_new_control_input) ... ok
+test_unrelated_newer_job_is_not_selected (test_sensor_recovery.SensorRecoveryTests.test_unrelated_newer_job_is_not_selected) ... ok
+test_unstable_same_size_snapshot_is_not_accepted (test_sensor_recovery.SensorRecoveryTests.test_unstable_same_size_snapshot_is_not_accepted) ... ok
+test_complete_clean_m1_and_s3_profiles_are_accepted (test_sequence_field_audit.SequenceFieldAuditTests.test_complete_clean_m1_and_s3_profiles_are_accepted) ... ok
+test_every_unsaved_bound_field_is_rejected_before_admission (test_sequence_field_audit.SequenceFieldAuditTests.test_every_unsaved_bound_field_is_rejected_before_admission) ... ok
+test_exact_known_unbound_controls_are_ignored_because_save_does_not_bind_them (test_sequence_field_audit.SequenceFieldAuditTests.test_exact_known_unbound_controls_are_ignored_because_save_does_not_bind_them) ... ok
+test_float_canonical_roundoff_is_tolerated_but_real_edit_is_not (test_sequence_field_audit.SequenceFieldAuditTests.test_float_canonical_roundoff_is_tolerated_but_real_edit_is_not) ... ok
+test_missing_owner_and_unsupported_type_fail_without_guessing (test_sequence_field_audit.SequenceFieldAuditTests.test_missing_owner_and_unsupported_type_fail_without_guessing) ... ok
+test_missing_unknown_or_duplicate_mapping_rejects (test_sequence_field_audit.SequenceFieldAuditTests.test_missing_unknown_or_duplicate_mapping_rejects) ... ok
+test_units_locale_nonfinite_and_indeterminate_states_reject (test_sequence_field_audit.SequenceFieldAuditTests.test_units_locale_nonfinite_and_indeterminate_states_reject) ... ok
+test_bounded_read_and_malformed_json_rejected (test_sequence_persistence.SequencePersistenceTests.test_bounded_read_and_malformed_json_rejected) ... ok
+test_capture_exact_process_image_path_and_saved_decimal (test_sequence_persistence.SequencePersistenceTests.test_capture_exact_process_image_path_and_saved_decimal) ... ok
+test_duplicate_or_wrong_scope_identity_rejected (test_sequence_persistence.SequencePersistenceTests.test_duplicate_or_wrong_scope_identity_rejected) ... ok
+test_earlier_owner_mutation_during_later_owner_read_is_detected (test_sequence_persistence.SequencePersistenceTests.test_earlier_owner_mutation_during_later_owner_read_is_detected) ... ok
+test_flat_legacy_layout_and_ambiguous_two_layouts (test_sequence_persistence.SequencePersistenceTests.test_flat_legacy_layout_and_ambiguous_two_layouts) ... ok
+test_invalid_and_out_of_range_values_rejected (test_sequence_persistence.SequencePersistenceTests.test_invalid_and_out_of_range_values_rejected) ... ok
+test_motion_owner_mutation_is_detected_after_save (test_sequence_persistence.SequencePersistenceTests.test_motion_owner_mutation_is_detected_after_save) ... ok
+test_no_file_is_optional_and_does_not_create_any (test_sequence_persistence.SequencePersistenceTests.test_no_file_is_optional_and_does_not_create_any) ... ok
+test_owner_inventory_is_bounded_and_file_removal_is_detected (test_sequence_persistence.SequencePersistenceTests.test_owner_inventory_is_bounded_and_file_removal_is_detected) ... ok
+test_read_detects_replacement_during_acquisition (test_sequence_persistence.SequencePersistenceTests.test_read_detects_replacement_during_acquisition) ... ok
+test_unchanged_wrong_power_times_out_without_any_writes (test_sequence_persistence.SequencePersistenceTests.test_unchanged_wrong_power_times_out_without_any_writes) ... ok
+test_verifies_ir_and_rejects_any_non_ir_change (test_sequence_persistence.SequencePersistenceTests.test_verifies_ir_and_rejects_any_non_ir_change) ... ok
+test_ambiguous_write_is_persisted_if_window_is_already_closing (test_session.ControllerTests.test_ambiguous_write_is_persisted_if_window_is_already_closing) ... ok
+test_ambiguous_write_is_reported_even_if_disconnect_was_requested (test_session.ControllerTests.test_ambiguous_write_is_reported_even_if_disconnect_was_requested) ... ok
+test_disconnect_and_close_do_not_join_or_wait_on_blocked_worker (test_session.ControllerTests.test_disconnect_and_close_do_not_join_or_wait_on_blocked_worker) ... ok
+test_event_backlog_is_bounded (test_session.ControllerTests.test_event_backlog_is_bounded) ... ok
+test_single_worker_disconnect_and_generation_filters (test_session.ControllerTests.test_single_worker_disconnect_and_generation_filters) ... ok
+test_target_can_be_updated_only_during_a_session (test_session.ControllerTests.test_target_can_be_updated_only_during_a_session) ... ok
+test_actual_private_mutex_prevents_a_second_owner_and_can_be_reacquired (test_session.SingleInstanceTests.test_actual_private_mutex_prevents_a_second_owner_and_can_be_reacquired) ... ok
+test_second_main_entry_does_not_create_a_window_or_adapter (test_session.SingleInstanceTests.test_second_main_entry_does_not_create_a_window_or_adapter) ... ok
+test_control_requires_explicit_connect (test_session.ViewTests.test_control_requires_explicit_connect) ... ok
+test_default_control_machine_selection_and_explicit_buttons (test_session.ViewTests.test_default_control_machine_selection_and_explicit_buttons) ... ok
+test_excel_image_cell_default_propagates_and_can_be_cleared (test_session.ViewTests.test_excel_image_cell_default_propagates_and_can_be_cleared) ... ok
+test_log_soft_limit_and_close_deadline (test_session.ViewTests.test_log_soft_limit_and_close_deadline) ... ok
+test_unknown_mode_does_not_start_a_control_worker (test_session.ViewTests.test_unknown_mode_does_not_start_a_control_worker) ... ok
+test_ambiguous_save_stops_without_retry_restore_or_heater_off (test_session.WorkerTests.test_ambiguous_save_stops_without_retry_restore_or_heater_off) ... ok
+test_authorized_control_saves_once_for_changed_common_ir_only (test_session.WorkerTests.test_authorized_control_saves_once_for_changed_common_ir_only) ... ok
+test_cancelled_before_connect_performs_no_external_calls (test_session.WorkerTests.test_cancelled_before_connect_performs_no_external_calls) ... ok
+test_control_unavailable_is_visible_and_never_silently_becomes_preview (test_session.WorkerTests.test_control_unavailable_is_visible_and_never_silently_becomes_preview) ... ok
+test_delayed_visible_historical_row_is_baseline_and_never_a_new_input (test_session.WorkerTests.test_delayed_visible_historical_row_is_baseline_and_never_a_new_input) ... ok
+test_dotnet_canonical_float_roundoff_does_not_look_like_external_edit (test_session.WorkerTests.test_dotnet_canonical_float_roundoff_does_not_look_like_external_edit) ... ok
+test_equal_layer_new_job_or_row_correction_clears_history_and_waits (test_session.WorkerTests.test_equal_layer_new_job_or_row_correction_clears_history_and_waits) ... ok
+test_external_ir_change_keeps_connection_and_holds_without_overwriting_it (test_session.WorkerTests.test_external_ir_change_keeps_connection_and_holds_without_overwriting_it) ... ok
+test_first_csv_row_created_after_connect_counts_as_first_new_observation (test_session.WorkerTests.test_first_csv_row_created_after_connect_counts_as_first_new_observation) ... ok
+test_fractional_actual_setting_is_held_then_saved_without_truncation (test_session.WorkerTests.test_fractional_actual_setting_is_held_then_saved_without_truncation) ... ok
+test_idle_unknown_rows_never_save_and_auto_resume_waits_for_fresh_rows (test_session.WorkerTests.test_idle_unknown_rows_never_save_and_auto_resume_waits_for_fresh_rows) ... ok
+test_live_target_change_waits_for_new_csv_and_records_successful_save (test_session.WorkerTests.test_live_target_change_waits_for_new_csv_and_records_successful_save) ... ok
+test_loss_of_ui_control_admission_stops_until_explicit_reconnect (test_session.WorkerTests.test_loss_of_ui_control_admission_stops_until_explicit_reconnect) ... ok
+test_monitor_never_writes_and_disconnect_releases_only_own_adapter (test_session.WorkerTests.test_monitor_never_writes_and_disconnect_releases_only_own_adapter) ... ok
+test_monitor_target_reference_updates_without_new_csv_row (test_session.WorkerTests.test_monitor_target_reference_updates_without_new_csv_row) ... ok
+test_pause_resume_clears_preview_history_and_rebaselines_existing_row (test_session.WorkerTests.test_pause_resume_clears_preview_history_and_rebaselines_existing_row) ... ok
+test_preview_waits_for_new_t_recoating_and_never_relearns_repeated_rows (test_session.WorkerTests.test_preview_waits_for_new_t_recoating_and_never_relearns_repeated_rows) ... ok
+test_run_identity_change_resets_even_when_layer_number_increases (test_session.WorkerTests.test_run_identity_change_resets_even_when_layer_number_increases) ... ok
+test_unknown_machine_cannot_enter_control_mode (test_session.WorkerTests.test_unknown_machine_cannot_enter_control_mode) ... ok
+test_wrong_window_identity_and_read_failure_close_without_output_actions (test_session.WorkerTests.test_wrong_window_identity_and_read_failure_close_without_output_actions) ... ok
+test_cancellation_never_publishes_partial_dataset_and_csv_has_units (test_slice_data.SliceTests.test_cancellation_never_publishes_partial_dataset_and_csv_has_units) ... ok
+test_duplicate_invalid_geometry_sizes_and_multiframe_rejected (test_slice_data.SliceTests.test_duplicate_invalid_geometry_sizes_and_multiframe_rejected) ... ok
+test_exact_physical_circle_with_anisotropic_dpi (test_slice_data.SliceTests.test_exact_physical_circle_with_anisotropic_dpi) ... ok
+test_high_bit_depth_and_float_images_are_not_silently_misclassified (test_slice_data.SliceTests.test_high_bit_depth_and_float_images_are_not_silently_misclassified) ... ok
+test_layer_start_offset_and_consecutive_prior_whole_empty_layers (test_slice_data.SliceTests.test_layer_start_offset_and_consecutive_prior_whole_empty_layers) ... ok
+test_missing_filename_number_requires_explicit_sequence_and_bad_config_rejected (test_slice_data.SliceTests.test_missing_filename_number_requires_explicit_sequence_and_bad_config_rejected) ... ok
+test_palette_is_rendered_and_transparent_pixels_are_blank (test_slice_data.SliceTests.test_palette_is_rendered_and_transparent_pixels_are_blank) ... ok
+test_polarity_threshold_and_mean_are_independent (test_slice_data.SliceTests.test_polarity_threshold_and_mean_are_independent) ... ok
+test_zip_and_multiselection_are_equivalent_and_holes_stay_unknown (test_slice_data.SliceTests.test_zip_and_multiselection_are_equivalent_and_holes_stay_unknown) ... ok
+test_image_formulas_in_input_cells_are_rejected (test_slice_excel.SliceExcelTests.test_image_formulas_in_input_cells_are_rejected) ... ok
+test_new_fields_are_distinct_same_row_and_cannot_overwrite_formula (test_slice_excel.SliceExcelTests.test_new_fields_are_distinct_same_row_and_cannot_overwrite_formula) ... ok
+test_offline_export_clears_unknown_values_and_can_be_loaded_by_existing_controller (test_slice_excel.SliceExcelTests.test_offline_export_clears_unknown_values_and_can_be_loaded_by_existing_controller) ... ok
+test_template_default_control_formula_preserved_and_extra_inputs_declared (test_slice_excel.SliceExcelTests.test_template_default_control_formula_preserved_and_extra_inputs_declared) ... ok
+test_worker_payload_contains_fresh_current_and_previous_values_and_rejects_mismatch (test_slice_excel.SliceExcelTests.test_worker_payload_contains_fresh_current_and_previous_values_and_rejects_mismatch) ... ok
+test_admitted_save_finishes_but_second_heater_cannot_use_old_epoch (test_slice_handoff.HandoffTests.test_admitted_save_finishes_but_second_heater_cannot_use_old_epoch) ... ok
+test_annotation_only_modes_drop_stale_images_but_keep_valid_math (test_slice_handoff.HandoffTests.test_annotation_only_modes_drop_stale_images_but_keep_valid_math) ... ok
+test_builtin_math_and_history_are_unchanged_by_image_replacement (test_slice_handoff.HandoffTests.test_builtin_math_and_history_are_unchanged_by_image_replacement) ... ok
+test_clear_handoff_passes_unknown_images_after_new_layer (test_slice_handoff.HandoffTests.test_clear_handoff_passes_unknown_images_after_new_layer) ... ok
+test_excel_without_image_mapping_keeps_history_and_outputs (test_slice_handoff.HandoffTests.test_excel_without_image_mapping_keeps_history_and_outputs) ... ok
+test_identical_reanalysis_is_noop_and_preserves_excel_history (test_slice_handoff.HandoffTests.test_identical_reanalysis_is_noop_and_preserves_excel_history) ... ok
+test_image_excel_resets_once_then_skips_cached_and_same_layer_rows (test_slice_handoff.HandoffTests.test_image_excel_resets_once_then_skips_cached_and_same_layer_rows) ... ok
+test_missing_actual_setting_rows_never_replay_when_value_returns (test_slice_handoff.HandoffTests.test_missing_actual_setting_rows_never_replay_when_value_returns) ... ok
+test_newer_request_during_reset_never_activates_intermediate_dataset (test_slice_handoff.HandoffTests.test_newer_request_during_reset_never_activates_intermediate_dataset) ... ok
+test_no_valid_snapshot_at_handoff_consumes_first_valid_as_baseline (test_slice_handoff.HandoffTests.test_no_valid_snapshot_at_handoff_consumes_first_valid_as_baseline) ... ok
+test_queued_stale_proposal_is_hidden_but_actual_history_is_retained (test_slice_handoff.HandoffTests.test_queued_stale_proposal_is_hidden_but_actual_history_is_retained) ... ok
+test_request_during_calculation_blocks_that_old_save (test_slice_handoff.HandoffTests.test_request_during_calculation_blocks_that_old_save) ... ok
+test_reset_failure_does_not_continue_with_mixed_history (test_slice_handoff.HandoffTests.test_reset_failure_does_not_continue_with_mixed_history) ... ok
+test_return_to_active_after_different_pending_plan_keeps_new_epoch (test_slice_handoff.HandoffTests.test_return_to_active_after_different_pending_plan_keeps_new_epoch) ... ok
+test_setting_requires_complete_dataset_and_rejects_superseded_activation (test_slice_handoff.HandoffTests.test_setting_requires_complete_dataset_and_rejects_superseded_activation) ... ok
+test_unavailable_control_rows_never_replay_after_admission_returns (test_slice_handoff.HandoffTests.test_unavailable_control_rows_never_replay_after_admission_returns) ... ok
+test_gui_import_invalidates_old_radius_and_sets_workbook_mapping (test_slice_integration.SliceIntegration.test_gui_import_invalidates_old_radius_and_sets_workbook_mapping) ... invalid command name "2272899804160_pump"
+    while executing
+"2272899804160_pump"
+    ("after" script)
+invalid command name "2272930012736_pump"
+    while executing
+"2272930012736_pump"
+    ("after" script)
+invalid command name "2272882214912_pump"
+    while executing
+"2272882214912_pump"
+    ("after" script)
+invalid command name "2272930199296_pump"
+    while executing
+"2272930199296_pump"
+    ("after" script)
+invalid command name "2272900603840_pump"
+    while executing
+"2272900603840_pump"
+    ("after" script)
+invalid command name "2272930259264_pump"
+    while executing
+"2272930259264_pump"
+    ("after" script)
+invalid command name "2272918750528_pump"
+    while executing
+"2272918750528_pump"
+    ("after" script)
+invalid command name "2272919220352_pump"
+    while executing
+"2272919220352_pump"
+    ("after" script)
+invalid command name "2272930254400_pump"
+    while executing
+"2272930254400_pump"
+    ("after" script)
+invalid command name "2272919477120_pump"
+    while executing
+"2272919477120_pump"
+    ("after" script)
+invalid command name "2272919444160_pump"
+    while executing
+"2272919444160_pump"
+    ("after" script)
+invalid command name "2272919445312_pump"
+    while executing
+"2272919445312_pump"
+    ("after" script)
+invalid command name "2272919396544_pump"
+    while executing
+"2272919396544_pump"
+    ("after" script)
+invalid command name "2272919313728_pump"
+    while executing
+"2272919313728_pump"
+    ("after" script)
+invalid command name "2272919313408_pump"
+    while executing
+"2272919313408_pump"
+    ("after" script)
+invalid command name "2272919306944_pump"
+    while executing
+"2272919306944_pump"
+    ("after" script)
+invalid command name "2272919512000_pump"
+    while executing
+"2272919512000_pump"
+    ("after" script)
+invalid command name "2272919513152_pump"
+    while executing
+"2272919513152_pump"
+    ("after" script)
+invalid command name "2272918595648_pump"
+    while executing
+"2272918595648_pump"
+    ("after" script)
+invalid command name "2272918596800_pump"
+    while executing
+"2272918596800_pump"
+    ("after" script)
+invalid command name "2272918597952_pump"
+    while executing
+"2272918597952_pump"
+    ("after" script)
+invalid command name "2272918907840_pump"
+    while executing
+"2272918907840_pump"
+    ("after" script)
+invalid command name "2272918908480_pump"
+    while executing
+"2272918908480_pump"
+    ("after" script)
+invalid command name "2272932366400_pump"
+    while executing
+"2272932366400_pump"
+    ("after" script)
+invalid command name "2272918939328_pump"
+    while executing
+"2272918939328_pump"
+    ("after" script)
+invalid command name "2272931453888_pump"
+    while executing
+"2272931453888_pump"
+    ("after" script)
+invalid command name "2272931459456_pump"
+    while executing
+"2272931459456_pump"
+    ("after" script)
+invalid command name "2272931401792_pump"
+    while executing
+"2272931401792_pump"
+    ("after" script)
+invalid command name "2272930251456_pump"
+    while executing
+"2272930251456_pump"
+    ("after" script)
+invalid command name "2272931818560_pump"
+    while executing
+"2272931818560_pump"
+    ("after" script)
+ok
+test_session_passes_actual_one_based_layer_and_prior_image_to_excel (test_slice_integration.SliceIntegration.test_session_passes_actual_one_based_layer_and_prior_image_to_excel) ... ok
+test_connected_controls_and_workbook_lock (test_slice_live_ui.SliceLiveUITests.test_connected_controls_and_workbook_lock) ... ok
+test_error_cancel_stale_and_clear_preserve_active (test_slice_live_ui.SliceLiveUITests.test_error_cancel_stale_and_clear_preserve_active) ... ok
+test_lost_activation_event_reconciles_from_authoritative_binding (test_slice_live_ui.SliceLiveUITests.test_lost_activation_event_reconciles_from_authoritative_binding) ... ok
+test_same_active_result_does_not_leave_pending_badge (test_slice_live_ui.SliceLiveUITests.test_same_active_result_does_not_leave_pending_badge) ... ok
+test_session_callback_rejects_old_context_and_inactive_session (test_slice_live_ui.SliceLiveUITests.test_session_callback_rejects_old_context_and_inactive_session) ... ok
+test_success_publishes_with_start_context_and_waits_for_ack (test_slice_live_ui.SliceLiveUITests.test_success_publishes_with_start_context_and_waits_for_ack) ... ok
+test_window_locks_workbook_and_acknowledges_only_latest_activation (test_slice_live_ui.SliceLiveUITests.test_window_locks_workbook_and_acknowledges_only_latest_activation) ... ok
+test_cancel_after_last_progress_and_byte_limit (test_slice_performance.SliceContentCacheTests.test_cancel_after_last_progress_and_byte_limit) ... ok
+test_corrupt_duplicate_zip_member_is_fully_read (test_slice_performance.SliceContentCacheTests.test_corrupt_duplicate_zip_member_is_fully_read) ... ok
+test_duplicate_contents_reuse_measurement_but_preserve_records (test_slice_performance.SliceContentCacheTests.test_duplicate_contents_reuse_measurement_but_preserve_records) ... ok
+test_eviction_and_invalid_images_still_fail (test_slice_performance.SliceContentCacheTests.test_eviction_and_invalid_images_still_fail) ... ok
+test_grayscale_polarity_thresholds_and_anisotropic_roi (test_slice_performance.SliceContentCacheTests.test_grayscale_polarity_thresholds_and_anisotropic_roi) ... ok
+test_invalid_targets_never_reach_session (test_target_temperature.TargetTemperatureTests.test_invalid_targets_never_reach_session) ... ok
+test_parse_valid_targets_with_decimal_and_scientific_notation (test_target_temperature.TargetTemperatureTests.test_parse_valid_targets_with_decimal_and_scientific_notation) ... ok
+test_session_uses_selected_target_for_opposite_recommendations (test_target_temperature.TargetTemperatureTests.test_session_uses_selected_target_for_opposite_recommendations) ... ok
+test_ambiguous_edit_never_retries_or_undoes (test_windows_ui_adapter.AdapterTests.test_ambiguous_edit_never_retries_or_undoes) ... ok
+test_cancelled_connect_is_resource_only (test_windows_ui_adapter.AdapterTests.test_cancelled_connect_is_resource_only) ... ok
+test_control_never_opens_reads_or_scrolls_process_table (test_windows_ui_adapter.AdapterTests.test_control_never_opens_reads_or_scrolls_process_table) ... ok
+test_csv_monitor_reads_without_ui_provider_requests (test_windows_ui_adapter.AdapterTests.test_csv_monitor_reads_without_ui_provider_requests) ... ok
+test_disconnect_during_preflight_cannot_send_late_apply (test_windows_ui_adapter.AdapterTests.test_disconnect_during_preflight_cannot_send_late_apply) ... ok
+test_expired_known_row_marker_does_not_authorize_save (test_windows_ui_adapter.AdapterTests.test_expired_known_row_marker_does_not_authorize_save) ... ok
+test_expired_marker_requires_known_complete_valid_past_row (test_windows_ui_adapter.AdapterTests.test_expired_marker_requires_known_complete_valid_past_row) ... ok
+test_fast_poll_returns_cached_snapshot_without_transport (test_windows_ui_adapter.AdapterTests.test_fast_poll_returns_cached_snapshot_without_transport) ... ok
+test_fractional_ir_setting_is_not_rounded_to_integer (test_windows_ui_adapter.AdapterTests.test_fractional_ir_setting_is_not_rounded_to_integer) ... ok
+test_hung_helper_is_bounded_and_only_own_helper_is_killed (test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed) ... ok
+test_initial_history_cannot_be_saved_as_a_new_measurement (test_windows_ui_adapter.AdapterTests.test_initial_history_cannot_be_saved_as_a_new_measurement) ... ok
+test_new_csv_record_saves_once_and_verifies_persistence (test_windows_ui_adapter.AdapterTests.test_new_csv_record_saves_once_and_verifies_persistence) ... ok
+test_newer_record_between_preflight_and_edit_blocks_save (test_windows_ui_adapter.AdapterTests.test_newer_record_between_preflight_and_edit_blocks_save) ... ok
+test_original_ui_read_timeout_keeps_csv_but_suspends_control (test_windows_ui_adapter.AdapterTests.test_original_ui_read_timeout_keeps_csv_but_suspends_control) ... ok
+test_partial_csv_record_cannot_trigger_save (test_windows_ui_adapter.AdapterTests.test_partial_csv_record_cannot_trigger_save) ... ok
+test_pause_state_is_read_without_table_access (test_windows_ui_adapter.AdapterTests.test_pause_state_is_read_without_table_access) ... ok
+test_preview_performs_no_sequence_or_save_requests (test_windows_ui_adapter.AdapterTests.test_preview_performs_no_sequence_or_save_requests) ... ok
+test_production_transport_has_no_table_or_scroll_entry_point (test_windows_ui_adapter.AdapterTests.test_production_transport_has_no_table_or_scroll_entry_point) ... ok
+test_saved_other_parameter_change_blocks_before_edit (test_windows_ui_adapter.AdapterTests.test_saved_other_parameter_change_blocks_before_edit) ... ok
+test_stale_completed_record_is_not_applied (test_windows_ui_adapter.AdapterTests.test_stale_completed_record_is_not_applied) ... ok
+test_text_readback_without_saved_file_does_not_claim_success (test_windows_ui_adapter.AdapterTests.test_text_readback_without_saved_file_does_not_claim_success) ... ok
+test_unrelated_pending_sequence_edit_blocks_before_ir_edit (test_windows_ui_adapter.AdapterTests.test_unrelated_pending_sequence_edit_blocks_before_ir_edit) ... ok
+
+----------------------------------------------------------------------
+Ran 511 tests in 112.610s
+
+OK

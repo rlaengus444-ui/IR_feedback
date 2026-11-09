@@ -1,0 +1,86 @@
+{
+  "review_stage": "CODE_POST_NO_RESTORE_SIMPLIFICATION",
+  "timestamp_utc": "2026-11-09T10:17:43.879012+00:00",
+  "route": "Official native collaboration followup to same sol_reviewer, requested gpt-6.1-sol/max; no independent provider/model identity attestation.",
+  "reviewed_commit": "40ada081c0523ae1f967a6fb8111fe68347130e5",
+  "base_runtime_review_commit": "58ec4edd392684ef279217bf228a298abd1293e9",
+  "decision": "APPROVE_SOURCE_IMPLEMENTATION_AND_STRICT_NO_RESTORE_PROBE; FULL_NATIVE_AND_ARTIFACT_PENDING",
+  "unresolved_source_findings": [],
+  "design_decision": "No-restore simplification accepted. Keeping the isolated primary fixture minimized retains required background/minimized recovery/negative coverage and eliminates the lifecycle exception entirely. It narrows test scope instead of weakening a Process-access boundary.",
+  "actual_source_review": {
+    "runtime": "git diff58ec4ed..40ada08 -- app is empty; original two hidden-recovery app tests remain. No control, bridge, CSV, helper timeout or application guard changed.",
+    "probe_flow": "Probe calls minimize, checks actual IsIconic, performs all subsequent hidden IR/Save/inner, duplicate/unnamed/unknown, paused and reparented-scope cases while minimized, then checks IsIconic again before teardown. There is no restore command invocation.",
+    "poison_oracle": "No restore classifier, no-helper control function or message exception remains. Main probe and all four complete-profile cases require literally empty raw poison lists and recheck through teardown. Stage/message instrumentation is retained for diagnosis, never filtering.",
+    "scope_claims": "Restore is explicitly listed as untested. Two IsIconic boundary checks plus no restore invocation establish the intended fixture state checks; actual Windows execution remains required.",
+    "candidate_retirement": "Every request records actual active-helper absence, unretired-registry absence, unlocked and shared process fence, all using exactTrue. Failed/unknown lifecycle evidence aborts with original response retained.",
+    "historical_retirement": "Separate pinned historical child reports its own exact lifecycle booleans. Child exit success, each requiredTrue and JSON structure are required; no missing-API compatibility fallback. Raw child stdout/stderr/errors and intervals are preserved."
+  },
+  "prior_findings_disposition": [
+    {
+      "id": "RESTORE-POST-01",
+      "resolution": "Explicit candidate/old lifecycle proof now rejects missing/false/string status and child failure. It no longer supports a message allowance; it remains a stricter diagnostic guard."
+    },
+    {
+      "id": "RESTORE-POST-02",
+      "resolution": "Classifier removed entirely. Every poison event fails, regardless of stage prefix; no permissive suffix matching remains."
+    },
+    {
+      "id": "asynchronous_restore_experiment",
+      "resolution": "Historical445 native baseline reproduced two D messages, including one with restore_active0 after synchronous restore returned; strict classifier correctly failed. Failed source/raw evidence is preserved. Current probe does not exercise restore or infer that an asynchronous message is safe."
+    }
+  ],
+  "checks_executed_by_reviewer": {
+    "record": "/workspace/ir-m1-recovery-2026.11.09/sol-no-restore-40ada08-checks.json",
+    "sha256": "a79c901e0c15711a0c9dfef0eb6556d05f30eabedd9df6863a13dd46a5e1193f",
+    "source_checks": {
+      "runtime_app_diff_empty": true,
+      "no_restore_command_invocation": true,
+      "no_restore_classifier_or_control": true,
+      "explicit_restore_untested": true,
+      "strict_main_poison_after_teardown": true,
+      "strict_profiles_poison_after_teardown": true,
+      "actual_iconic_both_boundaries": true
+    },
+    "lifecycle_cases": {
+      "cases": 15,
+      "passed": 15,
+      "failed": 0
+    },
+    "case_scope": "Actual frozen candidate/old wrapper functions extracted and executed with controlled response/lifecycle fault fixtures on Linux; no native Windows execution. Embedded historical child code syntax compiled.",
+    "coverage": "Actual frozen candidate/old wrapper functions were extracted and executed under15controlled lifecycle/response cases: clean request, recoverable hold, active/unretired/locked/wrong-fence candidate, each false historical flag, missing/string retirement and child-exit failure. All passed. Embedded historical child code syntax compiled. No native Windows execution by reviewer."
+  },
+  "native_evidence_inspected_not_reclassified": {
+    "source": "4459170dbffaa04c5e2b68228fdd746d4a408713",
+    "directory": "/workspace/ir-m1-recovery-2026.11.09/restore-full",
+    "restore": "Strict oracle failed both main and no-helper controls when second WM_GETTEXT occurred after restore-active flag cleared. Current no-restore change does not retrospectively pass that report.",
+    "bridge": "445 bridge report failed default3s discover timeout; exact DLL hashes/ADS were restored. This was not evidence of pin mismatch or approval of bridge loading. New exact candidate bridge gate still must pass.",
+    "status": "Historical failed run remains rejected as final artifact."
+  },
+  "pending_validation": [
+    "Actual40ada08 full default Windows run",
+    "Strict zero Process messages and actual minimized state in main and all4profile native cases",
+    "Exact packaged bridge ADS/load/tamper/deadline gates",
+    "All4real session-stack covered/minimized cases with full profiles and fresh Saves",
+    "Exact ZIP/source/manifest/module hashes and final independent artifact review"
+  ],
+  "untested_limits": [
+    "Restore lifecycle is deliberately untested in this probe; do not advertise restore validation.",
+    "Prior listed provider/race/resource-bound permutations remain unexhausted.",
+    "No actual BJT, sensor/PLC/lamp output, locked-desktop, Excel COM or long-duration equipment validation by reviewer."
+  ],
+  "approval_boundaries": {
+    "source_code_post_complete": true,
+    "runtime_source_approval_preserved": true,
+    "full_windows_validation_complete": false,
+    "artifact_approved": false,
+    "software_delivery_approved": false,
+    "algorithm_final_approval": false,
+    "equipment_application_approved": false,
+    "publication_performed": false
+  },
+  "frozen_changed_file_sha256": {
+    "release_tools/windows_hidden_recovery_probe.py": "cf118688cf1a546f3f459e1601f47f12c7bac5f0804b705bcda337d3fc2b745f",
+    "validation/SettingsRecoveryFixture.cs": "44b536a17bdefb1a2511e0280b20b2ee8baf66351a7380c19fe9d2cd374ca40d"
+  },
+  "note": "No source edits/native/equipment actions by reviewer; only external evidence written. Prior failed records are preserved and user algorithm/equipment HOLD remains. Full CI dispatch may proceed."
+}

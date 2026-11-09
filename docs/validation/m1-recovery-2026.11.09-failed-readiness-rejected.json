@@ -1,0 +1,13 @@
+{
+  "source_commit": "40ada081c0523ae1f967a6fb8111fe68347130e5",
+  "workflow_run_id": 42599651361,
+  "zip_sha256": "1ec1801637602dc87fcb890bee66975e6e06097ab1facf98d9b8c3f644f66e4b",
+  "readiness_sha256": "ae071fa313914f364d3b44c5e23df41454bf175201ffb68ad520285abdd74d37",
+  "candidate_sha256": "d3a7e035677840bfb24abfb99dd89f7e2917dd94c72c2f7a9fc8a326ad383de7",
+  "raw_hidden_recovery_outcome": "failure",
+  "mocked_publication": true,
+  "actual_github_write": false,
+  "expected_rejection": "A required Windows validation step failed",
+  "result": "passed",
+  "harness": "negative.py"
+}

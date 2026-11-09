@@ -1,0 +1,515 @@
+{
+  "passed": true,
+  "checks": {
+    "initial_fixture_prepared": true,
+    "cached_read_only_recovery": true,
+    "manual_fixture_changes_visible": true,
+    "in_place_duplicate_holds": true,
+    "in_place_new_input_inventoried": true,
+    "paused_holds": true,
+    "active_edit_holds": true,
+    "missing_sequence_holds": true,
+    "readonly_rebind": true,
+    "ambiguous_ir_holds": true,
+    "wrong_pid_identity_terminal": true,
+    "wrong_root_identity_terminal": true,
+    "fixture_restored": true,
+    "wrong_machine_identity_terminal": true,
+    "heartbeat_responsive": true,
+    "zero_save_and_navigation": true,
+    "process_panel_not_probed": true,
+    "actual_default_transport_used": true,
+    "full_m1_default_transport_and_audit": true,
+    "full_s3_default_transport_and_audit": true
+  },
+  "responses": {
+    "metadata": {
+      "records": [
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 658896,
+          "id": "labelMachineName"
+        },
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 658898,
+          "id": "labelTaskStatus"
+        },
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 658900,
+          "id": "btnSequences"
+        },
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 658892,
+          "id": "textBoxHeatingOutput"
+        },
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 658908,
+          "id": "textBoxSpeed"
+        },
+        {
+          "enabled": true,
+          "class_name": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "visible": true,
+          "hwnd": 1115264,
+          "id": "btnSave"
+        }
+      ],
+      "success": true,
+      "transport_seconds": 0.343061500000033,
+      "production_adapter_transport": true
+    },
+    "prepare": {
+      "fields": {
+        "textBoxSpeed": "5",
+        "textBoxHeatingOutput": "62"
+      },
+      "field_map": {
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 658908
+        },
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 658892
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 658896,
+        "sequences": 658900,
+        "scope_proof": {
+          "scope_parent": 724440,
+          "state_control_id": 658898,
+          "ir_hwnd": 658892,
+          "save_hwnd": 1115264,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1180734,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 855514,
+          "machine_hwnd": 658896,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 658896,
+          "state_hwnd": 658898,
+          "scope_control_id": 855514,
+          "state_thread": 2468,
+          "machine_parent": 1180734,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2468,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2468,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 658898,
+        "scope": 855514,
+        "ir": 658892,
+        "save": 1115264
+      },
+      "success": true,
+      "machine": "M1",
+      "transport_seconds": 0.38832949999999755,
+      "production_adapter_transport": true
+    },
+    "cached": {
+      "fields": {
+        "textBoxSpeed": "5",
+        "textBoxHeatingOutput": "62"
+      },
+      "field_map": {
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 658908
+        },
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 658892
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 658896,
+        "sequences": 658900,
+        "scope_proof": {
+          "scope_parent": 724440,
+          "state_control_id": 658898,
+          "ir_hwnd": 658892,
+          "save_hwnd": 1115264,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1180734,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 855514,
+          "machine_hwnd": 658896,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 658896,
+          "state_hwnd": 658898,
+          "scope_control_id": 855514,
+          "state_thread": 2468,
+          "machine_parent": 1180734,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2468,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2468,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 658898,
+        "scope": 855514,
+        "ir": 658892,
+        "save": 1115264
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.6144191999999862,
+      "production_adapter_transport": true
+    },
+    "manual_values": {
+      "fields": {
+        "textBoxSpeed": "9",
+        "textBoxHeatingOutput": "67"
+      },
+      "field_map": {
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 658908
+        },
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 658892
+        }
+      },
+      "setting": "67",
+      "handles": {
+        "machine": 658896,
+        "sequences": 658900,
+        "scope_proof": {
+          "scope_parent": 724440,
+          "state_control_id": 658898,
+          "ir_hwnd": 658892,
+          "save_hwnd": 1115264,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1180734,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 855514,
+          "machine_hwnd": 658896,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 658896,
+          "state_hwnd": 658898,
+          "scope_control_id": 855514,
+          "state_thread": 2468,
+          "machine_parent": 1180734,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2468,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2468,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 658898,
+        "scope": 855514,
+        "ir": 658892,
+        "save": 1115264
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.49655899999999065,
+      "production_adapter_transport": true
+    },
+    "duplicate_in_place": {
+      "success": false,
+      "error": "[recover_control] Control 'textBoxHeatingOutput' is ambiguous.",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.4370572999999922,
+      "production_adapter_transport": true
+    },
+    "extra_in_place": {
+      "fields": {
+        "textBoxHeatingOutput": "67",
+        "textBoxUnexpected": "1",
+        "textBoxSpeed": "9"
+      },
+      "field_map": {
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 658892
+        },
+        "textBoxUnexpected": {
+          "kind": "text",
+          "hwnd": 462310
+        },
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 658908
+        }
+      },
+      "setting": "67",
+      "handles": {
+        "machine": 658896,
+        "sequences": 658900,
+        "scope_proof": {
+          "scope_parent": 724440,
+          "state_control_id": 658898,
+          "ir_hwnd": 658892,
+          "save_hwnd": 1115264,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1180734,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 855514,
+          "machine_hwnd": 658896,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 658896,
+          "state_hwnd": 658898,
+          "scope_control_id": 855514,
+          "state_thread": 2468,
+          "machine_parent": 1180734,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2468,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2468,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 658898,
+        "scope": 855514,
+        "ir": 658892,
+        "save": 1115264
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.5045893999999862,
+      "production_adapter_transport": true
+    },
+    "paused": {
+      "success": false,
+      "error": "[recover_control] Automatic recipe updates require a fresh AUTO/RUNNING state.",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.4155653999999913,
+      "production_adapter_transport": true
+    },
+    "editing": {
+      "success": false,
+      "error": "[recover_control] The user is editing a target field; automatic Save is suspended.",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.35341850000003205,
+      "production_adapter_transport": true
+    },
+    "missing": {
+      "success": false,
+      "error": "[recover_control] The Sequence Save button is not visible; leaf metadata was not collected.",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.3981871999999953,
+      "production_adapter_transport": true
+    },
+    "rebound": {
+      "fields": {
+        "textBoxSpeed": "5",
+        "textBoxHeatingOutput": "62"
+      },
+      "field_map": {
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 396782
+        },
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 396778
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 658896,
+        "sequences": 658900,
+        "scope_proof": {
+          "scope_parent": 724440,
+          "state_control_id": 658898,
+          "ir_hwnd": 396778,
+          "save_hwnd": 396784,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1180734,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 396776,
+          "machine_hwnd": 658896,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 658896,
+          "state_hwnd": 658898,
+          "scope_control_id": 396776,
+          "state_thread": 2468,
+          "machine_parent": 1180734,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2468,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2468,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 658898,
+        "scope": 396776,
+        "ir": 396778,
+        "save": 396784
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.5173396999999795,
+      "production_adapter_transport": true
+    },
+    "ambiguous": {
+      "success": false,
+      "error": "[recover_control] A unique visible control 'textBoxHeatingOutput' is required.",
+      "error_kind": "control_wait",
+      "transport_seconds": 0.4372387999999887,
+      "production_adapter_transport": true
+    },
+    "wrong_pid": {
+      "success": false,
+      "error": "[recover_control] Exception calling \"ValidateWindow\" with \"2\" argument(s): \"The selected process/window identity changed.\"",
+      "error_kind": "identity",
+      "transport_seconds": 0.2663023999999723,
+      "production_adapter_transport": true
+    },
+    "wrong_root": {
+      "success": false,
+      "error": "[recover_control] Exception calling \"ValidateWindow\" with \"2\" argument(s): \"The selected process/window identity changed.\"",
+      "error_kind": "identity",
+      "transport_seconds": 0.26038119999998344,
+      "production_adapter_transport": true
+    },
+    "restored": {
+      "fields": {
+        "textBoxSpeed": "5",
+        "textBoxHeatingOutput": "62"
+      },
+      "field_map": {
+        "textBoxSpeed": {
+          "kind": "text",
+          "hwnd": 396804
+        },
+        "textBoxHeatingOutput": {
+          "kind": "text",
+          "hwnd": 396800
+        }
+      },
+      "setting": "62",
+      "handles": {
+        "machine": 658896,
+        "sequences": 658900,
+        "scope_proof": {
+          "scope_parent": 724440,
+          "state_control_id": 658898,
+          "ir_hwnd": 396800,
+          "save_hwnd": 396806,
+          "ir_class": "WindowsForms10.EDIT.app.0.141b42a_r7_ad1",
+          "state_parent": 1180734,
+          "state_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "state_id": "labelTaskStatus",
+          "scope_hwnd": 396798,
+          "machine_hwnd": 658896,
+          "ir_id": "textBoxHeatingOutput",
+          "machine_control_id": 658896,
+          "state_hwnd": 658898,
+          "scope_control_id": 396798,
+          "state_thread": 2468,
+          "machine_parent": 1180734,
+          "save_class": "WindowsForms10.BUTTON.app.0.141b42a_r7_ad1",
+          "machine_class": "WindowsForms10.STATIC.app.0.141b42a_r7_ad1",
+          "scope_thread": 2468,
+          "machine_id": "labelMachineName",
+          "machine_thread": 2468,
+          "scope_class": "WindowsForms10.Window.8.app.0.141b42a_r7_ad1",
+          "save_id": "btnSave"
+        },
+        "state": 658898,
+        "scope": 396798,
+        "ir": 396800,
+        "save": 396806
+      },
+      "success": true,
+      "machine": "M1",
+      "state": "AUTO",
+      "transport_seconds": 0.5136613000000239,
+      "production_adapter_transport": true
+    },
+    "wrong_machine": {
+      "success": false,
+      "error": "[recover_control] The selected native machine identity changed.",
+      "error_kind": "identity",
+      "transport_seconds": 0.34720559999999523,
+      "production_adapter_transport": true
+    }
+  },
+  "no_equipment_writes": true,
+  "scope": "Synthetic fixture only; fixture changes its own test fields. No navigation or Save requested.",
+  "untested": [
+    "Live BJT, hardware, real recipe persistence, and equipment operation."
+  ],
+  "adapter_default_helper_timeout_seconds": 3.0,
+  "bridge_sha256": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+  "helper_sha256": "395f2d0d076e8fcb172410d6f9892036c1bde2eda85e1c04e065da34781d2936",
+  "fixture_heartbeat_final": "639298170868530151,62,5,0,0",
+  "full_profiles": {
+    "M1": {
+      "machine": "M1",
+      "bound_fields": 73,
+      "passed": true,
+      "scope": "Full synthetic UI and temporary settings file; no physical equipment or Excel.",
+      "recovery_seconds": [
+        0.8129432000000065,
+        0.7848394999999755
+      ],
+      "epochs": [
+        0,
+        1
+      ],
+      "hold_reason": null,
+      "inventoried_fields": 73,
+      "settings_unchanged": true,
+      "zero_save_and_navigation": true,
+      "process_panel_not_probed": true
+    },
+    "S3": {
+      "machine": "S3",
+      "bound_fields": 74,
+      "passed": true,
+      "scope": "Full synthetic UI and temporary settings file; no physical equipment or Excel.",
+      "recovery_seconds": [
+        0.8043829000000073,
+        0.7915131999999971
+      ],
+      "epochs": [
+        0,
+        1
+      ],
+      "hold_reason": null,
+      "inventoried_fields": 74,
+      "settings_unchanged": true,
+      "zero_save_and_navigation": true,
+      "process_panel_not_probed": true
+    }
+  }
+}

@@ -1,0 +1,28 @@
+﻿{
+    "hardware_actions":  0,
+    "two_pass_32mib_ms":  51.4784,
+    "maximum_csv_bytes":  33554432,
+    "checks":  [
+                   "unchanged content accepted",
+                   "same-size preserved-mtime 42 to -1 rejected",
+                   "partial append holds without edit or Save",
+                   "complete append holds without edit or Save",
+                   "missing hash rejected",
+                   "missing mtime rejected as terminal",
+                   "invalid mtime type/range rejected as terminal: ",
+                   "invalid mtime type/range rejected as terminal: True",
+                   "invalid mtime type/range rejected as terminal: not ticks",
+                   "invalid mtime type/range rejected as terminal: 1.5",
+                   "invalid mtime type/range rejected as terminal: 0",
+                   "invalid mtime type/range rejected as terminal: -1",
+                   "invalid mtime type/range rejected as terminal: 3155378976000000000",
+                   "invalid size type rejected as terminal: ",
+                   "invalid size type rejected as terminal: True",
+                   "invalid size type rejected as terminal: 32",
+                   "invalid size type rejected as terminal: 1.5",
+                   "oversized evidence rejected",
+                   "mismatched digest rejected",
+                   "32 MiB bounded two-pass content assertion accepted"
+               ],
+    "passed":  true
+}

@@ -1,0 +1,80 @@
+{
+  "review_stage": "HISTORICAL_FAILED_NATIVE_ATTEMPT_ASSESSMENT",
+  "review_time_utc": "2026-11-09T09:44:50.479957+00:00",
+  "reviewer_route": "Same official native collaboration sol_reviewer, requested gpt-6.1-sol/max; no independent provider identity attestation.",
+  "source_commit": "9011e0628f8e9c0a6cae4a56715502a7b6d7f44b",
+  "artifact_zip_sha256": "20754c7d33521d153126adcd8f92aaca4fd2e0687bbc77904bc25844c034e2aa",
+  "candidate_zip_sha256_matches": true,
+  "decision": "REJECT_AS_FINAL_ARTIFACT; KEEP_FAILED_NATIVE_EVIDENCE",
+  "gate_results": {
+    "build": "success",
+    "tests": "success",
+    "smoke": "success",
+    "bridge": "success",
+    "csv_guard": "success",
+    "native_discovery": "success",
+    "slice_perf": "success",
+    "settings_recovery": "success",
+    "background": "success",
+    "hidden_recovery": "failure",
+    "hidden_session": "failure",
+    "excel": "failure",
+    "reverify": "success"
+  },
+  "successful_gate_count": 10,
+  "native_results_inspected": {
+    "windows_packaged_unit_tests": "Raw tests.txt ends Ran511 tests in126.675s / OK. Reviewer inspected supplied native evidence; did not execute Windows.",
+    "old_visibility_failure": "Historical old package produced recover_control Sequence Save button not visible; new package native and actual WinForms outer hiding recovery succeeded on the same synthetic view.",
+    "visibility_semantics": "Recorded native style and IsWindowVisible distinguish hidden outer ancestor from still WS_VISIBLE Sequence/IR/Save; explicit hidden IR/Save/inner styles were cleared and protected.",
+    "large_profile_native_recovery": "M1 full73 and S3 full74 saved-input native cases recovered with epochs[0,1], ~1.8s helper requests, unchanged settings and no Save/navigation. Managed full-profile cases failed from marker PID reuse, subsequently source-fixed in58ec4ed; first report is retained unchanged.",
+    "m1_real_session_stack": "M1 covered and minimized cases passed, two actual native recovery reads, no recovery writes/navigation, unchanged settings and preserved graph. Later fresh layers used normal Save path at75,70,65,60 with counts1..4.",
+    "s3_session_stack": "Both cases reached actual recovered epoch and four Saves ending60, but failed full contiguous-history assertion because chart layer5 is absent. This is not a passed session case.",
+    "excel": "Raw Excel report explicitly says Excel COM not registered / not tested. No Excel COM pass inferred.",
+    "other_gates": "Bridge ADS/tamper/size/missing probes, CSV guard, native discovery, existing settings-rebind and background probes report pass; exact historical source/ZIP and report identity still apply."
+  },
+  "remaining_failure_analysis": [
+    {
+      "check": "blank_id_holds",
+      "observation": "WinForms Name empty produced numeric AutomationId1183174, included freshly in returned field_map and fields. It was not a genuinely blank provider ID.",
+      "acceptable_test_correction": "Report unnamed-provider-ID behavior precisely and prove the complete actual persisted-schema recovery path holds on that unknown input with zero Save; retain actual blank-ID guard and mark true blank provider case unconstructed/unexecuted.",
+      "not_acceptable": "Treating helper success as control-admission success, relaxing unknown-field schema, or claiming actual blank UIA ID rejection was tested."
+    },
+    {
+      "check": "process_not_probed",
+      "observation": "Report contains only a failing boolean, without poison messages or stage attribution. Other full profile/settings probes show no poison access. Cause remains unresolved.",
+      "required_next_evidence": "Capture exact messages, HWND/class and timestamps/stage deltas around fixture actions and each target metadata operation. Preserve strict gate and original failure.",
+      "not_acceptable": "Waiving actual Process/provider access or resetting counters merely to turn the report green without causal evidence."
+    },
+    {
+      "check": "S3 contiguous chart history",
+      "observation": "Raw snapshots include layer_index4 during HOLD, but omit observation_key, freshness and temperature. LayerHistory.record requires a key and valid temperature, so layer number alone does not prove a graph-eligible observation.",
+      "hypothesis_not_proven": "~1.8s native recovery requests plus synthetic rapid rows may allow that row to expire before Python computes freshness; actual snapshot evidence is needed.",
+      "required_next_evidence": "Record observation_key/is_new/freshness/temperature, compare produced rows with actual eligible observations, preserve original failed contiguous range, and prove all eligible emitted observations plus prior graph prefix remain. Do not relax age/CSV/control barriers."
+    }
+  ],
+  "unresolved": [
+    "Exact Process poison origin",
+    "Actual S3 missing-chart eligibility/cause",
+    "Follow-up native execution of marker fix and corrected oracles",
+    "Final source/ZIP/manifest native evidence and independent artifact review"
+  ],
+  "artifact_approval": false,
+  "software_delivery_approval": false,
+  "equipment_application_approved": false,
+  "algorithm_final_approval": false,
+  "evidence_sha256": {
+    "readiness.json": "f8bddc156f97af4aabac097178e314b90729d9d1db78e6a6b458d1addc9a2894",
+    "candidate.json": "2d6d3be12cda39f4d968eee7fe04b159df4b94a2a7300631a413e95b0a5b7cd4",
+    "tests.txt": "e3f8dbb4f6ac8b9fcf6d59008b66c4fe73bdd87ca88745563059579bc03677a4",
+    "hidden-recovery.json": "85014067406e9a9511cdefea39f9b03eccab517c99bb5f5ab6f46a6ff94e5bcb",
+    "hidden-session.json": "196eaf16ed11268c41a8217c1f58df204989943f67091d7c35c4e5b7402f2cba",
+    "bridge.json": "1af2f311400b7ca667fb578b56abcc7932c91a7d612108f72de03a86f3c1aea1",
+    "settings-recovery.json": "4fe222e0a1d453b2c3532ef4a472fa615a7c6137142a137fc26c0eb3dea03db3",
+    "background.json": "6e639c5ead219b3f7bafd48716f3fbf41c56b8d62ad87b87340be47546b84d5b",
+    "excel.json": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03"
+  },
+  "notes": [
+    "All prior source review and failed native records preserved. Source CODE_POST approval is not final artifact approval.",
+    "No production source, native execution, equipment action or publication by reviewer."
+  ]
+}
