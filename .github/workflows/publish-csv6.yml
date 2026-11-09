@@ -1,37 +1,112 @@
-name: Validate and publish IR csv.6
+name: Publish reviewed M1 recovery evaluation ZIP
 on:
   workflow_dispatch:
 permissions:
   contents: write
+  actions: read
 jobs:
-  validate-and-upload:
+  publish-reviewed-candidate:
     runs-on: windows-2022
-    timeout-minutes: 15
+    timeout-minutes: 8
     steps:
-      # Historical csv.6 must use its matching source and one-argument verifier.
+      - name: Preserve checkout bytes
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
         with:
-          ref: 9f1cb65ac0f120445ebc7b796dae4171d9cc755d
-      - name: Verify complete package and run Windows tests using packaged runtime
-        shell: pwsh
-        run: |
-          $zip = "$env:GITHUB_WORKSPACE\dist\IRFeedback-2026.10.27-csv.6.zip"
-          if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne 'FF216AACA807A47B44DE34F47194AFF88F28DD0F08A9874F330CDD8C67BE5E84') { throw 'ZIP hash mismatch' }
-          py -3 release_tools/verify_package.py $zip
-          if ($LASTEXITCODE -ne 0) { throw 'Incomplete package' }
-          $dest = Join-Path $env:RUNNER_TEMP 'IRFeedback'
-          Expand-Archive -Path $zip -DestinationPath $dest
-          if ((Get-FileHash "$dest\app\workbook-replay.settings.json" -Algorithm SHA256).Hash -ne '3453C5F1911F484CED847505CE30C5F94367EB168F8F5402F5EC96AC31D3A8E6') { throw 'Default settings mismatch' }
-          Copy-Item 'app\test_layer_charts.py','app\test_session.py','app\test_target_temperature.py','app\test_layer_algorithm.py','app\test_new_features.py' "$dest\app"
-          Copy-Item 'app\input_example_validation.json','app\random80_validation.json' "$dest\app"
-          Push-Location "$dest\app"
-          & "$dest\runtime\python.exe" -m unittest -v test_layer_charts test_session test_target_temperature test_layer_algorithm test_new_features
-          if ($LASTEXITCODE -ne 0) { throw 'Windows package tests failed' }
-          Pop-Location
-      - name: Upload verified ZIP to draft release
+          ref: 93c5fac0e1bac61d77f83cca9dec149e927dc0a0
+      - name: Check out the immutable source that produced the reviewed ZIP
+        uses: actions/checkout@v4
+        with:
+          ref: e97564fb998f31cce27328bc4e326b164869c649
+          path: reviewed-source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify pinned native bridge build provenance
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          gh release upload 2026.10.27-csv.6 'dist/IRFeedback-2026.10.27-csv.6.zip' --clobber
-          if ($LASTEXITCODE -ne 0) { throw 'Release asset upload failed' }
+          @'
+          import hashlib, io, json, subprocess, zipfile
+          from pathlib import Path
+          repo = 'rlaengus444-ui/IR_feedback'
+          commit = '6f378742c99eaf4d16ac760183612eaf1581806d'
+          endpoint = f'repos/{repo}/actions/artifacts/13661787112'
+          metadata = json.loads(subprocess.check_output(['gh', 'api', endpoint], timeout=30))
+          assert metadata['id'] == 13661787112 and metadata['name'] == 'm1-recovery-bridge-' + commit
+          assert metadata['expired'] is False and metadata['size_in_bytes'] == 24323
+          assert metadata['digest'] == 'sha256:61007e2eaed226f4f10e7ae90d8f2940d2001378f46a21beb5b5e465e682ad9b'
+          run = metadata['workflow_run']
+          assert run['id'] == 42592342935 and run['head_sha'] == commit
+          assert run['repository_id'] == run['head_repository_id'] == 1434868115
+          raw = subprocess.check_output(['gh', 'api', endpoint + '/zip'], timeout=60)
+          assert len(raw) == 24323 and hashlib.sha256(raw).hexdigest() == metadata['digest'][7:]
+          with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              assert len(archive.namelist()) == len(set(archive.namelist())) and archive.testzip() is None
+              build = json.loads(archive.read('build.json'))
+              assert build['source_commit'] == commit and build['build_succeeded'] is True
+              assert build['equipment_application_approved'] is False
+              dll = archive.read('UiaBridge.dll')
+              assert hashlib.sha256(dll).hexdigest() == build['dll_sha256'] == 'aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e'
+              assert dll == Path('reviewed-source/app/UiaBridge.dll').read_bytes()
+              for name, digest in build['source_sha256'].items():
+                  assert hashlib.sha256(archive.read(Path(name).name)).hexdigest() == digest
+                  assert hashlib.sha256(Path('reviewed-source', name).read_bytes()).hexdigest() == digest
+              assert len(build['source_sha256']) == 6
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw 'Bridge build provenance mismatch' }
+      - name: Download the exact reviewed artifact by immutable API ID
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          @'
+          import hashlib, json, os, subprocess, zipfile
+          from pathlib import Path, PurePosixPath
+          repo = 'rlaengus444-ui/IR_feedback'
+          artifact_id = 13666271765
+          run_id = 42601104496
+          source = 'e97564fb998f31cce27328bc4e326b164869c649'
+          expected = '13a4316f3bd330eb59ba996617b4d7f732e9413afa198626368d54d56aa355f7'
+          endpoint = f'repos/{repo}/actions/artifacts/{artifact_id}'
+          metadata = json.loads(subprocess.check_output(['gh', 'api', endpoint], timeout=30))
+          assert metadata['id'] == artifact_id and metadata['name'] == 'slice-candidate-' + source
+          assert metadata['expired'] is False and metadata['size_in_bytes'] == 34940496
+          assert metadata['digest'] == 'sha256:' + expected
+          assert metadata['workflow_run']['id'] == run_id and metadata['workflow_run']['head_sha'] == source
+          assert metadata['workflow_run']['repository_id'] == 1434868115
+          assert metadata['workflow_run']['head_repository_id'] == 1434868115
+          archive_path = Path(os.environ['RUNNER_TEMP']) / 'verified-reconnect-evidence.zip'
+          with archive_path.open('xb') as stream:
+              subprocess.run(['gh', 'api', endpoint + '/zip'], stdout=stream, check=True, timeout=60)
+          assert archive_path.stat().st_size == 34940496
+          assert hashlib.sha256(archive_path.read_bytes()).hexdigest() == expected
+          output = Path(os.environ['RUNNER_TEMP']) / 'verified-reconnect-candidate'
+          output.mkdir()
+          with zipfile.ZipFile(archive_path) as archive:
+              infos = archive.infolist()
+              assert len(infos) <= 64
+              assert sum(item.file_size for item in infos) <= 64 * 1024 * 1024
+              seen = set()
+              for item in infos:
+                  name = item.filename
+                  parts = name.rstrip('/').split('/')
+                  assert name and not name.startswith('/') and '\\' not in name
+                  assert all(p not in ('', '.', '..') and ':' not in p and not p.endswith((' ', '.')) for p in parts)
+                  assert not (item.external_attr >> 16 & 0o170000 == 0o120000)
+                  folded = name.rstrip('/').casefold()
+                  assert folded not in seen
+                  seen.add(folded)
+              assert archive.testzip() is None
+              archive.extractall(output)
+          print('Verified exact artifact ID, provenance, archive digest and safe extraction.')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw 'Exact reviewed artifact download failed' }
+      - name: Validate exact evidence and publish only the reviewed evaluation ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          python release_tools/publish_m1_recovery_candidate.py "$env:RUNNER_TEMP\verified-reconnect-candidate" e97564fb998f31cce27328bc4e326b164869c649 a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d docs/validation/m1-recovery-2026.11.09-release-review.json "$env:GITHUB_WORKSPACE\reviewed-source"
+          if ($LASTEXITCODE -ne 0) { throw 'Reviewed live maximum IR evaluation publication failed' }
