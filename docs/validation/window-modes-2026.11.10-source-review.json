@@ -1,0 +1,87 @@
+{
+  "recorded_utc": "2026-11-10T10:25:55.239138+00:00",
+  "reviewer_task": "/root/sol_reviewer_window_modes_nov10",
+  "route": "Official collaboration agent task/follow-ups; this agent performed source/tool inspection",
+  "requested_configuration": {
+    "agent": "sol_reviewer",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "max",
+    "configuration_source": "Parent task states these official collaboration invocation settings"
+  },
+  "provider_identity_independently_attested": false,
+  "base_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+  "target_commit": "e8bf3e1b9620f9d948be7f8497cb7efaa45699d8",
+  "source_sha256": {
+    "release_tools/windows_hidden_session_probe.py": "2c90d112093641d8a6ac55b0ebe4e1516d80a12c94d089f68d533e07fc980996",
+    "validation/CsvRouteFixture.cs": "5dc0fa10e6e55ae9eb5da4230231d432f799256cb7b7f3e64615e173bc4568ca",
+    ".github/workflows/window-modes.yml": "f86bfd912c4ca4db3328677c3a3575b89f9193fa3b35bb3d1d21150a8111732c"
+  },
+  "production_app_dist_version_unchanged": true,
+  "released_package": {
+    "version": "2026.11.09-m1-recovery.1",
+    "sha256": "a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d",
+    "bytes": 35398906
+  },
+  "real_devices_accessed_by_reviewer": false,
+  "release_or_distribution_performed_by_reviewer": false,
+  "native_result_review": "Pending Windows result for this target; first Windows run failed",
+  "holds": [
+    "Real deployed BJT UI/fullscreen untested",
+    "Sensors, PLCs, lamp output, Excel COM, locked desktop, DPI/monitor changes and long-run thermal response untested",
+    "Final control/equipment HOLD remains; source review does not lift it"
+  ],
+  "stage": "CODEPOST_SOURCE",
+  "status": "Source review complete: no unresolved blockers to isolated validation CI; native approval pending",
+  "inspected_files": [
+    "release_tools/windows_hidden_session_probe.py",
+    "validation/CsvRouteFixture.cs",
+    ".github/workflows/window-modes.yml"
+  ],
+  "resolved_findings": [
+    "Sampler uses IsHandleCreated and Screen.FromRectangle; no diagnostic HWND creation",
+    "Native styles/state/geometry recorded and gated",
+    "Incremental/failing step facts retained",
+    "Late assertions/capture errors cannot retain success",
+    "Successful resumed foreground sample required before serial fresh input",
+    "Large-window oracle permits only recorded OS maximum tracking clamp",
+    "Fixture-only foreground handoff validates real HWND PID; production focus code unchanged",
+    "Only retired read-only initial validate timeouts with preserved grant and one later prepare are admitted before baseline; later outage/runner/adapter counters fixed",
+    "Two added transitions use passive events/timestamps, no request delays; permanent fixture event UTC must fall inside successful apply request"
+  ],
+  "reviewer_checks": [
+    {
+      "check": "Full diff and relevant released helper/adapter/recovery source read",
+      "result": "PASS"
+    },
+    {
+      "check": "Python in-memory compile",
+      "result": "PASS"
+    },
+    {
+      "check": "Workflow YAML and read-only Windows configuration",
+      "result": "PASS"
+    },
+    {
+      "check": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "check": "app/dist/VERSION delta from released base",
+      "result": "EMPTY"
+    }
+  ],
+  "first_run": {
+    "source_commit": "c1acb1a64c257507df3b3e8364c1f97d4aff2f66",
+    "result": "REJECTED: overall false; all four cases false; incomplete native validation",
+    "json_path": "/workspace/ir-window-modes-2026.11.10/first-ci/window-modes.json",
+    "json_sha256": "fffd8b18ffe645035c350fe8be3a89e66185149f31e97fbb9610bf471b016821",
+    "artifact_zip_sha256": "9f9fd41700659428a628c0c26b30968976fd5483f39ac17d2a63a92363cfe229",
+    "failures": [
+      "M1 covered: initial validate UiReadTimeout 3.0179s recovered; strict global outage oracle failed before mode audit",
+      "M1 initially minimized: small/maximize completed; 1100x800 requested was OS-clamped to1044x788 on1024x768; exact-size oracle rejected before fresh input",
+      "S3 cases: external owned-cover foreground restore failed"
+    ],
+    "production_window_mode_bug_established": false,
+    "evidence_preserved_unchanged": true
+  }
+}

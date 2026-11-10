@@ -1,0 +1,524 @@
+{
+  "stage": "CODEPOST_FINAL_SOURCE_AND_NATIVE_EVIDENCE",
+  "recorded_utc": "2026-11-10T10:34:39.101805+00:00",
+  "reviewer_task": "/root/sol_reviewer_window_modes_nov10",
+  "route": "Official collaboration agent task/follow-ups; this agent performed source/tool inspection",
+  "requested_configuration": {
+    "agent": "sol_reviewer",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "max",
+    "configuration_source": "Parent task states these official collaboration invocation settings"
+  },
+  "provider_identity_independently_attested": false,
+  "base_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+  "target_commit": "e8bf3e1b9620f9d948be7f8497cb7efaa45699d8",
+  "source_sha256": {
+    "release_tools/windows_hidden_session_probe.py": "2c90d112093641d8a6ac55b0ebe4e1516d80a12c94d089f68d533e07fc980996",
+    "validation/CsvRouteFixture.cs": "5dc0fa10e6e55ae9eb5da4230231d432f799256cb7b7f3e64615e173bc4568ca",
+    ".github/workflows/window-modes.yml": "f86bfd912c4ca4db3328677c3a3575b89f9193fa3b35bb3d1d21150a8111732c"
+  },
+  "decision": "APPROVED FOR THE STATED SYNTHETIC VALIDATION CONCLUSION ONLY",
+  "blocking_findings": [],
+  "source_and_native_review_complete": true,
+  "conclusion": "No resize, maximize/restore, minimize/restore or synthetic borderless-fullscreen failure was reproduced in the unchanged released session/native transport under these owned M1/S3 fixtures. This evidence does not establish actual deployed BJT or equipment validation.",
+  "github_metadata_independently_fetched_by_reviewer": {
+    "tools": [
+      "github_fetch",
+      "github_fetch_workflow_run_artifacts",
+      "github_fetch_workflow_run_jobs",
+      "github_fetch_workflow_job_logs"
+    ],
+    "run_id": 42798783313,
+    "run_url": "https://github.com/rlaengus444-ui/IR_feedback/actions/runs/42798783313",
+    "run_status": "completed",
+    "run_conclusion": "success",
+    "run_head_sha": "e8bf3e1b9620f9d948be7f8497cb7efaa45699d8",
+    "branch": "test/window-modes-20261110",
+    "artifact_id": 13753859497,
+    "artifact_bytes": 83868,
+    "artifact_digest": "sha256:027ebd50b6cd6abd6af1b86637c51d6f36a52b94b45351e73994447c305bec59",
+    "artifact_expired": false,
+    "job_id": 129770643797,
+    "job_conclusion": "success",
+    "package_verification_and_probe_steps": "completed/success",
+    "job_log_package_verification": "Package verified: released.zip sha256 a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d",
+    "job_log_artifact_digest_confirmed": true
+  },
+  "reviewer_independent_artifact_audit": {
+    "result": "PASS",
+    "method": "Reviewer-executed assertions over ZIP members, file/source hashes, raw native call/snapshot records, geometry/state/styles, foreground transfers, helper retirement, history and overlap timestamps; not pass flags alone",
+    "artifact_zip_path": "/workspace/ir-window-modes-2026.11.10/final-artifact.zip",
+    "artifact_zip_sha256": "027ebd50b6cd6abd6af1b86637c51d6f36a52b94b45351e73994447c305bec59",
+    "artifact_members_byte_equal_extracted_files": true,
+    "probe_and_fixture_byte_equal_frozen_commit": true,
+    "released_runtime_module_and_bridge_hashes_match_frozen_released_source": true,
+    "result_json_path": "/workspace/ir-window-modes-2026.11.10/final-ci/window-modes.json",
+    "result_json_sha256": "6fc279be31b8375347b5b9b82c3102b72c0cff6735b589eaeeee719b8b5c3587",
+    "totals": {
+      "cases": 4,
+      "serial_transitions": 28,
+      "native_apply_request_overlap_transitions": 8,
+      "transitions": 36,
+      "successful_native_applies_and_confirmed_saves": 52,
+      "prebaseline_readonly_validate_timeouts": 1,
+      "postbaseline_outages": 0,
+      "foreground_samples_outside_operator_intervals": 3977,
+      "operator_exclusion_intervals": 36,
+      "process_accesses": 0
+    },
+    "checks": [
+      "All 13 applies per case correspond exactly to fresh valid keyed observations and Saves1..13; powers75..15 in 5 percentage-point decrements",
+      "No duplicate or old-row Save; mode commands leave settings and Save/navigation counts unchanged in serial cases",
+      "Full73-field M1 and74-field S3 inventories confirmed by prepare/recovery/verify calls; live non-IR equality assertions passed",
+      "Actual root/scope/IR/Save HWNDs stay unchanged; handle event logs contain four creations and no destruction before teardown",
+      "Observed native IsZoomed/IsIconic/styles and rectangles establish real mode changes; anchored IR and Save rectangles move",
+      "Cover handoff stays in owned fixture code with matching target PID/HWND; all sampled foreground checks pass outside explicit intervals; serial fresh inputs follow successful resumed samples",
+      "Every eligible emitted layer equals retained history; all52 applied fresh layers retained; one history segment per case",
+      "All native helper retirement flags true, workers retired, one runner/connected event and one eventual Sequence entry/preparation per case",
+      "One initial3.02s validate timeout is read-only, actuation_possible false, helper retired and process fence clear; initial grant preserved; all later continuity counters unchanged",
+      "All eight fixture mode event timestamps strictly inside successful unmodified native apply request intervals"
+    ],
+    "cases": [
+      {
+        "machine": "M1",
+        "initially_minimized": false,
+        "passed": true,
+        "profile_fields": 73,
+        "prebaseline_readonly_validate_timeouts": 1,
+        "postbaseline_outages": 0,
+        "saves": 13,
+        "powers": [
+          75.0,
+          70.0,
+          65.0,
+          60.0,
+          55.0,
+          50.0,
+          45.0,
+          40.0,
+          35.0,
+          30.0,
+          25.0,
+          20.0,
+          15.0
+        ],
+        "save_counts": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "history_layers": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21
+        ],
+        "all_applied_fresh_layers_retained": true,
+        "foreground_samples": 994,
+        "explicit_operator_intervals": 9,
+        "worker_retired": true,
+        "all_native_helpers_retired": true,
+        "process_table_accesses": 0,
+        "native_inflight_request_overlap": [
+          {
+            "mode": "maximized",
+            "request_begin_utc": "2026-11-10T10:24:55.801555+00:00",
+            "fixture_mode_event_utc": "2026-11-10T10:24:56.0070985Z",
+            "request_end_utc": "2026-11-10T10:24:56.440629+00:00",
+            "seconds_after_request_start": 0.205543,
+            "seconds_before_request_return": 0.433531
+          },
+          {
+            "mode": "normal_restore",
+            "request_begin_utc": "2026-11-10T10:24:58.507075+00:00",
+            "fixture_mode_event_utc": "2026-11-10T10:24:58.6669763Z",
+            "request_end_utc": "2026-11-10T10:24:59.149066+00:00",
+            "seconds_after_request_start": 0.159901,
+            "seconds_before_request_return": 0.48209
+          }
+        ]
+      },
+      {
+        "machine": "M1",
+        "initially_minimized": true,
+        "passed": true,
+        "profile_fields": 73,
+        "prebaseline_readonly_validate_timeouts": 0,
+        "postbaseline_outages": 0,
+        "saves": 13,
+        "powers": [
+          75.0,
+          70.0,
+          65.0,
+          60.0,
+          55.0,
+          50.0,
+          45.0,
+          40.0,
+          35.0,
+          30.0,
+          25.0,
+          20.0,
+          15.0
+        ],
+        "save_counts": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "history_layers": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "all_applied_fresh_layers_retained": true,
+        "foreground_samples": 1022,
+        "explicit_operator_intervals": 9,
+        "worker_retired": true,
+        "all_native_helpers_retired": true,
+        "process_table_accesses": 0,
+        "native_inflight_request_overlap": [
+          {
+            "mode": "maximized",
+            "request_begin_utc": "2026-11-10T10:25:34.091405+00:00",
+            "fixture_mode_event_utc": "2026-11-10T10:25:34.2064057Z",
+            "request_end_utc": "2026-11-10T10:25:34.733925+00:00",
+            "seconds_after_request_start": 0.115,
+            "seconds_before_request_return": 0.52752
+          },
+          {
+            "mode": "normal_restore",
+            "request_begin_utc": "2026-11-10T10:25:36.815896+00:00",
+            "fixture_mode_event_utc": "2026-11-10T10:25:36.8570988Z",
+            "request_end_utc": "2026-11-10T10:25:37.463131+00:00",
+            "seconds_after_request_start": 0.041202,
+            "seconds_before_request_return": 0.606033
+          }
+        ]
+      },
+      {
+        "machine": "S3",
+        "initially_minimized": false,
+        "passed": true,
+        "profile_fields": 74,
+        "prebaseline_readonly_validate_timeouts": 0,
+        "postbaseline_outages": 0,
+        "saves": 13,
+        "powers": [
+          75.0,
+          70.0,
+          65.0,
+          60.0,
+          55.0,
+          50.0,
+          45.0,
+          40.0,
+          35.0,
+          30.0,
+          25.0,
+          20.0,
+          15.0
+        ],
+        "save_counts": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "history_layers": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "all_applied_fresh_layers_retained": true,
+        "foreground_samples": 966,
+        "explicit_operator_intervals": 9,
+        "worker_retired": true,
+        "all_native_helpers_retired": true,
+        "process_table_accesses": 0,
+        "native_inflight_request_overlap": [
+          {
+            "mode": "maximized",
+            "request_begin_utc": "2026-11-10T10:26:10.577373+00:00",
+            "fixture_mode_event_utc": "2026-11-10T10:26:10.6594144Z",
+            "request_end_utc": "2026-11-10T10:26:11.220148+00:00",
+            "seconds_after_request_start": 0.082041,
+            "seconds_before_request_return": 0.560734
+          },
+          {
+            "mode": "normal_restore",
+            "request_begin_utc": "2026-11-10T10:26:13.277571+00:00",
+            "fixture_mode_event_utc": "2026-11-10T10:26:13.3084419Z",
+            "request_end_utc": "2026-11-10T10:26:13.929886+00:00",
+            "seconds_after_request_start": 0.03087,
+            "seconds_before_request_return": 0.621445
+          }
+        ]
+      },
+      {
+        "machine": "S3",
+        "initially_minimized": true,
+        "passed": true,
+        "profile_fields": 74,
+        "prebaseline_readonly_validate_timeouts": 0,
+        "postbaseline_outages": 0,
+        "saves": 13,
+        "powers": [
+          75.0,
+          70.0,
+          65.0,
+          60.0,
+          55.0,
+          50.0,
+          45.0,
+          40.0,
+          35.0,
+          30.0,
+          25.0,
+          20.0,
+          15.0
+        ],
+        "save_counts": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "history_layers": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "all_applied_fresh_layers_retained": true,
+        "foreground_samples": 995,
+        "explicit_operator_intervals": 9,
+        "worker_retired": true,
+        "all_native_helpers_retired": true,
+        "process_table_accesses": 0,
+        "native_inflight_request_overlap": [
+          {
+            "mode": "maximized",
+            "request_begin_utc": "2026-11-10T10:26:48.168378+00:00",
+            "fixture_mode_event_utc": "2026-11-10T10:26:48.1750257Z",
+            "request_end_utc": "2026-11-10T10:26:48.813371+00:00",
+            "seconds_after_request_start": 0.006647,
+            "seconds_before_request_return": 0.638346
+          },
+          {
+            "mode": "normal_restore",
+            "request_begin_utc": "2026-11-10T10:26:50.865073+00:00",
+            "fixture_mode_event_utc": "2026-11-10T10:26:51.0311268Z",
+            "request_end_utc": "2026-11-10T10:26:51.510870+00:00",
+            "seconds_after_request_start": 0.166053,
+            "seconds_before_request_return": 0.479744
+          }
+        ]
+      }
+    ]
+  },
+  "native_geometry_shared_by_all_four_cases": [
+    {
+      "mode": "normal_small",
+      "size": [
+        640,
+        400
+      ],
+      "style": "0x16cf0000"
+    },
+    {
+      "mode": "maximized",
+      "size": [
+        1040,
+        744
+      ],
+      "style": "0x17cf0000"
+    },
+    {
+      "mode": "normal_large",
+      "requested_size": [
+        1100,
+        800
+      ],
+      "actual_size": [
+        1044,
+        788
+      ],
+      "reason": "recorded OS maximum tracking limit",
+      "style": "0x16cf0000"
+    },
+    {
+      "mode": "synthetic_borderless_fullscreen",
+      "size": [
+        1024,
+        768
+      ],
+      "client_size": [
+        1024,
+        768
+      ],
+      "screen_rect": [
+        0,
+        0,
+        1024,
+        768
+      ],
+      "style": "0x16010000"
+    },
+    {
+      "mode": "windowed_restore",
+      "size": [
+        760,
+        600
+      ],
+      "style": "0x16cf0000"
+    },
+    {
+      "mode": "minimized",
+      "size": [
+        160,
+        28
+      ],
+      "style": "0x36cf0000"
+    },
+    {
+      "mode": "normal_restore",
+      "size": [
+        760,
+        600
+      ],
+      "style": "0x16cf0000"
+    }
+  ],
+  "supplied_bjt_source_review": {
+    "path": "/workspace/attachments/ddb8ad57-b8ee-4aff-a1db-228d9b6200c7/MainForm.cs",
+    "sha256": "b0fdd5b18f9b42c74804f75bef66c4ca841a8da3441c4fc32445761cfed96877",
+    "reviewer_read": true,
+    "maximize_handler_line": 409,
+    "resize_handler_line": 550,
+    "finding": "Maximize toggles FormWindowState.Normal/Maximized and restores ClientSize; resize handler adjusts padding/icon. No explicit handle recreation or independent fullscreen path in the inspected handlers.",
+    "actual_deployed_binary_tested": false
+  },
+  "earlier_failure_preserved": {
+    "path": "/workspace/ir-window-modes-2026.11.10/first-ci/window-modes.json",
+    "sha256": "fffd8b18ffe645035c350fe8be3a89e66185149f31e97fbb9610bf471b016821",
+    "source_commit": "c1acb1a64c257507df3b3e8364c1f97d4aff2f66",
+    "status": "FAILED; never relabeled as passing",
+    "explanation": "Initial timeout recovered but old oracle prohibited it; large normal size was OS-clamped; external cover activation was denied. Subsequent changes affect test fixtures/oracles only."
+  },
+  "production_application_algorithm_timeouts_guards_and_distribution_unchanged": true,
+  "reviewer_did_not_run_real_devices_or_publish_a_release": true,
+  "limits": [
+    "Owned synthetic WinForms fixtures; global BJT discovery, real deployed UI and real fullscreen not exercised",
+    "Request overlap does not prove the transition occurred during IR edit or Save click",
+    "Native history data was checked; actual Tk chart rendering was not tested",
+    "DPI/monitor changes, exclusive fullscreen, locked desktop and Excel COM untested",
+    "No real sensor, PLC, lamp output, thermal stability or long-duration equipment validation; normal-looking stale sensor values remain a CSV limitation",
+    "Foreground method samples at20ms outside explicit operator transitions; excludes those logged intervals"
+  ],
+  "final_control_and_hardware_hold_lifted": false,
+  "final_review_status": "COMPLETE for frozen validation-only diff and actual Windows synthetic evidence; hardware/final-control approval remains HOLD"
+}

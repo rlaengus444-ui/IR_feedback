@@ -1,0 +1,25 @@
+{
+  "verification_source": "e8bf3e1b9620f9d948be7f8497cb7efaa45699d8",
+  "released_source": "e97564fb998f31cce27328bc4e326b164869c649",
+  "released_version": "2026.11.09-m1-recovery.1",
+  "released_zip_sha256": "a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d",
+  "runtime_changed": false,
+  "workflow_run_id": 42798783313,
+  "workflow_url": "https://github.com/rlaengus444-ui/IR_feedback/actions/runs/42798783313",
+  "artifact_id": 13753859497,
+  "artifact_bytes": 83868,
+  "artifact_sha256": "027ebd50b6cd6abd6af1b86637c51d6f36a52b94b45351e73994447c305bec59",
+  "first_run": {
+    "run_id": 42795689275,
+    "source": "c1acb1a64c257507df3b3e8364c1f97d4aff2f66",
+    "validation_passed": false,
+    "report_sha256": "fffd8b18ffe645035c350fe8be3a89e66185149f31e97fbb9610bf471b016821"
+  },
+  "windows_cases": 4,
+  "serial_transitions": 28,
+  "transitions_during_native_apply_request": 8,
+  "confirmed_saves": 52,
+  "actual_save_click_overlap_proven": false,
+  "actual_equipment_tested": false,
+  "equipment_application_approved": false
+}

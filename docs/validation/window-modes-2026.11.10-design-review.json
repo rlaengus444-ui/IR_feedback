@@ -1,0 +1,48 @@
+{
+  "recorded_utc": "2026-11-10T10:25:55.239138+00:00",
+  "reviewer_task": "/root/sol_reviewer_window_modes_nov10",
+  "route": "Official collaboration agent task/follow-ups; this agent performed source/tool inspection",
+  "requested_configuration": {
+    "agent": "sol_reviewer",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "max",
+    "configuration_source": "Parent task states these official collaboration invocation settings"
+  },
+  "provider_identity_independently_attested": false,
+  "base_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+  "target_commit": "e8bf3e1b9620f9d948be7f8497cb7efaa45699d8",
+  "source_sha256": {
+    "release_tools/windows_hidden_session_probe.py": "2c90d112093641d8a6ac55b0ebe4e1516d80a12c94d089f68d533e07fc980996",
+    "validation/CsvRouteFixture.cs": "5dc0fa10e6e55ae9eb5da4230231d432f799256cb7b7f3e64615e173bc4568ca",
+    ".github/workflows/window-modes.yml": "f86bfd912c4ca4db3328677c3a3575b89f9193fa3b35bb3d1d21150a8111732c"
+  },
+  "production_app_dist_version_unchanged": true,
+  "released_package": {
+    "version": "2026.11.09-m1-recovery.1",
+    "sha256": "a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d",
+    "bytes": 35398906
+  },
+  "real_devices_accessed_by_reviewer": false,
+  "release_or_distribution_performed_by_reviewer": false,
+  "native_result_review": "Pending Windows result for this target; first Windows run failed",
+  "holds": [
+    "Real deployed BJT UI/fullscreen untested",
+    "Sensors, PLCs, lamp output, Excel COM, locked desktop, DPI/monitor changes and long-run thermal response untested",
+    "Final control/equipment HOLD remains; source review does not lift it"
+  ],
+  "stage": "DESIGN_PRE",
+  "status": "Initial seven-transition design critique complete; source findings resolved; native validation pending",
+  "timing": {
+    "initial_seven_transition_design": "Reviewed against a clean released baseline before implementation diff appeared",
+    "two_inflight_request_transitions": "Design scope and provisional implementation diff reviewed together; no preimplementation critique claim for this extension"
+  },
+  "requirements": [
+    "Use owned synthetic M1/S3 full-profile fixtures and temporary CSV/settings with unchanged released runtime",
+    "Preserve native identity, freshness, consistency, bounds, timeouts and Save guards",
+    "Observe actual HWNDs, rectangles, native styles/state; acknowledgement alone is insufficient",
+    "No Save from mode commands/cached rows; one confirmed Save per applied fresh layer, maximum 5 percentage points; non-IR unchanged; zero Process access",
+    "Foreground exclusions only for explicit fixture/operator transitions; re-establish cover and sample before serial fresh controllable input",
+    "Report handle recreation honestly; do not replace target identity to pass",
+    "In-flight overlap means native apply request interval only, not proof of overlap with IR edit or queued Save"
+  ]
+}
