@@ -27,6 +27,9 @@ internal static class FullRouteFixture
     [DllImport("user32.dll")] private static extern bool IsZoomed(IntPtr h);
     [DllImport("user32.dll")] private static extern bool IsIconic(IntPtr h);
     [DllImport("user32.dll",EntryPoint="GetWindowLongPtrW")] private static extern IntPtr GetWindowLongPtr(IntPtr h,int index);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr h,out uint pid);
+    [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr h);
     private static int[] WindowRect(IntPtr h) {
         if(h==IntPtr.Zero)return null;
         NativeRect r;if(!GetWindowRect(h,out r))throw new InvalidOperationException("Fixture window rectangle unavailable");
@@ -206,6 +209,7 @@ internal static class FullRouteFixture
                 native_style=GetWindowLongPtr(ExistingHandle(form),-16).ToInt64(),native_ex_style=GetWindowLongPtr(ExistingHandle(form),-20).ToInt64(),
                 zoomed=IsZoomed(ExistingHandle(form)),iconic=IsIconic(ExistingHandle(form)),mode=windowMode,
                 screen_bounds=new int[] {screen.Left,screen.Top,screen.Right,screen.Bottom},utc=DateTime.UtcNow.ToString("o")
+                ,max_track_width=SystemInformation.MaxWindowTrackSize.Width,max_track_height=SystemInformation.MaxWindowTrackSize.Height
             }));
         };
         var lifetime=new System.Windows.Forms.Timer { Interval=windowAudit?360000:120000 };
@@ -237,6 +241,22 @@ internal static class FullRouteFixture
                         }
                     }
                     writeWindowState();
+                    File.WriteAllText(marker+".window-mode-event",File.ReadAllText(marker+".window-state"));
+                }
+                if(command.ContainsKey("foreground_hwnd")) {
+                    if(!windowAudit)throw new InvalidOperationException("Operator foreground transfer not enabled");
+                    var requested=new IntPtr(Convert.ToInt64(command["foreground_hwnd"]));
+                    uint requestedPid=Convert.ToUInt32(command["foreground_pid"]), actualPid;
+                    uint thread=GetWindowThreadProcessId(requested,out actualPid);
+                    if(thread==0 || actualPid!=requestedPid || actualPid==(uint)Process.GetCurrentProcess().Id)
+                        throw new InvalidOperationException("Owned foreground target identity mismatch");
+                    var oldForeground=GetForegroundWindow();
+                    bool sent=SetForegroundWindow(requested);
+                    File.WriteAllText(marker+".foreground-transfer",serializer.Serialize(new {
+                        caller_pid=Process.GetCurrentProcess().Id,target_pid=actualPid,target_hwnd=requested.ToInt64(),
+                        foreground_before=oldForeground.ToInt64(),foreground_after=GetForegroundWindow().ToInt64(),
+                        request_succeeded=sent,utc=DateTime.UtcNow.ToString("o")
+                    }));
                 }
                 if(command.ContainsKey("layer"))coreLayer=Convert.ToInt32(command["layer"]);
                 if(command.ContainsKey("temperature"))coreTemperature=Convert.ToDouble(command["temperature"]);

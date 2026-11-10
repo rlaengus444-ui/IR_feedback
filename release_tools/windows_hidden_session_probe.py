@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import csv
 import ctypes
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import hashlib
 import io
 import json
@@ -124,9 +124,6 @@ class ForegroundCover:
             self.excluded_transitions.append({"label": label, "begin_monotonic": time.monotonic()})
 
     def end_operator_transition(self):
-        self.user32.SetForegroundWindow.argtypes = [ctypes.c_void_p]
-        self.user32.SetForegroundWindow.restype = ctypes.c_int
-        self.user32.SetForegroundWindow(self.hwnd)
         wait_until(lambda: self.user32.GetForegroundWindow() == self.hwnd, 5,
                    "Owned cover did not resume foreground after operator transition")
         with self.sampling_lock:
@@ -210,11 +207,15 @@ def exercise(exe, cover_exe, folder, machine, minimized, *, window_transitions=F
     phase = ["initial"]
     next_layer = [0]
     target = before = options = None
+    continuity_baseline = (0,1,1)
     result = {"machine": machine, "minimized": minimized, "page": "webcam", "passed": False,
               "expected_full_profile_fields": field_count}
     window_steps = []
+    concurrent_steps = []
+    apply_probe = {"enabled":False,"started":threading.Event(),"entry":None}
     if window_transitions:
         result["window_mode_steps"] = window_steps
+        result["concurrent_window_steps"] = concurrent_steps
 
     def save_count():
         return int(Path(str(marker) + ".saves").read_text())
@@ -334,8 +335,12 @@ def exercise(exe, cover_exe, folder, machine, minimized, *, window_transitions=F
                 assert state["border_style"] == "Sizable" and state["window_state"] == "Normal"
                 assert state["native_style"] & 0x00C40000 == 0x00C40000
                 width,height = (640,400) if mode == "normal_small" else (1100,800) if mode == "normal_large" else (760,600)
+                width,height = min(width,state["max_track_width"]),min(height,state["max_track_height"])
                 assert state["bounds"][2] - state["bounds"][0] == width
                 assert state["bounds"][3] - state["bounds"][1] == height
+
+    def assert_connection_continuity():
+        assert (len(outages),len(runner_calls),len(raw_adapters)) == continuity_baseline
 
     def healthy(payload):
         cap = options._maximum_ir_setting.status()
@@ -369,17 +374,25 @@ def exercise(exe, cover_exe, folder, machine, minimized, *, window_transitions=F
             def request(request_data, *request_args, **request_kwargs):
                 begin = time.monotonic()
                 entry = {"phase": phase[0], "operation": request_data["operation"],
-                         "began_monotonic": begin, "error": None}
+                         "began_monotonic": begin, "began_utc":datetime.now(timezone.utc).isoformat(),"error": None}
+                if request_data["operation"] == "apply" and apply_probe["enabled"]:
+                    apply_probe["entry"] = entry
+                    apply_probe["started"].set()
                 try:
                     response = original_request(request_data, *request_args, **request_kwargs)
                     entry.update(success=True, scope_proof=bool(response.get("handles", {}).get("scope_proof")),
                                  fields=len(response.get("field_map", {})))
                     return response
                 except BaseException as error:
-                    entry.update(success=False, error={"type": type(error).__name__, "message": str(error)})
+                    entry.update(success=False, error={"type": type(error).__name__, "message": str(error),
+                        "operation":getattr(error,"operation",None),"actuation_possible":getattr(error,"actuation_possible",None),
+                        "helper_retired":getattr(error,"helper_retired",None)})
                     raise
                 finally:
+                    entry["helper_retired"] = (raw._active_helper is None and WindowsUiAdapter._unretired_helper is None
+                        and raw._helper_lock is WindowsUiAdapter._process_fence and not raw._helper_lock.locked())
                     entry["seconds"] = round(time.monotonic() - begin, 4)
+                    entry["ended_utc"] = datetime.now(timezone.utc).isoformat()
                     native_calls.append(entry)
 
             def recover(*recover_args, **recover_kwargs):
@@ -434,6 +447,25 @@ def exercise(exe, cover_exe, folder, machine, minimized, *, window_transitions=F
                 baseline_layer = layer
                 break
         assert baseline_layer is not None, "Full production stack did not reach a healthy visible baseline"
+        if window_transitions:
+            # Distinguish a documented read-only cold-start retry, before this
+            # experiment's baseline, from any outage caused by a mode change.
+            failures = [c for c in native_calls if not c.get("success")]
+            assert len(failures) == len(outages)
+            assert all(c["phase"] == "initial" and c["operation"] == "validate"
+                and c["error"]["type"] == "UiReadTimeout" and c["error"]["operation"] == "validate"
+                and c["error"]["actuation_possible"] is False and c["error"]["helper_retired"] is True
+                and c["helper_retired"] is True for c in failures)
+            assert all(o["phase"] == "initial" and o["kwargs"].get("preserve_initial_grant") is True for o in outages)
+            assert len(raw_adapters) == 1 + len(outages) and len(runner_calls) == 1
+            for operation in ("enter_sequence","prepare_control"):
+                selected = [c for c in native_calls if c["operation"] == operation]
+                assert len(selected) == 1 and selected[0]["success"] is True
+                assert all(selected[0]["began_monotonic"] >= c["began_monotonic"] + c["seconds"] - .001 for c in failures)
+            assert event_counts.get("connected") == 1 and save_count() == 0
+            continuity_baseline = (len(outages),len(runner_calls),len(raw_adapters))
+            result.update(pre_baseline_readonly_transport_recoveries=list(outages),
+                          pre_baseline_raw_adapter_count=len(raw_adapters))
         raw = wrapper._raw
         assert raw is not None and raw._native_handles.get("scope_proof")
         assert len(raw._native_fields) == field_count
@@ -469,7 +501,7 @@ def exercise(exe, cover_exe, folder, machine, minimized, *, window_transitions=F
         assert sum(item["after_epoch"] > item["before_epoch"] for item in recoveries
                    if item["phase"] == "hidden-recovery") == 1
         assert any(not item["control_available"] for item in snapshot_log if item["phase"] == "hidden-recovery")
-        assert not outages and len(runner_calls) == 1 and len(raw_adapters) == 1
+        assert_connection_continuity()
         assert event_counts.get("connected") == 1 and not event_counts.get("observer_hold", 0)
         with history_lock:
             recovered_history = tuple(point.layer for point in history.points)
@@ -529,6 +561,11 @@ def exercise(exe, cover_exe, folder, machine, minimized, *, window_transitions=F
                 current = sequence_persistence.capture(target)
                 assert current.power == before_power and current.non_ir == before.non_ir
                 assert save_count() == before_count and navigation_count() == baseline_navigation
+                command(foreground_hwnd=cover.hwnd,foreground_pid=cover.process.pid)
+                transfer = json.loads(Path(str(marker)+".foreground-transfer").read_text(encoding="utf-8-sig"))
+                step["operator_foreground_transfer"] = transfer
+                assert transfer["caller_pid"] == target.pid and transfer["target_pid"] == cover.process.pid
+                assert transfer["target_hwnd"] == cover.hwnd and transfer["foreground_after"] == cover.hwnd
                 cover.end_operator_transition()
                 step["stage"] = "foreground_restored_before_fresh_row"
                 samples_before = len(cover.samples)
@@ -568,6 +605,50 @@ def exercise(exe, cover_exe, folder, machine, minimized, *, window_transitions=F
                 step.update(power=current.power, save_count=save_count(), no_save_from_transition_or_old_row=True,
                     foreground_samples_during_control=len(cover.samples) - samples_before, stage="complete", passed=True)
                 previous = facts
+            for mode in ("maximized","normal_restore"):
+                phase[0] = "concurrent-window-" + mode
+                expected = powers[-1] - 5
+                before_count = save_count()
+                assert options._maximum_ir_setting.set(expected)
+                receive(next_layer[0]); receive(next_layer[0])
+                assert save_count() == before_count and cover.evidence()["foreground_maintained"]
+                step = {"mode":mode,"stage":"fresh_input_before_operator_transition","passed":False}
+                concurrent_steps.append(step)
+                apply_probe.update(enabled=True,entry=None)
+                apply_probe["started"].clear()
+                layer = append_fresh()
+                step["fresh_layer"] = layer + 1
+                assert apply_probe["started"].wait(15), "No actual native apply request observed"
+                cover.begin_operator_transition("concurrent-"+mode)
+                step["stage"] = "native_apply_in_flight"
+                command(window_mode=mode,page="webcam")
+                facts = json.loads(Path(str(marker)+".window-mode-event").read_text(encoding="utf-8-sig"))
+                step["native_after_command"] = facts
+                check_window_state(mode,facts,reference)
+                command(foreground_hwnd=cover.hwnd,foreground_pid=cover.process.pid)
+                transfer=json.loads(Path(str(marker)+".foreground-transfer").read_text(encoding="utf-8-sig"))
+                step["operator_foreground_transfer"] = transfer
+                assert transfer["caller_pid"]==target.pid and transfer["target_pid"]==cover.process.pid
+                assert transfer["target_hwnd"]==cover.hwnd and transfer["foreground_after"]==cover.hwnd
+                cover.end_operator_transition()
+                samples_before = len(cover.samples)
+                payload = receive(layer,applied=expected)
+                apply_probe["enabled"] = False
+                entry = apply_probe["entry"];step["actual_native_apply"] = dict(entry)
+                stamp=lambda value:datetime.fromisoformat(value.replace("Z","+00:00"))
+                assert stamp(entry["began_utc"])<=stamp(facts["utc"])<=stamp(entry["ended_utc"]), "Mode change did not overlap actual native request"
+                assert entry["success"] is True and entry["helper_retired"] is True
+                assert payload["snapshot"].observation_fresh is True and payload["snapshot"].measurement_valid is True
+                assert payload["snapshot"].observation_key is not None
+                receive(layer);receive(layer)
+                current=sequence_persistence.capture(target)
+                assert current.power==expected and current.non_ir==before.non_ir and save_count()==before_count+1
+                assert navigation_count()==baseline_navigation and id(wrapper._raw)==raw_id and id(wrapper._reader)==reader_id
+                after=window_state();step["native_after_save"]=after;check_window_state(mode,after,reference)
+                assert len(cover.samples)>samples_before and cover.evidence()["foreground_maintained"]
+                powers.append(current.power);counts.append(save_count());applied_layers.append(layer+1)
+                step.update(passed=True,stage="complete",power=current.power,save_count=save_count(),
+                    actual_request_overlap=True,no_duplicate_or_old_row_save=True)
         assert not Path(str(marker) + ".table-access").exists(), "Forbidden Process access was recorded"
         assert not any(call["operation"] in {"read", "return_process", "open_process", "follow_row"}
                        for call in native_calls)
@@ -589,13 +670,14 @@ def exercise(exe, cover_exe, folder, machine, minimized, *, window_transitions=F
         assert set(applied_layers).issubset(final_layers), (applied_layers, final_layers)
         assert set(final_layers).issubset(range(1, next_layer[0] + 2)), final_layers
         assert final_layers[-1] == next_layer[0] + 1
-        assert not outages and len(runner_calls) == 1 and len(raw_adapters) == 1
+        assert_connection_continuity()
         assert event_counts.get("connected") == 1 and not event_counts.get("actuation_barrier", 0)
         if window_transitions:
-            assert len(window_steps) == 7 and len(powers) == 11 and counts == list(range(1,12))
+            assert len(window_steps) == 7 and len(concurrent_steps)==2 and len(powers) == 13 and counts == list(range(1,14))
             assert all(step["passed"] for step in window_steps)
+            assert all(step["passed"] for step in concurrent_steps)
             result.update(all_seven_transitions_passed=True, root_and_control_handles_preserved=True,
-                          all_eleven_applied_fresh_layers_retained=True)
+                          both_inflight_request_transitions_passed=True,all_thirteen_applied_fresh_layers_retained=True)
         result.update(passed=True, powers=powers, save_counts=counts, applied_layers=applied_layers,
             no_duplicate_or_old_row_saves=True, final_history_layers=list(final_layers),
             eligible_emitted_layers=list(expected_observed_layers),
@@ -611,6 +693,7 @@ def exercise(exe, cover_exe, folder, machine, minimized, *, window_transitions=F
         capture = {"fixture_running": fixture.poll() is None, "phase": phase[0],
                    "native_calls": list(native_calls), "native_recoveries": list(recoveries),
                    "wrapper_outages": list(outages), "runner_calls": list(runner_calls),
+                   "raw_adapter_count":len(raw_adapters),"continuity_baseline":list(continuity_baseline),
                    "event_counts": dict(event_counts), "snapshots": list(snapshot_log)}
         try:
             capture.update(saves=save_count(), navigation=navigation_count(),
