@@ -1,6 +1,6 @@
 """Synthetic Windows hidden-Sequence recovery through the real session stack.
 
-Usage: python release_tools/windows_hidden_session_probe.py PACKAGE_ROOT SOURCE_ROOT OUTPUT_JSON
+Usage: python release_tools/windows_hidden_session_probe.py PACKAGE_ROOT SOURCE_ROOT OUTPUT_JSON [--window-transitions]
 
 Only owned temporary WinForms fixtures, CSVs and parameter files are used.
 Recovery must not edit, Save or navigate. Four subsequent fresh observations
@@ -89,6 +89,9 @@ class ForegroundCover:
         self.samples = []
         self.stopped = threading.Event()
         self.thread = None
+        self.sampling_lock = threading.Lock()
+        self.sampling_enabled = True
+        self.excluded_transitions = []
         self.user32 = ctypes.windll.user32
         self.user32.GetForegroundWindow.restype = ctypes.c_void_p
         self.hwnd = None
@@ -110,13 +113,32 @@ class ForegroundCover:
 
     def _sample(self):
         while not self.stopped.wait(.02):
-            self.samples.append(self.user32.GetForegroundWindow() == self.hwnd)
+            with self.sampling_lock:
+                if self.sampling_enabled:
+                    self.samples.append(self.user32.GetForegroundWindow() == self.hwnd)
+
+    def begin_operator_transition(self, label):
+        with self.sampling_lock:
+            assert self.sampling_enabled
+            self.sampling_enabled = False
+            self.excluded_transitions.append({"label": label, "begin_monotonic": time.monotonic()})
+
+    def end_operator_transition(self):
+        self.user32.SetForegroundWindow.argtypes = [ctypes.c_void_p]
+        self.user32.SetForegroundWindow.restype = ctypes.c_int
+        self.user32.SetForegroundWindow(self.hwnd)
+        wait_until(lambda: self.user32.GetForegroundWindow() == self.hwnd, 5,
+                   "Owned cover did not resume foreground after operator transition")
+        with self.sampling_lock:
+            self.excluded_transitions[-1].update(end_monotonic=time.monotonic(), foreground_restored=True)
+            self.sampling_enabled = True
 
     def evidence(self):
         return {"foreground_maintained": bool(self.samples) and all(self.samples)
                     and self.user32.GetForegroundWindow() == self.hwnd,
                 "foreground_samples": len(self.samples), "cover_hwnd": self.hwnd,
-                "cover_pid": self.process.pid if self.process else None}
+                "cover_pid": self.process.pid if self.process else None,
+                "explicit_operator_transition_exclusions": list(self.excluded_transitions)}
 
     def close(self):
         self.stopped.set()
@@ -132,7 +154,7 @@ class ForegroundCover:
                 self.process.wait(timeout=5)
 
 
-def exercise(exe, cover_exe, folder, machine, minimized):
+def exercise(exe, cover_exe, folder, machine, minimized, *, window_transitions=False):
     from adapter_contracts import MachineWindow
     from csv_source import MonitoringCsvReader
     from layer_charts import LayerHistory
@@ -164,7 +186,10 @@ def exercise(exe, cover_exe, folder, machine, minimized):
     log = log_folder / ("20261027_" + machine + ".log")
     prefix = started.strftime("%Y-%m-%d%p%I%M%S") + "...[BJT - AUTO]: "
     log.write_text(prefix + "AutoPrint started!\n" + prefix + "Layer: 0 -> Current Z = 1.23\n", encoding="utf-8")
-    fixture = subprocess.Popen([str(exe), str(marker), machine, "backgroundcsv", str(spec)], creationflags=FLAGS)
+    fixture_args = [str(exe), str(marker), machine, "backgroundcsv", str(spec)]
+    if window_transitions:
+        fixture_args += ["windowaudit", "visible"]
+    fixture = subprocess.Popen(fixture_args, creationflags=FLAGS)
     stop = threading.Event()
     events = queue.Queue()
     worker = None
@@ -187,6 +212,9 @@ def exercise(exe, cover_exe, folder, machine, minimized):
     target = before = options = None
     result = {"machine": machine, "minimized": minimized, "page": "webcam", "passed": False,
               "expected_full_profile_fields": field_count}
+    window_steps = []
+    if window_transitions:
+        result["window_mode_steps"] = window_steps
 
     def save_count():
         return int(Path(str(marker) + ".saves").read_text())
@@ -277,6 +305,37 @@ def exercise(exe, cover_exe, folder, machine, minimized):
         assert navigation_count() == navigation, "Hidden recovery navigated"
         current = sequence_persistence.capture(target)
         assert current.power == 80 and current.non_ir == before.non_ir
+
+    def window_state():
+        return wait_until(lambda: json.loads(Path(str(marker) + ".window-state").read_text(encoding="utf-8-sig")),
+                          5, "Fixture native window facts unavailable")
+
+    def check_window_state(mode, state, reference):
+        assert state["mode"] == mode
+        assert state["handles_present"] is True and reference["handles_present"] is True
+        for key in ("root_hwnd", "scope_hwnd", "ir_hwnd", "save_hwnd"):
+            assert type(state[key]) is int and state[key] > 0
+            assert state[key] == reference[key], ("Window/control recreated", mode, key, reference[key], state[key])
+        assert state["root_hwnd"] == target.hwnd
+        if mode == "minimized":
+            assert state["iconic"] is True and state["window_state"] == "Minimized"
+            assert state["native_style"] & 0x20000000
+        else:
+            assert state["iconic"] is False
+            if mode == "maximized":
+                assert state["zoomed"] is True and state["window_state"] == "Maximized"
+                assert state["native_style"] & 0x01000000
+            elif mode == "fullscreen":
+                assert state["border_style"] == "None" and state["bounds"] == state["screen_bounds"]
+                assert state["native_style"] & 0x00C40000 == 0
+                assert state["client_width"] == state["bounds"][2] - state["bounds"][0]
+                assert state["client_height"] == state["bounds"][3] - state["bounds"][1]
+            else:
+                assert state["border_style"] == "Sizable" and state["window_state"] == "Normal"
+                assert state["native_style"] & 0x00C40000 == 0x00C40000
+                width,height = (640,400) if mode == "normal_small" else (1100,800) if mode == "normal_large" else (760,600)
+                assert state["bounds"][2] - state["bounds"][0] == width
+                assert state["bounds"][3] - state["bounds"][1] == height
 
     def healthy(payload):
         cap = options._maximum_ir_setting.status()
@@ -444,12 +503,77 @@ def exercise(exe, cover_exe, folder, machine, minimized):
             receive(layer)
             assert save_count() == order, "A duplicate or cached row Saved again"
             assert id(wrapper._raw) == raw_id and id(wrapper._reader) == reader_id
+        if window_transitions:
+            reference = window_state()
+            previous = reference
+            sequence = (("normal_small", "sequence"), ("maximized", "webcam"),
+                        ("normal_large", "sequence"), ("fullscreen", "webcam"),
+                        ("windowed_restore", "sequence"), ("minimized", "webcam"),
+                        ("normal_restore", "webcam"))
+            for index,(mode,page) in enumerate(sequence, 1):
+                phase[0] = "window-" + mode
+                step = {"mode": mode, "page": page, "stage": "before_command", "native_before": previous,
+                        "passed": False, "fresh_layers": []}
+                window_steps.append(step)
+                before_count = save_count()
+                current = sequence_persistence.capture(target)
+                before_power = current.power
+                assert before_power == 65 - index * 5
+                cover.begin_operator_transition(mode)
+                command(window_mode=mode, page=page)
+                facts = window_state()
+                step.update(native_after_command=facts, stage="native_after_command")
+                check_window_state(mode, facts, reference)
+                assert facts["ir_bounds"] != previous["ir_bounds"], ("IR rectangle did not move", mode)
+                assert facts["save_bounds"] != previous["save_bounds"], ("Save rectangle did not move", mode)
+                current = sequence_persistence.capture(target)
+                assert current.power == before_power and current.non_ir == before.non_ir
+                assert save_count() == before_count and navigation_count() == baseline_navigation
+                cover.end_operator_transition()
+                step["stage"] = "foreground_restored_before_fresh_row"
+                samples_before = len(cover.samples)
+                wait_until(lambda: len(cover.samples) > samples_before and cover.samples[-1] is True,
+                           5, "Cover sampling did not resume before controllable input")
+                assert cover.evidence()["foreground_maintained"]
+                step["foreground_samples_before_fresh_row"] = len(cover.samples) - samples_before
+                expected = before_power - 5
+                assert options._maximum_ir_setting.set(expected)
+                # Same already-processed row: mode/cap changes must not Save it.
+                receive(next_layer[0]); receive(next_layer[0])
+                assert save_count() == before_count
+                step_layers = step["fresh_layers"]
+                completed = False
+                for _ in range(4):
+                    layer = append_fresh()
+                    step_layers.append(layer + 1)
+                    payload = receive(layer)
+                    if payload.get("applied", {}).get(1) == expected:
+                        assert payload["snapshot"].observation_fresh is True
+                        assert payload["snapshot"].measurement_valid is True
+                        assert payload["snapshot"].observation_key is not None
+                        completed = True
+                        break
+                    assert not payload.get("applied"), payload.get("applied")
+                    assert save_count() == before_count
+                assert completed, ("Feedback did not resume after window mode change", mode)
+                receive(layer); receive(layer)
+                current = sequence_persistence.capture(target)
+                assert current.power == expected and current.non_ir == before.non_ir
+                assert save_count() == before_count + 1 and navigation_count() == baseline_navigation
+                assert id(wrapper._raw) == raw_id and id(wrapper._reader) == reader_id
+                after = window_state(); check_window_state(mode, after, reference)
+                step["native_after_save"] = after
+                assert len(cover.samples) > samples_before and cover.evidence()["foreground_maintained"]
+                powers.append(current.power); counts.append(save_count()); applied_layers.append(layer + 1)
+                step.update(power=current.power, save_count=save_count(), no_save_from_transition_or_old_row=True,
+                    foreground_samples_during_control=len(cover.samples) - samples_before, stage="complete", passed=True)
+                previous = facts
         assert not Path(str(marker) + ".table-access").exists(), "Forbidden Process access was recorded"
         assert not any(call["operation"] in {"read", "return_process", "open_process", "follow_row"}
                        for call in native_calls)
         assert not any(call["operation"] == "enter_sequence" and call["phase"] != "initial" for call in native_calls)
         state = json.loads(Path(str(marker) + ".background-state").read_text(encoding="utf-8-sig"))
-        assert state["page"] == "webcam" and state["minimized"] == minimized, state
+        assert state["page"] == "webcam" and state["minimized"] == (False if window_transitions else minimized), state
         foreground = cover.evidence()
         assert foreground["foreground_maintained"]
         with history_lock:
@@ -467,6 +591,11 @@ def exercise(exe, cover_exe, folder, machine, minimized):
         assert final_layers[-1] == next_layer[0] + 1
         assert not outages and len(runner_calls) == 1 and len(raw_adapters) == 1
         assert event_counts.get("connected") == 1 and not event_counts.get("actuation_barrier", 0)
+        if window_transitions:
+            assert len(window_steps) == 7 and len(powers) == 11 and counts == list(range(1,12))
+            assert all(step["passed"] for step in window_steps)
+            result.update(all_seven_transitions_passed=True, root_and_control_handles_preserved=True,
+                          all_eleven_applied_fresh_layers_retained=True)
         result.update(passed=True, powers=powers, save_counts=counts, applied_layers=applied_layers,
             no_duplicate_or_old_row_saves=True, final_history_layers=list(final_layers),
             eligible_emitted_layers=list(expected_observed_layers),
@@ -475,7 +604,7 @@ def exercise(exe, cover_exe, folder, machine, minimized):
             non_ir_unchanged=True, process_table_accesses=0, background_state=state,
             cap_status=options._maximum_ir_setting.status(), **foreground)
     except BaseException as error:
-        result.update(error=type(error).__name__ + ": " + str(error), traceback=traceback.format_exc())
+        result.update(passed=False,error=type(error).__name__ + ": " + str(error), traceback=traceback.format_exc())
     finally:
         # Snapshot evidence before stopping/killing the owned target. Do not
         # replace a native failure with secondary diagnostics or teardown errors.
@@ -492,6 +621,14 @@ def exercise(exe, cover_exe, folder, machine, minimized):
                     non_ir_sha256=hashlib.sha256(repr(sorted(current.non_ir.items())).encode()).hexdigest())
             if cover is not None:
                 capture.update(cover.evidence())
+            if window_transitions:
+                capture["native_window_state"] = window_state()
+                events_file = Path(str(marker) + ".handle-events")
+                capture["fixture_handle_events"] = events_file.read_text().splitlines() if events_file.exists() else []
+            error_file = Path(str(marker) + ".error")
+            if error_file.exists():
+                capture["fixture_ui_error"] = error_file.read_text()
+                result.update(passed=False, fixture_ui_error=capture["fixture_ui_error"])
             with history_lock:
                 capture["history_layers"] = [point.layer for point in history.points]
                 capture["history_segment"] = history.segment_id
@@ -520,11 +657,13 @@ def exercise(exe, cover_exe, folder, machine, minimized):
     return result
 
 
-def main(package, source_root, output):
+def main(package, source_root, output, *, window_transitions=False):
     report = {"passed": False, "cases": [],
         "scope": "Owned synthetic Windows full-profile fixtures and temporary CSV/settings only; real observed/resilient/session/native helper stack.",
         "untested": ["Real BJT UI, devices, sensor/PLC/lamp output, Excel COM and locked desktop.",
-                     "Discovery uses an identity-checked fixture-only callback; global discovery is not exercised."]}
+                     "Discovery uses an identity-checked fixture-only callback; global discovery is not exercised.",
+                     "Borderless fullscreen is synthetic WinForms; real BJT fullscreen and DPI/monitor changes are not validated."]}
+    report["window_transition_audit"] = window_transitions
     try:
         if os.name != "nt":
             raise RuntimeError("Windows required")
@@ -553,7 +692,8 @@ def main(package, source_root, output):
                 if completed.returncode:
                     raise RuntimeError("Owned fixture compilation failed")
             for machine, minimized in (("M1", False), ("M1", True), ("S3", False), ("S3", True)):
-                report["cases"].append(exercise(executable, cover_exe, folder, machine, minimized))
+                report["cases"].append(exercise(executable, cover_exe, folder, machine, minimized,
+                                                window_transitions=window_transitions))
             report["passed"] = len(report["cases"]) == 4 and all(case["passed"] for case in report["cases"])
     except BaseException as error:
         report.update(error=type(error).__name__ + ": " + str(error), traceback=traceback.format_exc())
@@ -564,6 +704,6 @@ def main(package, source_root, output):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
+    if len(sys.argv) not in (4,5) or (len(sys.argv)==5 and sys.argv[4]!="--window-transitions"):
         raise SystemExit(__doc__)
-    raise SystemExit(main(*(Path(value).resolve() for value in sys.argv[1:])))
+    raise SystemExit(main(*(Path(value).resolve() for value in sys.argv[1:4]), window_transitions=len(sys.argv)==5))

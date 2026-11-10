@@ -1,0 +1,54 @@
+name: Verify released IR feedback across window mode changes
+on:
+  push:
+    branches: ['test/window-modes-20261110']
+    paths:
+      - '.github/workflows/window-modes.yml'
+      - 'validation/CsvRouteFixture.cs'
+      - 'release_tools/windows_hidden_session_probe.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  window-modes:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - name: Preserve source bytes
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download and verify exact currently released package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = "$env:RUNNER_TEMP\window-mode-evidence"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $zip = "$env:RUNNER_TEMP\released.zip"
+          Invoke-WebRequest 'https://github.com/rlaengus444-ui/IR_feedback/releases/download/2026.11.09-m1-recovery.1/IRFeedback-2026.11.09-m1-recovery.1.zip' -OutFile $zip
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d') { throw 'Released ZIP hash mismatch' }
+          if ((Get-Item $zip).Length -ne 35398906) { throw 'Released ZIP size mismatch' }
+          python release_tools/verify_package.py $zip '2026.11.09-m1-recovery.1'
+          if ($LASTEXITCODE -ne 0) { throw 'Released package source/manifest verification failed' }
+          Expand-Archive $zip "$env:RUNNER_TEMP\released"
+          @{ verification_source = $env:GITHUB_SHA; released_source = 'e97564fb998f31cce27328bc4e326b164869c649'; released_zip_sha256 = 'a98e2e4d183cbc2ec23a4a523f004e4bc6aa704d27640ea3aae5bee0f3bdbd4d'; runtime_modified = $false; real_equipment_tested = $false } | ConvertTo-Json | Set-Content -Encoding utf8 "$out\provenance.json"
+      - name: Exercise actual released session and native transport on owned resizable fixtures
+        shell: pwsh
+        run: |
+          & "$env:RUNNER_TEMP\released\runtime\python.exe" release_tools/windows_hidden_session_probe.py "$env:RUNNER_TEMP\released" "$env:GITHUB_WORKSPACE" "$env:RUNNER_TEMP\window-mode-evidence\window-modes.json" --window-transitions 2>&1 | Out-File -Encoding utf8 "$env:RUNNER_TEMP\window-mode-evidence\window-modes.txt"
+          if ($LASTEXITCODE -ne 0) { throw 'Window mode transition audit failed' }
+      - name: Preserve exact verification sources
+        if: always()
+        shell: pwsh
+        run: |
+          $out = "$env:RUNNER_TEMP\window-mode-evidence"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          Copy-Item validation/CsvRouteFixture.cs,release_tools/windows_hidden_session_probe.py "$out\"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: window-mode-validation-${{ github.sha }}
+          path: ${{ runner.temp }}/window-mode-evidence/
+          if-no-files-found: error

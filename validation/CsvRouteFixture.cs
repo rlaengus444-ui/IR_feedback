@@ -22,6 +22,17 @@ internal static class FullRouteFixture
     }
     private sealed class QuietForm:Form { public bool AllowActivation;protected override bool ShowWithoutActivation { get { return !AllowActivation; } } }
     [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr h,IntPtr after,int x,int y,int cx,int cy,uint flags);
+    [StructLayout(LayoutKind.Sequential)] private struct NativeRect { public int Left,Top,Right,Bottom; }
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr h,out NativeRect rect);
+    [DllImport("user32.dll")] private static extern bool IsZoomed(IntPtr h);
+    [DllImport("user32.dll")] private static extern bool IsIconic(IntPtr h);
+    [DllImport("user32.dll",EntryPoint="GetWindowLongPtrW")] private static extern IntPtr GetWindowLongPtr(IntPtr h,int index);
+    private static int[] WindowRect(IntPtr h) {
+        if(h==IntPtr.Zero)return null;
+        NativeRect r;if(!GetWindowRect(h,out r))throw new InvalidOperationException("Fixture window rectangle unavailable");
+        return new int[] {r.Left,r.Top,r.Right,r.Bottom};
+    }
+    private static IntPtr ExistingHandle(Control c) { return c.IsHandleCreated?c.Handle:IntPtr.Zero; }
     [STAThread] private static void Main(string[] args)
     {
         Application.EnableVisualStyles();
@@ -67,6 +78,7 @@ internal static class FullRouteFixture
         File.WriteAllText(marker+".sequence-clicks","0");
         int saves=0,sequenceClicks=0;
         bool normallyVisible=Array.IndexOf(args,"visible")>=0;
+        bool windowAudit=Array.IndexOf(args,"windowaudit")>=0;
         var form=new QuietForm { AllowActivation=Array.IndexOf(args,"activate")>=0,Name="FullRouteFixture",Text="BinderJet synthetic Sequence fixture",Left=200,Top=100,Width=760,Height=600,StartPosition=FormStartPosition.Manual,ShowInTaskbar=false,Opacity=normallyVisible?1:0.01 };
         form.Controls.Add(new Label { Name="labelMachineName",Text=machine,Top=10,Left=10,Width=100 });
         var taskStatus=new Label { Name="labelTaskStatus",Text="AUTO",Top=10,Left=150,Width=100 };
@@ -164,7 +176,39 @@ internal static class FullRouteFixture
             File.Replace(temporary,bjt,null);
             if(mode.EndsWith("savehang"))Thread.Sleep(8000);
         };
-        var lifetime=new System.Windows.Forms.Timer { Interval=120000 };
+        string windowMode="initial";
+        if(windowAudit) {
+            foreach(Control panel in new Control[] {process,sequence,webcam}) {
+                panel.Size=new System.Drawing.Size(form.ClientSize.Width-20,form.ClientSize.Height-110);
+                panel.Anchor=AnchorStyles.Top|AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right;
+            }
+            ir.Width=240;ir.Top=sequence.Height-80;
+            ir.Anchor=AnchorStyles.Left|AnchorStyles.Right|AnchorStyles.Bottom;
+            save.Left=sequence.Width-120;save.Top=sequence.Height-40;
+            save.Anchor=AnchorStyles.Right|AnchorStyles.Bottom;
+            form.MinimumSize=new System.Drawing.Size(400,300);
+            foreach(Control c in new Control[] {form,sequence,ir,save}) {
+                Control tracked=c;
+                tracked.HandleCreated+=delegate {File.AppendAllText(marker+".handle-events",DateTime.UtcNow.ToString("o")+"|"+tracked.Name+"|created|"+tracked.Handle.ToInt64()+"\n");};
+                tracked.HandleDestroyed+=delegate {File.AppendAllText(marker+".handle-events",DateTime.UtcNow.ToString("o")+"|"+tracked.Name+"|destroyed\n");};
+            }
+        }
+        Action writeWindowState=delegate {
+            if(!windowAudit)return;
+            var screen=Screen.FromRectangle(form.Bounds).Bounds;
+            File.WriteAllText(marker+".window-state",serializer.Serialize(new {
+                root_hwnd=ExistingHandle(form).ToInt64(),scope_hwnd=ExistingHandle(sequence).ToInt64(),ir_hwnd=ExistingHandle(ir).ToInt64(),save_hwnd=ExistingHandle(save).ToInt64(),
+                handles_present=form.IsHandleCreated&&sequence.IsHandleCreated&&ir.IsHandleCreated&&save.IsHandleCreated,
+                absent_handle_reason=form.IsHandleCreated&&sequence.IsHandleCreated&&ir.IsHandleCreated&&save.IsHandleCreated?null:"A diagnostic target has no existing HWND",
+                bounds=WindowRect(ExistingHandle(form)),ir_bounds=WindowRect(ExistingHandle(ir)),save_bounds=WindowRect(ExistingHandle(save)),
+                client_width=form.ClientSize.Width,client_height=form.ClientSize.Height,
+                border_style=form.FormBorderStyle.ToString(),window_state=form.WindowState.ToString(),
+                native_style=GetWindowLongPtr(ExistingHandle(form),-16).ToInt64(),native_ex_style=GetWindowLongPtr(ExistingHandle(form),-20).ToInt64(),
+                zoomed=IsZoomed(ExistingHandle(form)),iconic=IsIconic(ExistingHandle(form)),mode=windowMode,
+                screen_bounds=new int[] {screen.Left,screen.Top,screen.Right,screen.Bottom},utc=DateTime.UtcNow.ToString("o")
+            }));
+        };
+        var lifetime=new System.Windows.Forms.Timer { Interval=windowAudit?360000:120000 };
         var snapshotTimer=new System.Windows.Forms.Timer { Interval=1000 };
         snapshotTimer.Tick+=delegate { if(process.Visible && form.WindowState!=FormWindowState.Minimized)refreshRows(); };
         var heartbeat=new System.Windows.Forms.Timer { Interval=200 };
@@ -176,6 +220,24 @@ internal static class FullRouteFixture
                     process.Visible=page=="process";sequence.Visible=page=="sequence";webcam.Visible=page=="webcam";
                 }
                 if(command.ContainsKey("minimized"))form.WindowState=(bool)command["minimized"]?FormWindowState.Minimized:FormWindowState.Normal;
+                if(command.ContainsKey("window_mode")) {
+                    if(!windowAudit)throw new InvalidOperationException("Window audit not enabled");
+                    windowMode=(string)command["window_mode"];
+                    if(windowMode=="minimized")form.WindowState=FormWindowState.Minimized;
+                    else {
+                        form.WindowState=FormWindowState.Normal;
+                        form.FormBorderStyle=windowMode=="fullscreen"?FormBorderStyle.None:FormBorderStyle.Sizable;
+                        if(windowMode=="fullscreen")form.Bounds=Screen.FromControl(form).Bounds;
+                        else if(windowMode=="maximized")form.WindowState=FormWindowState.Maximized;
+                        else {
+                            if(windowMode!="normal_small" && windowMode!="normal_large" && windowMode!="windowed_restore" && windowMode!="normal_restore")
+                                throw new InvalidOperationException("Unknown window mode");
+                            form.Location=new System.Drawing.Point(200,100);
+                            form.Size=windowMode=="normal_small"?new System.Drawing.Size(640,400):windowMode=="normal_large"?new System.Drawing.Size(1100,800):new System.Drawing.Size(760,600);
+                        }
+                    }
+                    writeWindowState();
+                }
                 if(command.ContainsKey("layer"))coreLayer=Convert.ToInt32(command["layer"]);
                 if(command.ContainsKey("temperature"))coreTemperature=Convert.ToDouble(command["temperature"]);
                 coreTemperatures[coreLayer]=coreTemperature;
@@ -190,6 +252,7 @@ internal static class FullRouteFixture
             File.WriteAllText(marker+".heartbeat",DateTime.UtcNow.ToString("O")+" row="+grid.FirstDisplayedScrollingRowIndex+" cell="+(grid.CurrentCell==null?-1:grid.CurrentCell.RowIndex)+" active="+(form.ActiveControl==null?"none":form.ActiveControl.Name)+" displayed="+grid.DisplayedRowCount(true));
             var state=new Dictionary<string,string>();foreach(Control control in sequence.Controls){var text=control as TextBox;if(text!=null)state[text.Name]=text.Text;var toggle=control as CheckBox;if(toggle!=null)state[toggle.Name]="toggle:"+(toggle.Checked?"1":"0");}File.WriteAllText(marker+".fields-state",serializer.Serialize(state));
             if(background)File.WriteAllText(marker+".background-state",serializer.Serialize(new { page=process.Visible?"process":sequence.Visible?"sequence":"webcam",minimized=form.WindowState==FormWindowState.Minimized,coreLayer=coreLayer,coreTemperature=coreTemperature,refreshCount=refreshCount }));
+            writeWindowState();
         };
         lifetime.Tick+=delegate { form.Close(); };
         form.Shown+=delegate { SetWindowPos(form.Handle,normallyVisible?IntPtr.Zero:new IntPtr(1),0,0,0,0,0x0001|0x0002|0x0010);if(mode=="latevisible"){grid.CurrentCell=grid.Rows[857].Cells[0];grid.FirstDisplayedScrollingRowIndex=857;}cachedViewportFirstRow=Math.Max(0,grid.FirstDisplayedScrollingRowIndex);if(background)refreshRows();if(form.AllowActivation)form.Activate();File.WriteAllText(marker+".initial-viewport",grid.FirstDisplayedScrollingRowIndex.ToString());File.WriteAllText(marker+".window",Process.GetCurrentProcess().Id+","+form.Handle.ToInt64());lifetime.Start();heartbeat.Start();if(background)snapshotTimer.Start(); };
