@@ -139,6 +139,7 @@ class WindowsUiAdapter:
         self._native_fields: dict = {}
         self._retained_log_hint: int | None = None
         self._log_run_key: str | None = None
+        self._dispatch_transaction = None
         self._pending_save = None
         self._reconciled_save = None
 
@@ -265,6 +266,7 @@ class WindowsUiAdapter:
     def suspend_control(self, reason: str) -> None:
         """Enter connected HOLD. Never edit, Save, navigate or erase chart data."""
         with self._lock:
+            self._reconciled_save = None
             if self._control_hold_reason is None:
                 self._recovery_candidate = None
                 self._recovery_at = 0.0
@@ -645,6 +647,7 @@ class WindowsUiAdapter:
         directory = transaction_directory.name
         receipt = Path(directory) / "dispatch-completed.json"
         transaction['receipt'] = receipt
+        self._dispatch_transaction = transaction
         try:
             marker = Path(directory) / "save-started.txt"
             edit_marker = Path(directory) / "edit-started.txt"
@@ -686,6 +689,7 @@ class WindowsUiAdapter:
                         self._control_fault = "자동 적용을 중단했습니다. 결과를 확인한 뒤 다시 연결하세요."
                 raise
         finally:
+            self._dispatch_transaction = None
             if self._pending_save is not transaction:
                 transaction_directory.cleanup()
         with self._lock:
@@ -769,6 +773,9 @@ class WindowsUiAdapter:
         delivery_possible = False
         retained_save = False
         try:
+            barrier = WindowsUiAdapter._save_barrier
+            if barrier is not None and barrier is not self._pending_save:
+                raise AmbiguousWriteError("다른 연결의 Save 종료 확인이 남아 있습니다.")
             previous = WindowsUiAdapter._unretired_helper
             if previous is not None:
                 try:
@@ -833,6 +840,13 @@ class WindowsUiAdapter:
             if (request.get('operation') == 'apply' and delivery_possible and process is not None
                     and request.get('dispatch_receipt') and Path(request['save_marker']).exists()
                     and not (stop_event is not None and stop_event.is_set())):
+                transaction = self._dispatch_transaction
+                if transaction is None or transaction['target'] != self._target:
+                    raise AmbiguousWriteError("Save 요청의 소유권을 확인할 수 없습니다.") from exc
+                transaction['helper'] = process
+                transaction['owner'] = self
+                self._pending_save = transaction
+                WindowsUiAdapter._save_barrier = transaction
                 retained_save = True
                 raise SaveConfirmationPending("Save 응답 대기 · 요청을 반복하지 않고 처리 종료를 추적합니다.") from exc
             raise

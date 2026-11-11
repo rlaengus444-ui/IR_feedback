@@ -44,6 +44,7 @@ class ResilientUiAdapter:
         self._stopped = False
         self._next_retry = 0
         self._failures = 0
+        self._consumed_save_reconciliation = None
         self._sticky = ''
         self._fault = None
         self._fault_callback = None
@@ -504,9 +505,11 @@ class ResilientUiAdapter:
         if (job_admitted and native_auto and snap.control_available and snap.measurement_valid
                 and snap.observation_fresh and snap.observation_is_new is True
                 and isinstance(reconciled, tuple) and len(reconciled) == 3
+                and reconciled != self._consumed_save_reconciliation
                 and reconciled[1] == snap.run_key and type(reconciled[2]) is int
                 and snap.layer_index is not None and snap.layer_index > reconciled[2]):
             self._needs_baseline = False
+            self._consumed_save_reconciliation = reconciled
         if job_admitted and native_auto and self._needs_baseline and snap.measurement_valid and snap.observation_fresh and snap.observation_key and snap.layer_index is not None:
             if not snap.control_available or self._baseline is None:
                 self._baseline = (snap.observation_key, snap.layer_index)

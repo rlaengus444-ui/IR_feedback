@@ -14,7 +14,7 @@ import sys
 import time
 import traceback
 
-PIN = 'aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e'
+PIN = '939c65d211ff9d144e956eb7b2bae26c4cfab80437c2f0a6c60efa70f4c1b215'
 MAX_BYTES = 1024 * 1024
 ZONE = b'[ZoneTransfer]\r\nZoneId=3\r\n'
 
@@ -92,7 +92,7 @@ def main(root, output):
         if renamed.exists():
             raise FileExistsError(f'Refusing to overwrite {renamed}')
         original = dll.read_bytes()
-        if len(original) != 26112 or digest(original) != PIN:
+        if len(original) != 26624 or digest(original) != PIN:
             raise ValueError('Packaged DLL original bytes or pinned hash do not match')
         report['source_dll_sha256_before'] = digest(original)
         report['checks']['original_hash_and_size'] = True

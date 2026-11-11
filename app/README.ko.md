@@ -1,5 +1,7 @@
 # IR 피드백 외부 모듈 · CSV
 
+Save 응답 지연 후 처리 완료와 실제 저장값을 자동 확인해 새 층에서 제어를 재개합니다. [조건과 확인 범위](../docs/SAVE_AUTO_RESUME.ko.md)를 확인하세요.
+
 버전: `2026.11.11-save-resume.1` 평가판. 프린팅 중지·재시작 및 컨트롤러 PID 교체 후 확인 절차를 거쳐 자동 재개합니다. [재개 조건](../docs/JOB_RESUME.ko.md)을 확인하세요. 지원 장비는 M1·S3이며 M2는 아직 지원하지 않습니다. [숨겨진 Sequence 복구와 기록 저장](../docs/M1_HIDDEN_RECOVERY.ko.md), [Excel 지연 처리](../docs/EXCEL_RESPONSE_WAIT.ko.md), [IR 출력 상한과 검증 범위](../docs/IR_OUTPUT_LIMIT.ko.md)를 확인하세요. 수동 이미지 입력, 설정 변경 시 연결 유지와 CSV·온도·IR PNG 자동 저장은 유지합니다. 원본 BinderJet 소스·실행 파일·설정을 추가로 바꾸지 않고, 기존 Monitoring CSV에 새 완료 행이 저장되면 `TemperaturePostRecoating`을 읽어 IR 설정을 계산합니다. Process 표 조회·접근성 객체·스크롤·Process 탭 전환은 사용하지 않습니다.
 
 **온도 신뢰성:** 온도계 비활성 상태를 나타내는 -1 값은 제어 입력으로 사용하지 않습니다. 정상 범위의 오래된 센서값은 CSV만으로 감지할 수 없습니다. 실제 S3 센서·PLC·램프 출력은 미검증이며 제어 알고리즘 최종 승인과 장비 적용은 보류 상태입니다.

@@ -169,3 +169,32 @@ class SaveResumeSessionTests(unittest.TestCase):
         self.assertEqual({},rows[1]['applied'])
         self.assertEqual({1:60},rows[3]['applied'])
         self.assertEqual(3,controller.process.call_count)
+
+
+class SaveStampIsolationTests(unittest.TestCase):
+    def test_consumed_stamp_does_not_bypass_later_sensor_baseline(self):
+        import test_resilient_adapter as base
+        setup=base.ResilienceTests('test_baseline_requires_different_layer')
+        setup.setUp();adapter=setup.adapter;raw=setup.raws[-1]
+        raw.ambiguous=False
+        raw.snapshot=setup.snap('a',1);adapter.read_snapshot(None)
+        raw.snapshot=replace(setup.snap('b',2),save_reconciliation=('nonce','job',1))
+        self.assertTrue(adapter.read_snapshot(None).control_available)
+        raw.snapshot=replace(setup.snap('invalid',3),measurement_valid=False)
+        self.assertFalse(adapter.read_snapshot(None).control_available)
+        raw.snapshot=replace(setup.snap('c',4),save_reconciliation=('nonce','job',1))
+        self.assertFalse(adapter.read_snapshot(None).control_available)
+        raw.snapshot=replace(setup.snap('d',5),save_reconciliation=('nonce','job',1))
+        self.assertTrue(adapter.read_snapshot(None).control_available)
+
+    def test_save_stamp_does_not_override_algorithm_bounds(self):
+        adapter=Mock();stop=threading.Event();rows=[]
+        adapter.read_snapshot.return_value=test_session.snapshot('new',4,
+            run_key='job',control_available=True,control_epoch=1,observation_is_new=True,
+            observation_fresh=True,save_reconciliation=('nonce','job',3),
+            heater1_setting_percent=150)
+        def emit(kind,value):
+            if kind=='snapshot':rows.append(value);stop.set()
+        run_ui_session(SessionOptions(test_session.TARGET,mode='control'),stop,emit,lambda:adapter)
+        adapter.apply_ir_power.assert_not_called()
+        self.assertEqual('power-limit-waiting',rows[0]['effective_mode'])
