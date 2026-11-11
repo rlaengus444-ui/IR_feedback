@@ -320,8 +320,15 @@ class ResilientUiAdapter:
         fresh = bool(native_auto and snap.measurement_valid and snap.observation_fresh
                      and snap.observation_key and isinstance(snap.layer_index, int)
                      and not isinstance(snap.layer_index, bool))
-        if self._pinned_job is None and snap.run_key and native_auto:
+        if self._pinned_job is None and (not snap.run_key or not native_auto):
+            self._job_candidate = None
+            return False
+        if self._pinned_job is None:
             self._pinned_job = snap.run_key
+            # Establish chronology from the first proven log context, even if
+            # its CSV temperature is old/missing. It does not authorize Save.
+            self._pinned_proof = proof
+            self._job_highwater = proof
         if (snap.run_key == self._pinned_job and not self._job_handoff
                 and snap.run_key not in self._retired_jobs):
             if self._pinned_proof is not None and proof != self._pinned_proof:
@@ -329,9 +336,6 @@ class ResilientUiAdapter:
                 if self._was_ready or self._baseline is not None:
                     self.suspend_control('현재 작업 시작 근거 재확인 대기')
                 return False
-            if self._pinned_proof is None and proof and fresh:
-                self._pinned_proof = proof
-                self._job_highwater = proof
             if fresh:
                 self._prepare_authorized(event)
             return True

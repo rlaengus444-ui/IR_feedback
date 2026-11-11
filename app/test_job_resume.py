@@ -48,6 +48,19 @@ class JobResumeTests(unittest.TestCase):
         self.adapter.apply_ir_power(1,55,'B1',None)
         self.assertEqual(1,self.raws[-1].calls)
     def test_fresh_new_run_does_not_need_observed_stop(self): self.adopt()
+    def test_initial_idle_does_not_create_an_unrecoverable_handoff(self):
+        self.adapter._pinned_job=None;self.adapter._pinned_proof=None
+        self.adapter._job_highwater=None;self.adapter._was_ready=False
+        self.assertFalse(self.read('A',0,1000,machine_state='IDLE').control_available)
+        self.assertFalse(self.adapter._job_handoff)
+        self.read('A',0,1000)
+        self.assertTrue(self.read('A',1,1000).control_available)
+    def test_initial_stale_proven_run_can_transition_to_fresh_new_job(self):
+        self.adapter._pinned_job=None;self.adapter._pinned_proof=None
+        self.adapter._job_highwater=None;self.adapter._was_ready=False
+        self.read('A',0,1000,observation_fresh=False,observation_key=None)
+        self.assertEqual(1000,self.adapter._pinned_proof[3])
+        self.adopt()
     def test_old_run_flicker_during_candidate_never_rearms(self):
         self.read('B',0,2000)
         self.assertFalse(self.read('A',3,1000).control_available)
