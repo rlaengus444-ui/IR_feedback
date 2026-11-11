@@ -1,0 +1,109 @@
+{
+  "schema": "exact-save-resume-publisher-review/1",
+  "created_utc": "2026-11-11T10:02:28.247716+00:00",
+  "decision": "APPROVED_TO_EXECUTE_EXACT_REVIEWED_EVALUATION_PUBLISHER",
+  "publisher_workflow_execution_approved": true,
+  "evaluation_distribution_approved": true,
+  "stable_release_approved": false,
+  "final_algorithm_approved": false,
+  "equipment_application_approved": false,
+  "review_route": {
+    "actual_route": "native collaboration subagent /root/sol_reviewer_job_pid_nov11",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false,
+    "actual_independent_final_publisher_review_completed": true,
+    "cli_authentication_recovery_asserted": false
+  },
+  "scope": {
+    "worktree": "/workspace/IR_feedback_save_resume_delivery",
+    "reviewed_files": [
+      {
+        "path": "release_tools/publish_save_resume.py",
+        "sha256": "e0bbee27a2c0797040eef4e22468561deb01132d16257b570e16acd93fede272",
+        "bytes": 9570
+      },
+      {
+        "path": ".github/workflows/publish-csv6.yml",
+        "sha256": "fec6096e1ffb6b7e03b469e7ec3fe95e4ad968a62b2de5e78e7139aa2ca17c64",
+        "bytes": 959
+      },
+      {
+        "path": "release_tools/save_resume_review/release-review-save-auto-resume-final.json",
+        "sha256": "ec926b5e4393e2755b8fcf37a1d8f78b2b6f93a51d02e806ac14920f674e2867",
+        "bytes": 16220
+      },
+      {
+        "path": "release_tools/save_resume_review/release-notes.txt",
+        "sha256": "cb07f7e6c390d77886c59b7077f01581075e0eae573ebd32c170d5d5ff2283f9",
+        "bytes": 1640
+      }
+    ],
+    "source_snapshot": "/workspace/ir-save-auto-resume-2026.11.11/publisher-final-reviewed-source",
+    "protected_approval_copy_identical": true,
+    "runtime_or_application_source_changed_by_reviewer": false,
+    "rebuild_permitted": false,
+    "real_upload_or_release_mutation_by_reviewer": false
+  },
+  "approved_delivery": {
+    "repository": "rlaengus444-ui/IR_feedback",
+    "source": "ef414bd16788bdc3bf3d54999effb3c99abed3a1",
+    "version": "2026.11.11-save-resume.1",
+    "existing_draft_release_id": 441499860,
+    "run_id": 42996980159,
+    "api_artifact_id": 13845610566,
+    "outer_bytes": 34978149,
+    "outer_sha256": "9026d67ae6284c4ccdfe661ffcee1d582983a5b976f1ce420a7e80c27caaadfb",
+    "filename": "IRFeedback-2026.11.11-save-resume.1.zip",
+    "bytes": 35410858,
+    "sha256": "43f1bd03990270560a4f92d06620b5b8478ed5085f776c5256c3163f5cf5758e",
+    "assets": [
+      "IRFeedback-2026.11.11-save-resume.1.zip",
+      "SHA256.txt",
+      "release-review-save-auto-resume-final.json"
+    ],
+    "draft_then_prerelease": true,
+    "make_latest": "false"
+  },
+  "independent_readonly_github": {
+    "route": "GitHub connector github_fetch GET only",
+    "draft_id_and_target_verified": true,
+    "draft_prerelease_and_zero_assets_verified": true,
+    "exact_notes_body_verified": true,
+    "initial_version_tag_absent_404_verified": true,
+    "record": "/workspace/ir-save-auto-resume-2026.11.11/publisher-final-readonly-github.json",
+    "record_sha256": "c14b2cad9bfd1b3d81c22b57ce707b49833eada7c9937d8923fc83e58a6f75b1",
+    "artifact_metadata_previously_read_independently": "/workspace/ir-save-auto-resume-2026.11.11/final-github-metadata-reviewer.json"
+  },
+  "executed_tests": {
+    "command": "python /workspace/ir-save-auto-resume-2026.11.11/publisher-final-tests.py",
+    "tests": 9,
+    "seconds": 10.571,
+    "exit_code": 0,
+    "result": "OK",
+    "source": "/workspace/ir-save-auto-resume-2026.11.11/publisher-final-tests.py",
+    "source_sha256": "035b185f363d5b36982f80ff5fc67033949d1a39bdcf5e073fc375d21355331b",
+    "log": "/workspace/ir-save-auto-resume-2026.11.11/publisher-final-tests.txt",
+    "log_sha256": "a456064b8ef6505eaa37eeb05a764a7fdcf6bf27883f156e5d9394a95d86fa56",
+    "positive": "Actual exact immutable final archive, actual independent artifact metadata and draft fields, actual protected approval/notes, complete real package verifier; strict mocked API/upload records exactly one three-asset upload and one prerelease PATCH with make_latest=false",
+    "negative": "Changed approval, source metadata, draft source or initial tag refuse before upload; uploaded digest/body or tag changes refuse public PATCH. No real GitHub writes occur in tests.",
+    "prior_logic_tests": "/workspace/ir-save-auto-resume-2026.11.11/publisher-logic-review.json",
+    "prior_upload_tag_release_functions_ast_identical": true,
+    "hashes_unchanged_during_review": true
+  },
+  "unresolved_findings": [],
+  "execution_requirements": [
+    "Commit/tag/dispatch these exact reviewed publisher, workflow, approval and notes bytes; material changes require re-review",
+    "Allow the publisher to enforce all provenance/package/raw-check/draft/tag/uploaded-asset size and digest guards; no clobber, rebuild or bypass",
+    "If any API/upload/guard step fails, preserve and investigate state; approval does not authorize overwriting unexpected draft assets",
+    "After publication independently read asset metadata and download the full anonymous public ZIP; verify exact size and SHA256 before marking delivery complete or updating Notion",
+    "Authorized team Notion update must preserve existing nine file blocks and two images; this review introduces no new messaging or actuation authority"
+  ],
+  "limits": [
+    "Reviewer performed only read-only GitHub GETs and offline mocked publication; actual workflow token permissions/upload execution remain to be observed",
+    "Local gh authentication failure is not declared fixed",
+    "Evaluation artifact is approved separately by the protected final record; raw readiness remains false/pending and Excel COM unregistered",
+    "Actual tested long Save handler delay is six seconds, not the requested clamped 6.5 seconds",
+    "Final algorithm, physical equipment, long machine operation and stable release approval remain HOLD"
+  ]
+}

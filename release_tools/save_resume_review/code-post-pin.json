@@ -1,0 +1,77 @@
+{
+  "phase": "CODE_POST_DELTA",
+  "created_utc": "2026-11-11T09:40:27.682146+00:00",
+  "decision": "APPROVED_PIN_CORRECTION_PENDING_NEW_WINDOWS_AND_ARTIFACT_VALIDATION",
+  "source_review_approved": true,
+  "evaluation_distribution_approved": false,
+  "stable_release_approved": false,
+  "final_algorithm_approved": false,
+  "equipment_application_approved": false,
+  "review_route": {
+    "actual": "native collaboration subagent /root/sol_reviewer_job_pid_nov11",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false
+  },
+  "base_source": "2db2102ecbdd3835fff98a0f075229751f940ce8",
+  "source": {
+    "commit": "ef414bd16788bdc3bf3d54999effb3c99abed3a1",
+    "working_tree_clean": true,
+    "unresolved_source_findings": []
+  },
+  "changed_file": {
+    "path": "app/native_helper.ps1",
+    "sha256": "199244b5ebb520b991151ed3b9b84afdf6897491463ed169a4af08108ed03375",
+    "change": "ImportBundledBridge exact expected digest updated from former DLL hash to newly compiled reviewed DLL; no other code change"
+  },
+  "finding": {
+    "origin": "Actual Windows native failure of the 2db candidate",
+    "issue": "Production ImportBundledBridge still pinned the former DLL while source included the rebuilt DLL. Earlier source review missed this loader-pin mismatch.",
+    "resolution": "One-line pin update to exact reviewed rebuilt bytes; loader size/hash validation and byte-array assembly loading unchanged"
+  },
+  "executed_verification": {
+    "diff_exactly_one_line_added_and_removed": true,
+    "production_loader_pin": "939c65d211ff9d144e956eb7b2bae26c4cfab80437c2f0a6c60efa70f4c1b215",
+    "dll_sha256": "939c65d211ff9d144e956eb7b2bae26c4cfab80437c2f0a6c60efa70f4c1b215",
+    "dll_bytes": 26624,
+    "production_pin_matches_probe_and_preserved_build_proof": true,
+    "former_dll_digest_differs_and_is_refused": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+    "search": "rg across app, release_tools, workflows and repository nonbinary files for both digest and former size; no active former pin/26112 reference remains",
+    "portable_application_tests_repeated": false,
+    "reason": "Only the loader expected digest changed. Prior 111 focused source tests remain evidence for unchanged Python; actual loader execution awaits new Windows run."
+  },
+  "prior_failed_candidate": {
+    "source_commit": "2db2102ecbdd3835fff98a0f075229751f940ce8",
+    "raw_readiness": "/workspace/ir-save-auto-resume-2026.11.11/candidate-ci/readiness.json",
+    "raw_readiness_sha256": "2a35eb48852f740ea49992997389bd4ffe1ed3f3907b8489f8ef5e366f4ef708",
+    "checks": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "failure",
+      "csv_guard": "success",
+      "native_discovery": "failure",
+      "slice_perf": "success",
+      "settings_recovery": "failure",
+      "background": "failure",
+      "hidden_recovery": "failure",
+      "hidden_session": "failure",
+      "job_resume": "failure",
+      "excel": "failure",
+      "reverify": "success"
+    },
+    "device_application_approved": false,
+    "release_ready": false,
+    "automated_checks_passed": false,
+    "final_sol_review": "pending",
+    "distribution_approved": false,
+    "windows_unit_result_parent_supplied": "563 tests pass, 108.589 seconds; native stages fail"
+  },
+  "limits": [
+    "New full Windows native run must demonstrate that the production loader accepts exact reviewed DLL and rejects substituted bytes.",
+    "6500ms retained-helper/observed-session recovery, all raw checks and exact final artifact remain required before distribution.",
+    "Prior failed candidate and raw readiness remain untouched; GitHub continue-on-error job conclusion is not a validation pass.",
+    "No source edits, uploads, equipment writes or dependency installation by reviewer.",
+    "Excel COM/physical equipment/final algorithm/stable approval remain HOLD."
+  ]
+}

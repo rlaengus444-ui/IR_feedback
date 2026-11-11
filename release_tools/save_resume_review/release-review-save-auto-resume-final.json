@@ -1,0 +1,295 @@
+{
+  "schema": "independent-exact-evaluation-artifact-review/1",
+  "created_utc": "2026-11-11T09:58:50.663772+00:00",
+  "decision": "APPROVED_FOR_EXACT_EVALUATION_DISTRIBUTION_ONLY",
+  "evaluation_distribution_approved": true,
+  "stable_release_approved": false,
+  "final_algorithm_approved": false,
+  "equipment_application_approved": false,
+  "approval_statement": "Approve evaluation-only distribution of the exact tested IRFeedback-2026.11.11-save-resume.1.zip identified below. This approval does not approve stable release, final control algorithm, real equipment use, Excel COM behavior or arbitrary future rebuilt bytes.",
+  "review_route": {
+    "actual_route": "native collaboration subagent /root/sol_reviewer_job_pid_nov11",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false,
+    "actual_design_source_and_artifact_review_completed": true,
+    "cli_authentication_recovery_asserted": false,
+    "github_metadata_route": "GitHub connector github_fetch_workflow_run_artifacts, read independently by reviewer"
+  },
+  "source": {
+    "repository": "rlaengus444-ui/IR_feedback",
+    "repository_id": 1434868115,
+    "local_repository": "/workspace/IR_feedback_save_auto_resume",
+    "commit": "ef414bd16788bdc3bf3d54999effb3c99abed3a1",
+    "version": "2026.11.11-save-resume.1",
+    "working_tree_clean": true,
+    "unresolved_source_findings": [],
+    "source_code_post_records": [
+      "/workspace/ir-save-auto-resume-2026.11.11/code-post.json",
+      "/workspace/ir-save-auto-resume-2026.11.11/code-post-pin.json"
+    ],
+    "design_records": [
+      "/workspace/ir-save-auto-resume-2026.11.11/design-pre.json",
+      "/workspace/ir-save-auto-resume-2026.11.11/design-settings-after-completion.json"
+    ],
+    "prior_released_base": "a2b260654c7620eca87ea57dc7fa36d3c2c24a4d"
+  },
+  "approved_artifact": {
+    "filename": "IRFeedback-2026.11.11-save-resume.1.zip",
+    "version": "2026.11.11-save-resume.1",
+    "bytes": 35410858,
+    "sha256": "43f1bd03990270560a4f92d06620b5b8478ed5085f776c5256c3163f5cf5758e",
+    "local_path": "/workspace/ir-save-auto-resume-2026.11.11/final-ci/IRFeedback-2026.11.11-save-resume.1.zip",
+    "rebuild_approved": false,
+    "manifest_entries": 3662,
+    "package_files_including_manifest": 3663
+  },
+  "ci_artifact": {
+    "workflow_run": 42996980159,
+    "api_artifact_id_parent_supplied": 13845610566,
+    "api_artifact_id_independently_confirmed": 13845610566,
+    "outer_bytes": 34978149,
+    "outer_sha256": "9026d67ae6284c4ccdfe661ffcee1d582983a5b976f1ce420a7e80c27caaadfb",
+    "outer_path": "/workspace/ir-save-auto-resume-2026.11.11/final-ci.zip",
+    "artifact_name": "slice-candidate-ef414bd16788bdc3bf3d54999effb3c99abed3a1",
+    "expired": false,
+    "head_sha": "ef414bd16788bdc3bf3d54999effb3c99abed3a1",
+    "head_branch": "verify/save-resume-20261111-ef414bd",
+    "repository_id": 1434868115,
+    "head_repository_id": 1434868115,
+    "metadata_record": "/workspace/ir-save-auto-resume-2026.11.11/final-github-metadata-reviewer.json",
+    "metadata_record_sha256": "5827cba2de6b3f3c334c34a9e0d0e332a127ba5513a64912f6f17daadd79845e",
+    "outer_crc_and_23_unique_flat_entries_verified": true,
+    "all_extracted_evidence_matches_outer_bytes": true
+  },
+  "executed_artifact_checks": {
+    "package_verifier": {
+      "command": "python release_tools/verify_package.py /workspace/ir-save-auto-resume-2026.11.11/final-ci/IRFeedback-2026.11.11-save-resume.1.zip 2026.11.11-save-resume.1",
+      "result": "passed",
+      "complete_manifest_and_crc": true,
+      "safe_unique_casefold_paths": true,
+      "all_required_sources_and_runtime_present": true
+    },
+    "source_identity": {
+      "source_mappings": 52,
+      "unique_source_files": 50,
+      "all_packaged_source_bytes_match_clean_commit": true,
+      "strict_duplicate_free_finite_json_files": 24
+    },
+    "runtime_provenance": {
+      "base": "dist/IRFeedback-2026.10.27-csv.6.zip",
+      "base_sha256": "ff216aaca807a47b44de34f47194aff88f28dd0f08a9874f330cdd8c67be5e84",
+      "launcher_and_non_pillow_runtime_files": 3490,
+      "all_identical_to_base": true,
+      "pillow": "13.0.0 cp314-cp314-win_amd64",
+      "pillow_wheel_sha256": "f7cbb7a64e7ec664775195e4f81923bc8a93d9451b963f844e59118f63147a7a",
+      "pillow_files": 120,
+      "all_pillow_bytes_match_pinned_wheel": true,
+      "dependency_install_performed": false
+    },
+    "bridge_provenance": {
+      "dll_bytes": 26624,
+      "dll_sha256": "939c65d211ff9d144e956eb7b2bae26c4cfab80437c2f0a6c60efa70f4c1b215",
+      "production_loader_pin_matches_dll": true,
+      "dll_identical_to_preserved_windows_compilation_artifact": true,
+      "six_source_and_build_inputs_match_build_record": true,
+      "build_workflow_run_parent_supplied": 42995807963,
+      "build_commit": "a2abb911db40381e47016e72d8265fc64ca80744",
+      "build_record": "/workspace/ir-save-auto-resume-2026.11.11/bridge/build.json",
+      "build_record_sha256": "3e46b80dc14a40fb5ff21d4869c0ccc2cb64c9a6bfe6b5a3a576947553fdc021",
+      "download_marked_loader_acceptance_and_tampered_oversize_missing_rejections_passed": true
+    },
+    "details_record": "/workspace/ir-save-auto-resume-2026.11.11/final-provenance-check.json",
+    "details_record_sha256": "39c33c75f80cc10684e9f225265ba90ece90dd1c8e6a0651ba950ead60aa235e"
+  },
+  "raw_windows_validation": {
+    "tests_run": 563,
+    "tests_seconds": 127.172,
+    "tests_result": "OK",
+    "all_13_non_excel_checks_success": true,
+    "checks": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "settings_recovery": "success",
+      "background": "success",
+      "hidden_recovery": "success",
+      "hidden_session": "success",
+      "job_resume": "success",
+      "excel": "failure",
+      "reverify": "success"
+    },
+    "raw_flags_untouched": {
+      "automated_checks_passed": false,
+      "release_ready": false,
+      "final_sol_review": "pending",
+      "device_application_approved": false
+    },
+    "excel": {
+      "excel_com_tested": false,
+      "release_ready": false,
+      "reason": "Excel COM is not registered"
+    },
+    "owned_fixture_scope": "Actual Windows synthetic WinForms controllers and temporary CSV/settings through packaged Python and production raw/resilient/observed/session/native stack. No real BJT, sensors, PLC, lamps or Excel COM.",
+    "session_cases": [
+      {
+        "machine": "M1",
+        "original_pid": 8088,
+        "replacement_pid": 2840,
+        "pending_native_seconds": 5.00233209999999,
+        "pending_layer": 8,
+        "resumed_layer": 11,
+        "read_only_audits_before_resumed_apply": 2,
+        "old_delayed_row_applied_point": false,
+        "saved_per_phase": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "pending_phase_first_snapshot_layer": 7,
+        "interpretation_note": "Phase labels are captured by the reporting callback; the first phase snapshot can still show prior layer 7. The actual delayed apply attempt is phase-recorded layer 8."
+      },
+      {
+        "machine": "S3",
+        "original_pid": 4804,
+        "replacement_pid": 1968,
+        "pending_native_seconds": 5.017316700000038,
+        "pending_layer": 8,
+        "resumed_layer": 11,
+        "read_only_audits_before_resumed_apply": 2,
+        "old_delayed_row_applied_point": false,
+        "saved_per_phase": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "pending_phase_first_snapshot_layer": 7,
+        "interpretation_note": "Phase labels are captured by the reporting callback; the first phase snapshot can still show prior layer 7. The actual delayed apply attempt is phase-recorded layer 8."
+      }
+    ],
+    "long_save_timing": {
+      "requested_fixture_delay_ms": 6500,
+      "actual_fixture_clamped_delay_ms": 6000,
+      "caller_budget_ms": 5000,
+      "fixture_source": "validation/CsvRouteFixture.cs:194",
+      "claim": "Six-second actual synchronous handler delay exceeds five-second caller budget; do not describe this as an actual 6.5-second delay."
+    },
+    "long_save_result": "Both M1 and S3 produced one known SaveConfirmationPending response at about five seconds, continued CSV observation, retained helper ownership, verified completion/retirement/normal response and two full settings audits, then saved a genuinely higher fresh layer. No old delayed-row applied graph point or duplicate Save.",
+    "direct_confirmation_cases": {
+      "cases": 4,
+      "machines": [
+        "M1",
+        "S3"
+      ],
+      "normal_actual_delays_ms": [
+        250,
+        600,
+        1500
+      ],
+      "save_counts_after_each_normal_attempt": [
+        1,
+        2,
+        3
+      ],
+      "long_delay_cases": 2,
+      "automatic_reconciliation_no_replay_observation_and_fresh_save": true,
+      "target_exit_without_receipt_cases": 2,
+      "target_exit_remains_sticky_no_retry": true,
+      "helpers_retired": true
+    },
+    "other_native_results": [
+      "Seven phases per M1/S3 main session each recorded exactly one owned Save",
+      "Actual initial selection and scoped/global discovery with PID M1 8088 to 2840 and S3 4804 to 1968",
+      "Same-PID Stop/Start/new-job resume, new-PID same-job resume and retired-job/watermark preservation",
+      "Pre-edit expiry without edit/Save markers or epoch reset followed by fresh-layer Save",
+      "Five real native kind/role/scope/PID negative cases per M1/S3",
+      "Pre-edit job switch rejects without markers; post-edit/pre-Save job switch saves nothing and retains sticky barrier",
+      "Full hidden-session four cases, hidden recovery, external foreground/minimize eight background cases, discovery/settings/CSV-guard/performance and launcher reports passed"
+    ],
+    "post_edit_deadline_test_scope": "Explicit simulated edit marker with the actual production CSV deadline guard, zero UI actions and no Save, composed with Python marker-policy tests and actual native post-edit job-switch testing. Not an actual end-to-end UI post-edit clock-expiry experiment.",
+    "native_fixture_probe_and_hidden_session_source_hashes_match_reviewed_source": true,
+    "native_details": "/workspace/ir-save-auto-resume-2026.11.11/final-native-evidence-review.json",
+    "native_details_sha256": "f2a395dc1e24556ad224fc8c99399aa4d63d5d0e2418fdcec16cc351aed938c8",
+    "raw_evidence_sha256": {
+      "smoke.txt": "7815baf2777228c2b9ceb7a1dc7df9488b2f2edf515f59bcf0c9bff3765ed053",
+      "candidate.json": "7f812593ba750d5827c12ff2edaadecf1d69131e529dc6bc1c396c08287510d7",
+      "hidden-recovery.json": "392f74813d88dcffa1d2b277d06cb927bc8fd23960b39845af311747a8e647b0",
+      "slice-performance.json": "add539d62abc17de1978d0bb7e1b9e54d559449bd6cfa023465818fe50e867d8",
+      "excel.json": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03",
+      "SHA256.txt": "6dcd0c9ba88b8f78de20d91bac971f370d06590474ce7710957f51a665d11845",
+      "job-resume.json": "57c0ebe9891350a7ae60196ba9944a284a9a52bb7d2e7eabb0bfe9ff658105d5",
+      "tests.txt": "f6184b803ed4eac8dabc9d9962095af4ad575ff8389d37960bb0a7012f0f93f1",
+      "hidden-recovery.txt": "9c92ec23fe1e7e3a8b579e43797061e87717e5da79ef113652dcbe9ee132ffdc",
+      "csv-guard.json": "f6c7f7985e37a7927ade0c494de8bd76840b0d09d7ef8a0dac7f74beb32048ee",
+      "hidden-session.txt": "d66d958effd16540968b9d42c6b7a593cb5d7bb040d6ed781aac19c808231bc9",
+      "discovery.txt": "36fdc5a7e8bbd34938681d68f88ea636c03ab1b1bf451db59995e351730c3113",
+      "job-resume.txt": "904f1c5735960c05ddbbccec5e492857d6a494ead463c936ebd370f1dadc8430",
+      "settings-recovery.json": "5701bf0ee0d48ebe19118f3de5570774ee91fbc3d5e18d3959b3b7b89f6a2d1e",
+      "bridge.json": "684bd2b97686197c360e1a20b8af4dbe371a760145a305f3c12ed7dc6550a3cf",
+      "hidden-session.json": "c5f3ed44279e3e14be6f808879e8bc29afbcfc8e2011fca9f33e3c829aeb2523",
+      "settings-recovery.txt": "5701bf0ee0d48ebe19118f3de5570774ee91fbc3d5e18d3959b3b7b89f6a2d1e",
+      "discovery.json": "36fdc5a7e8bbd34938681d68f88ea636c03ab1b1bf451db59995e351730c3113",
+      "slice-performance.txt": "add539d62abc17de1978d0bb7e1b9e54d559449bd6cfa023465818fe50e867d8",
+      "background.json": "f2695c83de7e3d690ccf945b196cf28605a3475fca1cecad28b72dfae0b2cd43",
+      "background.txt": "f2695c83de7e3d690ccf945b196cf28605a3475fca1cecad28b72dfae0b2cd43",
+      "readiness.json": "941b0c74d5a632628967e74c84bd8017dcb296c0f6a12b4c708699cd317eee3d"
+    }
+  },
+  "source_and_offline_checks": {
+    "focused_portable_tests": 111,
+    "seconds": 5.041,
+    "result": "OK",
+    "known_linux_native_process_fixture_explicitly_excluded": true,
+    "logs": [
+      "/workspace/ir-save-auto-resume-2026.11.11/code-post-2db-tests.txt",
+      "/workspace/ir-save-auto-resume-2026.11.11/reviewer-fence-race.txt"
+    ],
+    "global_quarantine_lock_boundary_mock": "blocked before helper creation",
+    "publisher_logic_pre_review": "/workspace/ir-save-auto-resume-2026.11.11/publisher-logic-review.json",
+    "publisher_execution_approval": "pending final exact constants and copied review/notes review"
+  },
+  "resolved_and_preserved_history": {
+    "source_findings": "Four initial WIP findings plus consumed-stamp and process-lock atomicity findings resolved in reviewed source.",
+    "production_pin_miss": "Earlier source review missed that the loader expected the old DLL. First actual 2db Windows native candidate failed. One-line ef414bd correction independently reviewed; final Windows downloaded-marked and all native tests now pass.",
+    "failed_candidate_preserved": "/workspace/ir-save-auto-resume-2026.11.11/candidate-ci",
+    "prior_2db_candidate_distribution_approved": false,
+    "earlier_design_source_and_failed_raw_reports_preserved": true,
+    "prior_job_resume_evaluation_approval_not_overwritten": true
+  },
+  "remaining_limits": [
+    "Final algorithm, real equipment application, stable release and long-duration machine operation remain HOLD. A positive settings Save is not measured lamp power or physical control validation.",
+    "Excel COM was not registered, so real desktop Excel behavior remains untested. Raw readiness/Excel flags are preserved; independent evaluation approval is recorded separately.",
+    "Automatic recovery is limited to a known owned synchronous Save with proven completion. Missing/corrupt receipt, protocol/identity/configuration faults, edit-only ambiguity, target exit without receipt or unknown helper still block actuation.",
+    "The current strict pending guard can continue waiting if legitimate saved IR/non-IR settings change before original transaction integrity is established; this conservative limitation was reviewed and retained, not silently broadened.",
+    "A normal synchronous dispatch return and stable saved/UI settings do not establish arbitrary deferred asynchronous target-work quiescence or prove production-controller handler implementation on real hardware.",
+    "CSV cannot prove a plausible old physical sensor value is fresh. Invalid -1 and existing timestamp/job/alignment gates remain required.",
+    "The six-second result is the maximum exercised owned-fixture delay here; indefinite target hang recovery and arbitrary longer completion latency are not established by this test.",
+    "No actual publication, target equipment writes or dependency installs were performed by the reviewer."
+  ],
+  "authorized_delivery_scope": {
+    "exact_tested_zip_only": true,
+    "assets": [
+      "IRFeedback-2026.11.11-save-resume.1.zip",
+      "SHA256.txt",
+      "release-review-save-auto-resume-final.json"
+    ],
+    "prerelease": true,
+    "make_latest": false,
+    "target_source": "ef414bd16788bdc3bf3d54999effb3c99abed3a1",
+    "publisher_final_constants_review_required": true,
+    "after_publication_full_public_zip_get_sha256_required": true,
+    "team_notion_update": "Only after exact public artifact verification; preserve existing nine file blocks and two images and fold earlier recovery entry as authorized by user."
+  }
+}

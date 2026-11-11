@@ -1,0 +1,69 @@
+{
+  "phase": "RELEASE_CRITICAL_LOGIC_PRE_REVIEW",
+  "created_utc": "2026-11-11T09:50:20.694186+00:00",
+  "decision": "LOGIC_APPROVED_PENDING_FINAL_CONSTANTS_AND_ARTIFACT_REVIEW",
+  "publisher_logic_review_approved": true,
+  "publisher_execution_approved": false,
+  "evaluation_distribution_approved": false,
+  "equipment_application_approved": false,
+  "stable_release_approved": false,
+  "final_algorithm_approved": false,
+  "review_route": {
+    "actual": "native collaboration subagent /root/sol_reviewer_job_pid_nov11",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false
+  },
+  "source_base": "ef414bd16788bdc3bf3d54999effb3c99abed3a1",
+  "reviewed_files": {
+    "release_tools/publish_save_resume.py": "df46fe213450ef1a1c4ecfaa59e8838eb688476d556a04e1e6e8248581132024",
+    ".github/workflows/publish-csv6.yml": "fec6096e1ffb6b7e03b469e7ec3fe95e4ad968a62b2de5e78e7139aa2ca17c64",
+    "release_tools/save_resume_review/release-notes.txt": "cb07f7e6c390d77886c59b7077f01581075e0eae573ebd32c170d5d5ff2283f9"
+  },
+  "assessment": [
+    "Artifact/run/release IDs and byte counts remain zero; digest/review pins remain UNAPPROVED. This fails before API access. No actual delivery is approved by this record.",
+    "Upload/tag/draft/provenance/package/review checks are AST-identical to the previously independently approved publisher; no rebuilding or clobber was introduced.",
+    "New evidence predicates require 563 passing unit tests, actual per-machine delayed-session recovery, 250/600/1500ms short-delay cases with 1/2/3 Save counts, long-delay automatic reconciliation/no replay/observation/fresh-layer flags, and sticky exit without receipt.",
+    "Raw readiness false/pending fields and Excel COM unregistered failure remain required; all 13 non-Excel outcomes must be success.",
+    "Workflow is manual only with exact ef414bd reviewed source, current immutable workflow SHA checkout, preserved source bytes and official GitHub token.",
+    "Release notes limit the result to evaluation and do not claim hardware, Excel COM, final algorithm or stable approval."
+  ],
+  "tests": {
+    "command": "python /workspace/ir-save-auto-resume-2026.11.11/publisher-logic-tests.py",
+    "result": "11 tests passed",
+    "exit_code": 0,
+    "synthetic_predicate_fixtures_only": true,
+    "actual_windows_or_artifact_validation_claimed": false,
+    "api_and_uploads": "Never called; placeholders and strict mocks prevent all external side effects",
+    "test_source": "/workspace/ir-save-auto-resume-2026.11.11/publisher-logic-tests.py",
+    "test_source_sha256": "9fdd1794a44f062f5aa083d370f2665ce508448cff2424f907d4b51b9ad515cc",
+    "log": "/workspace/ir-save-auto-resume-2026.11.11/publisher-logic-tests.txt",
+    "log_sha256": "efbbbdacf2512d2710c08ce991cd70a487fbb3a8a8807213dde9806fdae0be34",
+    "coverage": [
+      "Synthetic valid new evidence schema",
+      "Missing/false new per-machine and long-delay predicates",
+      "Older two-delay report rejected",
+      "Wrong 1500ms/count and duplicate Save evidence rejected",
+      "Exit without sticky barrier rejected",
+      "Old 549-unit report rejected",
+      "Native failure or modified raw holds rejected",
+      "Placeholder publication stops before API/mutation",
+      "Previously reviewed publisher function AST identity",
+      "Manual exact-source no-rebuild workflow"
+    ]
+  },
+  "remaining": [
+    "Wait for and independently review actual ef414bd complete Windows artifact",
+    "Populate exact artifact/run/bytes/digests/release/review SHA constants only after final artifact approval",
+    "Finalize exact review filename/path and verify copied protected review/notes hashes",
+    "Re-review populated publisher/workflow and actual complete metadata/draft/tag/asset predicates before dispatch",
+    "After publication, full public ZIP GET hash verification before successful delivery/Notion latest prefix update"
+  ],
+  "duration_claim_correction": {
+    "probe_requested_delay_ms": 6500,
+    "fixture_actual_clamped_delay_ms": 6000,
+    "parent_cited_source": "validation/CsvRouteFixture.cs:194",
+    "implication": "Actual six-second handler delay still exceeds five-second caller budget. Final evidence must not call it an actual 6.5-second test. Earlier source review described the request; actual runtime duration remains to be inspected."
+  },
+  "actions_performed": "Read-only review and offline temporary fixtures; no uploads, source edits, live actuation or dependency installs"
+}

@@ -1,0 +1,14 @@
+test_actual_exact_artifact_package_and_metadata_positive (__main__.FinalPublisherTests.test_actual_exact_artifact_package_and_metadata_positive) ... ok
+test_changed_approval_stops_before_api (__main__.FinalPublisherTests.test_changed_approval_stops_before_api) ... ok
+test_changed_draft_target_stops_before_upload (__main__.FinalPublisherTests.test_changed_draft_target_stops_before_upload) ... ok
+test_final_constants_and_live_draft_scope (__main__.FinalPublisherTests.test_final_constants_and_live_draft_scope) ... ok
+test_saved_notes_changed_prevents_public_patch (__main__.FinalPublisherTests.test_saved_notes_changed_prevents_public_patch) ... ok
+test_tag_changed_after_upload_prevents_public_patch (__main__.FinalPublisherTests.test_tag_changed_after_upload_prevents_public_patch) ... ok
+test_uploaded_digest_changed_prevents_public_patch (__main__.FinalPublisherTests.test_uploaded_digest_changed_prevents_public_patch) ... ok
+test_wrong_source_metadata_stops_before_upload (__main__.FinalPublisherTests.test_wrong_source_metadata_stops_before_upload) ... ok
+test_wrong_tag_stops_before_upload (__main__.FinalPublisherTests.test_wrong_tag_stops_before_upload) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 10.571s
+
+OK

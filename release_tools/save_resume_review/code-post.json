@@ -1,0 +1,148 @@
+{
+  "schema": "save-auto-resume-code-review/1",
+  "created_utc": "2026-11-11T09:38:36.228557+00:00",
+  "phase": "CODE_POST",
+  "decision": "APPROVED_SOURCE_FOR_WINDOWS_AND_EXACT_ARTIFACT_VALIDATION",
+  "source_review_approved": true,
+  "evaluation_distribution_approved": false,
+  "stable_release_approved": false,
+  "final_algorithm_approved": false,
+  "equipment_application_approved": false,
+  "review_route": {
+    "actual_route": "native collaboration subagent /root/sol_reviewer_job_pid_nov11",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false,
+    "actual_design_and_source_review_completed": true,
+    "cli_authentication_restored_asserted": false
+  },
+  "source": {
+    "repository": "/workspace/IR_feedback_save_auto_resume",
+    "base_commit": "a2b260654c7620eca87ea57dc7fa36d3c2c24a4d",
+    "commit": "2db2102ecbdd3835fff98a0f075229751f940ce8",
+    "working_tree_clean": true,
+    "version": "2026.11.11-save-resume.1",
+    "unresolved_source_findings": [],
+    "reviewed_files": {
+      ".github/workflows/build-m1-recovery-bridge.yml": "9ef513f668bd06c562ce4cbb3af834328e5b5f8386aa14941405f26a73e60db0",
+      ".github/workflows/validate-slice.yml": "61add85ee8a1b6eeaff4e3ceb2ff6de1e1c917254e4691ebc97e4142bc2a8a38",
+      "README.md": "4f2f750268aea8764390fee953142c54e74ff5b361507c76bb061f74d5e8d81a",
+      "VERSION.txt": "9c4fd799e074cb38072f2e2b46970bf5e76df2ef219af12fae7c55004eabc2e1",
+      "app/README.ko.md": "1bf252673746b7489404ca184a9be0774296d66852b4c4e93b2270b4588c9480",
+      "app/UiaBridge.dll": "939c65d211ff9d144e956eb7b2bae26c4cfab80437c2f0a6c60efa70f4c1b215",
+      "app/UiaBridge.fields.part.cs": "e595c2dc7528d0712eb57d912cb56bcffc5a6711eec267788bbc23c75f6e147f",
+      "app/adapter_contracts.py": "38ec7611f51f12fc22ced321fe513b807ad03f37ce049e9488592e56b219242c",
+      "app/native_helper.ps1": "7751efa17a7eecb3fbd304ff306f7b08ea3174e1b01924c9833a43253a993cda",
+      "app/resilient_adapter.py": "1de6536b0311a64f88da401b17fc14cb3d3efe186f111445069ab29fd48470a4",
+      "app/sequence_persistence.py": "0fed8134015b4652d40136fce7f23af4c7a098e8715a3924258802b980d013c0",
+      "app/session.py": "772628e8b0eb2f07bd345860affbf5956f2a0c3c9fd4cb79e5c056ecf90eedd6",
+      "app/test_save_auto_resume.py": "3b3ff069d7a9d6fbd24f7499461844a673c530a32cf7b70168cb822eed2186ae",
+      "app/test_windows_ui_adapter.py": "b1e2df1bf5cdf78630253e8a6ff5c3ff21d54baa7366893d334ff71172c25da4",
+      "app/windows_ui_adapter.py": "b73269ecbeab690b582d52ed9e3f7c078a080700b2ad3ce31816e28fc5cf8577",
+      "docs/SAVE_AUTO_RESUME.ko.md": "ee577651e855e83ae7a35cb8f6fe7a0a2840c372e86cd94e801bdce97da6ed7b",
+      "docs/validation/save-resume-2026.11.11-bridge-build.json": "3e46b80dc14a40fb5ff21d4869c0ccc2cb64c9a6bfe6b5a3a576947553fdc021",
+      "release_tools/verify_package.py": "8185cc3cb4835f0088225e5ccdaa1f2db3d520d46d812bec52fe1433f8f16755",
+      "release_tools/windows_bridge_probe.py": "8e925c3230433233aece70ea073f6655b822ed5b23ec12832b8915e4869dc12c",
+      "release_tools/windows_job_resume_probe.py": "85d774f44d7c111b69818d2dac820eba635bf84104fe701d53a7a42a266e9099"
+    },
+    "snapshot": "/workspace/ir-save-auto-resume-2026.11.11/source-review-2db2102",
+    "reviewer_changed_source_or_application_tests": false
+  },
+  "design_pre": {
+    "record": "/workspace/ir-save-auto-resume-2026.11.11/design-pre.json",
+    "sha256": "657fe55dfb0da764afee981a09a29c5dd98c9332ac1fe179fc46f5ccc8824e5b",
+    "decision": "APPROVED_FOR_NARROW_IMPLEMENTATION_WITH_REQUIRED_BOUNDARIES"
+  },
+  "implementation_assessed": [
+    "One validated synchronous WM_COMMAND to the owned Save parent/button; no second Save or fallback queued Save in the production apply path. Native normal-return receipt follows target lifetime/ownership checks.",
+    "At parent apply timeout, known exact transaction/helper ownership is installed before releasing the process fence. Helper and private transaction directory remain retained. Barrier is rechecked under the global fence before any new native helper; different raw adapters cannot bypass unresolved ownership.",
+    "While pending, raw observation continues from the existing CSV reader and does not call native status/recovery helpers. No proposal is replayed and the attempted layer remains consumed. Receipt while helper is alive cannot rearm.",
+    "Helper retirement, exact strict typed nonce/PID/HWND/power/completed receipt and normal successful helper response are validated before two full stable read-only UI/persisted audits. Power/path/non-IR parameters must match the original transaction; receipt alone is not a saved-setting or lamp-output proof.",
+    "Dedicated PersistenceVerificationTimeout distinguishes a bounded unreadable/unmatched persistence wait; explicit non-IR PersistenceMismatch does not enter recoverable pending.",
+    "Raw suspend invalidates old reconciliation stamps. Wrapper consumes a stamp once; later invalid observations retain their baseline gates. Session stamp skips only the Save-specific consumed-row wait, respects independent algorithm bounds and image holds, resets uncertain history and calculates a distinct higher row from actual settings.",
+    "Generic protocol, identity, edit-only, missing/foreign/corrupt receipt and non-IR errors remain blocked. Pending transport disposal first freezes the wrapper; global unresolved ownership survives raw disconnect and new adapter creation. Target exit without a completion proof is not automatically cleared.",
+    "Existing job chronology, same-executable/machine unique PID reconnect, retired-job/per-job watermarks, native CSV/job guards, invalid -1 handling, cap/step checks and manual image lineage retain their gates.",
+    "Updated owned Windows probe exercises 250/600/1500ms normal completion, 6500ms retained-helper completion and higher-layer Save, full observed_session recovery, and target exit without receipt. Probe changes use fixture controls for owned test processes; they do not bypass production native guards."
+  ],
+  "resolved_findings": [
+    {
+      "id": "WIP-1",
+      "finding": "Generic PersistenceUnavailable/non-IR failures could be downgraded into pending",
+      "resolution": "New specific PersistenceVerificationTimeout; non-IR PersistenceMismatch remains Ambiguous/sticky; focused regression passes"
+    },
+    {
+      "id": "WIP-2",
+      "finding": "Reconciliation stamp could override algorithm power-limit hold",
+      "resolution": "Stamp requires no above_limit/power_limit_holding/image_hold; algorithm-bound regression passes"
+    },
+    {
+      "id": "WIP-3",
+      "finding": "Instance-only pending ownership could disappear on outage/replacement",
+      "resolution": "Class-level retained transaction barrier and _outage freeze before disposal; new adapter rejection regression passes"
+    },
+    {
+      "id": "WIP-4",
+      "finding": "Receipt comparison permitted boolean/numeric aliases",
+      "resolution": "Exact expected dict plus strict boolean/int/string field validation; boolean receipt regression passes"
+    },
+    {
+      "id": "POST-1",
+      "finding": "Persistent stamp could bypass later observation baseline barriers",
+      "resolution": "Raw suspend clears stamp and wrapper consumes each stamp once; invalid-sensor baseline regression passes"
+    },
+    {
+      "id": "POST-2",
+      "finding": "Barrier checked only before lock and installed after lock release",
+      "resolution": "Under-lock barrier recheck plus transaction installation in retained _request branch before finally releases fence; independent injected lock-boundary mock proves no Popen"
+    }
+  ],
+  "executed_tests": [
+    {
+      "scope": "Frozen exact source raw adapter, pending Save, wrapper, observer, persistence, observation expiry, settings, job resume",
+      "command": "python unittest loader for test_save_auto_resume test_sequence_persistence test_windows_ui_adapter test_resilient_adapter test_observed_session test_observation_expiry test_live_settings test_job_resume, excluding documented Linux native-process fixture",
+      "tests": 111,
+      "seconds": 5.041,
+      "exit_code": 0,
+      "result": "OK",
+      "log": "/workspace/ir-save-auto-resume-2026.11.11/code-post-2db-tests.txt",
+      "sha256": "d70a23ddb6d342e0501fc52363ded57d294057e1aba0d5c5edaac29fc0d148f6"
+    },
+    {
+      "scope": "Independent process-fence barrier race mock",
+      "result": "Another owner barrier installed during lock acquisition; AmbiguousWriteError before helper Popen",
+      "log": "/workspace/ir-save-auto-resume-2026.11.11/reviewer-fence-race.txt",
+      "sha256": "de4dd35303fbf9ec3225800a4244d24afc8f71a45963e1e6412afb1cfc65fb42",
+      "actual_native_process_or_network_used": false
+    }
+  ],
+  "bridge_provenance": {
+    "raw_folder": "/workspace/ir-save-auto-resume-2026.11.11/bridge",
+    "source_build_commit": "a2abb911db40381e47016e72d8265fc64ca80744",
+    "parent_supplied_workflow_run": 42995807963,
+    "parent_supplied_api_artifact_id": 13844385160,
+    "raw_build_succeeded": true,
+    "source_and_build_inputs_independently_matched": 6,
+    "dll_bytes": 26624,
+    "dll_sha256": "939c65d211ff9d144e956eb7b2bae26c4cfab80437c2f0a6c60efa70f4c1b215",
+    "dll_bytes_identical_to_raw_build": true,
+    "committed_build_json_identical_to_raw": true,
+    "stderr_bytes": 0,
+    "compiler_sha256_raw_record": "baef2676444878d5818628f46483f4e55241d6380ecff0bbb855c470852e1872",
+    "raw_record": "/workspace/ir-save-auto-resume-2026.11.11/bridge/build.json",
+    "raw_record_sha256": "3e46b80dc14a40fb5ff21d4869c0ccc2cb64c9a6bfe6b5a3a576947553fdc021",
+    "compiler_or_dll_not_executed_by_linux_reviewer": true
+  },
+  "pending_gates": [
+    "Actual full Windows workflow 42996316638 results, particularly 6500ms retained-helper + observed_session recovery for M1 and S3",
+    "Independent inspection of exact final package, manifest, source/runtime/DLL/base/Pillow provenance and all raw outcomes before any new evaluation distribution",
+    "Excel COM and real equipment remain untested; final algorithm/equipment/stable approval HOLD"
+  ],
+  "limits": [
+    "Source approval is not artifact/distribution approval. Prior a2b evaluation review does not approve the newly built DLL/package.",
+    "No new architecture Windows execution performed by reviewer yet; parent reports some CI stages passed, final raw results not reviewed in this record.",
+    "One known existing Linux native process fixture was explicitly excluded; its original failure is preserved in design-baseline-tests.txt. Full Linux/Tk environment failures reported by parent are not represented as source passes.",
+    "git diff --check reports CRLF as trailing whitespace only in the preserved raw Windows build JSON; no evidence bytes were normalized.",
+    "SendMessage normal return is a dispatch-return boundary for the supported synchronous handler route, not proof of arbitrary deferred asynchronous target work or physical actuation.",
+    "No live equipment writes, uploads, dependency installs, or application/test source changes by reviewer."
+  ]
+}

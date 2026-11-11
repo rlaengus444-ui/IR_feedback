@@ -1,0 +1,152 @@
+{
+  "schema": "save-auto-resume-design-review/1",
+  "created_utc": "2026-11-11T09:26:27.780669+00:00",
+  "phase": "DESIGN_PRE",
+  "decision": "APPROVED_FOR_NARROW_IMPLEMENTATION_WITH_REQUIRED_BOUNDARIES",
+  "implementation_approved": true,
+  "source_code_post_review_completed": false,
+  "distribution_approved": false,
+  "final_algorithm_approved": false,
+  "equipment_application_approved": false,
+  "stable_release_approved": false,
+  "route": {
+    "actual": "native collaboration subagent /root/sol_reviewer_job_pid_nov11",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false,
+    "actual_independent_design_review_completed": true,
+    "cli_authentication_restored_asserted": false
+  },
+  "reviewed_source": {
+    "repository": "/workspace/IR_feedback_restart_resume_nov11",
+    "base_commit": "a2b260654c7620eca87ea57dc7fa36d3c2c24a4d",
+    "working_tree_status": "",
+    "files": {
+      "app/UiaBridge.fields.part.cs": "bcd12720e73f1e953ef4305e2e010e689c5942a1ebe54f996c290af94eeae064",
+      "app/UiaBridge.navigation.part.cs": "8224937800f3aa7dd8a53fbeaa56e2afa1e3c41f8d4620d017ea36668cdf7a0b",
+      "app/native_helper.ps1": "b39036d4c5914a93e468267cfc5f33489e10e9f16a8900f8ccb1d7cc8fb0649c",
+      "app/windows_ui_adapter.py": "4feb0a138f55bb6b48c1e8016cc9ec0da5061ce0ae70c252eb5258f5c3b220f5",
+      "app/resilient_adapter.py": "b694710a12a104b6c6293ca218a9cedbfabf7dea0586ae2a71c5119d94dc4974",
+      "app/observed_session.py": "f46f8f7bd8c5eec54c79dee69e1b57b37aa1b4b2d4c4d594ab199153352103fc",
+      "app/session.py": "3949864e9ae49217393b095455cb7f7e7bc644cf88cdaf76f7b331f283c23a21",
+      "app/sequence_persistence.py": "f56f9a18043746eb1c71027b32d0588b3848fcc83867d610bd85b507e0f090a6",
+      "app/adapter_contracts.py": "92e375d0d502257397af3ea247a51aafafe37c574e8cea14b8007322f6901562",
+      "app/test_windows_ui_adapter.py": "059ff089fcc6091d2831617ac1764064f92ee9d0f3943d422715c6348d330c4a",
+      "app/test_resilient_adapter.py": "818fb4c05cee94fef0ff0d8e6e0c63240a1551f90cc240620046b7317dd9f422",
+      "app/test_observed_session.py": "5cb39f9f0a62b91f2aed8e43ea26d9684f305e72ba391565f092640f14bf45ae"
+    },
+    "new_worktree_parent_supplied": "/workspace/IR_feedback_save_auto_resume",
+    "reviewer_modified_application_or_tests": false
+  },
+  "source_findings": [
+    {
+      "location": "app/UiaBridge.fields.part.cs:101 / app/UiaBridge.navigation.part.cs:90 / app/native_helper.ps1:740",
+      "finding": "Save currently posts WM_COMMAND; Responsive sends WM_NULL. Sent message completion does not prove an earlier posted Save drained or completed. Neither equality of persisted IR nor WM_NULL is sufficient to clear ambiguity."
+    },
+    {
+      "location": "app/windows_ui_adapter.py:582,655,751",
+      "finding": "Current per-Save markers live in a TemporaryDirectory and _request always kills/retire-cleans its helper in finally. Reconciliation needs explicit owned transaction lifetime beyond caller timeout, not generic marker or helper-retirement inference."
+    },
+    {
+      "location": "app/windows_ui_adapter.py:600 / app/resilient_adapter.py:555 / app/observed_session.py:41",
+      "finding": "Any marked apply failure becomes AmbiguousWriteError, resilient freezes permanently, and escaping generic faults force the outer session to monitor. The new typed wait must be intercepted before all three paths without clearing existing faults."
+    },
+    {
+      "location": "app/sequence_persistence.py:225",
+      "finding": "verify_after currently uses PersistenceMismatch both for non-IR mutation and an expired wait. A recoverable persistence deadline needs explicit classification; never reinterpret every PersistenceMismatch or arbitrary marked failure as delay."
+    }
+  ],
+  "approved_minimal_architecture": [
+    "Keep exactly one approved native WM_COMMAND notification to the same audited Save parent/button; change its delivery to standard synchronous SendMessage in a dedicated owned helper. No blind retry, duplicate Save, rollback, synthetic input, process injection or target memory access.",
+    "The parent retains its existing bounded caller budget. If the exact owned apply helper is still alive after the budget and is in the transaction-bound Save-attempt stage, return a distinct typed pending result and retain its process handle, private directory, request identity and actuation fence. Do not kill that known pending helper solely for this timeout.",
+    "Native completion receipt is atomically published only after the SendMessage call normally returns and original root/PID/button/process-lifetime identity is revalidated. Bind it to a unique transaction nonce, expected endpoint, original run/observation/control epoch, proposed power and pre-Save settings identity. Validate schema/types and exact transaction match; reject stale/replayed/foreign/partial receipts.",
+    "SendMessage returning LRESULT zero is not a failure by itself. Do not use a timed-out SendMessageTimeout return or a response/marker written before dispatch as completion evidence. Callback/message-pump machinery is not required for this synchronous-helper variant.",
+    "The positive receipt proves the native dispatch returned, not physical lamp output or durable persistence. Require exact helper retirement as well, then existing full read-only UI-versus-persisted settings audits twice at least one second apart, same endpoint and native AUTO/no editing, before actuation authority can return.",
+    "Reconciliation audits are independent of the old CSV deadline. Preserve a completed stable settings audit while waiting for a fresh row, but reset audits for settings/endpoint/job/epoch/AUTO/editing change. Fresh observation admission retains every existing job-proof/alignment/complete-row/age/future/-1 barrier.",
+    "A known completed-dispatch persistence-only timeout may enter the same reconciliation wait after exact helper retirement. Protocol, identity, non-IR corruption, unknown helper ownership, partial edit without Save completion and arbitrary calculation/configuration faults retain existing sticky semantics."
+  ],
+  "allowed_state_transitions": [
+    {
+      "from": "READY",
+      "to": "SAVE_PENDING",
+      "when": "one admitted transaction attempted Save, known exact owned helper remains running beyond caller budget",
+      "actions": "consume original job/heater/layer watermark; advance control epoch; invalidate proposed/pending calculations; reset uncertain controller/Excel state once; retain process and receipt directory; block every further write"
+    },
+    {
+      "from": "SAVE_PENDING",
+      "to": "SAVE_PENDING",
+      "when": "helper still running or no validated completion receipt",
+      "actions": "continue offline CSV display/logging, no native helper/preparation/rebind bypass, no success attribution or retry"
+    },
+    {
+      "from": "SAVE_PENDING",
+      "to": "RECONCILING",
+      "when": "exact helper is retired and matching normal-dispatch-return receipt validates, or an explicitly classified persistence deadline follows proven completed dispatch",
+      "actions": "perform only full read-only settings reconciliation; do not edit or re-Save old power"
+    },
+    {
+      "from": "RECONCILING",
+      "to": "FRESH_LAYER_WAIT",
+      "when": "two stable full UI/persisted audits complete under same authorized identity/context",
+      "actions": "adopt current actual persisted IR/settings as baseline; preserve attempted watermark and discard old proposal permanently"
+    },
+    {
+      "from": "FRESH_LAYER_WAIT",
+      "to": "READY",
+      "when": "a genuinely fresh valid distinct higher layer is admitted under current job/epoch/target/cap/image/Excel context",
+      "actions": "run reset algorithm from audited actual power; normal numerical initialization, bounds, cap and step limits remain"
+    },
+    {
+      "from": "ANY",
+      "to": "EXISTING_STICKY_BARRIER",
+      "when": "generic ambiguity, unowned/unretired helper, malformed/foreign receipt, protocol/identity fault, edit-only failure, or helper killed/exited without completion proof",
+      "actions": "retain original diagnostic; do not auto-clear through job/PID changes or raw adapter replacement"
+    }
+  ],
+  "required_integration_boundaries": [
+    "Known pending ownership needs an explicit registry/state, not only the existing _unretired_helper slot which clears on poll and represents an unknown helper. New raw instances/disconnect/reconnect must not lose or bypass the transaction fence.",
+    "While known pending, read_snapshot must use the retained CSV reader and publish control_available=false without invoking native status/recovery helpers. Do not route the expected pending state through _outage/disconnect, which currently kills helpers and loses raw state.",
+    "Typed pending must be handled explicitly in raw adapter, resilient wrapper and session before generic catches. It must not call freeze_control, permanent fault callback or escape into observed_session generic monitor fallback. Generic faults must still do so.",
+    "Do not delete receipt/request files until exact helper retirement and completed transaction disposition. A process still alive or possible target-side in-flight Save cannot become harmless merely because the caller returned or helper was killed.",
+    "Stop remains prompt and stops future admissions. If stopping kills a helper while the target Save may be in flight, preserve an unresolved barrier for that transaction; cleanup/connection replacement cannot silently authorize further writes. Do not claim cancellation of an already-dispatched target command.",
+    "Keep the per-job attempted watermark and retired-job protections. Neither the old observation key nor the old proposed setting may ever be retried. A delayed receipt is not a retroactive applied/success point for the old graph row.",
+    "The failed layer may be a consumed watermark/lower bound only. Do not fabricate an accepted post-completion measurement or retain its uncertain proposed output in algorithm/Excel history. A future fresh higher layer may enter the reset algorithm after audits; ordinary initialization/hold rules are preserved.",
+    "If target/cap/image/Excel/job context changes during pending or reconciliation, old proposals remain discarded. Reconcile known completion separately, then pass current existing handoff/context gates. First narrow implementation may keep target exit without receipt sticky; no blanket new-PID clearance.",
+    "Use supported same native owner/descendant/role/writable checks before dispatch and identity checks after return. A synchronous Save call may remain blocked in the isolated helper while observation continues; do not suspend or kill the target process.",
+    "The completion mechanism assumes the supported Save route returns after its synchronous handler. It is not evidence that arbitrary asynchronous/deferred target-side work is quiescent. Do not generalize this guarantee to unverified handler implementations; retain strict full persisted/UI audits and evaluation-only claims.",
+    "If the bridge method/DLL changes, compile from the reviewed sources with preserved build provenance and verify exact packaged DLL/source identity in fresh Windows evidence. Prior unchanged-DLL artifact approval does not cover a newly built DLL."
+  ],
+  "required_validation": [
+    "Actual owned Windows M1 and S3 Save delayed beyond 1 second but below parent budget, then exact one Save and normal confirmation.",
+    "Actual owned M1 and S3 Save delayed beyond 5-second parent budget: CSV observations continue, no freeze callback/monitor-only fallback, owned helper retained, exactly one old Save, completion receipt plus retirement plus two full audits, then distinct higher fresh row reaches reset algorithm and next eligible Save without old replay.",
+    "A deliberately busy/hung target with stale matching power must never count as completion; test WM_NULL responsiveness/equality cannot clear the pending fence.",
+    "Partial edit/pre-Save job or deadline race, generic unretired helper, protocol failure, missing/foreign/replayed/partially-written receipt, wrong nonce/PID/root/process lifetime/power/run/baseline, and helper killed or target exit without completion must stay blocked.",
+    "Stop/disconnect/cap/image/target/job changes and stale old calculation result during pending; no late new command, no cleanup bypass or old-value reapplication. Verify new-job lineage and existing unique same-exe/machine reconnect behavior remain protected.",
+    "Full UI/non-IR/persisted mismatch during reconciliation holds; two stable audits required; stale/missing/invalid -1/future CSV cannot authorize Save; no freshness relaxation.",
+    "Portable tests through real run_ui_session + resilient + observed_session cover typed pending transitions, exactly-once epoch/history reset, no permanent fault callback, no old applied graph point, consumed watermark and actual-power/cap/step-based next computation.",
+    "Fresh full Windows packaged-runtime workflow and independent exact artifact review remain required before distributing the new version; no live equipment actuation."
+  ],
+  "executed_baseline": [
+    {
+      "command": "python -m unittest -v test_windows_ui_adapter test_resilient_adapter test_observed_session",
+      "file": "/workspace/ir-save-auto-resume-2026.11.11/design-baseline-tests.txt",
+      "sha256": "d8e424f0e8139b589308c05a4fe2c26c0e1fc7373bd30c6ad4e227b76cec57d3",
+      "result": "46 run; 45 pass, one existing Linux-inapplicable native-process fixture assertion fails because child.killed is false",
+      "exit_code": 1,
+      "known_failure": "test_windows_ui_adapter.AdapterTests.test_hung_helper_is_bounded_and_only_own_helper_is_killed"
+    },
+    {
+      "command": "same three modules, explicitly exclude the existing Linux-inapplicable native-process fixture",
+      "file": "/workspace/ir-save-auto-resume-2026.11.11/design-portable-baseline-tests.txt",
+      "sha256": "7cf101dcc83c8439e6446a7ebc4194ae2543ff5af0ec73242c006c4c35788576",
+      "result": "45 tests pass",
+      "exit_code": 0
+    }
+  ],
+  "untested_limits": [
+    "Design review precedes implementation; no new pending-helper architecture has been executed yet",
+    "No actual Windows synchronous-dispatch/long-helper evidence in this review",
+    "No real BJT/PLC/sensor/lamp/Excel PC tested or actuated",
+    "Prior a2b evaluation artifact/review evidence remain preserved and unchanged; this design approval is not source/artifact/distribution approval"
+  ]
+}
