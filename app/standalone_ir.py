@@ -489,6 +489,12 @@ class ThermalFeedbackWindow:
 
     def _show_snapshot(self, payload):
         snapshot = payload["snapshot"]
+        # Display events are bounded and can be dropped during a GUI backlog.
+        # Each snapshot retains the authoritative actual endpoint as well.
+        actual = snapshot.actual_target
+        selected = self.target_map.get(self.host.get())
+        if actual is not None and actual != selected:
+            self._show_rebound_target(actual)
         self._last_limit_snapshot = payload.get("limit_status")
         if "display_target_c" in payload:
             self.charts.set_target_temperature(payload["display_target_c"])
@@ -585,13 +591,7 @@ class ThermalFeedbackWindow:
                 if setting is not None and event.payload['epoch'] == setting.desired()[0]:
                     self.slice_panel.mark_session_active(event.payload['dataset'], event.payload['epoch'])
             elif event.kind == "target_rebound":
-                target = event.payload
-                self.targets = [x for x in self.targets if x.machine != target.machine] + [target]
-                self._populate_hosts()
-                for label, candidate in self.target_map.items():
-                    if candidate == target:
-                        self.host.set(label)
-                        break
+                self._show_rebound_target(event.payload)
             elif event.kind == "image_lineage_hold":
                 self.slice_panel.active.set("실행 중 이미지: 새 작업 확인 필요 · '현재 작업에 이미지 적용'을 누르세요.")
                 self._append_log(event.payload)
@@ -616,6 +616,14 @@ class ThermalFeedbackWindow:
         self._reconcile_slice_state()
         self._refresh_buttons()
         self.root.after(50, self._pump)
+
+    def _show_rebound_target(self, target):
+        self.targets = [x for x in self.targets if x.machine != target.machine] + [target]
+        self._populate_hosts()
+        for label, candidate in self.target_map.items():
+            if candidate == target:
+                self.host.set(label)
+                break
 
     def close(self):
         try:

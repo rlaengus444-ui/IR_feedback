@@ -58,6 +58,7 @@ class ManualSliceUITests(unittest.TestCase):
         self.view.current_run_key='job-A'
         self.view._publish_slice_dataset(B, (self.controller.generation - 1, "job-A"))
         self.assertIsNone(panel.pending_epoch)
+
         self.view._publish_slice_dataset(B, (self.controller.generation, "job-A"))
         epoch, desired = self.controller.slice_dataset_setting.desired()
         self.assertIs(B, desired)
@@ -67,6 +68,15 @@ class ManualSliceUITests(unittest.TestCase):
         self.view._reconcile_slice_state()
         self.assertIs(B, panel.active_dataset)
         self.assertIsNone(panel.pending_epoch)
+
+    def test_actual_pid_display_recovers_without_rebound_event(self):
+        from dataclasses import replace
+        from test_session import snapshot
+        actual=replace(TARGET,pid=TARGET.pid+10,hwnd=TARGET.hwnd+10)
+        self.view._show_snapshot(dict(snapshot=snapshot('new',1,actual_target=actual),
+            effective_mode='control',proposed={},reasons={},applied={},status='fixture'))
+        self.assertIn('PID '+str(actual.pid),self.view.host.get())
+        self.assertEqual(actual,self.view.target_map[self.view.host.get()])
 
 
 if __name__ == '__main__':
