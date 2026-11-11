@@ -569,7 +569,7 @@ try {
             $info = New-Object IO.FileInfo($registry)
             if ($info.Exists -and $info.Length -le 65536) { $instance = [IO.File]::ReadAllText($registry) | ConvertFrom-Json }
         } catch { }
-        foreach ($process in Get-Process) {
+        foreach ($process in (Get-Process)) {
             if (++$visited -gt 4096) { $complete=$false;break }
             $title = [string]$process.MainWindowTitle; $name = [string]$process.ProcessName
             if (($title + ' ' + $name) -notmatch '(?i)Binder\s*Jet|BinderJet|BinderjetController') { continue }
