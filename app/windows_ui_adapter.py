@@ -158,8 +158,8 @@ class WindowsUiAdapter:
         if target_filter is not None:
             request.update(expected_image_path=target_filter.image_path, expected_machine=target_filter.machine)
         response = self._request(request, None)
-        if response.get('complete') is False:
-            raise ReadTransportError('discover', '동일 장비 창 검색이 불완전합니다. 다시 검색합니다.')
+        if response.get('complete') is not True:
+            raise ReadTransportError('discover', '동일 장비 창 검색이 불완전합니다. 다시 검색합니다. ' + str(response.get('discovery_reason', '')))
         result: list[MachineWindow] = []
         for row in response.get("windows", []):
             try:

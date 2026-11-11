@@ -189,6 +189,7 @@ class ResilientUiAdapter:
 
     def _outage(self, reason, *, preserve_initial_grant=False):
         self._job_candidate = None
+        self._handoff_proof = None
         self._was_ready = False
         self._initial_prepare_allowed = False
         self._initial_recovery_grant = bool(preserve_initial_grant)
@@ -573,6 +574,7 @@ class ResilientUiAdapter:
 
     def drop_transport(self):
         self._job_candidate = None
+        self._handoff_proof = None
         self._initial_recovery_grant = False
         self._initial_prepare_allowed = False
         self._was_ready = False

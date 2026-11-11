@@ -577,6 +577,7 @@ try {
             if ($window -eq [IntPtr]::Zero) { $window = [BinderJetNativeProcess]::FindRoot([int]$process.Id) }
             if ($window -eq [IntPtr]::Zero) { continue }
             $image = ''; try { $image = [string]$process.Path } catch { }
+            if ($request.expected_image_path -and [string]::IsNullOrWhiteSpace($image)) { $complete=$false;continue }
             if ($request.expected_image_path -and -not [string]::Equals($image,[string]$request.expected_image_path,[StringComparison]::OrdinalIgnoreCase)) { continue }
             $machine = 'unknown'
             if ($null -ne $instance -and [int]$instance.processId -eq $process.Id -and [string]$instance.machineName -in @('M1','S3')) { $machine = [string]$instance.machineName }

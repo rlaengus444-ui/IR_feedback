@@ -139,6 +139,13 @@ class JobResumeTests(unittest.TestCase):
         self.assertEqual('B',self.adapter._pinned_job)
         self.assertFalse(self.read('B',1,2000,control_epoch=1).control_available)
         self.assertTrue(self.read('B',2,2000,control_epoch=1).control_available)
+    def test_handoff_transport_loss_on_same_pid_prepares_new_raw(self):
+        self.read('B',0,2000)
+        self.adapter._outage('read transport lost during audit')
+        self.candidates=[TARGET];self.now=3;self.adapter._reconnect(None)
+        self.assertFalse(self.read('B',0,2000).control_available)
+        self.assertEqual(['monitor','control'],self.raws[-1].modes)
+        self.adopt()
     def test_same_job_pid_rebind_retains_watermarks_and_reaudits(self):
         self.adapter.apply_ir_power(1,55,'A2',None)
         self.adapter._outage('process exited')

@@ -14,7 +14,10 @@ class ScopedDiscoveryTests(unittest.TestCase):
         self.assertEqual(TARGET.image_path,requests[0]['expected_image_path'])
         self.assertEqual(TARGET.machine,requests[0]['expected_machine'])
     def test_incomplete_native_inventory_never_selects_partial_candidate(self):
-        adapter=WindowsUiAdapter(runner=lambda request,event:{'success':True,'complete':False,'windows':[]})
+        for complete in (False,None,0,'false'):
+            adapter=WindowsUiAdapter(runner=lambda request,event:{'success':True,'complete':complete,'windows':[]})
+            with self.assertRaises(ReadTransportError):adapter.discover_matching(TARGET)
+        adapter=WindowsUiAdapter(runner=lambda request,event:{'success':True,'windows':[]})
         with self.assertRaises(ReadTransportError):adapter.discover_matching(TARGET)
 
 if __name__=='__main__':unittest.main()
