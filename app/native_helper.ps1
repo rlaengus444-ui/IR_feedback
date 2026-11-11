@@ -628,6 +628,7 @@ try {
                     $handles=@{state=$stateHandle.ToInt64();machine=[long]$machineRecord.hwnd}
                     $machine=CheckMachine $root $pidExpected $handles
                 }
+                $script:controlWait = $true
                 if (-not (Owned $root $stateHandle $pidExpected)) { throw 'The audited task-state label is unavailable.' }
                 $state = ([BinderJetNativeProcess]::ReadText($root, $stateHandle, $pidExpected)).Trim()
                 $response = @{success=$true;machine=$machine;state=$state;handles=$handles}

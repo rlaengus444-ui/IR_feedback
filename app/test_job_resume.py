@@ -139,5 +139,14 @@ class JobResumeTests(unittest.TestCase):
             self.adapter._outage('offline');self.now+=100;self.candidates=candidates
             self.adapter._reconnect(None)
             self.assertIsNone(self.adapter._raw)
+    def test_read_only_bootstrap_hold_recovers_without_permanent_barrier(self):
+        self.adapter._prepared_mode='monitor'
+        self.adapter._offline=lambda:UiSnapshot(target=TARGET)
+        self.raws[-1].read_native_state=lambda event:(_ for _ in ()).throw(ControlSuspended('state label is being recreated'))
+        self.assertFalse(self.read('A',3,1000).control_available)
+        self.assertFalse(self.adapter._sticky)
+        self.raws[-1].read_native_state=lambda event:'AUTO'
+        self.assertFalse(self.read('A',4,1000).control_available)
+        self.assertTrue(self.read('A',5,1000).control_available)
 
 if __name__=='__main__':unittest.main()

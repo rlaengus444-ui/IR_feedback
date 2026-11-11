@@ -90,7 +90,9 @@ def exercise(exe,folder,machine):
         raise AssertionError('No observation '+str(layer))
     def saves():return int(Path(str(marker)+'.saves').read_text())
     def phase_save(name,cap):
-        phase[0]=name;options._maximum_ir_setting.set(cap);before=saves()
+        phase[0]=name
+        wait_until(lambda:options._maximum_ir_setting.status()['ready'],10,'Session output bounds were not initialized')
+        options._maximum_ir_setting.set(cap);before=saves()
         for _ in range(14):
             layer=append();value=wait_snapshot(layer)
             # Give stable full audits/candidate reads time without expiring data.
