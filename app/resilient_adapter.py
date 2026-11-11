@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ntpath
+import math
 import time
 from dataclasses import replace
 
@@ -48,6 +49,13 @@ class ResilientUiAdapter:
         self._fault_callback = None
         self._fault_delivered = False
         self._pinned_job = None
+        self._pinned_proof = None
+        self._retired_jobs = set()
+        self._job_highwater = None
+        self._job_handoff = False
+        self._job_candidate = None
+        self._handoff_proof = None
+        self._rebind_audit_needed = False
         self._watermark = {}
         self._prepared_mode = None
         self._initial_prepare_allowed = True
@@ -153,6 +161,7 @@ class ResilientUiAdapter:
             self._initial_prepare_allowed = False
             self._dispose_failed_raw(raw)
             raise
+        self._rebind_audit_needed = self.current_target is not None
         self._raw, self.current_target = raw, target
         self._reader.target = target
         if hasattr(self._reader, 'log'):
@@ -179,6 +188,7 @@ class ResilientUiAdapter:
                 target.hwnd == self._target.hwnd and _identity(target) == _identity(self._target))
 
     def _outage(self, reason, *, preserve_initial_grant=False):
+        self._job_candidate = None
         self._was_ready = False
         self._initial_prepare_allowed = False
         self._initial_recovery_grant = bool(preserve_initial_grant)
@@ -247,6 +257,9 @@ class ResilientUiAdapter:
         try:
             self._raw.prepare_mode('control', stop_event)
             self._prepared_mode = 'control'
+            if self._rebind_audit_needed:
+                self._rebind_audit_needed = False
+                self.suspend_control('컨트롤러 재연결 · 전체 설정을 두 번 확인합니다.')
         except (ReadTransportError, TargetIdentityError, ControlUnavailable, PersistenceUnavailable, OSError) as exc:
             if getattr(exc, 'actuation_possible', False):
                 self.freeze_control(exc)
@@ -278,11 +291,106 @@ class ResilientUiAdapter:
             self._raw.suspend_control(self._sticky)
 
     def suspend_control(self, reason):
+        self._job_candidate = None
+        if self._job_handoff:
+            self._handoff_proof = None
         self._was_ready = False
         self._epoch += 1
         self._needs_baseline, self._baseline = True, None
         if self._raw:
             self._raw.suspend_control(reason)
+
+    def _job_proof(self, snap):
+        values = (snap.job_auto_started, snap.job_first_started)
+        if (not snap.run_key or any(isinstance(x, bool) or not isinstance(x, (int, float))
+                or not math.isfinite(x) or x <= 0 for x in values)
+                or values[0] > values[1] or isinstance(snap.job_first_layer, bool)
+                or not isinstance(snap.job_first_layer, int) or not 0 <= snap.job_first_layer <= 1000000):
+            return None
+        return (snap.run_key, snap.job_first_layer, snap.job_first_started, snap.job_auto_started)
+
+    def _admit_job(self, snap, native_auto, event):
+        """Forward-only admission of a new, byte-proven production run.
+
+        A different observed run immediately fences the former run. Confirmation
+        cannot span an endpoint, invalid observation, stop, or settings hold.
+        Native apply independently checks the same job bytes before edit/Save.
+        """
+        proof = self._job_proof(snap)
+        fresh = bool(native_auto and snap.measurement_valid and snap.observation_fresh
+                     and snap.observation_key and isinstance(snap.layer_index, int)
+                     and not isinstance(snap.layer_index, bool))
+        if self._pinned_job is None and snap.run_key and native_auto:
+            self._pinned_job = snap.run_key
+        if (snap.run_key == self._pinned_job and not self._job_handoff
+                and snap.run_key not in self._retired_jobs):
+            if self._pinned_proof is not None and proof != self._pinned_proof:
+                self._job_candidate = None
+                if self._was_ready or self._baseline is not None:
+                    self.suspend_control('현재 작업 시작 근거 재확인 대기')
+                return False
+            if self._pinned_proof is None and proof and fresh:
+                self._pinned_proof = proof
+                self._job_highwater = proof
+            if fresh:
+                self._prepare_authorized(event)
+            return True
+        if not snap.run_key:
+            self._job_candidate = None
+            self._handoff_proof = None
+            return False
+        if snap.run_key in self._retired_jobs or (proof and self._pinned_proof
+                and proof[3] <= self._pinned_proof[3]):
+            self._job_candidate = None
+            if self._was_ready or self._baseline is not None:
+                self.suspend_control('종료된 이전 작업 기록은 적용하지 않습니다.')
+            return False
+        if not self._job_handoff:
+            self._job_handoff = True
+            self._job_candidate = None
+            self.suspend_control('새 프린팅 작업 확인 중 · 이전 계산값 폐기')
+        aligned = (isinstance(snap.job_current_layer, int) and not isinstance(snap.job_current_layer, bool)
+                   and snap.layer_index is not None
+                   and snap.layer_index <= snap.job_current_layer <= snap.layer_index + 1)
+        eligible = bool(not self._sticky and fresh and aligned and proof and self._pinned_proof
+                        and snap.run_key not in self._retired_jobs and snap.run_key != self._pinned_job
+                        and proof[3] > self._pinned_proof[3]
+                        and (self._job_highwater is None or proof == self._job_highwater
+                             or proof[3] > self._job_highwater[3]))
+        if not eligible:
+            self._job_candidate = None
+            self._handoff_proof = None
+            return False
+        signature = (proof, self.current_target)
+        if self._handoff_proof != signature:
+            # Once a credible later run is observed, no older run may re-arm,
+            # even if the source disappears or temporarily regresses.
+            if self._job_highwater is not None and self._job_highwater[0] != proof[0]:
+                self._retired_jobs.add(self._job_highwater[0])
+            self._retired_jobs.add(self._pinned_job)
+            self._job_highwater = proof
+            self._job_candidate = None
+            self._prepare_authorized(event)
+            if self._raw is not None:
+                self.suspend_control('새 작업 · 전체 설정을 두 번 확인합니다.')
+                self._handoff_proof = signature
+            return False
+        if not snap.control_available:
+            self._job_candidate = None
+            return False
+        now = self._clock()
+        if self._job_candidate is None or self._job_candidate[0] != signature:
+            self._job_candidate = (signature, now)
+            return False
+        if now - self._job_candidate[1] < 1.0:
+            return False
+        self._pinned_job, self._pinned_proof = snap.run_key, proof
+        self._job_handoff = False
+        self._job_candidate = self._handoff_proof = None
+        self._was_ready = False
+        self._epoch += 1
+        self._needs_baseline, self._baseline = True, None
+        return False  # Never publish the pre-adoption observation as ready.
 
     def _offline(self):
         try:
@@ -346,11 +454,13 @@ class ResilientUiAdapter:
                 self._raw.suspend_control(snap.invalid_reason or '유효하지 않은 온도')
             self._needs_baseline, self._baseline = True, None
         native_auto = snap.machine_state.strip().upper() in {'AUTO', 'RUNNING'}
-        if (self._prepared_mode != 'control' and snap.run_key
-                and (self._pinned_job is None or snap.run_key == self._pinned_job)):
+        if self._prepared_mode != 'control' and snap.run_key:
             try:
                 native_state = self._raw.read_native_state(stop_event)
                 native_auto = native_state.strip().upper() in {'AUTO', 'RUNNING'}
+            except ControlSuspended as exc:
+                self.suspend_control(str(exc))
+                return self._offline()
             except (ReadTransportError, TargetIdentityError, OSError) as exc:
                 self._outage(str(exc))
                 return self._offline()
@@ -358,20 +468,20 @@ class ResilientUiAdapter:
                 self.freeze_control(exc)
                 self._outage(str(exc))
                 return self._offline()
-        if self._pinned_job is None and snap.run_key and native_auto:
-            self._pinned_job = snap.run_key
-        if (self._pinned_job and snap.run_key == self._pinned_job and native_auto
-                and snap.measurement_valid and snap.observation_fresh and snap.observation_key):
-            self._prepare_authorized(stop_event)
+        if not native_auto:
+            self._job_candidate = None
+            if self._was_ready or self._baseline is not None:
+                self.suspend_control('AUTO/RUNNING 및 새 관측 대기')
+        job_admitted = self._admit_job(snap, native_auto, stop_event)
         if self._raw is None:
             return self._offline()
-        if self._needs_baseline and snap.measurement_valid and snap.observation_fresh and snap.observation_key and snap.layer_index is not None:
+        if job_admitted and native_auto and self._needs_baseline and snap.measurement_valid and snap.observation_fresh and snap.observation_key and snap.layer_index is not None:
             if not snap.control_available or self._baseline is None:
                 self._baseline = (snap.observation_key, snap.layer_index)
             elif (snap.observation_is_new and snap.observation_key != self._baseline[0]
-                  and snap.layer_index != self._baseline[1]):
+                  and snap.layer_index > self._baseline[1]):
                 self._needs_baseline = False
-        ready = bool(snap.control_available and not self._sticky and self._pinned_job
+        ready = bool(job_admitted and native_auto and snap.control_available and not self._sticky and self._pinned_job
                      and snap.run_key == self._pinned_job and not self._needs_baseline)
         if ready:
             if not self._was_ready:
@@ -386,8 +496,8 @@ class ResilientUiAdapter:
             reason = snap.control_unavailable_reason
         elif not snap.run_key:
             reason = '현재 작업 식별 정보를 확인할 수 없어 IR 적용 대기'
-        elif self._pinned_job and snap.run_key != self._pinned_job:
-            reason = '관측된 작업이 처음 확인한 작업과 달라 IR 적용 대기'
+        elif self._job_handoff:
+            reason = '관측된 작업이 이전 작업과 달라 새 작업·설정 확인 및 새 층 대기'
         elif not self._pinned_job:
             reason = 'AUTO/RUNNING 상태와 작업 식별 확인 대기'
         elif self._needs_baseline:
@@ -440,6 +550,7 @@ class ResilientUiAdapter:
             raise ControlSuspended(self._sticky) from exc
 
     def drop_transport(self):
+        self._job_candidate = None
         self._initial_recovery_grant = False
         self._initial_prepare_allowed = False
         self._was_ready = False

@@ -123,6 +123,7 @@ class JobContext:
     first_started: datetime | None = None
     current_layer: int | None = None
     state: str = "unknown"
+    auto_started: datetime | None = None
 
 
 class JobLog:
@@ -209,7 +210,7 @@ class JobLog:
                     if "AutoPrint started!" in line:
                         stamp = log_timestamp(line)
                         key = hashlib.sha256((str(path) + "\0" + line).encode()).hexdigest() if stamp else None
-                        context = JobContext(run_key=key, state="AUTO")
+                        context = JobContext(run_key=key, state="AUTO", auto_started=stamp)
                     match = re.search(r"\bLayer:\s*(\d+)\s*->\s*Current Z\s*=", line)
                     if match and context.run_key:
                         layer = int(match.group(1))
@@ -251,6 +252,19 @@ class JobLog:
             raise JobLogReadUnavailable("unstable log")
         except OSError as exc:
             raise JobLogReadUnavailable("log I/O failure") from exc
+
+    def proof(self, context):
+        """Bind the published context to bytes rechecked by the native Save guard.
+
+        Appended ordinary layer messages are allowed; a new/ended run, rewritten
+        prefix, incomplete tail or a different selected log invalidates this proof.
+        """
+        if (context != self.context or not context.run_key or context.state != "AUTO"
+                or self.path is None or self.window_hash is None):
+            return None
+        return dict(path=str(self.path), offset=self.offset, start=self.window_start,
+                    sha256=self.window_hash.hex(), run_key=context.run_key,
+                    layer=context.current_layer)
 
 
 RECORD_TIME_FORMATS = ("%m/%d/%Y %H:%M:%S", "%m/%d/%Y %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f")
@@ -530,6 +544,8 @@ class MonitoringCsvReader:
                 token = {"path":str(self.path), "size":before.st_size,
                          "mtime_ticks":before.st_mtime_ns // 100 + 621355968000000000,
                          "sha256":hashlib.sha256(first).hexdigest()}
+                proof = getattr(self.log, 'proof', None)
+                token['job'] = proof(context) if proof is not None else None
             if latest is not None and not latest.measurement_valid:
                 token = None
             fresh = latest is not None and latest.finished is not None and -2 <= self.clock() - latest.finished.timestamp() <= self.MAX_NEW_AGE_SECONDS

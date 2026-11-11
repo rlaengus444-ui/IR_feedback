@@ -347,7 +347,13 @@ class WindowsUiAdapter:
             raise TargetIdentityError("원본 프로그램에 연결되어 있지 않습니다.")
         response = self._request({"operation": "read_status", "pid": target.pid,
             "hwnd": target.hwnd, "machine": target.machine, "handles": handles,
+            "bootstrap_status": not bool(handles.get('state')),
             "_generation": generation}, stop_event)
+        with self._lock:
+            if self._generation != generation or self._target != target:
+                raise TargetIdentityError('운전 상태 확인 중 연결 대상이 변경되었습니다.')
+            if not handles.get('state') and response.get('handles'):
+                self._native_handles.update(response['handles'])
         return str(response.get("state", "unknown"))
 
     def read_snapshot(self, stop_event) -> UiSnapshot:
@@ -436,7 +442,12 @@ class WindowsUiAdapter:
                 machine_state=machine_state, control_available=ready,
                 control_unavailable_reason=self._control_fault or self._control_hold_reason or CONTROL_REASON,
                 details=details, coupled_output=True, minimum_poll_seconds=self.MINIMUM_POLL_SECONDS,
-                run_key=self._run_key, observation_is_new=bool(sample and sample.key == self._new_sample_key and fresh),
+                run_key=self._run_key,
+                job_first_layer=source.context.first_layer,
+                job_first_started=source.context.first_started.timestamp() if source.context.first_started else None,
+                job_auto_started=source.context.auto_started.timestamp() if source.context.auto_started else None,
+                job_current_layer=source.context.current_layer,
+                observation_is_new=bool(sample and sample.key == self._new_sample_key and fresh),
                 control_recoverable=self._control_hold_reason is not None and self._control_fault is None,
                 control_epoch=self._control_epoch,
                 slicing_image_path=getattr(sample, 'slicing_image_path', ''),

@@ -55,17 +55,17 @@ class SliceLiveUITests(unittest.TestCase):
         calls = []
         controller = SimpleNamespace(generation=8, thread=object(), state='connected',
                                      slice_dataset_setting=SimpleNamespace(active=lambda: (0, self.a)),
-                                     update_slice_dataset=lambda value: calls.append(value) or 2)
-        window = SimpleNamespace(controller=controller, closing=False, slice_panel=self.panel,
+                                     update_slice_dataset=lambda value, **kw: calls.append(value) or 2)
+        window = SimpleNamespace(controller=controller, closing=False, current_run_key="job-A", slice_panel=self.panel,
                                  _append_log=lambda message: None)
-        ThermalFeedbackWindow._publish_slice_dataset(window, self.b, 7)
+        ThermalFeedbackWindow._publish_slice_dataset(window, self.b, (7,"job-A"))
         self.assertEqual([], calls)
-        ThermalFeedbackWindow._publish_slice_dataset(window, self.b, 8)
+        ThermalFeedbackWindow._publish_slice_dataset(window, self.b, (8,"job-A"))
         self.assertEqual([self.b], calls)
         self.assertIs(self.panel.active_dataset, self.a)
         self.assertEqual(2, self.panel.pending_epoch)
         controller.state = 'disconnecting'
-        ThermalFeedbackWindow._publish_slice_dataset(window, None, 8)
+        ThermalFeedbackWindow._publish_slice_dataset(window, None, (8,"job-A"))
         self.assertEqual([self.b], calls)
 
     def test_connected_controls_and_workbook_lock(self):
@@ -133,11 +133,11 @@ class SliceLiveUITests(unittest.TestCase):
 
     def test_same_active_result_does_not_leave_pending_badge(self):
         controller=SimpleNamespace(generation=7,thread=object(),state='connected',
-            update_slice_dataset=lambda value:0,
+            update_slice_dataset=lambda value, **kw:0,
             slice_dataset_setting=SimpleNamespace(active=lambda:(0,self.a)))
-        window=SimpleNamespace(controller=controller,closing=False,slice_panel=self.panel,
+        window=SimpleNamespace(controller=controller,closing=False,current_run_key="job-A",slice_panel=self.panel,
                                _append_log=lambda value:None)
-        ThermalFeedbackWindow._publish_slice_dataset(window,self.a,7)
+        ThermalFeedbackWindow._publish_slice_dataset(window,self.a,(7,"job-A"))
         self.assertIsNone(self.panel.pending_epoch)
 
 

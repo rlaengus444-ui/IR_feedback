@@ -261,7 +261,7 @@ class HandoffTests(unittest.TestCase):
         controller.events.put(WorkerEvent(controller.generation, 'snapshot', dict(
             snapshot=self.frame('saved', 2), proposed={1: 55}, reasons={1: 'old'},
             applied={1: 55}, slice_features=A.features(3), slice_epoch=0)))
-        controller.update_slice_dataset(B)
+        controller.update_slice_dataset(B, run_key="job-A")
         result = controller.poll()[0].payload
         self.assertEqual({}, result['proposed'])
         self.assertEqual({1: 55}, result['applied'])
@@ -282,7 +282,7 @@ class HandoffTests(unittest.TestCase):
             controller.events.put(WorkerEvent(controller.generation,'snapshot',dict(
                 snapshot=self.frame('old',1),proposed={1:55},reasons={1:'valid math'},applied={},
                 status='preview',slice_features=A.features(2),slice_epoch=0)))
-            epoch=controller.update_slice_dataset(B)
+            epoch=controller.update_slice_dataset(B, run_key="job-A")
             controller.slice_dataset_setting.activate(epoch)
             payload=controller.poll()[0].payload
             self.assertIsNone(payload['slice_features'])

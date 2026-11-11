@@ -119,6 +119,84 @@ function FreshLogHint([string]$machine) {
     finally { if ($null -ne $stream) { $stream.Dispose() } }
 }
 
+function SelectJobProofLog([string]$directory, [string]$machine) {
+    $selected=$null; $count=0
+    foreach ($candidate in [IO.Directory]::EnumerateFiles($directory, ('*_'+$machine+'.log'))) {
+        if (++$count -gt 4096) { StopObservation 'Controller log inventory exceeds its bound.' }
+        $file=New-Object IO.FileInfo($candidate)
+        if ($null -eq $selected -or $file.LastWriteTimeUtc -gt $selected.LastWriteTimeUtc -or
+            ($file.LastWriteTimeUtc -eq $selected.LastWriteTimeUtc -and [string]::CompareOrdinal($file.FullName,$selected.FullName) -gt 0)) { $selected=$file }
+    }
+    return $selected
+}
+
+function AssertJobProof($proof, [int]$index) {
+    # The Python reader binds its parsed job context to this exact consumed
+    # window. Re-read it and all new bytes here, inside both native apply gates.
+    # No wall-clock or same-layer guess can authorize a different run.
+    if ($null -eq $proof) { StopObservation 'Current job proof is unavailable; waiting for a verified run.' }
+    $path = [string](ValueOf $proof 'path')
+    $expectedHash = [string](ValueOf $proof 'sha256')
+    $run = [string](ValueOf $proof 'run_key')
+    $offset = ValueOf $proof 'offset'; $start = ValueOf $proof 'start'; $layer = ValueOf $proof 'layer'
+    if ($expectedHash -cnotmatch '^[0-9a-f]{64}$' -or $run -cnotmatch '^[0-9a-f]{64}$' -or
+        ($offset -isnot [int] -and $offset -isnot [long]) -or ($start -isnot [int] -and $start -isnot [long]) -or
+        ($layer -isnot [int] -and $layer -isnot [long]) -or $start -lt 0 -or $offset -le $start -or
+        ($offset - $start) -gt 8388608 -or $layer -lt 0 -or $layer -gt 1000000) { throw 'Invalid bounded job proof.' }
+    $stream = $null; $sha = $null
+    try {
+        $directory = [IO.Path]::Combine([IO.Path]::GetDirectoryName([string]$request.image_path), 'Logs')
+        if ($request.machine -notin @('M1','S3') -or [string]::IsNullOrWhiteSpace($path) -or
+            -not [string]::Equals([IO.Path]::GetFullPath([IO.Path]::GetDirectoryName($path)), [IO.Path]::GetFullPath($directory), [StringComparison]::OrdinalIgnoreCase)) { throw 'Job proof is outside the selected controller log directory.' }
+        $selected=SelectJobProofLog $directory ([string]$request.machine)
+        if ($null -eq $selected -or -not [string]::Equals($selected.FullName, [IO.Path]::GetFullPath($path), [StringComparison]::OrdinalIgnoreCase)) { StopObservation 'The selected controller job log changed.' }
+        $length=$selected.Length; $mtime=$selected.LastWriteTimeUtc.Ticks
+        if ($length -lt $offset -or ($length - $offset) -gt 1048576) { StopObservation 'Controller job log was replaced or advanced beyond the verification bound.' }
+        $buffer = New-Object byte[] ([int]($length - $start))
+        $again = New-Object byte[] $buffer.Length
+        foreach ($bytes in @($buffer,$again)) {
+            # Reopen each pass: atomic replacement must not leave both checks
+            # on a retired handle. Reselect before and after every bounded read.
+            $current=SelectJobProofLog $directory ([string]$request.machine)
+            if ($null -eq $current -or $current.FullName -cne $selected.FullName -or
+                $current.Length -ne $length -or $current.LastWriteTimeUtc.Ticks -ne $mtime) { StopObservation 'Controller log selection changed during verification.' }
+            $stream=[IO.File]::Open($path,[IO.FileMode]::Open,[IO.FileAccess]::Read,([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
+            try {
+                if ($stream.Length -ne $length) { StopObservation 'Controller job log length changed.' }
+                [void]$stream.Seek($start,[IO.SeekOrigin]::Begin)
+                $read=0
+                while ($read -lt $bytes.Length) {
+                    $part=$stream.Read($bytes,$read,$bytes.Length-$read)
+                    if ($part -eq 0) { StopObservation 'Incomplete controller job log read.' }; $read+=$part
+                }
+                if ($stream.Length -ne $length) { StopObservation 'Controller job log is being written.' }
+            } finally { $stream.Dispose(); $stream=$null }
+            $current=SelectJobProofLog $directory ([string]$request.machine)
+            if ($null -eq $current -or $current.FullName -cne $selected.FullName -or
+                $current.Length -ne $length -or $current.LastWriteTimeUtc.Ticks -ne $mtime) { StopObservation 'Controller log selection changed after verification.' }
+        }
+        $sha = [Security.Cryptography.SHA256]::Create()
+        $prefix = ([BitConverter]::ToString($sha.ComputeHash($buffer,0,[int]($offset - $start)))).Replace('-','').ToLowerInvariant()
+        if ($prefix -cne $expectedHash -or
+            [Convert]::ToBase64String($buffer) -cne [Convert]::ToBase64String($again)) { StopObservation 'Controller job evidence changed after calculation.' }
+        if ($buffer.Length -eq 0 -or $buffer[$buffer.Length-1] -ne 10) { StopObservation 'Incomplete controller job log tail.' }
+        $tail = [Text.Encoding]::UTF8.GetString($buffer,[int]($offset-$start),[int]($length-$offset))
+        foreach ($line in ($tail -split "`n")) {
+            if ($line -notmatch 'AUTO') { continue }
+            if ($line.Contains('AutoPrint started!') -or $line.Contains('AutoPrint finished!') -or
+                $line.Contains('AutoPrint cancelled.') -or $line.Contains('Stopping printing as requested.')) { StopObservation 'Printing job changed after calculation; old decision discarded.' }
+            if ($line -match '\bLayer:\s*(\d+)\s*->\s*Current Z\s*=') { $layer = [long]$matches[1] }
+        }
+        if ($layer -lt $index -or $layer -gt ($index+1)) { StopObservation 'The production layer advanced beyond the completed CSV decision.' }
+    } catch {
+        if ($script:observationWait) { throw }
+        StopObservation ('Current controller job could not be verified: ' + $_.Exception.Message)
+    } finally {
+        if ($null -ne $sha) { $sha.Dispose() }
+        if ($null -ne $stream) { $stream.Dispose() }
+    }
+}
+
 function FiniteNumber([string]$text) {
     $number = 0.0
     if (-not [double]::TryParse($text.Replace(',','.'), [Globalization.NumberStyles]::Float,
@@ -192,8 +270,7 @@ function AssertCsvFile($token, $observation) {
     $age = ([DateTime]::UtcNow - $file.LastWriteTimeUtc).TotalSeconds
     if ($age -lt -2 -or $age -gt 5) { throw 'The completed CSV record is no longer fresh enough for an IR update.' }
     $index = [int]$observation.row_index
-    $hint = FreshLogHint ([string]$request.machine)
-    if ($null -ne $hint -and ($hint -lt $index -or $hint -gt ($index + 1))) { throw 'The production layer advanced beyond the completed CSV decision.' }
+    AssertJobProof (ValueOf $token 'job') $index
 }
 
 function UniqueVisibleRecord($records, [string]$id, [bool]$required) {
@@ -533,9 +610,27 @@ try {
             'read_status' {
                 $script:controlWait = $true
                 $stateHandle = HandleOf $handles 'state'
+                if ($stateHandle -eq [IntPtr]::Zero -and $request.bootstrap_status -eq $true -and
+                    $null -eq (ValueOf $handles 'scope_proof')) {
+                    # Rebound endpoints have no cached controls yet. Discover
+                    # exact global labels read-only; do not enter any page.
+                    $records=@(foreach ($candidate in @([BinderJetNativeProcess]::Enumerate($root, $pidExpected))) {
+                        if ([string]$candidate.class_name -notmatch '(?i)STATIC') { continue }
+                        $leaf=[BinderJetLeafMetadata]::LeafIdentity($root,[IntPtr][long]$candidate.hwnd,$pidExpected)
+                        if ([string]$leaf.id -in @('labelTaskStatus','labelMachineName')) {
+                            @{hwnd=$candidate.hwnd;id=[string]$leaf.id;class_name=$candidate.class_name;visible=$true}
+                        }
+                    })
+                    $record=UniqueVisibleRecord $records 'labelTaskStatus' $true
+                    if ([string]$record.class_name -notmatch '(?i)STATIC') { throw 'The task-state control is not a native label.' }
+                    $stateHandle=[IntPtr][long]$record.hwnd
+                    $machineRecord=UniqueVisibleRecord $records 'labelMachineName' $true
+                    $handles=@{state=$stateHandle.ToInt64();machine=[long]$machineRecord.hwnd}
+                    $machine=CheckMachine $root $pidExpected $handles
+                }
                 if (-not (Owned $root $stateHandle $pidExpected)) { throw 'The audited task-state label is unavailable.' }
                 $state = ([BinderJetNativeProcess]::ReadText($root, $stateHandle, $pidExpected)).Trim()
-                $response = @{success=$true;machine=$machine;state=$state}
+                $response = @{success=$true;machine=$machine;state=$state;handles=$handles}
             }
             'enter_sequence' {
                 # A native menu click creates/shows the existing Sequence view.

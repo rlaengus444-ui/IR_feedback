@@ -48,6 +48,7 @@ class SlicePanel(ttk.Frame):
             ttk.Label(row,text=label).pack(side='left')
             widget=ttk.Combobox(row,textvariable=var,values=values,width=15,state='readonly');widget.pack(side='left',padx=(5,16));self.configuration_widgets.append((widget,'readonly'))
         widget=ttk.Button(row,text='다시 분석',command=self.start);widget.pack(side='left');self.configuration_widgets.append((widget,'normal'))
+        ttk.Button(row,text='현재 작업에 이미지 적용',command=self.reconfirm).pack(side='left',padx=7)
         ttk.Label(self,text='이미지 중앙의 원형 영역을 분석합니다. 센서 실제 위치·도포 실행·건조 완료를 확정하는 데이터가 아닙니다.\n파일명 숫자 배정은 누락 층을 미확인으로 남깁니다. 정렬순 연속은 사용자가 실제 층 순서를 확인한 경우에만 선택하세요.',wraplength=1000,foreground='#836118').pack(fill='x')
         ttk.Label(self,textvariable=self.summary,wraplength=1000).pack(fill='x',pady=7)
         ttk.Label(self,textvariable=self.active,wraplength=1000).pack(fill='x')
@@ -64,6 +65,10 @@ class SlicePanel(ttk.Frame):
         for widget, state in self.configuration_widgets:
             widget.configure(state='disabled' if locked else state)
         self.workbook_button.configure(state='disabled' if locked or self.workbook_busy() else 'normal')
+
+    def reconfirm(self):
+        if self.busy() or self.running or self.dataset is None:return
+        self.publish_dataset(self.dataset,self.context_token())
     def _active_text(self):
         if self.active_epoch is None:
             text='실행 중 이미지: 연결 전'

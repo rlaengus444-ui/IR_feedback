@@ -140,7 +140,15 @@ internal static class FullRouteFixture
                 sequence.Controls.Add(input);number++;
             }
         }
+        bool jobSwitchOnEdit=false;
         ir.TextChanged+=delegate {
+            if(jobSwitchOnEdit) {
+                jobSwitchOnEdit=false;
+                string logPath=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Logs","20261111_"+machine+".log");
+                string prefix=DateTime.Now.ToString("yyyy-MM-ddtt hhmmss",CultureInfo.InvariantCulture).Replace(" ","")+"...[BJT - AUTO]: ";
+                File.AppendAllText(logPath,prefix+"AutoPrint started!\n"+prefix+"Layer: 0 -> Current Z = 1\n");
+                File.WriteAllText(marker+".job-switched-after-edit","1");
+            }
             if(mode.EndsWith("edithang")&&ir.Text!="62") { File.WriteAllText(marker+".edited",ir.Text);Thread.Sleep(8000); }
             if(mode.EndsWith("statechange")&&ir.Text!="62") { File.WriteAllText(marker+".edited",ir.Text);taskStatus.Text="IDLE"; }
         };
@@ -180,6 +188,7 @@ internal static class FullRouteFixture
                 if(command.ContainsKey("temperature"))coreTemperature=Convert.ToDouble(command["temperature"]);
                 coreTemperatures[coreLayer]=coreTemperature;
                 if(command.ContainsKey("state"))taskStatus.Text=(string)command["state"];
+                if(command.ContainsKey("jobSwitchOnEdit"))jobSwitchOnEdit=(bool)command["jobSwitchOnEdit"];
                 if(command.ContainsKey("dirty"))foreach(Control c in sequence.Controls){var text=c as TextBox;if(text!=null && text!=ir){text.Text="9999";break;}}
                 string logDir=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Logs");Directory.CreateDirectory(logDir);
                 File.AppendAllText(Path.Combine(logDir,"20261027_"+machine+".log"),DateTime.Now.ToString("yyyy-MM-ddtthhmmss")+"...[BJT - AUTO]: Layer: "+coreLayer+" -> Current Z = 1.23\n");

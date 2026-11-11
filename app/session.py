@@ -30,8 +30,9 @@ class SliceDatasetSetting:
         self._lock = threading.Lock()
         self._active = (0, dataset)
         self._desired = self._active
+        self._desired_run = None
 
-    def request(self, dataset, *, force=False):
+    def request(self, dataset, *, force=False, run_key=None):
         if dataset is not None and not isinstance(dataset, SliceDataset):
             raise ValueError("완료된 슬라이싱 분석 데이터가 필요합니다.")
         with self._lock:
@@ -42,19 +43,30 @@ class SliceDatasetSetting:
                 return self._desired[0]
             epoch = self._desired[0] + 1
             self._desired = (epoch, dataset)
+            self._desired_run = run_key
             return epoch
 
     def desired(self):
         with self._lock:
             return self._desired
 
+    def discard_stale_request(self, epoch, run_key):
+        """Retire a previous job's pending image handoff without replaying it."""
+        with self._lock:
+            if (not run_key or self._desired[0] != epoch or self._active[0] == epoch
+                    or self._desired_run is None or self._desired_run == run_key):
+                return False
+            self._desired = (epoch + 1, None)
+            self._desired_run = run_key
+            return True
+
     def active(self):
         with self._lock:
             return self._active
 
-    def activate(self, epoch):
+    def activate(self, epoch, run_key=None):
         with self._lock:
-            if self._desired[0] != epoch:
+            if self._desired[0] != epoch or (self._desired_run is not None and self._desired_run != run_key):
                 return False
             self._active = self._desired
             return True
@@ -134,6 +146,10 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                            and options.workbook_spec.slice_start_cell)
     image_waiting = False
     image_baseline_layer = None
+    image_run_key = None
+    image_authorized = True
+    image_reset_epoch = None
+    actual_target = options.target
     limit_setting = options._maximum_ir_setting
     hard_minimum, hard_maximum, hard_step = 0.0, 100.0, 5.0
     power_limit_holding = False
@@ -196,6 +212,17 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             if (snapshot.target.machine, snapshot.target.pid, snapshot.target.hwnd) != (
                     options.target.machine, options.target.pid, options.target.hwnd):
                 raise AdapterError("선택한 장비와 읽은 창의 식별값이 달라 연결을 중단했습니다.")
+            if snapshot.actual_target is not None and snapshot.actual_target != actual_target:
+                previous_target, actual_target = actual_target, snapshot.actual_target
+                emit("target_rebound", actual_target)
+                emit("log", f"{actual_target.machine} 컨트롤러 자동 재연결 · PID {previous_target.pid} → {actual_target.pid} · 새 관측과 설정 확인 후 IR 재개")
+            if snapshot.run_key:
+                if image_run_key is None:
+                    image_run_key = snapshot.run_key
+                elif snapshot.run_key != image_run_key:
+                    image_run_key = snapshot.run_key
+                    image_authorized = False
+                    emit("image_lineage_hold", "새 작업 · 기존 이미지 분석은 보존하며 현재 작업 이미지 확인 전까지 이미지 참고값을 미확인으로 처리합니다.")
             effective_mode = options.mode
             status = "조회 중" if options.mode == "monitor" else "새 T_recoating 기록 대기"
             if options.mode == "control":
@@ -282,14 +309,20 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
             # complete latest result requests a new epoch. Never mutate frozen
             # Excel rows or interrupt an already admitted Save to switch images.
             desired_epoch, desired_dataset = slice_setting.desired()
+            if slice_setting.discard_stale_request(desired_epoch, snapshot.run_key):
+                desired_epoch, desired_dataset = slice_setting.desired()
+                emit("log", "이전 작업의 이미지 적용 예약 취소 · 현재 작업 이미지는 미확인으로 처리합니다.")
             handoff_pending = desired_epoch != slice_epoch
             if handoff_pending:
-                if image_consuming:
+                if image_consuming and image_reset_epoch != desired_epoch:
                     held.clear()
                     reasons.clear()
                     reset_controllers("슬라이싱 이미지 교체")  # Reopens its pristine private copy.
-                if slice_setting.activate(desired_epoch):
+                    image_reset_epoch = desired_epoch
+                if slice_setting.activate(desired_epoch, snapshot.run_key):
                     slice_epoch, slice_dataset = desired_epoch, desired_dataset
+                    image_run_key = snapshot.run_key
+                    image_authorized = True
                     if image_consuming:
                         baseline_seen = valid
                         last_key = snapshot.observation_key if valid else None
@@ -355,7 +388,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                 reasons.clear()
                 held_cap_stamp = None
             features = (slice_dataset.features(snapshot.layer_index + 1)
-                        if slice_dataset is not None and valid else None)
+                        if image_authorized and slice_dataset is not None and valid else None)
             if excel_calc is not None:
                 excel_calc.watch(snapshot,
                     eligible=can_calculate and valid and not control_barrier and not image_hold
@@ -595,9 +628,10 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                   limit_status=limit_status,
                                   decision_cap_stamp=held_cap_stamp,
                                   slice_epoch=slice_epoch,
+                                  image_authorized=image_authorized,
                                   slice_fingerprint=slice_dataset.fingerprint if slice_dataset is not None else None,
                                   slice_features=(slice_dataset.features(snapshot.layer_index + 1)
-                                      if slice_dataset is not None and valid else None)))
+                                      if image_authorized and slice_dataset is not None and valid else None)))
             interval = snapshot.minimum_poll_seconds
             if not finite(interval):
                 interval = 1.0
@@ -723,12 +757,14 @@ class SessionController:
             raise ValueError("연결 중에만 목표 온도를 적용할 수 있습니다.")
         return self.target_temperature_setting.set(value)
 
-    def update_slice_dataset(self, dataset):
+    def update_slice_dataset(self, dataset, *, run_key=None):
         """Queue a complete dataset/clear; activation belongs to the worker."""
         if (self.thread is None or self.closed or self.state not in ("connecting", "connected", "recovering")
                 or self.slice_dataset_setting is None):
             raise ValueError("연결 중에만 이미지 데이터 교체를 예약할 수 있습니다.")
-        return self.slice_dataset_setting.request(dataset)
+        if not isinstance(run_key, str) or not run_key:
+            raise ValueError("현재 작업이 확인된 뒤 이미지를 적용하세요.")
+        return self.slice_dataset_setting.request(dataset, force=True, run_key=run_key)
 
     def update_maximum_ir(self, value):
         if (self.thread is None or self.closed or self.state not in ("connected", "recovering")

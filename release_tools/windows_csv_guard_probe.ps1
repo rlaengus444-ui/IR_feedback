@@ -5,21 +5,28 @@ $tokens = $null; $errors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile($helper, [ref]$tokens, [ref]$errors)
 if ($errors.Count) { throw "Native helper parse errors: $errors" }
 # Load only the actual read-only guard functions, never the UI dispatcher.
-foreach ($name in @('ValueOf', 'FreshLogHint', 'StopObservation', 'CsvContentHash', 'AssertCsvFile')) {
+foreach ($name in @('ValueOf', 'StopObservation', 'CsvContentHash', 'SelectJobProofLog', 'AssertJobProof', 'AssertCsvFile')) {
     $definitions = @($ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true))
     if ($definitions.Count -ne 1) { throw "Cannot identify exact production function $name" }
     Invoke-Expression $definitions[0].Extent.Text
 }
-$request = @{ machine = 'unknown'; image_path = '' }
 $directory = Join-Path $env:TEMP ([Guid]::NewGuid().ToString('N'))
 [void][IO.Directory]::CreateDirectory($directory)
+$request = @{ machine = 'M1'; image_path = (Join-Path $directory 'Controller.exe') }
+[void][IO.Directory]::CreateDirectory((Join-Path $directory 'Logs'))
+$jobPath = Join-Path $directory 'Logs/20261111_M1.log'
+$jobBytes = [Text.Encoding]::UTF8.GetBytes("2026-11-11AM090000...[BJT - AUTO]: AutoPrint started!`n2026-11-11AM090001...[BJT - AUTO]: Layer: 1 -> Current Z = 1`n")
+[IO.File]::WriteAllBytes($jobPath,$jobBytes)
+$jobSha = [Security.Cryptography.SHA256]::Create()
+try { $jobHash = ([BitConverter]::ToString($jobSha.ComputeHash($jobBytes))).Replace('-','').ToLowerInvariant() } finally { $jobSha.Dispose() }
+$jobProof = @{path=$jobPath;start=0;offset=$jobBytes.Length;sha256=$jobHash;run_key=('1'*64);layer=1}
 $path = Join-Path $directory 'LayerDatasheet_20261028_000000.csv'
 $checks = [Collections.Generic.List[string]]::new()
 function TokenFor([byte[]]$bytes) {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { $digest = ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant() }
     finally { $sha.Dispose() }
-    return @{ path = $path; size = $bytes.Length; mtime_ticks = ([IO.FileInfo]::new($path)).LastWriteTimeUtc.Ticks; sha256 = $digest }
+    return @{ path = $path; size = $bytes.Length; mtime_ticks = ([IO.FileInfo]::new($path)).LastWriteTimeUtc.Ticks; sha256 = $digest; job=$jobProof }
 }
 function MustReject($token, [string]$label, [bool]$observationWait = $false) {
     $rejected = $false
@@ -34,6 +41,57 @@ try {
     $token = TokenFor $raw
     AssertCsvFile $token @{ row_index = 0 }
     $checks.Add('unchanged content accepted')
+    $noJob=$token.Clone();$noJob.Remove('job')
+    MustReject $noJob 'missing native job proof holds' $true
+    foreach ($tail in @(
+        "2026-11-11AM100000...[BJT - AUTO]: AutoPrint started!`n2026-11-11AM100001...[BJT - AUTO]: Layer: 1 -> Current Z = 1`n",
+        "2026-11-11AM100000...[BJT - AUTO]: AutoPrint cancelled.`n",
+        "2026-11-11AM100000...[BJT - AUTO]: Layer: 3 -> Current Z = 1`n",
+        'partial tail')) {
+        [IO.File]::WriteAllBytes($jobPath,$jobBytes)
+        [IO.File]::AppendAllText($jobPath,$tail)
+        MustReject $token ('native job switch/stop/advance/incomplete tail: '+$tail.Trim()) $true
+    }
+    [IO.File]::WriteAllBytes($jobPath,$jobBytes)
+    [IO.File]::AppendAllText($jobPath,"2026-11-11AM100000...[BJT - AUTO]: Layer: 1 -> Current Z = 1`n")
+    AssertCsvFile $token @{row_index=0}
+    $checks.Add('ordinary same-run layer append remains usable')
+    [IO.File]::WriteAllBytes($jobPath,$jobBytes)
+    $changedJob=[Text.Encoding]::UTF8.GetBytes(([Text.Encoding]::UTF8.GetString($jobBytes)).Replace('090000','080000'))
+    [IO.File]::WriteAllBytes($jobPath,$changedJob)
+    MustReject $token 'rewritten job anchor rejected with unchanged CSV' $true
+    [IO.File]::Delete($jobPath)
+    MustReject $token 'missing controller log holds' $true
+    [IO.File]::WriteAllBytes($jobPath,$jobBytes)
+    # Interleave replacement/new-log selection with the actual production
+    # selection function; guard read/hash code remains byte-for-byte production.
+    $originalSelect=${function:SelectJobProofLog}
+    foreach ($raceCase in @('replace','new-selection')) {
+        [IO.File]::WriteAllBytes($jobPath,$jobBytes)
+        $raceMtime=[IO.File]::GetLastWriteTimeUtc($jobPath)
+        $script:selectionCalls=0
+        function SelectJobProofLog([string]$directory,[string]$machine) {
+            $selected=& $originalSelect $directory $machine
+            $script:selectionCalls++
+            if ($script:selectionCalls -eq 3) {
+                if ($raceCase -eq 'replace') {
+                    $tmp=$jobPath+'.tmp'
+                    [IO.File]::WriteAllBytes($tmp,$changedJob)
+                    [IO.File]::SetLastWriteTimeUtc($tmp,$raceMtime)
+                    [IO.File]::Replace($tmp,$jobPath,$null)
+                } else {
+                    $newLog=Join-Path ([IO.Path]::GetDirectoryName($jobPath)) '20261112_M1.log'
+                    [IO.File]::WriteAllBytes($newLog,$changedJob)
+                    [IO.File]::SetLastWriteTimeUtc($newLog,$raceMtime.AddSeconds(1))
+                }
+            }
+            return $selected
+        }
+        MustReject $token ('native read race '+$raceCase) $true
+        Remove-Item (Join-Path ([IO.Path]::GetDirectoryName($jobPath)) '20261112_M1.log') -ErrorAction SilentlyContinue
+        Set-Item Function:SelectJobProofLog $originalSelect
+    }
+    [IO.File]::WriteAllBytes($jobPath,$jobBytes)
     $modified = [Text.Encoding]::UTF8.GetBytes("Id,TemperaturePostRecoating`r`n1,-1`r`n")
     [IO.File]::WriteAllBytes($path, $modified)
     [IO.File]::SetLastWriteTimeUtc($path, [DateTime]::new([long]$token.mtime_ticks, [DateTimeKind]::Utc))

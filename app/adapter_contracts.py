@@ -88,6 +88,10 @@ class UiSnapshot:
     actual_target: MachineWindow | None = None
     actuation_barrier: bool = False
     expired_observation_key: str | None = None
+    job_first_layer: int | None = None
+    job_first_started: float | None = None
+    job_auto_started: float | None = None
+    job_current_layer: int | None = None
 
 
 class UiAdapter(Protocol):

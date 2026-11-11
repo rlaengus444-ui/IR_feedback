@@ -69,6 +69,7 @@ class ThermalFeedbackWindow:
         self.discoverer = discoverer
         self.targets = []
         self.target_map = {}
+        self.current_run_key = None
         self.discovery_queue = queue.Queue(maxsize=1)
         self.searching = False
         self.discovery_thread = None
@@ -225,15 +226,15 @@ class ThermalFeedbackWindow:
             workbook_busy=lambda: self.controller.thread is not None,
             use_workbook=self._use_slice_workbook,
             publish_dataset=self._publish_slice_dataset,
-            context_token=lambda: self.controller.generation)
+            context_token=lambda: (self.controller.generation, self.current_run_key))
         notebook.add(self.slice_panel, text="슬라이싱 이미지")
 
     def _publish_slice_dataset(self, dataset, token):
-        if (self.closing or token != self.controller.generation or self.controller.thread is None
+        if (self.closing or not self.current_run_key or token != (self.controller.generation, self.current_run_key) or self.controller.thread is None
                 or self.controller.state not in ("connecting", "connected", "recovering")):
             return
         try:
-            epoch = self.controller.update_slice_dataset(dataset)
+            epoch = self.controller.update_slice_dataset(dataset, run_key=self.current_run_key)
         except ValueError:
             return
         active_epoch, active_dataset = self.controller.slice_dataset_setting.active()
@@ -583,7 +584,19 @@ class ThermalFeedbackWindow:
                 setting = self.controller.slice_dataset_setting
                 if setting is not None and event.payload['epoch'] == setting.desired()[0]:
                     self.slice_panel.mark_session_active(event.payload['dataset'], event.payload['epoch'])
+            elif event.kind == "target_rebound":
+                target = event.payload
+                self.targets = [x for x in self.targets if x.machine != target.machine] + [target]
+                self._populate_hosts()
+                for label, candidate in self.target_map.items():
+                    if candidate == target:
+                        self.host.set(label)
+                        break
+            elif event.kind == "image_lineage_hold":
+                self.slice_panel.active.set("실행 중 이미지: 새 작업 확인 필요 · '현재 작업에 이미지 적용'을 누르세요.")
+                self._append_log(event.payload)
             elif event.kind == "snapshot":
+                self.current_run_key = event.payload['snapshot'].run_key
                 self._show_snapshot(event.payload)
             elif event.kind == "chart_snapshot":
                 self._record_chart_payload(event.payload)
@@ -594,6 +607,7 @@ class ThermalFeedbackWindow:
                 self.capability.set(str(event.payload))
                 self._append_log(event.payload)
             elif event.kind == "finished":
+                self.current_run_key = None
                 self._capture_current_plot()
                 self.archive.submit()
                 self.slice_panel.clear_session()

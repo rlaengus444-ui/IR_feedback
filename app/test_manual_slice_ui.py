@@ -55,9 +55,10 @@ class ManualSliceUITests(unittest.TestCase):
         self.view.connect()
         self.assertEqual('connecting', self.controller.state)
         panel.mark_session_active(A, 0)
-        self.view._publish_slice_dataset(B, self.controller.generation - 1)
+        self.view.current_run_key='job-A'
+        self.view._publish_slice_dataset(B, (self.controller.generation - 1, "job-A"))
         self.assertIsNone(panel.pending_epoch)
-        self.view._publish_slice_dataset(B, self.controller.generation)
+        self.view._publish_slice_dataset(B, (self.controller.generation, "job-A"))
         epoch, desired = self.controller.slice_dataset_setting.desired()
         self.assertIs(B, desired)
         self.assertEqual(epoch, panel.pending_epoch)
