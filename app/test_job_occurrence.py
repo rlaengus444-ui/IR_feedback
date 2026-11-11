@@ -10,7 +10,7 @@ class JobOccurrenceTests(unittest.TestCase):
     def setup_log(self,directory):
         root=Path(directory);(root/'Logs').mkdir();path=root/'Logs/day_M1.log'
         prefix='한글 무관 기록\n'
-        path.write_text(prefix+self.TEXT,encoding='utf-8')
+        path.write_text(prefix+self.TEXT,encoding='utf-8',newline='\n')
         return path,JobLog(MachineWindow('M1',1,2,'fixture',str(root/'Controller.exe'))),len(prefix.encode())
     def test_identical_same_second_start_occurrences_are_distinct(self):
         with tempfile.TemporaryDirectory() as directory:
