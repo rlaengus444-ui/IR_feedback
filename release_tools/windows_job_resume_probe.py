@@ -18,7 +18,7 @@ def exercise(exe,folder,machine):
     spec,_=fields_for(exe,machine,marker)
     monitor=folder/('monitor-'+machine);monitor.mkdir()
     logs=exe.parent/'Logs';logs.mkdir(exist_ok=True)
-    log=logs/('20261111_'+machine+'.log')
+    log=logs/('20261027_'+machine+'.log')
     events=queue.Queue();stop=threading.Event();worker=None;fixture=None
     raw_calls=[];reports=[];rebinds=[];barriers=[];history=LayerHistory()
     run=[None]; csv_path=[None]; start=[None]; next_layer=[0]; phase=['initial'];race=[False]
@@ -72,7 +72,9 @@ def exercise(exe,folder,machine):
                 with log.open('a',encoding='utf-8') as f:f.write(prefix+'AutoPrint started!\n'+prefix+'Layer: 0 -> Current Z = 1\n')
                 entry['job_switched_after_python_preflight']=True
             try:
-                value=original(data,event);entry['success']=True;return value
+                value=original(data,event);entry['success']=True
+                if data['operation']=='discover':entry['windows']=value.get('windows',[])
+                return value
             except Exception as e:
                 entry['success']=False;entry['error']=str(e)
                 entry['edit_marker']=Path(data['edit_marker']).exists() if 'edit_marker' in data else False
@@ -93,7 +95,8 @@ def exercise(exe,folder,machine):
         phase[0]=name
         wait_until(lambda:options._maximum_ir_setting.status()['ready'],10,'Session output bounds were not initialized')
         options._maximum_ir_setting.set(cap);before=saves()
-        for _ in range(14):
+        deadline=time.monotonic()+100
+        while time.monotonic()<deadline:
             layer=append();value=wait_snapshot(layer)
             # Give stable full audits/candidate reads time without expiring data.
             time.sleep(.35)

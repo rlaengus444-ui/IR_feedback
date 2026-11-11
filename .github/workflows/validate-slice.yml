@@ -2,6 +2,10 @@ name: Validate connected slice candidate
 on:
   workflow_dispatch:
     inputs:
+      job_only:
+        description: Job/PID diagnostic only; never release ready
+        type: boolean
+        default: false
       native_only:
         description: Run only native diagnostic probes; never release ready
         type: boolean
@@ -155,7 +159,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Excel COM validation unavailable or failed; release gate closed' }
       - name: Verify hidden Sequence inventory and historical failure
         id: hidden_recovery
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && !inputs.job_only
         continue-on-error: true
         shell: pwsh
         run: |
@@ -167,7 +171,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Hidden Sequence recovery probe failed' }
       - name: Verify actual hidden recovery session and normal Save path
         id: hidden_session
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && !inputs.job_only
         continue-on-error: true
         shell: pwsh
         run: |
@@ -205,7 +209,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.native_only && 'native-diagnostic' || 'slice-candidate' }}-${{ github.sha }}
+          name: ${{ (inputs.native_only || inputs.job_only) && 'native-diagnostic' || 'slice-candidate' }}-${{ github.sha }}
           path: ${{ runner.temp }}/slice-candidate/
           if-no-files-found: warn
       - name: Enforce release readiness

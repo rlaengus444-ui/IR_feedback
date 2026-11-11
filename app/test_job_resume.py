@@ -123,6 +123,22 @@ class JobResumeTests(unittest.TestCase):
         self.assertEqual('A',self.adapter._pinned_job)
         self.assertNotIn('B',self.adapter._retired_jobs)
         self.adopt()
+    def test_slow_independent_settings_audit_does_not_restart_when_temperature_expires(self):
+        self.read('B',0,2000)
+        holds=len(self.raws[-1].holds)
+        for i in range(7):
+            self.now+=1
+            self.assertFalse(self.read('B',0,2000,observation_key=None,observation_fresh=False,
+                control_available=i>=5,control_epoch=int(i>=5)).control_available)
+        self.assertEqual(holds,len(self.raws[-1].holds))
+        self.assertEqual('A',self.adapter._pinned_job)
+        self.assertEqual(0,self.raws[-1].calls)
+        self.assertFalse(self.read('B',1,2000,control_epoch=1).control_available)
+        self.now+=1.1
+        self.assertFalse(self.read('B',1,2000,control_epoch=1).control_available)
+        self.assertEqual('B',self.adapter._pinned_job)
+        self.assertFalse(self.read('B',1,2000,control_epoch=1).control_available)
+        self.assertTrue(self.read('B',2,2000,control_epoch=1).control_available)
     def test_same_job_pid_rebind_retains_watermarks_and_reaudits(self):
         self.adapter.apply_ir_power(1,55,'A2',None)
         self.adapter._outage('process exited')

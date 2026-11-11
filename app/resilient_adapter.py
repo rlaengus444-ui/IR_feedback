@@ -212,7 +212,15 @@ class ResilientUiAdapter:
         if self._clock() < self._next_retry:
             return
         try:
-            candidates = [x for x in self.discover() if _identity(x) == _identity(self._target)]
+            if self._discoverer is not None:
+                discovered = self.discover()
+            else:
+                probe = self._new_raw()
+                try:
+                    discovered = probe.discover_matching(self._target)
+                finally:
+                    probe.disconnect()
+            candidates = [x for x in discovered if _identity(x) == _identity(self._target)]
             if len(candidates) != 1:
                 self._outage('동일 실행 파일과 장비의 창을 유일하게 확인할 수 없습니다.')
                 return
@@ -365,7 +373,7 @@ class ResilientUiAdapter:
         aligned = (isinstance(snap.job_current_layer, int) and not isinstance(snap.job_current_layer, bool)
                    and snap.layer_index is not None
                    and snap.layer_index <= snap.job_current_layer <= snap.layer_index + 1)
-        eligible = bool(not self._sticky and fresh and aligned and proof and self._pinned_proof
+        eligible = bool(not self._sticky and native_auto and proof and self._pinned_proof
                         and snap.run_key not in self._retired_jobs and snap.run_key != self._pinned_job
                         and self._newer_job(proof, self._pinned_proof)
                         and (self._job_highwater is None or proof == self._job_highwater
@@ -388,7 +396,7 @@ class ResilientUiAdapter:
                 self.suspend_control('새 작업 · 전체 설정을 두 번 확인합니다.')
                 self._handoff_proof = signature
             return False
-        if not snap.control_available:
+        if not fresh or not aligned or not snap.control_available:
             self._job_candidate = None
             return False
         now = self._clock()
@@ -459,6 +467,7 @@ class ResilientUiAdapter:
         if self._raw_epoch != snap.control_epoch:
             self._raw_epoch = snap.control_epoch
             self._epoch += 1
+            self._job_candidate = None
         if not snap.measurement_valid:
             self._was_ready = False
             if not self._needs_baseline or self._baseline is not None:

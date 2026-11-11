@@ -143,6 +143,7 @@ class JobLog:
         self.window_start = 0
         self.window_hash = None
         self._provisional = None
+        self.incarnation = 0
 
     def _select_log(self, folder):
         with os.scandir(folder) as entries:
@@ -156,7 +157,7 @@ class JobLog:
         if self.target.machine not in {"M1", "S3"} or not self.target.image_path:
             raise JobLogReadUnavailable("unsupported target")
         folder = Path(self.target.image_path).parent / "Logs"
-        fields = ("context", "path", "identity", "offset", "pending", "last_stat", "window_start", "window_hash")
+        fields = ("context", "path", "identity", "offset", "pending", "last_stat", "window_start", "window_hash", "incarnation")
         try:
             for attempt in range(3):
                 path = self._select_log(folder)
@@ -178,9 +179,11 @@ class JobLog:
                             reset = True
                     if reset:
                         self._provisional = None
+                        incarnation = base['incarnation'] + int(base['path'] is not None)
                         base = dict(context=JobContext(), path=None, identity=None,
                                     offset=max(0, stat.st_size - self.MAX_INITIAL_BYTES), pending=b"",
-                                    last_stat=None, window_start=max(0, stat.st_size - self.MAX_INITIAL_BYTES), window_hash=None)
+                                    last_stat=None, window_start=max(0, stat.st_size - self.MAX_INITIAL_BYTES), window_hash=None,
+                                    incarnation=incarnation)
                     offset = base["offset"]
                     end = min(stat.st_size, offset + (self.MAX_INITIAL_BYTES if reset else self.MAX_APPEND_BYTES))
                     start = max(base["window_start"], end - self.MAX_INITIAL_BYTES)
@@ -214,7 +217,7 @@ class JobLog:
                         continue
                     if "AutoPrint started!" in line:
                         stamp = log_timestamp(line)
-                        incarnation = hashlib.sha256(repr((str(path), identity)).encode()).hexdigest()
+                        incarnation = hashlib.sha256(repr((str(path), identity, base['incarnation'])).encode()).hexdigest()
                         key = hashlib.sha256(repr((incarnation, start_position, line)).encode()).hexdigest() if stamp else None
                         context = JobContext(run_key=key, state="AUTO", auto_started=stamp,
                                              auto_position=start_position, log_identity=incarnation)
@@ -247,7 +250,8 @@ class JobLog:
                         metadata(current) != expected or checked != first or selected != path):
                     continue
                 staged = dict(context=context, path=path, identity=identity, offset=end, pending=pending,
-                              last_stat=signature, window_start=start, window_hash=hashlib.sha256(first).digest())
+                              last_stat=signature, window_start=start, window_hash=hashlib.sha256(first).digest(),
+                              incarnation=base['incarnation'])
                 if end != stat.st_size or pending or not (context.run_key and context.first_layer is not None and context.first_started):
                     self._provisional = staged
                     reason = "backlog" if end != stat.st_size else "incomplete tail" if pending else "missing job anchor"

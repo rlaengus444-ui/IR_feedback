@@ -41,6 +41,16 @@ class JobOccurrenceTests(unittest.TestCase):
             second=reader.read()
             self.assertNotEqual(first.log_identity,second.log_identity)
             self.assertNotEqual(first.run_key,second.run_key)
+    def test_in_place_truncation_cannot_reuse_same_start_occurrence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path,reader,_=self.setup_log(directory)
+            with path.open('a') as f:f.write('padding\n'*200)
+            first=reader.read()
+            path.write_text(self.TEXT,encoding='utf-8')
+            second=reader.read()
+            self.assertNotEqual(first.log_identity,second.log_identity)
+            self.assertNotEqual(first.run_key,second.run_key)
+            self.assertEqual(second.run_key,reader.read().run_key)
     def test_same_second_restart_during_preflight_discards_old_decision(self):
         with tempfile.TemporaryDirectory() as directory:
             raw,state,calls,path,values,append,baseline,source,audit=fixture.AdapterTests().fixture(directory)

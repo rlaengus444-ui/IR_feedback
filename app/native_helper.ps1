@@ -562,6 +562,7 @@ try {
     ImportBundledBridge ([string]$request.bridge_path)
     if ($request.operation -eq 'discover') {
         $windows = New-Object 'Collections.Generic.List[object]'
+        $complete=$true; $visited=0
         $instance = $null
         try {
             $registry = [IO.Path]::Combine([Environment]::GetFolderPath('LocalApplicationData'), 'BinderJet.Unified', 'runtime-instance.json')
@@ -569,22 +570,26 @@ try {
             if ($info.Exists -and $info.Length -le 65536) { $instance = [IO.File]::ReadAllText($registry) | ConvertFrom-Json }
         } catch { }
         foreach ($process in Get-Process) {
+            if (++$visited -gt 4096) { $complete=$false;break }
             $title = [string]$process.MainWindowTitle; $name = [string]$process.ProcessName
             if (($title + ' ' + $name) -notmatch '(?i)Binder\s*Jet|BinderJet|BinderjetController') { continue }
             $window = $process.MainWindowHandle
             if ($window -eq [IntPtr]::Zero) { $window = [BinderJetNativeProcess]::FindRoot([int]$process.Id) }
             if ($window -eq [IntPtr]::Zero) { continue }
             $image = ''; try { $image = [string]$process.Path } catch { }
+            if ($request.expected_image_path -and -not [string]::Equals($image,[string]$request.expected_image_path,[StringComparison]::OrdinalIgnoreCase)) { continue }
             $machine = 'unknown'
             if ($null -ne $instance -and [int]$instance.processId -eq $process.Id -and [string]$instance.machineName -in @('M1','S3')) { $machine = [string]$instance.machineName }
             if ($machine -eq 'unknown') { $machine = MachineKind ($title + ' ' + [IO.Path]::GetFileName($image)) }
             if ($machine -eq 'unknown' -and [BinderJetQueuedNavigation]::Responsive($window,[int]$process.Id,100)) {
                 try { $machine = [BinderJetNativeProcess]::IdentifyMachine($window, [int]$process.Id) } catch { }
             }
+            if ($request.expected_machine -and $machine -eq 'unknown') { $complete=$false }
+            if ($request.expected_machine -and $machine -ne [string]$request.expected_machine) { continue }
+            if ($windows.Count -ge 12) { $complete=$false;break }
             $windows.Add(@{machine=$machine;pid=$process.Id;hwnd=$window.ToInt64();title=$title;image_path=$image})
-            if ($windows.Count -ge 12) { break }
         }
-        $response = @{success=$true;windows=@($windows.ToArray())}
+        $response = @{success=$true;windows=@($windows.ToArray());complete=$complete}
     } else {
         $root = [IntPtr][long]$request.hwnd; $pidExpected = [int]$request.pid; $handles = $request.handles
         # Identity validation does not enter the target window procedure.

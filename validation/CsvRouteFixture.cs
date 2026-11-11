@@ -144,7 +144,7 @@ internal static class FullRouteFixture
         ir.TextChanged+=delegate {
             if(jobSwitchOnEdit) {
                 jobSwitchOnEdit=false;
-                string logPath=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Logs","20261111_"+machine+".log");
+                string logPath=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Logs","20261027_"+machine+".log");
                 string prefix=DateTime.Now.ToString("yyyy-MM-ddtt hhmmss",CultureInfo.InvariantCulture).Replace(" ","")+"...[BJT - AUTO]: ";
                 File.AppendAllText(logPath,prefix+"AutoPrint started!\n"+prefix+"Layer: 0 -> Current Z = 1\n");
                 File.WriteAllText(marker+".job-switched-after-edit","1");

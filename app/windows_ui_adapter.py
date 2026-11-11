@@ -150,8 +150,16 @@ class WindowsUiAdapter:
         if callback is not None:
             callback()
 
-    def discover(self) -> list[MachineWindow]:
-        response = self._request({"operation": "discover"}, None)
+    def discover_matching(self, target) -> list[MachineWindow]:
+        return self.discover(target)
+
+    def discover(self, target_filter=None) -> list[MachineWindow]:
+        request = {"operation": "discover"}
+        if target_filter is not None:
+            request.update(expected_image_path=target_filter.image_path, expected_machine=target_filter.machine)
+        response = self._request(request, None)
+        if response.get('complete') is False:
+            raise ReadTransportError('discover', '동일 장비 창 검색이 불완전합니다. 다시 검색합니다.')
         result: list[MachineWindow] = []
         for row in response.get("windows", []):
             try:
