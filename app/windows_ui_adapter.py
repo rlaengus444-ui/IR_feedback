@@ -447,6 +447,8 @@ class WindowsUiAdapter:
                 job_first_started=source.context.first_started.timestamp() if source.context.first_started else None,
                 job_auto_started=source.context.auto_started.timestamp() if source.context.auto_started else None,
                 job_current_layer=source.context.current_layer,
+                job_start_offset=source.context.auto_position,
+                job_log_identity=source.context.log_identity,
                 observation_is_new=bool(sample and sample.key == self._new_sample_key and fresh),
                 control_recoverable=self._control_hold_reason is not None and self._control_fault is None,
                 control_epoch=self._control_epoch,

@@ -124,6 +124,8 @@ class JobContext:
     current_layer: int | None = None
     state: str = "unknown"
     auto_started: datetime | None = None
+    auto_position: int | None = None
+    log_identity: str = ""
 
 
 class JobLog:
@@ -203,14 +205,19 @@ class JobLog:
                 if len(pending) > 65536 or any(len(line) > 65536 for line in lines):
                     raise CsvSourceError("원본 로그의 한 줄이 허용 크기를 초과했습니다.")
                 context = base["context"]
+                line_position = offset - len(base['pending'])
                 for raw_line in lines:
+                    start_position = line_position
+                    line_position += len(raw_line) + 1
                     line = raw_line.decode("utf-8-sig", errors="replace").strip()
                     if "AUTO" not in line:
                         continue
                     if "AutoPrint started!" in line:
                         stamp = log_timestamp(line)
-                        key = hashlib.sha256((str(path) + "\0" + line).encode()).hexdigest() if stamp else None
-                        context = JobContext(run_key=key, state="AUTO", auto_started=stamp)
+                        incarnation = hashlib.sha256(repr((str(path), identity)).encode()).hexdigest()
+                        key = hashlib.sha256(repr((incarnation, start_position, line)).encode()).hexdigest() if stamp else None
+                        context = JobContext(run_key=key, state="AUTO", auto_started=stamp,
+                                             auto_position=start_position, log_identity=incarnation)
                     match = re.search(r"\bLayer:\s*(\d+)\s*->\s*Current Z\s*=", line)
                     if match and context.run_key:
                         layer = int(match.group(1))

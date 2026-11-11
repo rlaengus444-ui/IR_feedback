@@ -305,9 +305,18 @@ class ResilientUiAdapter:
         if (not snap.run_key or any(isinstance(x, bool) or not isinstance(x, (int, float))
                 or not math.isfinite(x) or x <= 0 for x in values)
                 or values[0] > values[1] or isinstance(snap.job_first_layer, bool)
-                or not isinstance(snap.job_first_layer, int) or not 0 <= snap.job_first_layer <= 1000000):
+                or not isinstance(snap.job_first_layer, int) or not 0 <= snap.job_first_layer <= 1000000
+                or type(snap.job_start_offset) is not int or snap.job_start_offset < 0
+                or not isinstance(snap.job_log_identity, str) or not snap.job_log_identity):
             return None
-        return (snap.run_key, snap.job_first_layer, snap.job_first_started, snap.job_auto_started)
+        return (snap.run_key, snap.job_first_layer, snap.job_first_started, snap.job_auto_started,
+                snap.job_log_identity, snap.job_start_offset)
+
+    @staticmethod
+    def _newer_job(proof, previous):
+        if proof[4] == previous[4]:
+            return proof[5] > previous[5]
+        return proof[3] > previous[3]
 
     def _admit_job(self, snap, native_auto, event):
         """Forward-only admission of a new, byte-proven production run.
@@ -344,7 +353,7 @@ class ResilientUiAdapter:
             self._handoff_proof = None
             return False
         if snap.run_key in self._retired_jobs or (proof and self._pinned_proof
-                and proof[3] <= self._pinned_proof[3]):
+                and not self._newer_job(proof, self._pinned_proof)):
             self._job_candidate = None
             if self._was_ready or self._baseline is not None:
                 self.suspend_control('종료된 이전 작업 기록은 적용하지 않습니다.')
@@ -358,9 +367,9 @@ class ResilientUiAdapter:
                    and snap.layer_index <= snap.job_current_layer <= snap.layer_index + 1)
         eligible = bool(not self._sticky and fresh and aligned and proof and self._pinned_proof
                         and snap.run_key not in self._retired_jobs and snap.run_key != self._pinned_job
-                        and proof[3] > self._pinned_proof[3]
+                        and self._newer_job(proof, self._pinned_proof)
                         and (self._job_highwater is None or proof == self._job_highwater
-                             or proof[3] > self._job_highwater[3]))
+                             or self._newer_job(proof, self._job_highwater)))
         if not eligible:
             self._job_candidate = None
             self._handoff_proof = None

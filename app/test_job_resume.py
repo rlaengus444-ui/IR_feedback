@@ -26,6 +26,7 @@ class JobResumeTests(unittest.TestCase):
         snap = UiSnapshot(target=TARGET, actual_target=self.adapter.current_target,
             run_key=job, job_auto_started=started, job_first_started=started+1,
             job_first_layer=0, job_current_layer=layer+1, layer_index=layer,
+            job_start_offset=int(started), job_log_identity='owned-log',
             machine_state='AUTO', observation_key=job+str(layer), observation_is_new=True,
             observation_fresh=True, control_available=True)
         self.raws[-1].snapshot=replace(snap, **kw)
@@ -85,6 +86,15 @@ class JobResumeTests(unittest.TestCase):
             self.assertFalse(self.read('C',1,2000).control_available)
         self.assertEqual('A',self.adapter._pinned_job)
         self.adopt()
+    def test_same_second_restart_uses_later_start_occurrence(self):
+        def read(layer):return self.read('B',layer,1000,job_start_offset=2000)
+        self.assertFalse(read(0).control_available)
+        self.assertFalse(read(0).control_available)
+        self.now+=1.1
+        self.assertFalse(read(0).control_available)
+        self.assertEqual('B',self.adapter._pinned_job)
+        self.assertFalse(read(0).control_available)
+        self.assertTrue(read(1).control_available)
     def test_higher_candidate_prevents_regression_to_abandoned_candidate(self):
         self.read('B',0,2000)
         self.read('C',0,3000)

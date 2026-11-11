@@ -92,6 +92,8 @@ class UiSnapshot:
     job_first_started: float | None = None
     job_auto_started: float | None = None
     job_current_layer: int | None = None
+    job_start_offset: int | None = None
+    job_log_identity: str = ""
 
 
 class UiAdapter(Protocol):
