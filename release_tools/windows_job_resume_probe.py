@@ -5,7 +5,7 @@ from pathlib import Path
 from windows_hidden_session_probe import fields_for, csv_bytes, wait_until, sha256, FLAGS
 
 
-def exercise(exe,folder,machine):
+def exercise(exe,folder,machine,confirmation=None):
     from adapter_contracts import MachineWindow
     from csv_source import MonitoringCsvReader
     from observed_session import run_observed_session
@@ -14,9 +14,10 @@ def exercise(exe,folder,machine):
     from session import SessionOptions
     from layer_charts import LayerHistory
     import sequence_persistence
-    marker=folder/machine
+    label=machine+('-'+confirmation if confirmation else '')
+    marker=folder/label
     spec,_=fields_for(exe,machine,marker)
-    monitor=folder/('monitor-'+machine);monitor.mkdir()
+    monitor=folder/('monitor-'+label);monitor.mkdir()
     logs=exe.parent/'Logs';logs.mkdir(exist_ok=True)
     log=logs/('20261027_'+machine+'.log')
     events=queue.Queue();stop=threading.Event();worker=None;fixture=None
@@ -130,7 +131,7 @@ def exercise(exe,folder,machine):
         negative_checks=[];phase[0]='native-field-negatives';negative_saves=saves()
         raw=raw_factory(source_factory=lambda t:MonitoringCsvReader(t,roots=[monitor]))
         raw.connect(target,stop);raw.prepare_mode('control',stop)
-        for name in ('unknown-kind','text-as-toggle','pushbutton-as-checkbox','outside-scope','wrong-pid'):
+        for name in (() if confirmation else ('unknown-kind','text-as-toggle','pushbutton-as-checkbox','outside-scope','wrong-pid')):
             layer=append();source=raw._csv.read()
             token=source.token
             assert source.sample and token
@@ -151,6 +152,34 @@ def exercise(exe,folder,machine):
             else:raise AssertionError('Native field guard accepted '+name)
             assert saves()==negative_saves and not raw._control_fault
         result['native_field_negative_checks']=negative_checks
+        if confirmation:
+            from adapter_contracts import AmbiguousWriteError,ControlUnavailable
+            before=sequence_persistence.capture(target)
+            append();raw._last_read=0;raw.read_snapshot(stop) # Baseline, no Save.
+            successes=[]
+            for delay,power in ((250,75),(600,70)):
+                command(saveDelayMs=delay)
+                append();raw._last_read=0;snap=raw.read_snapshot(stop)
+                count=saves();begin=time.monotonic()
+                raw.apply_ir_power(1,power,snap.observation_key,stop)
+                current=sequence_persistence.capture(target)
+                assert saves()==count+1 and current.power==power and current.non_ir==before.non_ir
+                successes.append(dict(delay_ms=delay,save_count=saves(),seconds=time.monotonic()-begin,power=power))
+            command(saveDelayMs=1500 if confirmation=='long-delay' else 0,exitOnSave=confirmation=='exit')
+            append();raw._last_read=0;snap=raw.read_snapshot(stop);count=saves()
+            try:raw.apply_ir_power(1,65,snap.observation_key,stop)
+            except AmbiguousWriteError as error:failure=str(error)
+            else:raise AssertionError('Unconfirmed delayed/exit Save did not remain uncertain')
+            assert raw._control_fault and saves()==count+1
+            time.sleep(1) # Read-only settling; never send the old Save again.
+            try:raw.apply_ir_power(1,65,snap.observation_key,stop)
+            except ControlUnavailable:pass
+            else:raise AssertionError('Uncertain Save was retried')
+            assert saves()==count+1
+            raw.disconnect()
+            result.update(passed=True,confirmation_case=confirmation,short_delay_successes=successes,
+                uncertainty_sticky=True,one_save_per_attempt=True,terminal_error=failure,worker_retired=True)
+            return result
         raw.disconnect()
         wrapper=ResilientUiAdapter(raw_factory=raw_factory,source_factory=lambda t:MonitoringCsvReader(t,roots=[monitor]))
         def work():
@@ -178,7 +207,11 @@ def exercise(exe,folder,machine):
         with log.open('a',encoding='utf-8') as f:f.write(prefix+'AutoPrint cancelled.\n')
         wait_until(lambda:any(x['phase']=='stop-start' and '비자동' in str(x['status']) for x in reports),10,'IDLE not observed')
         before=saves();start_job(datetime.now().replace(microsecond=0));command(state='AUTO')
+        command(saveDelayMs=500)
         phase_save('same-pid-new-job',65)
+        assert saves()==before+1
+        command(saveDelayMs=0)
+        result['single_save_confirmed_after_500ms_ui_work']=True
         assert wrapper._pinned_job!=first_run and first_run in wrapper._retired_jobs
         assert wrapper.current_target.pid==original_pid and wrapper._reader is first_reader
         assert all(wrapper._watermark.get(k)==v for k,v in first_watermark.items())
@@ -250,7 +283,10 @@ def main(package,source,output):
                 '/reference:System.Windows.Forms.dll','/reference:System.Drawing.dll','/reference:System.Web.Extensions.dll',str(fixture_source)],check=True,capture_output=True,text=True)
             report['fixture_sha256']=sha256(fixture_source);report['probe_sha256']=sha256(__file__)
             for machine in ('M1','S3'):report['cases'].append(exercise(exe,folder,machine))
-            report['passed']=all(x['passed'] and x['worker_retired'] for x in report['cases']) and len(report['cases'])==2
+            report['save_confirmation_cases']=[exercise(exe,folder,machine,kind)
+                for machine in ('M1','S3') for kind in ('long-delay','exit')]
+            report['passed']=(all(x['passed'] and x['worker_retired'] for x in report['cases']) and len(report['cases'])==2
+                and len(report['save_confirmation_cases'])==4 and all(x['passed'] for x in report['save_confirmation_cases']))
     except BaseException as e:report.update(error=str(e),traceback=traceback.format_exc())
     output.write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps(report,ensure_ascii=True,indent=2));return 0 if report['passed'] else 1

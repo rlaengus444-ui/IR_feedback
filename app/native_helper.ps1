@@ -738,8 +738,16 @@ try {
                 # cancellation or uncertain result must never trigger a retry.
                 [IO.File]::WriteAllText([string]$request.save_marker, 'save-may-have-started')
                 [BinderJetNativeFields]::QueueSave($root, $save, $pidExpected)
+                $acknowledgement=[Diagnostics.Stopwatch]::StartNew()
                 Start-Sleep -Milliseconds 100
-                if (-not [BinderJetQueuedNavigation]::Responsive($root, $pidExpected, 250)) { throw 'Save was queued but the target acknowledgement is uncertain.' }
+                while ($true) {
+                    $remaining=[int][Math]::Floor(1000-$acknowledgement.Elapsed.TotalMilliseconds)
+                    if ($remaining -le 0) { throw 'Save was queued but the target acknowledgement is uncertain.' }
+                    $responsive=[BinderJetQueuedNavigation]::Responsive($root,$pidExpected,[Math]::Min(100,$remaining))
+                    if ($acknowledgement.Elapsed.TotalMilliseconds -ge 1000) { throw 'Save was queued but the target acknowledgement is uncertain.' }
+                    if ($responsive) { break }
+                    Start-Sleep -Milliseconds ([Math]::Min(25,[Math]::Max(1,1000-$acknowledgement.Elapsed.TotalMilliseconds)))
+                }
                 $verified = [BinderJetNativeFields]::Read($root, $ir, $pidExpected, 'text')
                 if ([Math]::Abs((FiniteNumber $verified) - $desired) -gt 0.000000001) { throw 'IR readback after queued Save did not match.' }
                 $response = @{success=$true;save_invoked=$true;setting=$verified}

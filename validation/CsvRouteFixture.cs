@@ -65,7 +65,7 @@ internal static class FullRouteFixture
         }
         File.WriteAllText(marker+".saves","0");
         File.WriteAllText(marker+".sequence-clicks","0");
-        int saves=0,sequenceClicks=0;
+        int saves=0,sequenceClicks=0,saveDelayMs=0;
         bool normallyVisible=Array.IndexOf(args,"visible")>=0;
         var form=new QuietForm { AllowActivation=Array.IndexOf(args,"activate")>=0,Name="FullRouteFixture",Text="BinderJet synthetic Sequence fixture",Left=200,Top=100,Width=760,Height=600,StartPosition=FormStartPosition.Manual,ShowInTaskbar=Array.IndexOf(args,"taskbar")>=0,Opacity=normallyVisible?1:0.01 };
         form.Controls.Add(new Label { Name="labelMachineName",Text=machine,Top=10,Left=10,Width=100 });
@@ -140,7 +140,7 @@ internal static class FullRouteFixture
                 sequence.Controls.Add(input);number++;
             }
         }
-        bool jobSwitchOnEdit=false;
+        bool jobSwitchOnEdit=false,exitOnSave=false;
         ir.TextChanged+=delegate {
             if(jobSwitchOnEdit) {
                 jobSwitchOnEdit=false;
@@ -158,6 +158,8 @@ internal static class FullRouteFixture
         if(mode=="dirtysequence") { process.Visible=false;sequence.Visible=true;webcam.Visible=false;sequence.BringToFront(); }
         save.Click+=delegate {
             saves++;File.WriteAllText(marker+".saves",saves.ToString());
+            if(exitOnSave)Environment.Exit(0);
+            if(saveDelayMs>0)Thread.Sleep(saveDelayMs);
             if(mode.EndsWith("savetardy"))Thread.Sleep(4500);
             string temporary=bjt+".tmp";
             if(fieldSpec==null)File.WriteAllText(temporary,Parameters(ir.Text));
@@ -189,6 +191,8 @@ internal static class FullRouteFixture
                 coreTemperatures[coreLayer]=coreTemperature;
                 if(command.ContainsKey("state"))taskStatus.Text=(string)command["state"];
                 if(command.ContainsKey("jobSwitchOnEdit"))jobSwitchOnEdit=(bool)command["jobSwitchOnEdit"];
+                if(command.ContainsKey("saveDelayMs"))saveDelayMs=Math.Max(0,Math.Min(6000,Convert.ToInt32(command["saveDelayMs"])));
+                if(command.ContainsKey("exitOnSave"))exitOnSave=(bool)command["exitOnSave"];
                 if(command.ContainsKey("dirty"))foreach(Control c in sequence.Controls){var text=c as TextBox;if(text!=null && text!=ir){text.Text="9999";break;}}
                 string logDir=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Logs");Directory.CreateDirectory(logDir);
                 File.AppendAllText(Path.Combine(logDir,"20261027_"+machine+".log"),DateTime.Now.ToString("yyyy-MM-ddtthhmmss")+"...[BJT - AUTO]: Layer: "+coreLayer+" -> Current Z = 1.23\n");
