@@ -160,8 +160,10 @@ def exercise(exe,folder,machine):
         phase_save('initial-save',75)
         phase[0]='deadline-pre-edit';options._maximum_ir_setting.set(70)
         expire[0]=True;before_expiry=saves();expiry_epoch=wrapper._epoch
-        while expire[0]:
+        expiry_deadline=time.monotonic()+45
+        while expire[0] and time.monotonic()<expiry_deadline:
             layer=append();wait_snapshot(layer)
+        assert not expire[0], 'No admitted apply request available for the bounded expiry injection'
         assert saves()==before_expiry and wrapper._epoch==expiry_epoch and not wrapper._sticky
         expired_calls=[x for x in raw_calls if x.get('deadline_expired_before_native_edit')]
         assert len(expired_calls)==1 and not expired_calls[0]['edit_marker'] and not expired_calls[0]['save_marker']
