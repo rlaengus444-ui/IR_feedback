@@ -124,24 +124,20 @@ def exercise(exe,folder,machine):
         assert os.path.samefile(found[0].image_path,exe)
         target=found[0]  # Use the exact identity the operator selects in the UI.
         options=SessionOptions(target,mode='control',maximum_ir_percent=80)
-        wrapper=ResilientUiAdapter(raw_factory=raw_factory,source_factory=lambda t:MonitoringCsvReader(t,roots=[monitor]))
-        def work():
-            try:run_observed_session(options,stop,emit,adapter_factory=lambda:wrapper)
-            except BaseException as e:events.put(('error',str(e)))
-        worker=threading.Thread(target=work,daemon=True);worker.start()
-        phase_save('initial-save',75)
         # Actual native negatives for Kind-dedup equivalence. The remaining
         # Read checks still reject class/role/PID/scope errors before any edit.
         from adapter_contracts import AdapterError,ObservationSuspended
         negative_checks=[];phase[0]='native-field-negatives';negative_saves=saves()
+        raw=raw_factory(source_factory=lambda t:MonitoringCsvReader(t,roots=[monitor]))
+        raw.connect(target,stop);raw.prepare_mode('control',stop)
         for name in ('unknown-kind','text-as-toggle','pushbutton-as-checkbox','outside-scope','wrong-pid'):
-            layer=append();value=wait_snapshot(layer);raw=wrapper._raw
-            key=value['snapshot'].observation_key
-            token=raw._verify_csv_observation(key)
+            layer=append();source=raw._csv.read()
+            token=source.token
+            assert source.sample and token
             mapping={k:dict(v) for k,v in raw._native_fields.items()}
-            data=dict(operation='verify_control',pid=wrapper.current_target.pid,hwnd=wrapper.current_target.hwnd,
-                machine=machine,image_path=wrapper.current_target.image_path,handles=dict(raw._native_handles),
-                field_map=mapping,csv_token=token,observation=dict(raw._observation_row))
+            data=dict(operation='verify_control',pid=target.pid,hwnd=target.hwnd,
+                machine=machine,image_path=target.image_path,handles=dict(raw._native_handles),
+                field_map=mapping,csv_token=token,observation=dict(row_index=source.sample.layer_index))
             field=mapping['textBoxHeatingOutput']
             if name=='unknown-kind':field['kind']='unsupported'
             elif name=='text-as-toggle':field['kind']='toggle'
@@ -153,8 +149,15 @@ def exercise(exe,folder,machine):
                 assert not isinstance(error,ObservationSuspended)
                 negative_checks.append({'case':name,'type':type(error).__name__,'message':str(error)})
             else:raise AssertionError('Native field guard accepted '+name)
-            assert saves()==negative_saves and not wrapper._sticky
+            assert saves()==negative_saves and not raw._control_fault
         result['native_field_negative_checks']=negative_checks
+        raw.disconnect()
+        wrapper=ResilientUiAdapter(raw_factory=raw_factory,source_factory=lambda t:MonitoringCsvReader(t,roots=[monitor]))
+        def work():
+            try:run_observed_session(options,stop,emit,adapter_factory=lambda:wrapper)
+            except BaseException as e:events.put(('error',str(e)))
+        worker=threading.Thread(target=work,daemon=True);worker.start()
+        phase_save('initial-save',75)
         phase[0]='deadline-pre-edit';options._maximum_ir_setting.set(70)
         expire[0]=True;before_expiry=saves();expiry_epoch=wrapper._epoch
         while expire[0]:
@@ -168,9 +171,10 @@ def exercise(exe,folder,machine):
         result['deadline_expiry_recovered_without_epoch_reset']=True
         first_run=wrapper._pinned_job;first_reader=wrapper._reader;first_watermark=dict(wrapper._watermark)
         first_power=sequence_persistence.capture(target).power
+        phase[0]='stop-start'
         command(state='IDLE');prefix=datetime.now().strftime('%Y-%m-%d%p%I%M%S')+'...[BJT - AUTO]: '
         with log.open('a',encoding='utf-8') as f:f.write(prefix+'AutoPrint cancelled.\n')
-        wait_until(lambda:any(x['phase']=='initial-save' and '비자동' in str(x['status']) for x in reports),10,'IDLE not observed')
+        wait_until(lambda:any(x['phase']=='stop-start' and '비자동' in str(x['status']) for x in reports),10,'IDLE not observed')
         before=saves();start_job(datetime.now().replace(microsecond=0));command(state='AUTO')
         phase_save('same-pid-new-job',65)
         assert wrapper._pinned_job!=first_run and first_run in wrapper._retired_jobs
