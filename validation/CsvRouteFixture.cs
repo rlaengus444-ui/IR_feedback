@@ -67,7 +67,7 @@ internal static class FullRouteFixture
         File.WriteAllText(marker+".sequence-clicks","0");
         int saves=0,sequenceClicks=0;
         bool normallyVisible=Array.IndexOf(args,"visible")>=0;
-        var form=new QuietForm { AllowActivation=Array.IndexOf(args,"activate")>=0,Name="FullRouteFixture",Text="BinderJet synthetic Sequence fixture",Left=200,Top=100,Width=760,Height=600,StartPosition=FormStartPosition.Manual,ShowInTaskbar=false,Opacity=normallyVisible?1:0.01 };
+        var form=new QuietForm { AllowActivation=Array.IndexOf(args,"activate")>=0,Name="FullRouteFixture",Text="BinderJet synthetic Sequence fixture",Left=200,Top=100,Width=760,Height=600,StartPosition=FormStartPosition.Manual,ShowInTaskbar=Array.IndexOf(args,"taskbar")>=0,Opacity=normallyVisible?1:0.01 };
         form.Controls.Add(new Label { Name="labelMachineName",Text=machine,Top=10,Left=10,Width=100 });
         var taskStatus=new Label { Name="labelTaskStatus",Text="AUTO",Top=10,Left=150,Width=100 };
         form.Controls.Add(taskStatus);

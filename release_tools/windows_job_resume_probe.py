@@ -30,7 +30,7 @@ def exercise(exe,folder,machine):
         wait_until(lambda:done.exists() and json.loads(done.read_text(encoding='utf-8-sig'))==values,5,'Fixture command timeout')
     def launch():
         Path(str(marker)+'.window').unlink(missing_ok=True)
-        p=subprocess.Popen([str(exe),str(marker),machine,'backgroundcsv',str(spec)],creationflags=FLAGS)
+        p=subprocess.Popen([str(exe),str(marker),machine,'backgroundcsv',str(spec),'taskbar'],creationflags=FLAGS)
         wait_until(lambda:Path(str(marker)+'.window').exists() or p.poll() is not None,10,'Fixture launch')
         assert p.poll() is None
         pid,hwnd=map(int,Path(str(marker)+'.window').read_text().split(','));assert pid==p.pid
@@ -114,7 +114,8 @@ def exercise(exe,folder,machine):
         selector=raw_factory(source_factory=lambda t:None)
         try:found=[x for x in selector.discover() if x.pid==original_pid]
         finally:selector.disconnect()
-        assert len(found)==1 and found[0].machine==machine
+        result['initial_selection']={'expected_hwnd':target.hwnd,'candidates':[dict(machine=x.machine,pid=x.pid,hwnd=x.hwnd,image_path=x.image_path) for x in found]}
+        assert len(found)==1 and found[0].machine==machine and found[0].hwnd==target.hwnd
         assert os.path.samefile(found[0].image_path,exe)
         target=found[0]  # Use the exact identity the operator selects in the UI.
         options=SessionOptions(target,mode='control',maximum_ir_percent=80)
