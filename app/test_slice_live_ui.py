@@ -118,9 +118,9 @@ class SliceLiveUITests(unittest.TestCase):
         controller.state='connected'
         window=ThermalFeedbackWindow(self.root,controller=controller,auto_discover=False)
         window.slice_panel.mark_session_active(A,0)
-        epoch=controller.update_slice_dataset(B)
+        epoch=controller.update_slice_dataset(B,run_key="job-A")
         window.slice_panel.mark_pending(epoch)
-        controller.slice_dataset_setting.activate(epoch)
+        self.assertTrue(controller.slice_dataset_setting.activate(epoch,"job-A"))
         controller.events.put(WorkerEvent(controller.generation,'slice_activated',dict(epoch=epoch,dataset=B)))
         for i in range(129):
             controller.events.put(WorkerEvent(controller.generation,'snapshot',dict(

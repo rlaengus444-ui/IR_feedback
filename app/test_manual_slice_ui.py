@@ -63,7 +63,7 @@ class ManualSliceUITests(unittest.TestCase):
         self.assertIs(B, desired)
         self.assertEqual(epoch, panel.pending_epoch)
         self.assertIs(A, panel.active_dataset)
-        self.controller.slice_dataset_setting.activate(epoch)
+        self.assertTrue(self.controller.slice_dataset_setting.activate(epoch,"job-A"))
         self.view._reconcile_slice_state()
         self.assertIs(B, panel.active_dataset)
         self.assertIsNone(panel.pending_epoch)

@@ -283,7 +283,7 @@ class HandoffTests(unittest.TestCase):
                 snapshot=self.frame('old',1),proposed={1:55},reasons={1:'valid math'},applied={},
                 status='preview',slice_features=A.features(2),slice_epoch=0)))
             epoch=controller.update_slice_dataset(B, run_key="job-A")
-            controller.slice_dataset_setting.activate(epoch)
+            self.assertTrue(controller.slice_dataset_setting.activate(epoch,"job-A"))
             payload=controller.poll()[0].payload
             self.assertIsNone(payload['slice_features'])
             self.assertEqual({1:55},payload['proposed'])
