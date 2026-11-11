@@ -1,0 +1,336 @@
+{
+  "review_type": "FINAL_EXACT_SAVE_ACK_ARTIFACT_AND_EVALUATION_DELIVERY_REVIEW",
+  "completed_at_utc": "2026-11-11T08:51:30.320662+00:00",
+  "decision": "APPROVED_FOR_EXACT_EVALUATION_DISTRIBUTION_ONLY",
+  "evaluation_distribution_approved": true,
+  "stable_release_approved": false,
+  "final_algorithm_approved": false,
+  "equipment_application_approved": false,
+  "approval_statement": "Approved to distribute only the exact tested evaluation ZIP identified below through the user-authorized GitHub prerelease and printing-team Notion delivery. The new expiry and bounded single-Save acknowledgement fixes are included. This does not approve stable release, final control-algorithm behavior, equipment application or untested Excel COM. No prior HOLD/approval/raw evidence file is overwritten by this new verdict.",
+  "review_route": {
+    "tool": "native collaboration",
+    "task": "/root/sol_reviewer_job_pid_nov11",
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "max",
+    "provider_model_independently_attested": false,
+    "actual_design_source_and_artifact_review_completed": true,
+    "cli_authentication_restoration_claimed": false
+  },
+  "source": {
+    "commit": "a2b260654c7620eca87ea57dc7fa36d3c2c24a4d",
+    "released_base_commit": "e97564fb998f31cce27328bc4e326b164869c649",
+    "expiry_runtime_reference": "0531ea04eb879aba1765df1fb559f19ae1f7fe5b",
+    "working_tree_clean": true,
+    "unresolved_source_findings": [],
+    "source_review_refs": [
+      "code-post-final.json",
+      "code-post-expiry.json",
+      "code-post-save-ack.json"
+    ],
+    "only_packaged_source_changes_from_reviewed_expiry_runtime": [
+      "app/native_helper.ps1",
+      "docs/JOB_RESUME.ko.md"
+    ],
+    "all80_application_python_files_unchanged_from_expiry_runtime": true
+  },
+  "approved_artifact": {
+    "filename": "IRFeedback-2026.11.11-job-resume.1.zip",
+    "version": "2026.11.11-job-resume.1",
+    "bytes": 35407375,
+    "sha256": "cd65db88bffb2159a7d0d04c523373e75c765dc02f3d7744c9ac37466dcc68a7",
+    "manifest_hash_entries": 3661,
+    "local_path": "/workspace/ir-job-pid-resume-2026.11.11/ack-final-ci/IRFeedback-2026.11.11-job-resume.1.zip",
+    "rebuild_allowed_under_this_approval": false
+  },
+  "ci_artifact": {
+    "workflow_run": 42988067040,
+    "repository_id_parent_supplied": 1434868115,
+    "api_artifact_id_parent_supplied": 13840961578,
+    "immutable_workflow_tag": "verify/job-resume-20261111-a2b2606",
+    "outer_bytes": 34970885,
+    "outer_sha256": "de183960938782fc24bf69988f955209e923cd199b554056b07bcd60a6440cfc",
+    "outer_crc_and_all23_extracted_file_bytes_verified": true,
+    "candidate_commit_hash_and_size_verified": true
+  },
+  "independent_package_verification": {
+    "verify_package": "PASS: independently executed release_tools/verify_package.py against clean a2b2606. Full packaged source bytes, every manifest hash/file list, CRC/path/case/symlink checks, required runtime and Pillow load-path/license checks passed; digest matched candidate.json and SHA256.txt.",
+    "runtime_base_pillow_dll_json": {
+      "base_sha256": "ff216aaca807a47b44de34f47194aff88f28dd0f08a9874f330cdd8c67be5e84",
+      "unchanged_base_runtime_and_launcher_files": 3490,
+      "pillow_wheel_sha256": "f7cbb7a64e7ec664775195e4f81923bc8a93d9451b963f844e59118f63147a7a",
+      "pillow_files_matching_wheel": 120,
+      "json_files_parsed": 24,
+      "dll_sha256": "aa9083d1c43256fd3ad34fe84d7e266b0958c6ad6164b1159ba6a18c2db06f1e",
+      "manifest_entries": 3661,
+      "package_bytes": 35407375,
+      "package_sha256": "cd65db88bffb2159a7d0d04c523373e75c765dc02f3d7744c9ac37466dcc68a7",
+      "result": "PASS",
+      "unique_source_files": 49,
+      "changes_from_reviewed_expiry_runtime": [
+        "app/native_helper.ps1",
+        "docs/JOB_RESUME.ko.md"
+      ]
+    },
+    "pinned_wheel_input": "Previously independently downloaded hash-pinned public Pillow13.0.0 cp314-win_amd64 wheel; all120 bundled Pillow files compared byte-for-byte again for this exact ZIP.",
+    "control_algorithm_output_bounds_workbook_formulas": "Layer algorithm, output limit, workbook settings, Excel workbook engine and packaged template remain byte-identical to released base; no mathematical control-law approval is inferred."
+  },
+  "actual_final_windows_evidence": {
+    "tests_run": 549,
+    "unit_test_result": "OK",
+    "unit_test_seconds": 113.94,
+    "unit_footer_independently_verified": true,
+    "non_excel_checks_passed": 13,
+    "raw_step_outcomes": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "settings_recovery": "success",
+      "background": "success",
+      "hidden_recovery": "success",
+      "hidden_session": "success",
+      "job_resume": "success",
+      "excel": "failure",
+      "reverify": "success"
+    },
+    "normal_session_cases": [
+      {
+        "machine": "M1",
+        "original_pid": 1868,
+        "replacement_pid": 4832,
+        "passed": true,
+        "successful_native_saves": 5,
+        "actual_global_and_scoped_discovery": true,
+        "reader_and_watermarks_preserved": true,
+        "pre_edit_expiry_error": "ObservationExpired",
+        "pre_edit_expiry_no_edit_or_save": true,
+        "expiry_and_fresh_resume_epochs": [
+          3
+        ],
+        "same_pid_new_job_with_500ms_save_one_invocation": true,
+        "native_field_negative_case_count": 5,
+        "native_job_switch_races_no_stale_save": true,
+        "post_edit_uncertainty_sticky": true,
+        "worker_retired": true
+      },
+      {
+        "machine": "S3",
+        "original_pid": 2860,
+        "replacement_pid": 7792,
+        "passed": true,
+        "successful_native_saves": 5,
+        "actual_global_and_scoped_discovery": true,
+        "reader_and_watermarks_preserved": true,
+        "pre_edit_expiry_error": "ObservationExpired",
+        "pre_edit_expiry_no_edit_or_save": true,
+        "expiry_and_fresh_resume_epochs": [
+          3
+        ],
+        "same_pid_new_job_with_500ms_save_one_invocation": true,
+        "native_field_negative_case_count": 5,
+        "native_job_switch_races_no_stale_save": true,
+        "post_edit_uncertainty_sticky": true,
+        "worker_retired": true
+      }
+    ],
+    "save_confirmation_cases": [
+      {
+        "machine": "M1",
+        "case": "long-delay",
+        "passed": true,
+        "short_delay_successes": [
+          {
+            "delay_ms": 250,
+            "save_count": 1,
+            "seconds": 1.304841500000066,
+            "power": 75
+          },
+          {
+            "delay_ms": 600,
+            "save_count": 2,
+            "seconds": 1.6480501999999433,
+            "power": 70
+          }
+        ],
+        "exact_persisted_ir_and_non_ir_verified_by_probe": true,
+        "uncertain_attempt_type": "1500ms handler delay",
+        "one_save_per_attempt_no_replay": true,
+        "sticky_uncertainty_after_settle": true,
+        "actual_native_apply_requests": 3,
+        "direct_raw_owner_scope_not_threaded_session": true
+      },
+      {
+        "machine": "M1",
+        "case": "exit",
+        "passed": true,
+        "short_delay_successes": [
+          {
+            "delay_ms": 250,
+            "save_count": 1,
+            "seconds": 1.3063291999999365,
+            "power": 75
+          },
+          {
+            "delay_ms": 600,
+            "save_count": 2,
+            "seconds": 1.658889199999976,
+            "power": 70
+          }
+        ],
+        "exact_persisted_ir_and_non_ir_verified_by_probe": true,
+        "uncertain_attempt_type": "owned process exits on Save",
+        "one_save_per_attempt_no_replay": true,
+        "sticky_uncertainty_after_settle": true,
+        "actual_native_apply_requests": 3,
+        "direct_raw_owner_scope_not_threaded_session": true
+      },
+      {
+        "machine": "S3",
+        "case": "long-delay",
+        "passed": true,
+        "short_delay_successes": [
+          {
+            "delay_ms": 250,
+            "save_count": 1,
+            "seconds": 1.3070308000000068,
+            "power": 75
+          },
+          {
+            "delay_ms": 600,
+            "save_count": 2,
+            "seconds": 1.6618334000000914,
+            "power": 70
+          }
+        ],
+        "exact_persisted_ir_and_non_ir_verified_by_probe": true,
+        "uncertain_attempt_type": "1500ms handler delay",
+        "one_save_per_attempt_no_replay": true,
+        "sticky_uncertainty_after_settle": true,
+        "actual_native_apply_requests": 3,
+        "direct_raw_owner_scope_not_threaded_session": true
+      },
+      {
+        "machine": "S3",
+        "case": "exit",
+        "passed": true,
+        "short_delay_successes": [
+          {
+            "delay_ms": 250,
+            "save_count": 1,
+            "seconds": 1.312673000000018,
+            "power": 75
+          },
+          {
+            "delay_ms": 600,
+            "save_count": 2,
+            "seconds": 1.6671363000000383,
+            "power": 70
+          }
+        ],
+        "exact_persisted_ir_and_non_ir_verified_by_probe": true,
+        "uncertain_attempt_type": "owned process exits on Save",
+        "one_save_per_attempt_no_replay": true,
+        "sticky_uncertainty_after_settle": true,
+        "actual_native_apply_requests": 3,
+        "direct_raw_owner_scope_not_threaded_session": true
+      }
+    ],
+    "post_edit_deadline_composition": {
+      "used_production_guard": true,
+      "save_marker": false,
+      "deadline_wait": true,
+      "ui_edit_simulated": true,
+      "edit_marker": true,
+      "actual_ui_actions": 0
+    },
+    "post_edit_deadline_claim_limit": "This explicitly uses a simulated durable edit marker and zero UI actions with the production guard. Combined marker-policy Python tests and actual post-edit job-switch native cases establish the covered uncertainty path; it is not claimed as a real end-to-end UI post-edit wall-clock expiry run.",
+    "other_probe_results": {
+      "bridge_and_download_marking": "PASS",
+      "native_csv_job_freshness_guards": "PASS",
+      "native_inventory_identity_negatives": "PASS",
+      "full_m1_s3_settings_recovery": "PASS",
+      "hidden_scope_recovery": "PASS",
+      "hidden_session_cases": 4,
+      "background_cases": 8,
+      "background_saved_cases": 4,
+      "dirty_or_paused_no_save_cases": 4,
+      "image_parity_performance": "PASS",
+      "launcher_smoke": "PASS"
+    },
+    "probe_hash_matches_final_git": "921b5904431949e31622671977e92c02e5034bc62179d6e80758d766e1f3129c",
+    "fixture_hash_matches_final_git": "1941c69a5af5be1f4a70bc1a84a455f14c855268066161596edc6323f56e180b",
+    "excel": {
+      "excel_com_tested": false,
+      "release_ready": false,
+      "reason": "Excel COM is not registered"
+    },
+    "raw_automated_checks_passed": false,
+    "raw_release_ready": false,
+    "raw_final_sol_review": "pending",
+    "raw_device_application_approved": false,
+    "overall_workflow_all_passed": false,
+    "interpretation": "All13 non-Excel checks and549 Windows tests passed. The Excel-only step failed because COM is not registered; raw overall readiness remains false and untouched. This completed independent review grants only the explicitly authorized evaluation delivery, retaining Excel validation, stable release, final algorithm and equipment holds."
+  },
+  "covered_recovery_behavior": [
+    "Verified later job occurrence and unique same-executable/native-machine endpoint can resume through full audits, consumed baseline and higher fresh layer; prior decisions and retired jobs are not replayed.",
+    "Known pre-edit time expiry discards only the command while retaining qualified completed actual-input history/context and connection. Pending or changed context retains reset/baseline protection; strict row/file5s and pre-edit2s headroom remain.",
+    "After exactly one marked QueueSave, only bounded read-only responsiveness confirmation is repeated. First successful response leads to exact readback and full persisted power/non-IR proof. No Save/SetIr retry or uncertainty auto-clear was introduced.",
+    "250ms/600ms owned handlers succeed once;1500ms or exit remains sticky, and an old attempt is rejected after settling without another native Save request."
+  ],
+  "delivery_scope_and_required_post_delivery_checks": [
+    "Create/publish only the2026.11.11-job-resume.1 prerelease targeting exact a2b260654c7620eca87ea57dc7fa36d3c2c24a4d, with latest=false.",
+    "Upload this exact tested ZIP without rebuilding, its matching SHA256.txt and this new release-review-save-ack-final.json.",
+    "Verify tag/target, asset digest and35407375-byte size before publication; after publication a full public GET must reproduce SHA256 cd65db88bffb2159a7d0d04c523373e75c765dc02f3d7744c9ac37466dcc68a7.",
+    "Mirror the authorized evaluation download, matching hash/review and explicit limitations to printing-team Notion. Preserve all nine prior files and both images; fold prior m1-recovery evidence without deleting its contents.",
+    "Keep Excel COM untested and final algorithm/equipment/stable HOLD visible. Do not describe the entire raw CI workflow as all-pass.",
+    "Any change to ZIP bytes, runtime/source behavior or target commit invalidates this exact-artifact approval and requires review."
+  ],
+  "limitations_and_holds": [
+    "Real BJT UI, S3 physical sensors, PLCs, lamp outputs and long thermal operation remain unvalidated; no real equipment was actuated by this review or these tests.",
+    "Microsoft Excel COM is not registered in the CI environment. Real Excel-engine validation is unperformed; mocked bookkeeping/formula/source preservation is not an Excel COM execution result.",
+    "Final algorithm, equipment application and stable release approval remain HOLD.",
+    "Tests use owned synthetic full-profile WinForms fixtures and normal taskbar roots. Owned/parking-window fallback and locked-desktop operation are not established. Hidden-session discovery uses an identity-checked fixture callback; separate normal job/PID cases use actual global/scoped native discovery.",
+    "The1000ms responsiveness budget cannot guarantee every UI/IO delay completes. Existing bounded readback and persistence checks still govern success; genuine uncertainty remains sticky.",
+    "Expected post-edit uncertainty may leave a modified textbox; no automatic restore/retry/clear is performed.",
+    "CSV/log/native checks are bounded evidence, not an atomic physical transaction, and cannot independently prove that a plausible frozen sensor value is fresh."
+  ],
+  "release_notes_review": "Current notes identify evaluation scope,549 Windows tests, expiry and single-Save confirmation behavior, preserve manual image/workbook flows, and explicitly state physical equipment and Excel COM untested. Accepted within this scoped verdict.",
+  "raw_evidence_sha256": {
+    "SHA256.txt": "398fbc9a593bdd4f40444445e212db952585e9cd851a09e052ea5c60bd5be1d9",
+    "background.json": "bdc70146a5b21ecab3bdb24f1027732e7651c2d09565e39d5c584f85155f718c",
+    "background.txt": "bdc70146a5b21ecab3bdb24f1027732e7651c2d09565e39d5c584f85155f718c",
+    "bridge.json": "4efd47991a7f93d5495df838c07da285968df4371a1c99aa26a45cf5acf8e25d",
+    "candidate.json": "81245421f0d4c25da2af4268d1206726191a610fb73aae0415113a422f206434",
+    "csv-guard.json": "7d26fab7f6d41595fadb59fea029b6529fa99a7e6c21a49d3e5ab264565662d9",
+    "discovery.json": "351fab9564157e567c34ade7a789abca0af8e2d2cc3ba2cd31fbb2b0d5444457",
+    "discovery.txt": "351fab9564157e567c34ade7a789abca0af8e2d2cc3ba2cd31fbb2b0d5444457",
+    "excel.json": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03",
+    "hidden-recovery.json": "f056470c41eafa43f49ef49b464294772477dbe827f582a002297253f55cd43f",
+    "hidden-recovery.txt": "762fcce91994ae2cdc4843b409cdca11729da43947aa2fcd68cc804d318a19b7",
+    "hidden-session.json": "da925a8bcdd2ce9ebf99ec35e41c5d6d3be02da4fd0dd9183c0b3ff71c940a77",
+    "hidden-session.txt": "b6dbf2eca80772b75acaa877951f8cd1e29759faacc0af8b875b199caf537f09",
+    "job-resume.json": "aca755acde7bfb3f9d155f6c9a45e268e41482ba3a29242ef46381411d57f592",
+    "job-resume.txt": "bfdf2d4959668fd635350e862fc45a5829bc900e2f17936ca2f0f7136c339a03",
+    "readiness.json": "240cd60d0263eaf129db2513f1571d1b2cb37379eb0db49d5d80528da5684c2d",
+    "settings-recovery.json": "59d5e740503b3cf52433dffd6bf1bd8f9ad99e0babe992e4e9a1f05409e7bd18",
+    "settings-recovery.txt": "59d5e740503b3cf52433dffd6bf1bd8f9ad99e0babe992e4e9a1f05409e7bd18",
+    "slice-performance.json": "ec67d89ca5501af6e625dd6b84eb468cc769149475051d17ca8a9703119e4f11",
+    "slice-performance.txt": "ec67d89ca5501af6e625dd6b84eb468cc769149475051d17ca8a9703119e4f11",
+    "smoke.txt": "5ffacda0244327d12acda746cc21136b4d13d18137ef6d23bf251e17dba641b5",
+    "tests.txt": "0f70187233f7f151348a031ba69496ef3420dd36f0f2fefbbaf12a7aa2b5a51e"
+  },
+  "independent_review_evidence_sha256": {
+    "design-pre.json": "bda89591a10e95da582558eedbc89c172799ebf85930601b5a9173453c622257",
+    "design-pre-audit-freshness-refinement.json": "635c4fa85cbadd2f5f6733f59ad83539f3af7b195dcb1c92032956cc8e5c5409",
+    "design-pre-expiry-recovery.json": "fc615777cdf28c9d909f273abb0cdaaa124671d3f7cce0269ef3bc97a2ef943c",
+    "design-pre-kind-dedup.json": "8c199f40dba9436ff732a1f857fe5f44cc330dfeddd65567247bbe332fa6d21d",
+    "design-pre-save-ack.json": "a4503eab21d8515705468c4246ff39f523ed5d52c61537685ddc65f5a3b3c6d2",
+    "code-post-final.json": "5576749dfd3129813d41edda1fb205042ee4a0538092679635e2bd6667687924",
+    "code-post-expiry.json": "902110a2849b241880c547550116cea8585cec718ebe86654fe70af362bceebc",
+    "code-post-save-ack.json": "6c9d42aa5208e47a1fbc21d1f7c6a337ecd0f83c54bdab62d4037d9c7dbf5626"
+  },
+  "reviewer_actions": "Read-only source/package/raw evidence verification and portable checks; wrote review evidence only. No application/package/raw-readiness mutation, equipment operation, publication or Notion write performed by reviewer."
+}

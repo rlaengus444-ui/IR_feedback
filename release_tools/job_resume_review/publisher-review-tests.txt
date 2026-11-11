@@ -1,0 +1,24 @@
+test_actual_evidence_accepts_and_rejects_mutated_holds (__main__.PublisherReviewTests.test_actual_evidence_accepts_and_rejects_mutated_holds) ... ok
+test_actual_exact_artifact_positive_real_package_verifier (__main__.PublisherReviewTests.test_actual_exact_artifact_positive_real_package_verifier) ... ok
+test_annotated_tag_supported (__main__.PublisherReviewTests.test_annotated_tag_supported) ... ok
+test_annotated_wrong_commit_before_upload (__main__.PublisherReviewTests.test_annotated_wrong_commit_before_upload) ... ok
+test_annotation_loop_is_bounded_before_upload (__main__.PublisherReviewTests.test_annotation_loop_is_bounded_before_upload) ... ok
+test_changed_artifact_body_before_upload (__main__.PublisherReviewTests.test_changed_artifact_body_before_upload) ... ok
+test_changed_local_approved_bytes_after_upload_prevents_publication (__main__.PublisherReviewTests.test_changed_local_approved_bytes_after_upload_prevents_publication) ... ok
+test_draft_each_mismatch_before_upload (__main__.PublisherReviewTests.test_draft_each_mismatch_before_upload) ... ok
+test_failed_upload_never_publishes (__main__.PublisherReviewTests.test_failed_upload_never_publishes) ... ok
+test_metadata_provenance_each_mismatch_before_upload (__main__.PublisherReviewTests.test_metadata_provenance_each_mismatch_before_upload) ... ok
+test_missing_tag_allowed_only_until_publication (__main__.PublisherReviewTests.test_missing_tag_allowed_only_until_publication) ... ok
+test_non404_tag_error_before_upload (__main__.PublisherReviewTests.test_non404_tag_error_before_upload) ... ok
+test_notes_bytes_tamper_before_any_api (__main__.PublisherReviewTests.test_notes_bytes_tamper_before_any_api) ... ok
+test_postpublication_missing_tag_is_detected (__main__.PublisherReviewTests.test_postpublication_missing_tag_is_detected) ... ok
+test_review_bytes_tamper_before_any_api (__main__.PublisherReviewTests.test_review_bytes_tamper_before_any_api) ... ok
+test_saved_draft_or_assets_changed_prevents_publication (__main__.PublisherReviewTests.test_saved_draft_or_assets_changed_prevents_publication) ... ok
+test_workflow_has_no_rebuild_exact_source_manual_only (__main__.PublisherReviewTests.test_workflow_has_no_rebuild_exact_source_manual_only) ... ok
+test_wrong_tag_after_upload_prevents_publication (__main__.PublisherReviewTests.test_wrong_tag_after_upload_prevents_publication) ... ok
+test_wrong_tag_before_upload (__main__.PublisherReviewTests.test_wrong_tag_before_upload) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 10.029s
+
+OK

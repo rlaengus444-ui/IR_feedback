@@ -1,0 +1,132 @@
+{
+  "schema": "independent-release-publisher-review/1",
+  "created_utc": "2026-11-11T09:08:35.760278+00:00",
+  "decision": "APPROVED_TO_EXECUTE_EXACT_REVIEWED_EVALUATION_PUBLISHER",
+  "publisher_workflow_approved": true,
+  "evaluation_distribution_approved": true,
+  "stable_release_approved": false,
+  "final_algorithm_approved": false,
+  "equipment_application_approved": false,
+  "review_route": {
+    "actual_route": "native collaboration subagent /root/sol_reviewer_job_pid_nov11",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false,
+    "actual_independent_review_completed": true,
+    "cli_authentication_recovery_asserted": false
+  },
+  "scope": {
+    "delivery_worktree": "/workspace/IR_feedback_job_resume_delivery",
+    "base_commit": "a2b260654c7620eca87ea57dc7fa36d3c2c24a4d",
+    "reviewed_diff": "uncommitted exact publisher, manual workflow, and copied final approval/notes identified by SHA256 below",
+    "reviewed_files": [
+      {
+        "path": "release_tools/publish_job_resume.py",
+        "sha256": "0e0b3c2197c7e1689b979dbc34bd3cbab112308f91a3369cf4cc90ff0cbb4ff3",
+        "bytes": 9179
+      },
+      {
+        "path": ".github/workflows/publish-csv6.yml",
+        "sha256": "4ba7680e1b5ce174315dbda7168ed23fc8808ef39f454125b3a6db56e7ba1c74",
+        "bytes": 955
+      },
+      {
+        "path": "release_tools/job_resume_review/release-review-save-ack-final.json",
+        "sha256": "57b697ed427a643c904e535d0dc73771d4dfc856438b40109aa281bfb185a713",
+        "bytes": 18024
+      },
+      {
+        "path": "release_tools/job_resume_review/release-notes.txt",
+        "sha256": "f162f7a99aa7ccd2e0434394e713c6dd14249dfe15d348d0938d53dfa4448d07",
+        "bytes": 2716
+      }
+    ],
+    "source_snapshot": "/workspace/ir-job-pid-resume-2026.11.11/publisher-reviewed-source",
+    "runtime_source_changes": false,
+    "rebuild_permitted": false,
+    "publication_performed_by_reviewer": false,
+    "real_github_mutations_during_review": false
+  },
+  "approved_delivery": {
+    "repository": "rlaengus444-ui/IR_feedback",
+    "existing_draft_release_id": 441431537,
+    "version": "2026.11.11-job-resume.1",
+    "target_source_commit": "a2b260654c7620eca87ea57dc7fa36d3c2c24a4d",
+    "ci_run": 42988067040,
+    "api_artifact_id": 13840961578,
+    "outer_bytes": 34970885,
+    "outer_sha256": "de183960938782fc24bf69988f955209e923cd199b554056b07bcd60a6440cfc",
+    "filename": "IRFeedback-2026.11.11-job-resume.1.zip",
+    "bytes": 35407375,
+    "sha256": "cd65db88bffb2159a7d0d04c523373e75c765dc02f3d7744c9ac37466dcc68a7",
+    "assets": [
+      "IRFeedback-2026.11.11-job-resume.1.zip",
+      "SHA256.txt",
+      "release-review-save-ack-final.json"
+    ],
+    "publish_prerelease": true,
+    "make_latest": "false"
+  },
+  "resolved_findings": [
+    {
+      "finding": "Tag identity previously checked only after public publication",
+      "resolution": "Bounded exact commit/annotated tag peel before upload, immediately before PATCH, and required after PATCH; only a 404 ref may be absent before publication"
+    },
+    {
+      "finding": "Selected JSON fields did not authenticate the exact final review and release notes",
+      "resolution": "Exact protected review and notes SHA256 pinned and checked before any API access and again before publication; independently compared copied bytes to originals"
+    },
+    {
+      "finding": "Draft notes could change between initial validation and publication",
+      "resolution": "Saved draft body and exact notes bytes rechecked after upload before publication"
+    }
+  ],
+  "unresolved_findings": [],
+  "tests": {
+    "command": "python /workspace/ir-job-pid-resume-2026.11.11/publisher_review_tests.py",
+    "exit_code": 0,
+    "tests_passed": 19,
+    "seconds": 10.029,
+    "result": "OK",
+    "test_source_sha256": "961edcd1b8e0032fba30cd187c3a6d969790ecb4f21652623101487516a5e569",
+    "log": "/workspace/ir-job-pid-resume-2026.11.11/publisher-review-tests.txt",
+    "log_sha256": "03925b7c006acea61f6731ab3218c36bf08a29cdd03d6cfbb6af09cedda6a5c1",
+    "github_api_and_uploads": "All replaced with strict offline mocks; unexpected endpoints or subprocess commands fail",
+    "positive": "Exact immutable real CI artifact, actual copied review/notes, actual raw evidence, complete real package/source/manifest verifier; exactly one upload of three assets then one prerelease PATCH with make_latest=false",
+    "negative_coverage": [
+      "review or notes bytes tampered before any API access",
+      "artifact id/name/expired/size/digest and workflow run/source/repository provenance",
+      "changed download bytes",
+      "draft release id/tag/source/draft/prerelease/assets/body mismatch",
+      "wrong direct or annotated tag commit",
+      "bounded annotation loop",
+      "404 ref allowed before publication only; 401/403/451/500 refused",
+      "tag change after upload denies PATCH",
+      "saved release draft/body/assets/state/size/digest mismatch denies PATCH",
+      "local review or notes change after upload denies PATCH",
+      "failed upload denies PATCH",
+      "post-publication missing tag detected",
+      "raw readiness holds and failed tests refused",
+      "manual workflow has exact source checkout, source-byte preservation, no rebuild or clobber"
+    ],
+    "additional_checks": [
+      "git diff --check passed",
+      "publisher/workflow/review/notes hashes unchanged across review",
+      "protected original approval and notes match copied pinned bytes"
+    ]
+  },
+  "execution_requirements": [
+    "Commit and run the exact reviewed publisher/workflow/review/notes bytes; material changes require re-review",
+    "Publisher itself must pass all immutable provenance, package, draft, tag, and uploaded asset digest gates",
+    "After successful publication, independently read public assets and verify the full public ZIP GET SHA256 before marking delivery successful or updating the team Notion latest prefix",
+    "If upload or validation fails, investigate the resulting draft state; this approval does not authorize overwriting unexpected assets or bypassing guards"
+  ],
+  "limits": [
+    "Workflow authentication/permissions and actual GitHub writes were not executed by the reviewer; supported repo-token workflow execution remains to be observed",
+    "Review does not assert recovery of the failed local gh authentication",
+    "Raw readiness flags remain false/pending; Excel COM remains untested because it is unregistered",
+    "Only evaluation distribution is approved; final algorithm, real equipment and stable release approval remain HOLD",
+    "No live equipment actuation, heater writes or dependency installs performed",
+    "Earlier source/artifact reviews and raw intermediate failures remain protected and unchanged"
+  ]
+}
