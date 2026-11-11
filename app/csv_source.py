@@ -557,6 +557,8 @@ class MonitoringCsvReader:
                          "sha256":hashlib.sha256(first).hexdigest()}
                 proof = getattr(self.log, 'proof', None)
                 token['job'] = proof(context) if proof is not None else None
+                if latest is not None and latest.finished is not None:
+                    token['finished_ticks'] = int(latest.finished.timestamp() * 10000000) + 621355968000000000
             if latest is not None and not latest.measurement_valid:
                 token = None
             fresh = latest is not None and latest.finished is not None and -2 <= self.clock() - latest.finished.timestamp() <= self.MAX_NEW_AGE_SECONDS

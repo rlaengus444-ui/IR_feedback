@@ -213,6 +213,11 @@ function StopObservation([string]$message) {
     throw $message
 }
 
+function StopDeadline([string]$message) {
+    $script:deadlineWait = $true
+    throw $message
+}
+
 function CsvContentHash([string]$path, [long]$expectedSize) {
     if ($expectedSize -le 0 -or $expectedSize -gt 33554432) { throw 'Monitoring CSV content verification exceeds its bounded size.' }
     $stream = $null; $sha = $null
@@ -238,8 +243,9 @@ function CsvContentHash([string]$path, [long]$expectedSize) {
     }
 }
 
-function AssertCsvFile($token, $observation) {
+function AssertCsvFile($token, $observation, [int]$minimumRemainingMs = 0) {
     $script:observationWait = $false
+    $script:deadlineWait = $false
     $path = [string](ValueOf $token 'path')
     if ([string]::IsNullOrWhiteSpace($path) -or [IO.Path]::GetFileName($path) -notmatch '^LayerDatasheet_\d{8}_\d{6}\.csv$') { throw 'A verified Monitoring CSV token is required.' }
     $expectedHash = [string](ValueOf $token 'sha256')
@@ -267,10 +273,20 @@ function AssertCsvFile($token, $observation) {
         if (-not $file.Exists -or $file.Length -ne $expectedSize -or
             $file.LastWriteTimeUtc.Ticks -ne $expectedMtime) { StopObservation 'The Monitoring CSV changed during verification.' }
     }
-    $age = ([DateTime]::UtcNow - $file.LastWriteTimeUtc).TotalSeconds
-    if ($age -lt -2 -or $age -gt 5) { throw 'The completed CSV record is no longer fresh enough for an IR update.' }
+    $finished = ValueOf $token 'finished_ticks'
+    if (($finished -isnot [int] -and $finished -isnot [long]) -or $finished -le 0 -or $finished -gt [DateTime]::MaxValue.Ticks) { throw 'A valid integer completed-row UTC timestamp is required.' }
+    if ($minimumRemainingMs -lt 0 -or $minimumRemainingMs -gt 2000) { throw 'Invalid freshness admission margin.' }
     $index = [int]$observation.row_index
     AssertJobProof (ValueOf $token 'job') $index
+    # Last check after the bounded CSV and job reads. A future clock is a
+    # different observation fault and does not grant history retention.
+    $now = [DateTime]::UtcNow
+    $fileAge = ($now - $file.LastWriteTimeUtc).TotalSeconds
+    $rowAge = ($now.Ticks - [long]$finished) / 10000000.0
+    if ($fileAge -lt -2 -or $rowAge -lt -2) { StopObservation 'The completed CSV clock is ahead; waiting for a verified new observation.' }
+    if ($fileAge -gt 5 -or $rowAge -gt 5) { StopDeadline 'The completed CSV record expired before this operation; discard the decision and resume on a fresh layer.' }
+    $limit = 5 - $minimumRemainingMs / 1000.0
+    if ($fileAge -gt $limit -or $rowAge -gt $limit) { StopDeadline 'Insufficient freshness time before IR edit; waiting for a fresh layer without replay.' }
 }
 
 function UniqueVisibleRecord($records, [string]$id, [bool]$required) {
@@ -295,7 +311,9 @@ function ReadFields($root, $pidExpected, $fieldMap, $scope = [IntPtr]::Zero) {
         if ([string]::IsNullOrWhiteSpace($entry.Name) -or $values.ContainsKey($entry.Name)) { throw 'The native Sequence field map has a blank/duplicate ID.' }
         $window = [IntPtr][long](ValueOf $entry.Value 'hwnd'); $kind = [string](ValueOf $entry.Value 'kind')
         if ($scope -ne [IntPtr]::Zero -and -not [BinderJetLeafMetadata]::IsDescendant($root, $scope, $window, $pidExpected)) { throw 'A native Sequence input left its verified view scope.' }
-        if ($kind -notin @('text','toggle') -or [BinderJetNativeFields]::Kind($root, $window, $pidExpected) -cne $kind) { throw 'A native Sequence input no longer has its verified kind.' }
+        # Read itself verifies owned EDIT / BUTTON+CHECKBUTTON role, including
+        # after the value/state read. Avoid a duplicate COM role lookup here.
+        if ($kind -notin @('text','toggle')) { throw 'A native Sequence input no longer has its verified kind.' }
         $values[$entry.Name] = [BinderJetNativeFields]::Read($root, $window, $pidExpected, $kind)
     }
     return $values
@@ -707,7 +725,7 @@ try {
                 [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
                 AssertAutomatic $root $pidExpected $handles
                 $script:controlWait = $false
-                AssertCsvFile $request.csv_token $request.observation
+                AssertCsvFile $request.csv_token $request.observation 2000
                 [IO.File]::WriteAllText([string]$request.edit_marker, 'edit-may-have-started')
                 [BinderJetNativeFields]::SetIr($root, $ir, $pidExpected, [string]$request.power)
                 $after = ReadFields $root $pidExpected $request.field_map $scope
@@ -731,7 +749,7 @@ try {
     }
     $response | ConvertTo-Json -Depth 10 -Compress
 } catch {
-    $kind = if ($script:identityFailure) { 'identity' } elseif ($script:observationWait) { 'observation_wait' } elseif ($script:controlWait) { 'control_wait' } else { 'operation' }
+    $kind = if ($script:identityFailure) { 'identity' } elseif ($script:deadlineWait) { 'deadline_wait' } elseif ($script:observationWait) { 'observation_wait' } elseif ($script:controlWait) { 'control_wait' } else { 'operation' }
     @{success=$false;error=$_.Exception.Message;error_kind=$kind} | ConvertTo-Json -Depth 3 -Compress
     exit 1
 }

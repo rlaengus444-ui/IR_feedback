@@ -22,6 +22,11 @@ class ObservationSuspended(ControlUnavailable):
     pass
 
 
+class ObservationExpired(ObservationSuspended):
+    """Only a known pre-edit time budget expired; consume, never replay it."""
+    pass
+
+
 class TargetIdentityError(AdapterError):
     """The verified root/PID/machine identity was lost; do not rebind it."""
     pass

@@ -5,7 +5,7 @@ $tokens = $null; $errors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile($helper, [ref]$tokens, [ref]$errors)
 if ($errors.Count) { throw "Native helper parse errors: $errors" }
 # Load only the actual read-only guard functions, never the UI dispatcher.
-foreach ($name in @('ValueOf', 'StopObservation', 'CsvContentHash', 'SelectJobProofLog', 'AssertJobProof', 'AssertCsvFile')) {
+foreach ($name in @('ValueOf', 'StopObservation', 'StopDeadline', 'CsvContentHash', 'SelectJobProofLog', 'AssertJobProof', 'AssertCsvFile')) {
     $definitions = @($ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true))
     if ($definitions.Count -ne 1) { throw "Cannot identify exact production function $name" }
     Invoke-Expression $definitions[0].Extent.Text
@@ -26,7 +26,7 @@ function TokenFor([byte[]]$bytes) {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { $digest = ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant() }
     finally { $sha.Dispose() }
-    return @{ path = $path; size = $bytes.Length; mtime_ticks = ([IO.FileInfo]::new($path)).LastWriteTimeUtc.Ticks; sha256 = $digest; job=$jobProof }
+    return @{ path = $path; size = $bytes.Length; mtime_ticks = ([IO.FileInfo]::new($path)).LastWriteTimeUtc.Ticks; sha256 = $digest; job=$jobProof; finished_ticks=[DateTime]::UtcNow.Ticks }
 }
 function MustReject($token, [string]$label, [bool]$observationWait = $false) {
     $rejected = $false
@@ -92,6 +92,22 @@ try {
         Set-Item Function:SelectJobProofLog $originalSelect
     }
     [IO.File]::WriteAllBytes($jobPath,$jobBytes)
+    $fresh=TokenFor $raw
+    foreach ($mode in @('file-expired','row-expired','headroom','future')) {
+        [IO.File]::WriteAllBytes($path,$raw)
+        $check=TokenFor $raw
+        $margin=0
+        if ($mode -eq 'file-expired') { [IO.File]::SetLastWriteTimeUtc($path,[DateTime]::UtcNow.AddSeconds(-6));$check.mtime_ticks=([IO.FileInfo]::new($path)).LastWriteTimeUtc.Ticks }
+        if ($mode -eq 'row-expired') { $check.finished_ticks=[DateTime]::UtcNow.AddSeconds(-6).Ticks }
+        if ($mode -eq 'headroom') { $check.finished_ticks=[DateTime]::UtcNow.AddSeconds(-4).Ticks;$margin=2000 }
+        if ($mode -eq 'future') { $check.finished_ticks=[DateTime]::UtcNow.AddSeconds(3).Ticks }
+        $rejected=$false
+        try { AssertCsvFile $check @{row_index=0} $margin } catch { $rejected=$true }
+        if (-not $rejected -or [bool]$script:deadlineWait -ne ($mode -ne 'future') -or [bool]$script:observationWait -ne ($mode -eq 'future')) { throw ('Wrong native expiry classification: '+$mode) }
+        $checks.Add('deadline/future classification '+$mode)
+    }
+    [IO.File]::WriteAllBytes($path,$raw)
+    $token=TokenFor $raw
     $modified = [Text.Encoding]::UTF8.GetBytes("Id,TemperaturePostRecoating`r`n1,-1`r`n")
     [IO.File]::WriteAllBytes($path, $modified)
     [IO.File]::SetLastWriteTimeUtc($path, [DateTime]::new([long]$token.mtime_ticks, [DateTimeKind]::Utc))

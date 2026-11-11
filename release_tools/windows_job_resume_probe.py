@@ -21,7 +21,7 @@ def exercise(exe,folder,machine):
     log=logs/('20261027_'+machine+'.log')
     events=queue.Queue();stop=threading.Event();worker=None;fixture=None
     raw_calls=[];reports=[];rebinds=[];barriers=[];history=LayerHistory()
-    run=[None]; csv_path=[None]; start=[None]; next_layer=[0]; phase=['initial'];race=[False]
+    run=[None]; csv_path=[None]; start=[None]; next_layer=[0]; phase=['initial'];race=[False];expire=[False]
     result={'machine':machine,'passed':False,'phases':[]}
     def command(**values):
         done=Path(str(marker)+'.command-done');done.unlink(missing_ok=True)
@@ -66,6 +66,10 @@ def exercise(exe,folder,machine):
         raw=WindowsUiAdapter(**kw);original=raw._request
         def request(data,event):
             entry={'phase':phase[0],'operation':data['operation'],'pid':data.get('pid')};begin=time.monotonic()
+            if expire[0] and data['operation']=='apply':
+                expire[0]=False
+                time.sleep(5.1)  # Completed calculation, no helper/edit started.
+                entry['deadline_expired_before_native_edit']=True
             if race[0] and data['operation']=='apply':
                 race[0]=False
                 prefix=datetime.now().strftime('%Y-%m-%d%p%I%M%S')+'...[BJT - AUTO]: '
@@ -77,6 +81,7 @@ def exercise(exe,folder,machine):
                 return value
             except Exception as e:
                 entry['success']=False;entry['error']=str(e)
+                entry['error_type']=type(e).__name__
                 entry['edit_marker']=Path(data['edit_marker']).exists() if 'edit_marker' in data else False
                 entry['save_marker']=Path(data['save_marker']).exists() if 'save_marker' in data else False
                 raise
@@ -125,6 +130,42 @@ def exercise(exe,folder,machine):
             except BaseException as e:events.put(('error',str(e)))
         worker=threading.Thread(target=work,daemon=True);worker.start()
         phase_save('initial-save',75)
+        # Actual native negatives for Kind-dedup equivalence. The remaining
+        # Read checks still reject class/role/PID/scope errors before any edit.
+        from adapter_contracts import AdapterError,ObservationSuspended
+        negative_checks=[];phase[0]='native-field-negatives';negative_saves=saves()
+        for name in ('unknown-kind','text-as-toggle','pushbutton-as-checkbox','outside-scope','wrong-pid'):
+            layer=append();value=wait_snapshot(layer);raw=wrapper._raw
+            key=value['snapshot'].observation_key
+            token=raw._verify_csv_observation(key)
+            mapping={k:dict(v) for k,v in raw._native_fields.items()}
+            data=dict(operation='verify_control',pid=wrapper.current_target.pid,hwnd=wrapper.current_target.hwnd,
+                machine=machine,image_path=wrapper.current_target.image_path,handles=dict(raw._native_handles),
+                field_map=mapping,csv_token=token,observation=dict(raw._observation_row))
+            field=mapping['textBoxHeatingOutput']
+            if name=='unknown-kind':field['kind']='unsupported'
+            elif name=='text-as-toggle':field['kind']='toggle'
+            elif name=='pushbutton-as-checkbox':field.update(kind='toggle',hwnd=raw._native_handles['save'])
+            elif name=='outside-scope':field['hwnd']=raw._native_handles['state']
+            elif name=='wrong-pid':data['pid']+=100000
+            try:raw._request(data,stop)
+            except AdapterError as error:
+                assert not isinstance(error,ObservationSuspended)
+                negative_checks.append({'case':name,'type':type(error).__name__,'message':str(error)})
+            else:raise AssertionError('Native field guard accepted '+name)
+            assert saves()==negative_saves and not wrapper._sticky
+        result['native_field_negative_checks']=negative_checks
+        phase[0]='deadline-pre-edit';options._maximum_ir_setting.set(70)
+        expire[0]=True;before_expiry=saves();expiry_epoch=wrapper._epoch
+        while expire[0]:
+            layer=append();wait_snapshot(layer)
+        assert saves()==before_expiry and wrapper._epoch==expiry_epoch and not wrapper._sticky
+        expired_calls=[x for x in raw_calls if x.get('deadline_expired_before_native_edit')]
+        assert len(expired_calls)==1 and not expired_calls[0]['edit_marker'] and not expired_calls[0]['save_marker']
+        assert expired_calls[0]['error_type']=='ObservationExpired'
+        phase_save('deadline-next-fresh-auto-resume',70)
+        assert wrapper._epoch==expiry_epoch and not wrapper._sticky
+        result['deadline_expiry_recovered_without_epoch_reset']=True
         first_run=wrapper._pinned_job;first_reader=wrapper._reader;first_watermark=dict(wrapper._watermark)
         first_power=sequence_persistence.capture(target).power
         command(state='IDLE');prefix=datetime.now().strftime('%Y-%m-%d%p%I%M%S')+'...[BJT - AUTO]: '

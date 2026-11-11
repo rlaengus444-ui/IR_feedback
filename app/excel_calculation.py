@@ -267,6 +267,16 @@ class ExcelCalculation:
         details = ' · '.join(str(part) for part in (operation, phase) if part)
         return f'{status} · {details + " · " if details else ""}{elapsed:.0f}초'
 
+    def can_retain_after_expiry(self, snapshot, powers, heaters, target_stamp, image_epoch, cap_stamp):
+        """Only a fully consumed result in its unchanged actual-input context."""
+        return bool(self.group is not None and self.group.state == 'ready'
+            and not self.latched_reason and not self.pending and self._completed is None
+            and not self._resetting and self._recovery is None
+            and self._accepted_identity == self._identity(snapshot)
+            and self.accepted_stamp == (target_stamp, image_epoch)
+            and self.accepted_cap_stamp == cap_stamp
+            and self._context == self._context_for(snapshot, powers, tuple(heaters), target_stamp, image_epoch, cap_stamp))
+
     def describe(self):
         result = dict(self.group.describe()) if self.group is not None else {'state': 'new'}
         result.update(recovery_state=self._recovery, fault_generation=self.fault_generation,

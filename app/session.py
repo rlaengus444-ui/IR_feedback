@@ -8,7 +8,7 @@ from pathlib import Path
 import threading
 import time
 
-from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, ObservationSuspended, MachineWindow
+from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, ObservationSuspended, ObservationExpired, MachineWindow
 from layer_algorithm import LayerAdaptiveController, LayerSettings
 from target_temperature import TargetTemperatureSetting
 from excel_workbook import WorkbookController, WorkbookSpec
@@ -550,6 +550,29 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                                         reset_controllers("IR 적용 직전 상한 변경")
                                         held.clear(); reasons.clear(); write_held = True
                                         status = "IR 상한 변경됨 · 다음 새 층 대기"
+                                        break
+                                    except ObservationExpired as error:
+                                        context_ok = (options._target_temperature_setting.snapshot() == target_stamp
+                                            and limit_setting.snapshot() == cap_stamp
+                                            and (not image_consuming or slice_setting.admit(slice_epoch)))
+                                        if context_ok and validate_epoch is None:
+                                            context_ok = False
+                                        if context_ok:
+                                            try:
+                                                validate_epoch(snapshot.control_epoch)
+                                            except ControlUnavailable:
+                                                context_ok = False
+                                        if context_ok and excel_calc is not None:
+                                            context_ok = excel_calc.can_retain_after_expiry(snapshot, values, heaters,
+                                                target_stamp, slice_epoch if image_consuming else None, cap_stamp)
+                                        if not context_ok:
+                                            hold_feedback("유효 시간 만료 중 제어 조건 변경")
+                                            control_holding = False
+                                        held.clear(); reasons.clear(); held_cap_stamp = None
+                                        effective_mode = "observation-waiting"
+                                        can_calculate = False
+                                        write_held = True
+                                        status = "연결 유지 · 이번 계산 시간 만료 · 다음 새 층에서 자동 재개: " + str(error)
                                         break
                                     except ObservationSuspended as error:
                                         # No edit/Save started. Never retry the old
