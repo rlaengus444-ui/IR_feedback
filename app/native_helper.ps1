@@ -585,6 +585,14 @@ try {
             if ($machine -eq 'unknown' -and [BinderJetQueuedNavigation]::Responsive($window,[int]$process.Id,100)) {
                 try { $machine = [BinderJetNativeProcess]::IdentifyMachine($window, [int]$process.Id) } catch { }
             }
+            if ($request.expected_machine) {
+                # Captions/filenames/registry hints cannot prove uniqueness of
+                # the machine partition during automatic reconnection.
+                $machine='unknown'
+                if ([BinderJetQueuedNavigation]::Responsive($window,[int]$process.Id,100)) {
+                    try { $machine=[BinderJetNativeProcess]::IdentifyMachine($window,[int]$process.Id) } catch { }
+                }
+            }
             if ($request.expected_machine -and $machine -eq 'unknown') { $complete=$false }
             if ($request.expected_machine -and $machine -ne [string]$request.expected_machine) { continue }
             if ($windows.Count -ge 12) { $complete=$false;break }

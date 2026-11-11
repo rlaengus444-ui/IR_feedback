@@ -111,6 +111,12 @@ def exercise(exe,folder,machine):
         # Old baseline permits all initial bootstrap gates before fresh rows.
         start_job(datetime.now().replace(microsecond=0)-timedelta(minutes=2))
         fixture,target=launch();original_pid=target.pid
+        selector=raw_factory(source_factory=lambda t:None)
+        try:found=[x for x in selector.discover() if x.pid==original_pid]
+        finally:selector.disconnect()
+        assert len(found)==1 and found[0].machine==machine
+        assert os.path.samefile(found[0].image_path,exe)
+        target=found[0]  # Use the exact identity the operator selects in the UI.
         options=SessionOptions(target,mode='control',maximum_ir_percent=80)
         wrapper=ResilientUiAdapter(raw_factory=raw_factory,source_factory=lambda t:MonitoringCsvReader(t,roots=[monitor]))
         def work():
