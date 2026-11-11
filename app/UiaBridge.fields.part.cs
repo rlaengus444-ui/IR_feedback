@@ -17,6 +17,8 @@ public static class BinderJetNativeFields
     [DllImport("user32.dll")] private static extern IntPtr GetParent(IntPtr window);
     [DllImport("user32.dll")] private static extern int GetDlgCtrlID(IntPtr window);
     [DllImport("user32.dll", SetLastError=true)] private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll", EntryPoint="SendMessageW", CharSet=CharSet.Unicode)]
+    private static extern IntPtr SaveMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] private static extern int GetClassName(IntPtr window, StringBuilder value, int count);
     [DllImport("user32.dll", EntryPoint="GetWindowLongW")] private static extern int GetWindowLong(IntPtr window, int index);
     [DllImport("user32.dll", EntryPoint="SendMessageTimeoutW", CharSet=CharSet.Unicode, SetLastError=true)]
@@ -106,6 +108,19 @@ public static class BinderJetNativeFields
         int id=GetDlgCtrlID(button);
         if(!PostMessage(parent,0x0111,new IntPtr(id & 0xffff),button))
             throw new InvalidOperationException("The audited Save notification could not be queued.");
+    }
+
+    // One synchronous notification. Its owned helper may remain waiting while
+    // Python observes CSV; only normal return permits a completion receipt.
+    public static void SaveAndWait(IntPtr root, IntPtr button, int pid)
+    {
+        ValidateSave(root,button,pid);
+        IntPtr parent=GetParent(button);
+        Validate(root,parent,pid);
+        int id=GetDlgCtrlID(button);
+        SaveMessage(parent,0x0111,new IntPtr(id & 0xffff),button);
+        Validate(root,parent,pid);
+        Validate(root,button,pid);
     }
 
     public static string Read(IntPtr root, IntPtr child, int pid, string kind)

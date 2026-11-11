@@ -298,7 +298,7 @@ class AdapterTests(unittest.TestCase):
         self.assertNotIn(b"BinderJetAccessibleGrid",binary)
         self.assertNotIn(b"BinderJetQueuedGridScroll",binary)
         self.assertIn("AssertCsvFile",source)
-        self.assertIn("[BinderJetNativeFields]::QueueSave",source)
+        self.assertIn("[BinderJetNativeFields]::SaveAndWait",source)
 
 
 if __name__=="__main__":unittest.main()

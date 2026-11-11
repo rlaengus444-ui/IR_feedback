@@ -153,11 +153,11 @@ def exercise(exe,folder,machine,confirmation=None):
             assert saves()==negative_saves and not raw._control_fault
         result['native_field_negative_checks']=negative_checks
         if confirmation:
-            from adapter_contracts import AmbiguousWriteError,ControlUnavailable
+            from adapter_contracts import AmbiguousWriteError,ControlUnavailable,SaveConfirmationPending
             before=sequence_persistence.capture(target)
             append();raw._last_read=0;raw.read_snapshot(stop) # Baseline, no Save.
             successes=[]
-            for delay,power in ((250,75),(600,70)):
+            for delay,power in ((250,75),(600,70),(1500,65)):
                 command(saveDelayMs=delay)
                 append();raw._last_read=0;snap=raw.read_snapshot(stop)
                 count=saves();begin=time.monotonic()
@@ -165,20 +165,45 @@ def exercise(exe,folder,machine,confirmation=None):
                 current=sequence_persistence.capture(target)
                 assert saves()==count+1 and current.power==power and current.non_ir==before.non_ir
                 successes.append(dict(delay_ms=delay,save_count=saves(),seconds=time.monotonic()-begin,power=power))
-            command(saveDelayMs=1500 if confirmation=='long-delay' else 0,exitOnSave=confirmation=='exit')
+            command(saveDelayMs=6500 if confirmation=='long-delay' else 0,exitOnSave=confirmation=='exit')
             append();raw._last_read=0;snap=raw.read_snapshot(stop);count=saves()
-            try:raw.apply_ir_power(1,65,snap.observation_key,stop)
-            except AmbiguousWriteError as error:failure=str(error)
-            else:raise AssertionError('Unconfirmed delayed/exit Save did not remain uncertain')
-            assert raw._control_fault and saves()==count+1
-            time.sleep(1) # Read-only settling; never send the old Save again.
-            try:raw.apply_ir_power(1,65,snap.observation_key,stop)
-            except ControlUnavailable:pass
-            else:raise AssertionError('Uncertain Save was retried')
-            assert saves()==count+1
+            if confirmation=='long-delay':
+                try:raw.apply_ir_power(1,60,snap.observation_key,stop)
+                except SaveConfirmationPending as error:failure=str(error)
+                else:raise AssertionError('6.5s Save did not enter owned pending state')
+                assert raw._pending_save and not raw._control_fault and saves()==count+1
+                raw._last_read=0;observed=raw.read_snapshot(stop)
+                assert not observed.control_available and observed.control_recoverable
+                assert observed.layer_index==snap.layer_index
+                deadline=time.monotonic()+20
+                while raw._pending_save is not None and time.monotonic()<deadline:
+                    raw._last_read=0;raw.read_snapshot(stop);time.sleep(.25)
+                assert raw._pending_save is None and not raw._control_fault
+                assert sequence_persistence.capture(target).power==60 and saves()==count+1
+                command(saveDelayMs=0)
+                append();raw._last_read=0;fresh=raw.read_snapshot(stop)
+                assert fresh.layer_index>snap.layer_index and fresh.observation_key!=snap.observation_key
+                raw.apply_ir_power(1,55,fresh.observation_key,stop)
+                assert saves()==count+2 and sequence_persistence.capture(target).power==55
+                try:raw.apply_ir_power(1,55,fresh.observation_key,stop)
+                except ControlUnavailable:pass
+                else:raise AssertionError('Fresh layer Save was repeated')
+                result.update(passed=True,confirmation_case=confirmation,short_delay_successes=successes,
+                    automatic_reconciliation=True,one_save_per_attempt=True,old_proposal_not_replayed=True,
+                    observed_while_pending=True,fresh_layer_saved=True,terminal_error=failure)
+            else:
+                try:raw.apply_ir_power(1,60,snap.observation_key,stop)
+                except AmbiguousWriteError as error:failure=str(error)
+                else:raise AssertionError('Exit without receipt did not stay uncertain')
+                assert raw._control_fault and saves()==count+1
+                try:raw.apply_ir_power(1,60,snap.observation_key,stop)
+                except ControlUnavailable:pass
+                else:raise AssertionError('Uncertain Save was retried')
+                assert saves()==count+1
+                result.update(passed=True,confirmation_case=confirmation,short_delay_successes=successes,
+                    uncertainty_sticky=True,one_save_per_attempt=True,terminal_error=failure)
             raw.disconnect()
-            result.update(passed=True,confirmation_case=confirmation,short_delay_successes=successes,
-                uncertainty_sticky=True,one_save_per_attempt=True,terminal_error=failure,worker_retired=True)
+            result['worker_retired']=True
             return result
         raw.disconnect()
         wrapper=ResilientUiAdapter(raw_factory=raw_factory,source_factory=lambda t:MonitoringCsvReader(t,roots=[monitor]))
@@ -187,6 +212,16 @@ def exercise(exe,folder,machine,confirmation=None):
             except BaseException as e:events.put(('error',str(e)))
         worker=threading.Thread(target=work,daemon=True);worker.start()
         phase_save('initial-save',75)
+        command(saveDelayMs=6500)
+        phase_save('save-delayed-pending',70)
+        assert wrapper._raw._pending_save is not None and not wrapper._sticky
+        delayed_count=saves()
+        # Timer-command completion waits for the owned fixture UI handler, not
+        # for an operator. The session keeps reading CSV while Save is pending.
+        command(saveDelayMs=0)
+        phase_save('save-automatic-resume',65)
+        assert saves()==delayed_count+1 and not wrapper._sticky
+        result['delayed_save_automatically_resumed']=True
         phase[0]='deadline-pre-edit';options._maximum_ir_setting.set(70)
         expire[0]=True;before_expiry=saves();expiry_epoch=wrapper._epoch
         expiry_deadline=time.monotonic()+45

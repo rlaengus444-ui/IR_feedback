@@ -17,16 +17,17 @@ import subprocess
 import tempfile
 import threading
 import time
+import uuid
 from pathlib import Path
 from typing import Callable
 
 try:
-    from .adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, ObservationSuspended, ObservationExpired, TargetIdentityError, UiReadTimeout, ReadTransportError, ProtocolError, MachineWindow, UiSnapshot
+    from .adapter_contracts import AdapterError, AmbiguousWriteError, SaveConfirmationPending, ControlUnavailable, ControlSuspended, ObservationSuspended, ObservationExpired, TargetIdentityError, UiReadTimeout, ReadTransportError, ProtocolError, MachineWindow, UiSnapshot
     from . import sequence_persistence
     from .sequence_field_audit import assert_fields_match_persisted, SequenceFieldAuditError
     from .csv_source import MonitoringCsvReader
 except ImportError:
-    from adapter_contracts import AdapterError, AmbiguousWriteError, ControlUnavailable, ControlSuspended, ObservationSuspended, ObservationExpired, TargetIdentityError, UiReadTimeout, ReadTransportError, ProtocolError, MachineWindow, UiSnapshot
+    from adapter_contracts import AdapterError, AmbiguousWriteError, SaveConfirmationPending, ControlUnavailable, ControlSuspended, ObservationSuspended, ObservationExpired, TargetIdentityError, UiReadTimeout, ReadTransportError, ProtocolError, MachineWindow, UiSnapshot
     import sequence_persistence
     from sequence_field_audit import assert_fields_match_persisted, SequenceFieldAuditError
     from csv_source import MonitoringCsvReader
@@ -95,6 +96,7 @@ class WindowsUiAdapter:
     _process_fence = threading.Lock()
     _unretired_helper = None
     _unretired_directory = None
+    _save_barrier = None
     MINIMUM_POLL_SECONDS = 0.25
     RECOVERY_INTERVAL_SECONDS = 1.0
 
@@ -137,6 +139,8 @@ class WindowsUiAdapter:
         self._native_fields: dict = {}
         self._retained_log_hint: int | None = None
         self._log_run_key: str | None = None
+        self._pending_save = None
+        self._reconciled_save = None
 
     def set_apply_admission_gate(self, callback) -> None:
         if callback is not None and not callable(callback):
@@ -308,6 +312,12 @@ class WindowsUiAdapter:
             signature = json.dumps({"identity": [target.machine, target.pid, target.hwnd, target.image_path],
                 "settings_path": after.path, "power": after.power, "non_ir": dict(after.non_ir), "fields": values,
                 "handles": new_handles, "field_map": mapping}, sort_keys=True, allow_nan=False)
+            transaction = self._pending_save
+            if transaction is not None:
+                if (not transaction['completed'] or after.path != transaction['original'].path
+                        or after.non_ir != transaction['original'].non_ir
+                        or not math.isclose(after.power, float(transaction['power']), abs_tol=1e-9, rel_tol=0)):
+                    raise ControlSuspended("이전 Save의 실제 저장값과 다른 설정을 확인 중입니다.")
             with self._lock:
                 if self._generation != generation or self._target != target:
                     raise TargetIdentityError("설정 확인 중 연결 대상이 변경되었습니다.")
@@ -328,10 +338,57 @@ class WindowsUiAdapter:
                 self._control_hold_reason = None
                 self._recovery_candidate = None
                 self._last_snapshot = None
+                if transaction is not None:
+                    self._reconciled_save = (transaction['nonce'], transaction['run_key'], transaction['layer'])
+                    self._pending_save = None
+                    if WindowsUiAdapter._save_barrier is transaction:
+                        WindowsUiAdapter._save_barrier = None
+                    transaction['directory'].cleanup()
         except (ControlSuspended, UiReadTimeout, sequence_persistence.PersistenceUnavailable, SequenceFieldAuditError) as error:
             self._check_stopped(stop_event)
             self._recovery_candidate = None
             self.suspend_control(str(error))
+
+    def _poll_save_completion(self, target, generation, stop_event):
+        transaction = self._pending_save
+        if transaction is None:
+            return False
+        self._check_stopped(stop_event)
+        if transaction['target'] != target or transaction['generation'] != generation:
+            raise AmbiguousWriteError("Save 결과 확인 중 원본 연결이 변경되었습니다.")
+        helper = transaction['helper']
+        if helper is not None and helper.poll() is None:
+            return True
+        if not transaction['completed']:
+            try:
+                receipt = json.loads(transaction['receipt'].read_text(encoding='utf-8-sig'))
+                expected = dict(transaction_id=transaction['nonce'], pid=target.pid,
+                    hwnd=target.hwnd, power=transaction['power'], completed=True)
+                if (not isinstance(receipt, dict) or receipt != expected
+                        or type(receipt.get('completed')) is not bool
+                        or type(receipt.get('pid')) is not int or type(receipt.get('hwnd')) is not int
+                        or type(receipt.get('power')) is not str
+                        or (helper is not None and helper.returncode != 0)):
+                    raise ValueError('Completion receipt does not match the owned transaction.')
+            except (OSError, ValueError) as exc:
+                raise AmbiguousWriteError("이전 Save의 처리 종료 증거를 확인하지 못했습니다.") from exc
+            if helper is not None:
+                stdout, stderr = helper.communicate(timeout=0.5)
+                try:
+                    response = json.loads(stdout.lstrip('\ufeff').strip())
+                    if (not isinstance(response, dict) or response.get('success') is not True
+                            or response.get('save_invoked') is not True
+                            or _number(response.get('setting')) != float(transaction['power'])):
+                        raise ValueError('Invalid completion response.')
+                except (ValueError, TypeError) as exc:
+                    raise AmbiguousWriteError("Save 종료 응답의 무결성을 확인하지 못했습니다.") from exc
+                with self._lock:
+                    if self._active_helper is helper:
+                        self._active_helper = None
+            transaction['completed'] = True
+            self._recovery_candidate = None
+            self._recovery_at = 0
+        return False
 
     def _update_settings_locked(self, response: dict) -> None:
         displayed = _number(response.get("setting"))
@@ -375,7 +432,8 @@ class WindowsUiAdapter:
                 return self._last_snapshot
         source = self._csv.read()
         sample = source.sample
-        if self._mode == "control" and time.monotonic() - self._status_at >= 1.0:
+        pending = self._poll_save_completion(target, generation, stop_event)
+        if self._mode == "control" and not pending and time.monotonic() - self._status_at >= 1.0:
             try:
                 status = self._request({"operation": "read_status", "pid": target.pid, "hwnd": target.hwnd,
                                         "machine": target.machine, "handles": handles, "_generation": generation}, stop_event)
@@ -410,7 +468,7 @@ class WindowsUiAdapter:
                     raise
                 self.suspend_control(str(error))
             self._settings_at = time.monotonic()
-        if self._mode == "control" and self._control_hold_reason is not None and self._control_fault is None:
+        if self._mode == "control" and not pending and self._control_hold_reason is not None and self._control_fault is None:
             with self._lock:
                 self._last_settings = [persisted.power, persisted.power] if persisted is not None else [None, None]
             self._recover_control(target, generation, stop_event)
@@ -466,7 +524,8 @@ class WindowsUiAdapter:
                 csv_generation=getattr(sample, 'source_generation', ''),
                 observation_fresh=bool(fresh), measurement_valid=getattr(sample, 'measurement_valid', True),
                 invalid_reason=getattr(sample, 'invalid_reason', ''), actual_target=target,
-                expired_observation_key=expired_key)
+                expired_observation_key=expired_key,
+                save_reconciliation=self._reconciled_save if ready else None)
             self._csv_token = source.token
             self._layer_hint = source.context.current_layer
             self._observation_row = {"row_index": sample.layer_index, "temperature": sample.temperature,
@@ -578,7 +637,15 @@ class WindowsUiAdapter:
         handles = dict(fresh.get("handles") or handles)
         native_fields = dict(fresh.get("field_map") or self._native_fields)
         csv_token = self._verify_csv_observation(expected_observation_key)
-        with tempfile.TemporaryDirectory(prefix="binderjet-save-") as directory:
+        transaction_directory = tempfile.TemporaryDirectory(prefix="binderjet-save-")
+        transaction = dict(directory=transaction_directory, nonce=uuid.uuid4().hex,
+            target=target, generation=generation, run_key=snapshot.run_key,
+            layer=snapshot.layer_index, key=expected_observation_key, power=power_text,
+            original=current, helper=None, completed=False)
+        directory = transaction_directory.name
+        receipt = Path(directory) / "dispatch-completed.json"
+        transaction['receipt'] = receipt
+        try:
             marker = Path(directory) / "save-started.txt"
             edit_marker = Path(directory) / "edit-started.txt"
             try:
@@ -589,14 +656,27 @@ class WindowsUiAdapter:
                                           "csv_token": csv_token,
                                           "layer_hint": layer_hint,
                                           "power": power_text,
+                                          "transaction_id": transaction["nonce"], "dispatch_receipt": str(receipt),
                                           "save_marker": str(marker), "edit_marker": str(edit_marker)}, stop_event)
                 readback = _number(response.get("setting"))
                 if not response.get("save_invoked") or readback is None or not math.isclose(readback, power_percent, rel_tol=0, abs_tol=1e-9):
                     raise AdapterError("IR Save 확인 응답이 일치하지 않습니다.")
                 verified = sequence_persistence.verify_after(current, power_percent, timeout=1.0)
                 if verified is None:
-                    raise AdapterError("IR 저장 결과를 확인할 수 없습니다.")
+                    raise sequence_persistence.PersistenceVerificationTimeout("IR 저장 결과를 확인할 수 없습니다.")
             except Exception as exc:
+                # Only a known retained synchronous dispatch or a completed
+                # dispatch with delayed persistence may enter reconciliation.
+                pending = isinstance(exc, SaveConfirmationPending)
+                completed = receipt.exists() and isinstance(exc, sequence_persistence.PersistenceVerificationTimeout)
+                if (pending or completed) and not (stop_event is not None and stop_event.is_set()):
+                    transaction['helper'] = self._active_helper if pending else None
+                    transaction['owner'] = self
+                    self._pending_save = transaction
+                    WindowsUiAdapter._save_barrier = transaction
+                    self._last_applied_key = expected_observation_key
+                    self.suspend_control("Save 처리 확인 중 · 연결 유지, 완료 확인 후 새 층에서 자동 재개")
+                    raise SaveConfirmationPending(self._control_hold_reason) from exc
                 if marker.exists() or edit_marker.exists():
                     with self._lock:
                         self._control_fault = "자동 적용 결과를 확인할 수 없습니다. 다시 연결하기 전에 원본 설정을 확인하세요."
@@ -605,6 +685,9 @@ class WindowsUiAdapter:
                     with self._lock:
                         self._control_fault = "자동 적용을 중단했습니다. 결과를 확인한 뒤 다시 연결하세요."
                 raise
+        finally:
+            if self._pending_save is not transaction:
+                transaction_directory.cleanup()
         with self._lock:
             if self._generation != generation or self._target != target:
                 raise AmbiguousWriteError("IR 저장 확인 중 연결이 변경되었습니다. 같은 명령을 자동 재시도하지 않습니다.")
@@ -654,6 +737,9 @@ class WindowsUiAdapter:
 
     def _request(self, request: dict, stop_event) -> dict:
         self._check_stopped(stop_event)
+        barrier = WindowsUiAdapter._save_barrier
+        if barrier is not None and barrier is not self._pending_save:
+            raise AmbiguousWriteError("다른 연결의 Save 종료 확인이 남아 있어 원본 UI 요청을 보류합니다.")
         request = dict(request, bridge_path=str(Path(__file__).with_name("UiaBridge.dll")))
         expected_generation = request.get("_generation")
         with self._lock:
@@ -681,6 +767,7 @@ class WindowsUiAdapter:
             raise AdapterError("이전 UI 읽기가 아직 종료되지 않았습니다.")
         process = None
         delivery_possible = False
+        retained_save = False
         try:
             previous = WindowsUiAdapter._unretired_helper
             if previous is not None:
@@ -742,6 +829,13 @@ class WindowsUiAdapter:
             if not isinstance(response, dict) or not response.get("success", False):
                 raise self._response_error(request, response, "Windows UI 읽기에 실패했습니다.")
             return response
+        except UiReadTimeout as exc:
+            if (request.get('operation') == 'apply' and delivery_possible and process is not None
+                    and request.get('dispatch_receipt') and Path(request['save_marker']).exists()
+                    and not (stop_event is not None and stop_event.is_set())):
+                retained_save = True
+                raise SaveConfirmationPending("Save 응답 대기 · 요청을 반복하지 않고 처리 종료를 추적합니다.") from exc
+            raise
         except OSError as exc:
             operation = request.get("operation", "unknown")
             if operation in _NON_IR_OPERATIONS:
@@ -749,7 +843,7 @@ class WindowsUiAdapter:
             raise
         finally:
             retired = True
-            if process is not None:
+            if process is not None and not retained_save:
                 try:
                     if process.poll() is None:
                         try:
@@ -763,6 +857,8 @@ class WindowsUiAdapter:
                     retired = process.poll() is not None
                 except OSError:
                     retired = False
+            if retained_save:
+                retired = False
             with self._lock:
                 if self._active_helper is process and retired:
                     self._active_helper = None
@@ -775,7 +871,7 @@ class WindowsUiAdapter:
                 except OSError:
                     pass
             self._helper_lock.release()
-            if not retired:
+            if not retired and not retained_save:
                 operation = request.get("operation", "unknown")
                 if operation not in _NON_IR_OPERATIONS and delivery_possible:
                     raise AmbiguousWriteError("UI 도우미의 종료를 확인할 수 없어 입력 또는 Save 결과가 불확실합니다.")

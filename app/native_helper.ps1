@@ -737,17 +737,14 @@ try {
                 # This durable marker precedes the only queued Save. A timeout,
                 # cancellation or uncertain result must never trigger a retry.
                 [IO.File]::WriteAllText([string]$request.save_marker, 'save-may-have-started')
-                [BinderJetNativeFields]::QueueSave($root, $save, $pidExpected)
-                $acknowledgement=[Diagnostics.Stopwatch]::StartNew()
-                Start-Sleep -Milliseconds 100
-                while ($true) {
-                    $remaining=[int][Math]::Floor(1000-$acknowledgement.Elapsed.TotalMilliseconds)
-                    if ($remaining -le 0) { throw 'Save was queued but the target acknowledgement is uncertain.' }
-                    $responsive=[BinderJetQueuedNavigation]::Responsive($root,$pidExpected,[Math]::Min(100,$remaining))
-                    if ($acknowledgement.Elapsed.TotalMilliseconds -ge 1000) { throw 'Save was queued but the target acknowledgement is uncertain.' }
-                    if ($responsive) { break }
-                    Start-Sleep -Milliseconds ([Math]::Min(25,[Math]::Max(1,1000-$acknowledgement.Elapsed.TotalMilliseconds)))
-                }
+                if ([string]::IsNullOrWhiteSpace([string]$request.dispatch_receipt) -or
+                    [string]::IsNullOrWhiteSpace([string]$request.transaction_id)) { throw 'A transaction receipt is required.' }
+                $lifetime = [Diagnostics.Process]::GetProcessById($pidExpected).StartTime.ToUniversalTime().Ticks
+                [BinderJetNativeFields]::SaveAndWait($root, $save, $pidExpected)
+                if ([Diagnostics.Process]::GetProcessById($pidExpected).StartTime.ToUniversalTime().Ticks -ne $lifetime) { throw 'The Save process lifetime changed.' }
+                $receipt = @{transaction_id=[string]$request.transaction_id; pid=$pidExpected;
+                    hwnd=$root.ToInt64(); power=[string]$request.power; completed=$true}
+                [IO.File]::WriteAllText([string]$request.dispatch_receipt, ($receipt | ConvertTo-Json -Compress))
                 $verified = [BinderJetNativeFields]::Read($root, $ir, $pidExpected, 'text')
                 if ([Math]::Abs((FiniteNumber $verified) - $desired) -gt 0.000000001) { throw 'IR readback after queued Save did not match.' }
                 $response = @{success=$true;save_invoked=$true;setting=$verified}

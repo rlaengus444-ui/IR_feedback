@@ -31,6 +31,11 @@ class PersistenceMismatch(PersistenceUnavailable):
     pass
 
 
+class PersistenceVerificationTimeout(PersistenceMismatch):
+    """Completed Save has not yet produced readable matching persisted IR."""
+    pass
+
+
 @dataclass(frozen=True)
 class SequencePersistenceSnapshot:
     path: str
@@ -233,5 +238,5 @@ def verify_after(before: SequencePersistenceSnapshot | None, power: int | float,
             last_error = exc
         remaining = deadline - time.monotonic()
         if remaining <= 0:
-            raise PersistenceMismatch("Sequence Save did not produce the expected saved IR setting within the verification bound.") from last_error
+            raise PersistenceVerificationTimeout("Sequence Save did not produce the expected saved IR setting within the verification bound.") from last_error
         time.sleep(min(0.05, remaining))

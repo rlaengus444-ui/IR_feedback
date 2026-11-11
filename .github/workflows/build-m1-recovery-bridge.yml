@@ -1,7 +1,7 @@
 name: Build scoped recovery bridge evidence
 on:
   push:
-    branches: ['fix/m1-hidden-recovery-20261109']
+    branches: ['fix/m1-hidden-recovery-20261109', 'fix/save-auto-resume-20261111']
     paths:
       - 'app/UiaBridge*.cs'
       - 'app/build_uia_bridge.ps1'

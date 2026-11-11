@@ -153,6 +153,7 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
     limit_setting = options._maximum_ir_setting
     hard_minimum, hard_maximum, hard_step = 0.0, 100.0, 5.0
     power_limit_holding = False
+    reconciled_save_seen = None
     def reset_controllers(reason="제어 조건 재확인"):
         for controller in controllers.values():
             controller.reset()
@@ -351,6 +352,26 @@ def run_ui_session(options, stop_event, emit, adapter_factory=default_adapter_fa
                     baseline_seen = True
                     last_key = snapshot.observation_key
                     known_run_key = snapshot.run_key
+            # The failed row is only a consumed lower bound, never an accepted
+            # temperature/output history. A completed dispatch plus full audits
+            # permits the first distinct fresh higher row into the reset engine.
+            reconciled = snapshot.save_reconciliation
+            if (options.mode == 'control' and not power_limit_holding and not above_limit
+                    and not image_hold and snapshot.control_available and automatic
+                    and valid and snapshot.observation_is_new is True and snapshot.observation_fresh
+                    and isinstance(reconciled, tuple) and len(reconciled) == 3
+                    and reconciled != reconciled_save_seen and reconciled[1] == snapshot.run_key
+                    and type(reconciled[2]) is int and snapshot.layer_index > reconciled[2]):
+                reconciled_save_seen = reconciled
+                control_holding = False
+                recovery_baseline_pending = False
+                recovery_baseline_layer = None
+                baseline_seen = False
+                last_key = last_layer = None
+                known_run_key = snapshot.run_key
+                effective_mode = 'control'
+                can_calculate = True
+                emit('log', '이전 Save 처리 종료·실제 저장값 확인 완료 · 새 층에서 IR 자동 재개')
             # Observations seen while readiness is absent are barriers too.
             # Restored AUTO/current-IR must not turn a cached held row into Save.
             if ((control_holding or recovery_baseline_pending or recovery_baseline_layer is not None)

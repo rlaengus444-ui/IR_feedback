@@ -27,6 +27,11 @@ class ObservationExpired(ObservationSuspended):
     pass
 
 
+class SaveConfirmationPending(ControlSuspended):
+    """One owned Save is settling; observe and reconcile, never replay it."""
+    pass
+
+
 class TargetIdentityError(AdapterError):
     """The verified root/PID/machine identity was lost; do not rebind it."""
     pass
@@ -99,6 +104,7 @@ class UiSnapshot:
     job_current_layer: int | None = None
     job_start_offset: int | None = None
     job_log_identity: str = ""
+    save_reconciliation: tuple | None = None
 
 
 class UiAdapter(Protocol):

@@ -7,14 +7,14 @@ import time
 from dataclasses import replace
 
 try:
-    from .adapter_contracts import (AdapterError, AmbiguousWriteError, ControlSuspended,
+    from .adapter_contracts import (AdapterError, AmbiguousWriteError, SaveConfirmationPending, ControlSuspended,
         ControlUnavailable, ObservationSuspended, TargetIdentityError, ReadTransportError,
         ProtocolError, UiSnapshot)
     from .csv_source import MonitoringCsvReader, CsvSourceError, CsvReadUnavailable
     from .windows_ui_adapter import WindowsUiAdapter
     from .sequence_persistence import PersistenceUnavailable
 except ImportError:
-    from adapter_contracts import (AdapterError, AmbiguousWriteError, ControlSuspended,
+    from adapter_contracts import (AdapterError, AmbiguousWriteError, SaveConfirmationPending, ControlSuspended,
         ControlUnavailable, ObservationSuspended, TargetIdentityError, ReadTransportError,
         ProtocolError, UiSnapshot)
     from csv_source import MonitoringCsvReader, CsvSourceError, CsvReadUnavailable
@@ -194,6 +194,8 @@ class ResilientUiAdapter:
         self._initial_prepare_allowed = False
         self._initial_recovery_grant = bool(preserve_initial_grant)
         self._prepared_mode = None
+        if self._raw is not None and getattr(self._raw, '_pending_save', None) is not None:
+            self.freeze_control(AmbiguousWriteError('Save 처리 추적 중 연결이 변경되어 종료 증거를 보존합니다.'))
         try:
             if self._raw is not None:
                 self._raw.disconnect()
@@ -498,6 +500,13 @@ class ResilientUiAdapter:
         job_admitted = self._admit_job(snap, native_auto, stop_event)
         if self._raw is None:
             return self._offline()
+        reconciled = snap.save_reconciliation
+        if (job_admitted and native_auto and snap.control_available and snap.measurement_valid
+                and snap.observation_fresh and snap.observation_is_new is True
+                and isinstance(reconciled, tuple) and len(reconciled) == 3
+                and reconciled[1] == snap.run_key and type(reconciled[2]) is int
+                and snap.layer_index is not None and snap.layer_index > reconciled[2]):
+            self._needs_baseline = False
         if job_admitted and native_auto and self._needs_baseline and snap.measurement_valid and snap.observation_fresh and snap.observation_key and snap.layer_index is not None:
             if not snap.control_available or self._baseline is None:
                 self._baseline = (snap.observation_key, snap.layer_index)
@@ -552,6 +561,11 @@ class ResilientUiAdapter:
         self._watermark[watermark] = snap.layer_index
         try:
             self._raw.apply_ir_power(heater, power_percent, expected_observation_key, stop_event)
+        except SaveConfirmationPending:
+            self._was_ready = False
+            self._needs_baseline = True
+            self._baseline = (snap.observation_key, snap.layer_index)
+            raise
         except AmbiguousWriteError as exc:
             self.freeze_control(exc)
             raise ControlSuspended(self._sticky) from exc
