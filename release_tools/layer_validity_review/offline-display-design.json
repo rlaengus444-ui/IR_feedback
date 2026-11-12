@@ -1,0 +1,34 @@
+{
+  "phase": "NARROW_DESIGN_ADDENDUM_OFFLINE_DISPLAY",
+  "created_utc": "2026-11-12T03:22:49.679668+00:00",
+  "review_route": {
+    "actual": "native collaboration followup_task /root/sol_reviewer_layer_validity_nov12",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false
+  },
+  "decision": "PROCEED_WITH_READ_ONLY_DISPLAY_CONSTRAINTS; final delta CODE_POST required",
+  "reviewed_base": "ba950eba558c8a2ee7aad43f933d6e15c6da8a0f",
+  "trigger": "Windows CI 43145818010 native checks passed but five unit tests failed; original artifact remains unapproved and preserved.",
+  "proposed_change": "ResilientUiAdapter._offline may expose a complete previously parsed valid nonfuture sample temperature/key for display while token/current job-layer authority is unavailable.",
+  "constraints": [
+    "Return machine_state unknown, control_available false, observation_fresh false and observation_is_new false unconditionally from this offline display path.",
+    "Only display a reader-parsed complete valid finite nonfuture sample; invalid thermometer -1 and future timestamp samples remain unavailable.",
+    "A tokenless or unknown-context display key never authorizes control, mutates arrived-key authority, consumes the actuation watermark or bypasses raw reconnect/job proof/baseline checks.",
+    "Preserve the actual raw adapter current-token/job/AUTO/layer, hash proof and native pre-edit/pre-Save guards unchanged.",
+    "Original baseline offline key required a complete token; tokenless last-known sample display is an intentional read-only extension for chart continuity, not literal unchanged behavior.",
+    "Update obsolete expiry/queued-reset assertions while preserving behavioral no-old-result/no-replay/retirement assertions; do not label the failed first artifact approved or rewrite its evidence."
+  ],
+  "required_checks": [
+    "Offline token-none and unknown-context display retains latest readable valid temperature/key and has all control authority flags false",
+    "Invalid -1 and future samples do not display as a usable measurement",
+    "Offline returned display observation cannot cause Save; reconnect still requires actual current-job/layer proof and fresh baseline/higher row",
+    "Updated pending-calculation test retires old owner and rejects old late result; cap ABA same row remains blocked",
+    "Full final Windows unit/native artifact checks must pass apart from explicitly unregistered Excel COM evaluation limitation"
+  ],
+  "source_edits_or_external_actions_by_reviewer": false,
+  "distribution_approved": false,
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false,
+  "stable_release_approved": false
+}

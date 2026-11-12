@@ -1,0 +1,62 @@
+{
+  "phase": "CODE_POST_DELTA",
+  "created_utc": "2026-11-12T03:26:27.053800+00:00",
+  "decision": "PASS_SCOPED_CODE_REVIEW_FOR_EVALUATION_CANDIDATE; exact final artifact and publisher review still required",
+  "review_route": {
+    "actual": "native collaboration followup_task /root/sol_reviewer_layer_validity_nov12",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false,
+    "actual_independent_final_delta_response_completed": true
+  },
+  "previous_reviewed_source": "ba950eba558c8a2ee7aad43f933d6e15c6da8a0f",
+  "target_source": "2372c29602a9538f78593699c5e34c0485373524",
+  "working_tree_clean": true,
+  "reviewed_delta_files": [
+    "app/resilient_adapter.py",
+    "app/test_excel_history_continuity.py",
+    "app/test_layer_validity.py",
+    "app/test_live_limit_excel.py",
+    "app/test_live_limit_runtime.py",
+    "app/test_raw_history_continuity.py"
+  ],
+  "assessment": [
+    "Only runtime delta is offline display. It displays a previously parsed valid finite nonfuture latest temperature while native state is unknown; observation key still requires a complete token.",
+    "Offline snapshots unconditionally set observation_is_new=false and observation_fresh=false and retain unknown machine state/control_available=false. Displayed data creates no control admission.",
+    "Future clocks, -1, NaN and booleans remain excluded. Actual raw current-job/layer token/arrival authority and native pre-edit/pre-Save proof are unchanged.",
+    "Test deltas update obsolete expiry and queued-reset expectations to current-key retention and forced verified retirement, while preserving no-late-result/no-Save/same-row cap ABA assertions.",
+    "Prior source review findings W1/W2 remain fixed. No new blocking source finding.",
+    "First ba950eb Windows artifact with five failed tests remains preserved and unapproved; native pass evidence from that artifact does not approve the new exact package."
+  ],
+  "unresolved_source_findings": [],
+  "independent_executed_tests": {
+    "command": "PYTHONPATH=app python -m unittest -v test_layer_validity.OfflineDisplayTests test_initial_prepare_recovery.InitialPrepareSessionTests test_excel_history_continuity.HistoryContinuityTests.test_invalidated_pending_observation_retires_owner_and_discards_result test_live_limit_excel.LimitExcelTests.test_pending_cap_aba_discards_result_and_resets test_live_limit_runtime.LiveLimitRuntimeTests.test_cap_aba_while_excel_busy_discards_old_result test_raw_history_continuity",
+    "tests": 6,
+    "result": "PASS",
+    "seconds": 6.944,
+    "exit_code": 0,
+    "log": "/workspace/layer-validity-2026.11.12/reviewer-delta-tests.txt",
+    "log_sha256": "9db051e362198db5b370d1f9326634a4d67cdda183b5ecbed8de4abe4c80ecd9"
+  },
+  "parent_test_evidence_inspected": {
+    "path": "/workspace/layer-validity-2026.11.12/seventh-regressions.txt",
+    "result": "41 tests passed in 15.731 seconds",
+    "sha256": "7e770302106345b22f559386ac9125c1c54c672867c2b58805a178c0a577f0ed"
+  },
+  "other_checks": "git diff --check passed; clean exact target revision; no protected binary or prior evidence changed",
+  "pending": [
+    "Replacement full Windows CI 43148075487 for exact 2372c29 target with expected572 tests",
+    "Independent exact outer/inner ZIP hash/manifest/source/evidence review",
+    "Final publisher source/test-count/metadata/approval/notes pin review and mocked publication before dispatch"
+  ],
+  "unverified_limits": [
+    "Reviewer ran Linux synthetic/offline tests only",
+    "No real Excel COM",
+    "No actual equipment, sensor, PLC, lamp or long-run thermal stability testing"
+  ],
+  "equipment_application_approved": false,
+  "final_algorithm_approved": false,
+  "stable_release_approved": false,
+  "evaluation_distribution_approved": false,
+  "reviewer_mutations": "New external review evidence only; no source/API/equipment/dependency changes."
+}

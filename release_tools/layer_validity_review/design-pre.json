@@ -1,0 +1,97 @@
+{
+  "review_stage": "DESIGN_PRE",
+  "recorded_at_utc": "2026-11-12T02:48:55.270801+00:00",
+  "reviewer_task": "/root/sol_reviewer_layer_validity_nov12",
+  "actual_tool_route": "native collaboration.spawn_agent / followup_task",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_model_identity_independently_verified": false,
+  "repository": "/workspace/IR_feedback",
+  "base_revision": "ef414bd16788bdc3bf3d54999effb3c99abed3a1",
+  "working_tree_at_review": "clean",
+  "target_change": "Remove wall-clock validity/calculation expiry; authorize a delayed decision only while its exact observed row remains in the current job/layer window.",
+  "disposition": "PROCEED_WITH_REQUIRED_DESIGN_CONSTRAINTS; implementation and distribution approval remain pending CODE_POST and artifact review",
+  "read_required_docs": [
+    "AGENTS.md",
+    "CODEX_REVIEW_PROTOCOL.md",
+    "README.md",
+    "app/README.ko.md",
+    "docs/VALIDATION.ko.md"
+  ],
+  "inspected_source": [
+    "app/csv_source.py",
+    "app/windows_ui_adapter.py",
+    "app/native_helper.ps1",
+    "app/excel_calculation.py",
+    "app/excel_async.py",
+    "app/excel_workbook.py",
+    "app/session.py"
+  ],
+  "inspected_tests": [
+    "app/test_csv_observation_wait.py",
+    "app/test_excel_async.py"
+  ],
+  "findings": [
+    {
+      "id": "D1",
+      "severity": "required",
+      "location": "app/windows_ui_adapter.py:_apply_ir_power; app/native_helper.ps1:AssertCsvFile",
+      "finding": "Three-second snapshot/preflight gates, five-second row/file age gates and the two-second pre-edit headroom can skip every otherwise valid Save.",
+      "required_resolution": "Remove these upper-age/headroom gates completely. Do not replace them with 60 seconds or any other elapsed-time deadline. Preserve future-clock rejection (currently more than two seconds ahead), hashes/metadata and real job/layer proof immediately before IR edit and Save."
+    },
+    {
+      "id": "D2",
+      "severity": "required",
+      "location": "app/csv_source.py:MonitoringCsvReader.read; app/windows_ui_adapter.py:read_snapshot/_verify_csv_observation",
+      "finding": "Removing only the apply gates is insufficient because the CSV reader is_new and adapter observation_fresh/key visibility still expire after five seconds, invalidating pending Excel results.",
+      "required_resolution": "Remove upper-age validity from reader and snapshot admission. Preserve arrival/connection baseline, reset/replacement generation, complete-record token, valid measurement, nonfuture clock and current run/AUTO/layer-index-or-index+1 authority. Keep an admitted latest key actionable across 10/30/60/120-second delays until evidence changes, while baseline/historical keys never become new solely because age gates disappeared. Native current-job proof remains required for actual Save."
+    },
+    {
+      "id": "D3",
+      "severity": "required",
+      "location": "app/excel_async.py:AsyncWorkbookGroup._run; app/excel_workbook.py:WorkbookController._call",
+      "finding": "Eight-second normal/45-second gap process budgets and the controller step response deadline independently cause calculation expiry.",
+      "required_resolution": "Make calculation STEP/process elapsed time unbounded while the exact context remains eligible. Keep cancellation, EOF/process exit/protocol failures active, and preserve bounded startup, reset, retirement and native UI transport behavior. Explicitly represent an unbounded budget rather than silently treating None as the old default timeout."
+    },
+    {
+      "id": "D4",
+      "severity": "required",
+      "location": "app/excel_calculation.py:reset/watch; app/excel_async.py:reset/close/fence",
+      "finding": "Existing reset queues behind a busy operation. Once STEP has no deadline, a stale/hung old calculation can prevent all later control indefinitely.",
+      "required_resolution": "On observation/job/layer/settings/target/cap/image/topology invalidation during a pending calculation, discard its ticket, close/cancel the old group nonblocking, wait for positively verified retirement through the existing ownership fence, and recreate from the frozen prepared workbook. Never overlap unverified Excel ownership or reuse an obsolete result. Use existing recovery baseline/fresh-higher-layer semantics and leave no reset permanently queued behind an invalid unbounded step."
+    },
+    {
+      "id": "D5",
+      "severity": "required",
+      "location": "app/windows_ui_adapter.py:_apply_ir_power; app/native_helper.ps1:apply; app/session.py",
+      "finding": "User authorization removes time expiry, not duplicate/uncertain actuation barriers.",
+      "required_resolution": "Preserve one attempt/Save per row, edit/Save write-ahead markers, pending synchronous dispatch reconciliation, changed Sequence persistence/field audits, future clock and -1 rejection, and post-edit ambiguity barriers. A failure after edit may have started must not be retried as a harmless observation wait."
+    }
+  ],
+  "required_validation": [
+    "Parameterized 10/30/60/120-second old completed-row timestamps and equally old CSV mtime: already observed latest eligible same-job/layer row can Save exactly once; elapsed snapshot/preflight time alone cannot reject it.",
+    "Delayed asynchronous STEP at 10/30/60/120 simulated seconds returns accepted output in unchanged context without timeout or history reset; full adapter/session test reaches Save.",
+    "Existing preconnection row, resumed historical prefix, rewritten file generation and duplicate same-row Save remain blocked.",
+    "Newer complete/partial CSV append, same-size same-mtime hash rewrite, job start/stop/restart, proof replacement and production layer beyond index+1 discard old decision before any edit/Save.",
+    "Future row/file clocks, -1 invalid measurement, malformed/nonfinite/zero/missing inputs, manual Sequence changes, target/cap/image/control-epoch changes retain their barriers.",
+    "Pending unbounded calculation invalidated by context: old group cancellation is nonblocking; new group waits for verified retirement; late old ticket cannot Save; fresh baseline/higher layer automatically resumes.",
+    "A live unbounded calculation can still be cancelled; EOF/process exit recovers rather than spinning; retained init/reset deadlines still work; isolation retirement is verified before replacement.",
+    "Native offline/synthetic guard tests cover both pre-edit and pre-Save job/layer proof checks and delayed admissible timestamps, including proof change after edit leading to ambiguity and no retry.",
+    "Run relevant existing unit/contract tests and release artifact checks appropriate to the final diff; distinguish Linux mocks, Windows synthetic UI, Excel COM and real equipment evidence."
+  ],
+  "executed_tests": [],
+  "untested_limits": [
+    "No implementation diff exists yet",
+    "No Windows native helper execution",
+    "No Excel COM execution",
+    "No real M1/S3 sensors, PLC, lamp output or long-run thermal control testing"
+  ],
+  "holds": [
+    "CODE_POST review required after implementation",
+    "Exact release artifact/publisher review required before authorized distribution",
+    "Equipment application, algorithm/stability final approval remain HOLD"
+  ],
+  "mutations_performed": [
+    "Created this new external review evidence JSON only; no repository code, binaries, prior evidence, GitHub, Notion or equipment modified"
+  ]
+}

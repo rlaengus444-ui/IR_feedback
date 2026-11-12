@@ -1,0 +1,69 @@
+{
+  "phase": "RELEASE_CRITICAL_LOGIC_PRE_REVIEW",
+  "created_utc": "2026-11-12T03:14:28.802134+00:00",
+  "decision": "LOGIC_APPROVED_PENDING_FINAL_CONSTANTS_AND_ARTIFACT_REVIEW",
+  "publisher_logic_review_approved": true,
+  "publisher_execution_approved": false,
+  "evaluation_distribution_approved": false,
+  "equipment_application_approved": false,
+  "stable_release_approved": false,
+  "final_algorithm_approved": false,
+  "review_route": {
+    "actual": "native collaboration followup_task /root/sol_reviewer_layer_validity_nov12",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false
+  },
+  "source_base": "ba950eba558c8a2ee7aad43f933d6e15c6da8a0f",
+  "previous_approved_publisher_revision": "7e3f9799a4220e189ddbceadc6588ec23778f406",
+  "reviewed_files": {
+    "release_tools/publish_layer_validity.py": "2ac65aced8bd6b8a9913c8ea9d0380b0e490f4363d56a69e5360ff67d9355953",
+    ".github/workflows/publish-csv6.yml": "0d2c6fbaa0eb706b56cd4f7fe56604c6063c81a2cfc62b0ecb1fd4142f4a6c69"
+  },
+  "assessment": [
+    "Artifact/run/release IDs and byte counts remain zero; all digest/review pins remain UNAPPROVED, so publish refuses before API access. This record grants no execution or distribution approval.",
+    "Upload, provenance, exact package verification, review, tag and draft/prerelease functions are AST-identical to the previously independently approved Save-resume publisher. No rebuild, overwrite or clobber was added.",
+    "New evidence predicates require 571 passing Windows tests, delayed same-layer Save without expiry on both M1/S3 and native 10/30/60/120-second age admission, plus changed-job post-edit simulated guard rejection with zero actual UI actions.",
+    "Existing four Save confirmation cases, delayed reconciliation/no replay, sticky process exit and 250/600/1500ms short-delay requirements remain enforced.",
+    "All thirteen non-Excel CI outcomes must succeed, the only Excel failure must be COM unregistered, and raw false/pending readiness holds must remain unmodified.",
+    "Workflow is manual only, uses immutable workflow SHA plus exact reviewed source ba950eb, preserves checkout bytes and uses the official job token.",
+    "Parent plans to create and independently verify the exact version tag after artifact approval and before publisher execution. Final review must inspect this tag, empty draft, exact notes, final constants and uploaded digests."
+  ],
+  "unresolved_findings": [],
+  "tests": {
+    "command": "python /workspace/layer-validity-2026.11.12/publisher-logic-tests.py",
+    "result": "12 tests passed",
+    "seconds": 0.04,
+    "exit_code": 0,
+    "synthetic_predicate_fixtures_only": true,
+    "actual_windows_or_artifact_validation_claimed": false,
+    "api_and_uploads": "Never called; placeholder publication is tested with API/subprocess strict failure mocks.",
+    "test_source": "/workspace/layer-validity-2026.11.12/publisher-logic-tests.py",
+    "test_source_sha256": "8b64c4dff066e26ee86de2fbd0a2fb7947a739c74c86e85257706be4583d2892",
+    "log": "/workspace/layer-validity-2026.11.12/publisher-logic-tests.txt",
+    "log_sha256": "ad913b3240a7d16d6d232d95fba0d4865d07c6bc86a79e08d63f826e41b49e0b",
+    "coverage": [
+      "Valid new synthetic schema",
+      "Both delayed Save flags required",
+      "All four native delay checks required",
+      "Post-edit job guard and zero actual action predicates",
+      "Raw holds remain false/pending",
+      "Non-Excel failures/other Excel failure reject",
+      "Old/failing test report reject",
+      "Save confirmation timing/count/reconciliation/sticky cases",
+      "Source and approval scope exactness",
+      "Placeholders refuse before API",
+      "Previous publisher function AST identity",
+      "Manual immutable no-rebuild workflow"
+    ]
+  },
+  "remaining": [
+    "Inspect actual final Windows artifact/evidence and exact ZIP/outer hashes",
+    "Populate final artifact/run/size/SHA/release/review/notes pins after actual artifact approval",
+    "Review final protected artifact approval and release notes bytes",
+    "Independently verify exact existing version tag and empty draft release target/prerelease/notes",
+    "Re-review and offline-test populated publisher against actual immutable evidence before workflow dispatch",
+    "After publication verify public asset metadata and complete anonymous ZIP GET size/hash before marking delivery complete or updating Notion"
+  ],
+  "actions_performed": "Read-only source/evidence inspection and offline temporary synthetic predicate checks; no repository source edits, API requests, uploads, equipment actuation or dependency installs."
+}

@@ -1,0 +1,113 @@
+{
+  "schema": "exact-layer-validity-publisher-review/1",
+  "created_utc": "2026-11-12T03:48:32.241734+00:00",
+  "decision": "APPROVED_TO_EXECUTE_EXACT_REVIEWED_EVALUATION_PUBLISHER",
+  "publisher_workflow_execution_approved": true,
+  "evaluation_distribution_approved": true,
+  "stable_release_approved": false,
+  "final_algorithm_approved": false,
+  "equipment_application_approved": false,
+  "review_route": {
+    "actual_route": "native collaboration subagent /root/sol_reviewer_layer_validity_nov12",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false,
+    "actual_independent_final_publisher_review_completed": true,
+    "cli_authentication_recovery_asserted": false
+  },
+  "scope": {
+    "worktree": "/workspace/IR_feedback_layer_delivery",
+    "reviewed_files": [
+      {
+        "path": "release_tools/publish_layer_validity.py",
+        "sha256": "6e242608226ecbd4a31b34ce072d24b0c564b5eb6a17bb6fd945d65e8c84add8",
+        "bytes": 9744
+      },
+      {
+        "path": ".github/workflows/publish-csv6.yml",
+        "sha256": "2f28843e5e0d670412e87683df716d87aba991fa8193a3068371632d656e9526",
+        "bytes": 963
+      },
+      {
+        "path": "release_tools/layer_validity_review/release-review-layer-validity-final.json",
+        "sha256": "c21a868c65749640b112cc995dfb9756e73ca16395f3b58b7574adda47488e63",
+        "bytes": 14832
+      },
+      {
+        "path": "release_tools/layer_validity_review/release-notes.txt",
+        "sha256": "50d3fa0e00b31418b0bbafccadaabb689e0444fb40922a9cef6b38bb70c9469e",
+        "bytes": 1853
+      }
+    ],
+    "protected_approval_copy_identical": true,
+    "source_worktree": "/workspace/IR_feedback",
+    "source_revision": "2372c29602a9538f78593699c5e34c0485373524",
+    "runtime_or_application_source_changed_by_reviewer": false,
+    "rebuild_permitted": false,
+    "real_upload_or_release_mutation_by_reviewer": false,
+    "delivery_commit_status": "Publisher/workflow/protected evidence reviewed as exact frozen bytes before parent commit; execution must use these same bytes."
+  },
+  "approved_delivery": {
+    "repository": "rlaengus444-ui/IR_feedback",
+    "source": "2372c29602a9538f78593699c5e34c0485373524",
+    "version": "2026.11.12-layer-validity.1",
+    "existing_draft_release_id": 442468320,
+    "run_id": 43148075487,
+    "api_artifact_id": 13913375815,
+    "outer_bytes": 34979579,
+    "outer_sha256": "b47934bf49e693260a4c438fd1b0ffcb0b132e298381aefd4a88ccb08b3fd307",
+    "filename": "IRFeedback-2026.11.12-layer-validity.1.zip",
+    "bytes": 35412522,
+    "sha256": "2ab632bb0ee4405317223e62458fe1e3043b2c206fbcc08125f24493a94299f0",
+    "assets": [
+      "IRFeedback-2026.11.12-layer-validity.1.zip",
+      "SHA256.txt",
+      "release-review-layer-validity-final.json"
+    ],
+    "draft_then_prerelease": true,
+    "make_latest": "false"
+  },
+  "independent_readonly_github": {
+    "route": "GitHub connector github_fetch GET only",
+    "draft_id_target_prerelease_and_empty_assets_verified": true,
+    "exact_notes_body_verified": true,
+    "precreated_version_tag_direct_exact_source_verified": true,
+    "record": "/workspace/layer-validity-2026.11.12/publisher-final-readonly-github.json",
+    "record_sha256": "da40f699ea23055ee28885735521c95d694a3be3f16d46fdd5d6ce630c91f044",
+    "artifact_metadata_previously_read_independently": "/workspace/layer-validity-2026.11.12/reviewer-final-github-metadata.json",
+    "artifact_metadata_sha256": "a1dc7b52647d757aafb76f7972d9af0b1abc782c03f7a602af57dbcd0f312638"
+  },
+  "executed_tests": {
+    "command": "python /workspace/layer-validity-2026.11.12/publisher-final-tests.py",
+    "tests": 12,
+    "seconds": 4.111,
+    "exit_code": 0,
+    "result": "OK",
+    "source": "/workspace/layer-validity-2026.11.12/publisher-final-tests.py",
+    "source_sha256": "d118031baf8ecc0e203bcc4f1e91248ccf815d411037e40bc8aab202dc906ec3",
+    "log": "/workspace/layer-validity-2026.11.12/publisher-final-tests.txt",
+    "log_sha256": "e56590e582587d33f7044908af198a8f7bcd7f361a794ae776e310a646fa47fc",
+    "positive": "Actual immutable final archive, independently fetched real artifact/draft/tag metadata, protected review/notes, complete real package verifier; strict mock API/upload records exactly one three-asset upload, one prerelease PATCH with make_latest=false and three exact tag checks.",
+    "negative": "Changed approval, wrong source metadata, changed downloaded archive, wrong draft target, existing unexpected asset and wrong initial tag refuse before upload. Uploaded digest/body or tag change refuses public PATCH.",
+    "no_real_api_or_upload_in_tests": true,
+    "prior_logic_tests": "/workspace/layer-validity-2026.11.12/publisher-logic-review.json",
+    "no_runtime_or_unit_suite_repeated": true,
+    "hashes_unchanged_during_review": true
+  },
+  "unresolved_findings": [],
+  "execution_requirements": [
+    "Commit and dispatch the exact reviewed publisher/workflow/protected approval/notes bytes through an immutable delivery ref; material changes require re-review.",
+    "Preserve all provenance, source/ZIP/manifest/notes/approval, empty draft, exact tag and uploaded asset size/digest guards; no rebuild, clobber or bypass.",
+    "The exact precreated version tag must remain at2372c29602a9538f78593699c5e34c0485373524. Stop and investigate any changed or unverified tag.",
+    "If an API/upload/guard step fails, preserve and inspect state; this approval does not authorize overwriting unexpected draft assets or retrying a partially published mutation blindly.",
+    "After publication independently verify public asset metadata and download the complete anonymous public ZIP, matching35412522bytes and SHA2562ab632bb0ee4405317223e62458fe1e3043b2c206fbcc08125f24493a94299f0 before marking delivery complete or updating authorized team Notion content.",
+    "Preserve existing Notion attachments/images and established evaluation/physical-approval scope when carrying out the already authorized update."
+  ],
+  "limits": [
+    "Reviewer performed only read-only GitHub GETs and offline mocked publication. Actual workflow token/upload execution remains to be observed.",
+    "Artifact approval is the separately protected exact evaluation record; raw readiness remains false/pending and Excel COM is unregistered.",
+    "Real sensor/PLC/lamp output, actual BJT, Excel COM, long-run machine operation, final algorithm and stable-release approval remain HOLD.",
+    "Native aged-metadata guards cover10/30/60/120seconds; actual delayed-save injection is10.1seconds. Save-handler long delay is clamped to6seconds."
+  ],
+  "reviewer_actions": "Read-only inspection/GETs, temporary isolated mocked publication checks, and this new external review evidence only; no repository source edits, uploads, equipment action or dependency installs."
+}

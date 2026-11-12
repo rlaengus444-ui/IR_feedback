@@ -1,0 +1,279 @@
+{
+  "schema": "exact-layer-validity-evaluation-artifact-review/1",
+  "created_utc": "2026-11-12T03:43:36.099652+00:00",
+  "decision": "APPROVED_FOR_EXACT_EVALUATION_DISTRIBUTION_ONLY",
+  "evaluation_distribution_approved": true,
+  "publisher_workflow_execution_approved": false,
+  "stable_release_approved": false,
+  "final_algorithm_approved": false,
+  "equipment_application_approved": false,
+  "review_route": {
+    "actual": "native collaboration subagent /root/sol_reviewer_layer_validity_nov12; actual design, independent source/delta, and exact artifact review completed",
+    "requested_model": "gpt-6.1-sol",
+    "requested_reasoning_effort": "max",
+    "provider_model_identity_independently_attested": false,
+    "actual_design_source_and_artifact_review_completed": true,
+    "cli_authentication_recovery_asserted": false,
+    "independent_readonly_provenance_route": "GitHub connector github_fetch GET: workflow run, artifact collection and workflow jobs",
+    "no_real_publish_upload_or_equipment_action_performed": true
+  },
+  "source": {
+    "repository": "rlaengus444-ui/IR_feedback",
+    "commit": "2372c29602a9538f78593699c5e34c0485373524",
+    "working_tree_clean": true,
+    "unresolved_source_findings": [],
+    "base_revision": "ef414bd16788bdc3bf3d54999effb3c99abed3a1",
+    "prior_reviewed_revision": "ba950eba558c8a2ee7aad43f933d6e15c6da8a0f",
+    "runtime_scope": "CSV/adapter/native upper-age gates and Excel STEP/process expiry removal; invalidated asynchronous calculation retirement; read-only offline display authority flags",
+    "protected_binaries_and_prior_evidence_preserved": true
+  },
+  "approved_artifact": {
+    "filename": "IRFeedback-2026.11.12-layer-validity.1.zip",
+    "version": "2026.11.12-layer-validity.1",
+    "bytes": 35412522,
+    "sha256": "2ab632bb0ee4405317223e62458fe1e3043b2c206fbcc08125f24493a94299f0",
+    "rebuild_permitted": false,
+    "any_other_artifact_approved": false
+  },
+  "ci_artifact": {
+    "workflow_run": 43148075487,
+    "workflow_run_url": "https://github.com/rlaengus444-ui/IR_feedback/actions/runs/43148075487",
+    "api_artifact_id_parent_supplied": 13913375815,
+    "api_artifact_id_independently_verified": true,
+    "name": "slice-candidate-2372c29602a9538f78593699c5e34c0485373524",
+    "outer_bytes": 34979579,
+    "outer_sha256": "b47934bf49e693260a4c438fd1b0ffcb0b132e298381aefd4a88ccb08b3fd307",
+    "repository_id": 1434868115,
+    "head_repository_id": 1434868115,
+    "expired_at_review": false,
+    "run_attempt": 1,
+    "workflow_head_sha_independently_verified": "2372c29602a9538f78593699c5e34c0485373524",
+    "raw_overall_conclusion": "failure",
+    "overall_failure_reason": "Final readiness enforcement retains Excel COM unavailable failure and raw evaluation holds; all thirteen other raw outcomes passed."
+  },
+  "package_verification": {
+    "command": "python release_tools/verify_package.py /workspace/layer-validity-2026.11.12/replacement-ci/IRFeedback-2026.11.12-layer-validity.1.zip 2026.11.12-layer-validity.1",
+    "result": "PASS",
+    "unsafe_or_duplicate_or_colliding_paths": false,
+    "outer_23_file_crc_and_extracted_bytes_exact": true,
+    "manifest_all_3663_hashes_checked": true,
+    "all_53_required_source_entries_match_clean_source": true,
+    "core_runtime_launcher_entries_identical_to_protected_csv6_base": 3490,
+    "bridge_sha256": "939c65d211ff9d144e956eb7b2bae26c4cfab80437c2f0a6c60efa70f4c1b215",
+    "launcher_sha256": "057156eb45b8f2f14f08f926ba50c9491cbeddb80a6a6cf6ed11f19dc24db196",
+    "packaged_python_reported": "3.14.5 Windows AMD64",
+    "packaged_pillow_reported": "13.0.0",
+    "pillow_download_sha256": "f7cbb7a64e7ec664775195e4f81923bc8a93d9451b963f844e59118f63147a7a",
+    "runtime_source_sha256": {
+      "app/native_helper.ps1": "ba8d45748872182b61627285338efb44fc2400557ead387ad668ad864cd0c0c4",
+      "app/windows_ui_adapter.py": "5bc8fbf6a88d7f03701c487b93986dbb2e5a73022b388bb405dd43247392db1f",
+      "app/csv_source.py": "2059aec43e6045434361b816f644781e64a6f032083c96708e08bd022707b2af",
+      "app/excel_async.py": "6a955853a712401bd8bd2cf37663de771d0045d60a1c146048e2ca9c644393e7",
+      "app/excel_workbook.py": "05a8f20f2b57a47fb1f3a7a7dce6ef77696284b6cd6a30b26c3a0aad57c89830",
+      "app/excel_calculation.py": "e21b11319c1961f51a6d0d79405ad8545bfe1818a19ee0fa3538a16f064a0109",
+      "app/resilient_adapter.py": "fd9995fc6574d5437623620c002612a5b89cab142f5eed3d67d36efc9e0a9f92"
+    }
+  },
+  "validation": {
+    "full_windows_unit_suite": {
+      "tests": 572,
+      "seconds": 121.933,
+      "result": "OK",
+      "actual_artifact_file": "tests.txt"
+    },
+    "raw_non_excel_outcomes": {
+      "build": "success",
+      "tests": "success",
+      "smoke": "success",
+      "bridge": "success",
+      "csv_guard": "success",
+      "native_discovery": "success",
+      "slice_perf": "success",
+      "settings_recovery": "success",
+      "background": "success",
+      "hidden_recovery": "success",
+      "hidden_session": "success",
+      "job_resume": "success",
+      "reverify": "success"
+    },
+    "native_same_layer_delayed_save": {
+      "M1": {
+        "injected_delay_seconds": 10.1,
+        "apply_total_seconds": 10.828867300000184,
+        "edit_marker": true,
+        "save_marker": true,
+        "success": true
+      },
+      "S3": {
+        "injected_delay_seconds": 10.1,
+        "apply_total_seconds": 10.838707800000066,
+        "edit_marker": true,
+        "save_marker": true,
+        "success": true
+      },
+      "same_row_duplicate_save_blocked": true,
+      "scope": "Owned synthetic full-profile Windows fixtures and temporary CSV/recipe files through production session/resilient/native stack."
+    },
+    "native_guard": {
+      "checks": 36,
+      "age_windows_seconds": [
+        10,
+        30,
+        60,
+        120
+      ],
+      "age_windows_are_aged_metadata_not_120_second_real_waits": true,
+      "future_clock_rejected": true,
+      "missing_job_proof_rejected": true,
+      "changed_job_stop_layer_advance_incomplete_log_rejected": true,
+      "same_size_preserved_mtime_hash_rewrite_rejected": true,
+      "partial_complete_csv_append_old_token_rejected": true,
+      "post_edit_changed_job_composition": {
+        "used_production_guard": true,
+        "save_marker": false,
+        "observation_wait": true,
+        "ui_edit_simulated": true,
+        "edit_marker": true,
+        "actual_ui_actions": 0
+      },
+      "post_edit_ui_edit_is_simulated": true,
+      "actual_ui_actions_in_composition": 0,
+      "hardware_actions": 0,
+      "two_pass_32mib_ms": 67.2148
+    },
+    "job_pid_and_save_continuity": {
+      "machines": [
+        "M1",
+        "S3"
+      ],
+      "original_and_replacement_pid_differ": true,
+      "reader_and_watermarks_preserved": true,
+      "new_job_and_pid_automatically_resumed": true,
+      "pre_edit_and_pre_save_changed_job_rejected": true,
+      "uncertain_edit_sticky": true,
+      "workers_retired": true,
+      "four_save_confirmation_cases_passed": true,
+      "short_delay_ms": [
+        250,
+        600,
+        1500
+      ],
+      "short_delay_save_counts": [
+        1,
+        2,
+        3
+      ],
+      "long_delay_requested_ms": 6500,
+      "fixture_actual_long_delay_ms": 6000,
+      "delayed_save_automatic_reconciliation_no_old_replay_fresh_layer_resume": true,
+      "exit_without_receipt_sticky": true
+    },
+    "background_and_hidden_recovery": {
+      "background_M1_S3_normal_minimized_dirty_paused_cases_passed": true,
+      "full_profile_M1_73_and_S3_74_field_sessions_passed": true,
+      "no_duplicate_or_old_row_saves": true,
+      "chart_history_preserved": true,
+      "non_ir_settings_unchanged": true,
+      "process_table_accesses": 0,
+      "fixture_foreground_maintained": true
+    },
+    "other_checks": "Launcher opened and closed normally; downloaded-file DLL loading; bounded native inventory closed-failure cases; settings recovery; image analysis parity/performance all passed in this exact Windows run.",
+    "independent_local_tests": "Prior CODE_POST:83/84 targeted Linux tests passed with one proven baseline Windows-only platform assumption; delta6/6 passed; direct cap ABA/unverified-retirement/higher-row checks passed. Full Windows suite above resolves the platform-specific test."
+  },
+  "raw_holds_preserved": {
+    "automated_checks_passed": false,
+    "release_ready": false,
+    "device_application_approved": false,
+    "final_sol_review": "pending",
+    "excel_com_tested": false,
+    "excel_failure_reason": "Excel COM is not registered",
+    "raw_files_rewritten": false
+  },
+  "resolved_findings": [
+    {
+      "id": "W1",
+      "resolution": "Genuine replacement-init/transport failures clear context-restart state and retain fault backoff/baseline rules."
+    },
+    {
+      "id": "W2",
+      "resolution": "Invalidated observation/layer floor prevents same-row target/cap ABA resubmission; only distinct higher authorized arrivals enter verified replacement directly."
+    },
+    {
+      "id": "CI-first-attempt",
+      "resolution": "Five obsolete expiry/reset/display assertions corrected, offline display grants no control/arrival authority, and replacement full572-test Windows run passes."
+    }
+  ],
+  "notes": {
+    "path": "release-notes.txt",
+    "bytes": 1853,
+    "sha256": "50d3fa0e00b31418b0bbafccadaabb689e0444fb40922a9cef6b38bb70c9469e",
+    "reviewed_scope": "Evaluation only; elapsed expiry removal and preserved evidence/limits described; real Excel COM/equipment/long-run/final algorithm/stable approval explicitly not claimed."
+  },
+  "limitations_and_holds": [
+    "No real Excel desktop COM execution; formula equivalence, slow real COM completion and long workbook sessions remain unvalidated for this release.",
+    "No real BJT application/device, sensor, PLC, lamp output, long machine run or thermal stability validation. Final algorithm, equipment application and stable release approval remain HOLD.",
+    "A normal-looking old sensor reading may be undetectable from CSV alone; job/layer/hash proof is not independent physical sensor-success or actual lamp-output proof.",
+    "Read/hash/job/UI checks are bounded sampled evidence and do not create an atomic physical device transaction.",
+    "10/30/60/120-second native guard checks use aged timestamps; actual native delayed-save injection is10.1 seconds. STEP 10/30/60/120 waits and cancellation are tested with synthetic clocks/controllers, not real Excel COM.",
+    "Background tests use owned Windows synthetic targets; actual production hidden/locked/sleep/permission-mismatch behavior is not established.",
+    "The earlier ba950eb artifact with five failed unit tests remains unapproved; this approval applies only to the exact2372c29 ZIP/outer digest above."
+  ],
+  "execution_requirements": [
+    "Retain this exact approval, release notes and raw false/pending evidence; do not rebuild or substitute any other ZIP.",
+    "Finalize exact publisher pins and independently review/mock-test its metadata, draft, tag, notes and uploaded size/digest checks before dispatch.",
+    "Create/verify the exact version tag at2372c29602a9538f78593699c5e34c0485373524 and verify the intended draft is prerelease with exact notes and no unexpected assets.",
+    "Publish as prerelease with make_latest=false only. This artifact approval does not approve stable or equipment operation.",
+    "After publication verify public asset metadata and complete anonymous public ZIP download size/SHA256 before successful delivery or authorized Notion latest update."
+  ],
+  "independent_evidence_records": {
+    "design-pre.json": {
+      "sha256": "e277fd59b8ae6b0334c058fb4546bfa8d0553c23f68359acbbbc30051206db5a"
+    },
+    "code-wip-review.json": {
+      "sha256": "4744715ae9ed6fbd1b75b1b40136c7d16617e2453d3571642f2d4c29612d272e"
+    },
+    "code-post.json": {
+      "sha256": "9ac796c05e087a7d66994169860c67e9a994ed01a810d7f9ed3ee556dc9e2527"
+    },
+    "offline-display-design.json": {
+      "sha256": "456fb0b61c3388715d173ecaa555949b61a3ca42ddc766a11f13ea79a20ba4d4"
+    },
+    "code-post-delta-2372c29.json": {
+      "sha256": "f0dc83d58622a1064fb3a30f28e2a20ccb9938b5a325ea2a2c78a51e385b341a"
+    },
+    "reviewer-final-github-metadata.json": {
+      "sha256": "a1dc7b52647d757aafb76f7972d9af0b1abc782c03f7a602af57dbcd0f312638"
+    },
+    "reviewer-artifact-verification.json": {
+      "sha256": "fcc30f48b5478231908f264e2b48cec99e635ad2487d4967155f64bb71cef6fb"
+    },
+    "reviewer-delta-tests.txt": {
+      "sha256": "9db051e362198db5b370d1f9326634a4d67cdda183b5ecbed8de4abe4c80ecd9"
+    }
+  },
+  "raw_evidence_sha256": {
+    "SHA256.txt": "198a9319716e56d3367143bcef679db114405da60233a9939ca392d8d7a91ad0",
+    "background.json": "f8db453271211b631a8ad4c5242ba822740559d8dce181613970db42af78d24d",
+    "background.txt": "f8db453271211b631a8ad4c5242ba822740559d8dce181613970db42af78d24d",
+    "bridge.json": "fdcaf77cf99d3b8081fa9fd57288034c5fbddb25f880eb34abc2602d1483574e",
+    "candidate.json": "27e1102a30f406755a5a2ffee2b429c7a7469a1501aa802c8fb85b9456007cf4",
+    "csv-guard.json": "b286ee94479c7a6a82b7d803587642cb5f8f0732ace07abe8dcfbc4ce7e35b22",
+    "discovery.json": "623d11c4cead8faf90404c76855884492b19817b58bd7cbfc0b396e9cfd63a8e",
+    "discovery.txt": "623d11c4cead8faf90404c76855884492b19817b58bd7cbfc0b396e9cfd63a8e",
+    "excel.json": "054eefa0fb77e418524a5d8b2d787215c0ca4c1cc46decd733e7ce0d72325a03",
+    "hidden-recovery.json": "6b3f9cc21ae68dc266ea59c3e3c37f28e10183c75e6e8552b27ff25c2ae44b91",
+    "hidden-recovery.txt": "44a32ffd489e14e733455823aea44b5658ed3cb7b06e4557e6304ded094abc02",
+    "hidden-session.json": "cdf9f518c4b1f1a4746118e9f6988804d5a5959c8662c8416268e5f1849e6f2d",
+    "hidden-session.txt": "db2f07495dbadacca851006b44fd374e37f7f08bb615f1ae4be25687f1a7c910",
+    "job-resume.json": "4e18cae4dd5a1fbc3c352926706f5e86b246dc056c7b537f1c9744e199b4a648",
+    "job-resume.txt": "c0313cfc3a7a9d3fe9c8769769a4e271bfbc9856b3cbbe54c1b1d2cf9504f35b",
+    "readiness.json": "0905ff36ff59e2a80d3160486c2569ee0fc9b1b7ce132e9e6470ccf5dad77bac",
+    "settings-recovery.json": "0b3fb5195afb7c243b2adb9c02e900357fe03f14a58145d3018ee73136d01be7",
+    "settings-recovery.txt": "0b3fb5195afb7c243b2adb9c02e900357fe03f14a58145d3018ee73136d01be7",
+    "slice-performance.json": "f0d2d57daf8ba4fedc8b0502e7145179c76f354638df781e87f68fad2bc0718b",
+    "slice-performance.txt": "f0d2d57daf8ba4fedc8b0502e7145179c76f354638df781e87f68fad2bc0718b",
+    "smoke.txt": "160e5e001f98960056d8d71c9908d0c44bb7b5e02f277cd865f9a9a63f54e58e",
+    "tests.txt": "7e3f03bc527361aa084923b5cb7d1e6e3b8a7301b0cb3dff8f4ec5e94c945833"
+  },
+  "reviewer_actions": "Read-only GitHub GETs, local archive/hash/source inspection and protected review evidence creation only; no uploads, repository source changes, equipment writes or dependency installs."
+}

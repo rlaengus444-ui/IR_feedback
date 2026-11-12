@@ -1,0 +1,86 @@
+{
+  "review_stage": "CODE_POST",
+  "recorded_at_utc": "2026-11-12T03:08:13.472773+00:00",
+  "actual_tool_route": "native collaboration.spawn_agent, then followup_task; actual independent final response delivered",
+  "reviewer_task": "/root/sol_reviewer_layer_validity_nov12",
+  "requested_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "max",
+  "provider_model_identity_independently_verified": false,
+  "base_revision": "ef414bd16788bdc3bf3d54999effb3c99abed3a1",
+  "target_revision": "ba950eba558c8a2ee7aad43f933d6e15c6da8a0f",
+  "working_tree": "clean at final review",
+  "disposition": "PASS_SCOPED_CODE_REVIEW_FOR_EVALUATION_CANDIDATE; artifact and publisher review pending",
+  "blocking_findings": [],
+  "prior_findings_resolved": [
+    {
+      "id": "W1",
+      "resolution": "Timeout/WorkbookTransportError clears context-restart, resume-context and restart-floor flags. Replacement-init-fault regression verifies ordinary backoff and fresh-baseline requirements."
+    },
+    {
+      "id": "W2",
+      "resolution": "Restart floor preserves invalidated CSV generation/run/control epoch, observation key and layer. Only a distinct higher arrival-authorized row with matching context can enter replacement directly. Same-row target/cap ABA remains blocked."
+    }
+  ],
+  "reviewed_behavior": [
+    "Removed five-second row age admission in MonitoringCsvReader and upper-age snapshot/verification gates; retained connection baseline, arrived-key authority, generation reset, measurement validation and future-clock rejection.",
+    "Current snapshot authority now requires complete token, valid measurement, AUTO and layer-index/index+1 window; observation_fresh remains false for baseline-only historical rows.",
+    "Removed three-second snapshot and preflight age vetoes plus native five-second file/row age and two-second edit headroom; original native two-pass CSV hash/metadata and JobLog proof calls remain immediately before edit and Save.",
+    "Workbook STEP response and asynchronous process have no elapsed-time deadline. Init/reset/native transport deadlines, cancellation, EOF/protocol/transport error behavior remain.",
+    "Superseded busy calculations retire nonblocking, retain prepared workbook bytes and require positive retirement verification and the existing ownership fence before replacement. Old result tickets cannot be accepted.",
+    "Sequence persisted/all-field audits, bounds/change limits, attempt watermark, durable edit/Save markers, pending Save reconciliation and ambiguous-write barriers remain.",
+    "New version, documentation, package source mapping and Windows delayed/native guard probes were inspected. No protected dist/launcher/bridge binary or prior evidence changed."
+  ],
+  "independent_executed_tests": [
+    {
+      "command": "PYTHONPATH=app python -m unittest -v test_layer_validity test_excel_calculation test_excel_session_async test_excel_retirement test_excel_transport test_windows_ui_adapter",
+      "tests_run": 84,
+      "passed": 83,
+      "failures": 1,
+      "errors": 0,
+      "elapsed_seconds": 7.643,
+      "result": "All eight new regressions and relevant Excel/adapter behavior passed. One pre-existing platform-dependent test fails on Linux before fake Popen due to Windows-only transport guard.",
+      "output_location": "Native exec tool transcript chunks fc4703 and 6adcbd; platform failure independently captured in reviewer-platform-baseline.txt."
+    },
+    {
+      "command": "Differential isolated execution of test_hung_helper_is_bounded_and_only_own_helper_is_killed against frozen adapter and baseline ef414bd adapter loaded from git show",
+      "result": "Identical Linux-only failure in baseline and candidate; both raise Windows-only AdapterError before Popen (0 calls). Not caused by candidate changes.",
+      "evidence": "/workspace/layer-validity-2026.11.12/reviewer-platform-baseline.txt"
+    },
+    {
+      "command": "Independent isolated calculation fixture checks: unverified retirement, cap ABA and higher-row resume",
+      "result": "PASS: unverified retirement blocks replacement; cap ABA cannot resubmit same row; next higher newly arrived row resumes.",
+      "evidence": "/workspace/layer-validity-2026.11.12/reviewer-additional-cancellation.txt"
+    },
+    {
+      "command": "git diff --check ef414bd16788bdc3bf3d54999effb3c99abed3a1 HEAD; git status --porcelain; protected-path diff",
+      "result": "PASS; clean tree and no dist/IRFeedback.exe/UiaBridge.dll changes."
+    }
+  ],
+  "parent_test_evidence_inspected": [
+    {
+      "path": "/workspace/layer-validity-2026.11.12/fourth-focused.txt",
+      "result": "93 tests passed in 26.464 seconds"
+    },
+    {
+      "path": "/workspace/layer-validity-2026.11.12/fifth-focused.txt",
+      "result": "82 tests passed in 7.413 seconds"
+    }
+  ],
+  "test_counts_are_overlapping_not_additive": true,
+  "pending_validation": [
+    "Windows workflow 43145818010 for immutable ba950eb ref and exact candidate artifact must be inspected after completion.",
+    "Actual Windows native delayed Save and 10/30/60/120 aged-token guard output are pending; reviewer has inspected probe code only.",
+    "Exact ZIP/manifest/source/sha256 and evaluation publisher release flags/evidence review remain mandatory."
+  ],
+  "untested_limits": [
+    "No actual Windows execution by this reviewer",
+    "No real Excel COM validation",
+    "No real M1/S3 device, sensor, PLC, lamp output or long-run stability testing"
+  ],
+  "holds": [
+    "Equipment application remains HOLD",
+    "Algorithm/stability final approval remains HOLD",
+    "This code review alone does not authorize stable release or bypass artifact/publisher review"
+  ],
+  "source_or_external_mutations": "None; reviewer created only new external review evidence files."
+}
