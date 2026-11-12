@@ -491,13 +491,13 @@ class WindowsUiAdapter:
                 if source.is_new:
                     self._new_sample_key = sample.key
             age = time.time() - sample.finished.timestamp() if sample and sample.finished is not None else None
-            fresh = age is not None and -2 <= age <= MonitoringCsvReader.MAX_NEW_AGE_SECONDS
-            key = sample.key if sample and source.token and (
-                sample.key == self._baseline_sample_key or (sample.key == self._new_sample_key and fresh)) else None
-            expired_key = (sample.key if sample and source.token and key is None
-                and getattr(sample, 'measurement_valid', True) and age is not None
-                and age > MonitoringCsvReader.MAX_NEW_AGE_SECONDS
-                and self._new_sample_key is not None and sample.key == self._new_sample_key else None)
+            fresh = bool(age is not None and age >= -2 and source.token is not None
+                and getattr(sample, 'measurement_valid', True) and source.context.state == 'AUTO'
+                and source.context.current_layer is not None
+                and sample.layer_index <= source.context.current_layer <= sample.layer_index + 1)
+            key = sample.key if sample and source.token and fresh and (
+                sample.key == self._baseline_sample_key or sample.key == self._new_sample_key) else None
+            expired_key = None  # Decisions are invalidated by evidence changes, not elapsed time.
             details = source.details
             if self._mode == "control" and machine_state == "unknown":
                 details += " 원본 UI 응답 대기 · CSV 조회만 계속하며 IR 적용은 정지합니다."
@@ -524,7 +524,7 @@ class WindowsUiAdapter:
                 recoating_finished=getattr(sample, 'recoating_finished', None),
                 slice_lineage=getattr(sample, 'slice_lineage', ''),
                 csv_generation=getattr(sample, 'source_generation', ''),
-                observation_fresh=bool(fresh), measurement_valid=getattr(sample, 'measurement_valid', True),
+                observation_fresh=bool(fresh and sample and sample.key == self._new_sample_key), measurement_valid=getattr(sample, 'measurement_valid', True),
                 invalid_reason=getattr(sample, 'invalid_reason', ''), actual_target=target,
                 expired_observation_key=expired_key,
                 save_reconciliation=self._reconciled_save if ready else None)
@@ -560,8 +560,6 @@ class WindowsUiAdapter:
         age = time.time() - sample.finished.timestamp()
         if sample.key != self._new_sample_key:
             raise ControlUnavailable("기존 기준 관찰은 새 제어 명령에 재사용하지 않습니다.")
-        if age > MonitoringCsvReader.MAX_NEW_AGE_SECONDS:
-            raise ObservationExpired("CSV 유효 시간이 지나 이번 계산을 폐기합니다. 다음 새 층에서 자동으로 이어갑니다.")
         if age < -2:
             raise ObservationSuspended("CSV 시각이 현재 시각보다 앞서 있어 새 측정을 기다립니다.")
         return source.token
@@ -595,7 +593,6 @@ class WindowsUiAdapter:
                 raise ControlSuspended(self._control_hold_reason)
             if snapshot is None or snapshot.observation_key != expected_observation_key or observation is None:
                 raise ControlUnavailable("최신 T_recoating 관측값을 다시 확인해야 합니다.")
-            snapshot_elapsed = time.monotonic() - self._last_read
             if self._last_applied_key == expected_observation_key:
                 raise ControlUnavailable("같은 CSV 행에는 IR을 두 번 저장하지 않습니다.")
             if not snapshot.control_available or self._layer_hint is None or not self._layer_hint - 1 <= observation["row_index"] <= self._layer_hint:
@@ -614,10 +611,7 @@ class WindowsUiAdapter:
         if current is None or expected_number is None or not math.isclose(current.power, expected_number, rel_tol=0, abs_tol=1e-9) or current.non_ir != persisted.non_ir:
             raise ControlSuspended("기존 IR 또는 다른 저장 설정이 변경되어 자동 적용을 중단했습니다.")
         common = {"pid": target.pid, "hwnd": target.hwnd, "machine": target.machine, "image_path": target.image_path, "_generation": generation}
-        guarded_at = time.monotonic()
         csv_token = self._verify_csv_observation(expected_observation_key)
-        if snapshot_elapsed > 3:
-            raise ObservationExpired("관측 후 적용 시간이 지나 이번 계산을 폐기합니다. 다음 새 층에서 자동으로 이어갑니다.")
         fresh = self._request(dict(common, operation="verify_control", handles=handles,
                                    field_map=self._native_fields, observation=observation, layer_hint=layer_hint,
                                    csv_token=csv_token), stop_event)
@@ -634,8 +628,6 @@ class WindowsUiAdapter:
             assert_fields_match_persisted(fresh_fields, current, target.machine)
         except SequenceFieldAuditError as exc:
             raise ControlSuspended("IR 입력 전에 다른 설정의 미저장 변경을 발견했습니다. " + str(exc)) from exc
-        if time.monotonic() - guarded_at > 3:
-            raise ObservationExpired("재검증 유효 시간이 지나 이번 계산을 폐기합니다. 다음 새 층에서 자동으로 이어갑니다.")
         handles = dict(fresh.get("handles") or handles)
         native_fields = dict(fresh.get("field_map") or self._native_fields)
         csv_token = self._verify_csv_observation(expected_observation_key)

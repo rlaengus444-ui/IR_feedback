@@ -210,7 +210,7 @@ class LogSessionContinuityTests(unittest.TestCase):
                                 self.assertEqual(key, latest.observation_key)
                                 self.assertEqual(previous_offset, reader.offset)
                             fake_now[0] += 7
-                            wait(lambda: any(x['snapshot'].expired_observation_key == key for x in snapshots()))
+                            wait(lambda: any(x['snapshot'].observation_key == key and x['snapshot'].observation_fresh and x['snapshot'].expired_observation_key is None for x in snapshots()))
                             expected_saves = max(0, accepted - 2)
                             self.assertEqual(state['saves'], expected_saves)
                             self.assertEqual(resets, [])

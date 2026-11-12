@@ -93,34 +93,30 @@ try {
     }
     [IO.File]::WriteAllBytes($jobPath,$jobBytes)
     $fresh=TokenFor $raw
-    foreach ($mode in @('file-expired','row-expired','headroom','future')) {
+    foreach ($delay in @(10,30,60,120)) {
         [IO.File]::WriteAllBytes($path,$raw)
+        [IO.File]::SetLastWriteTimeUtc($path,[DateTime]::UtcNow.AddSeconds(-$delay))
         $check=TokenFor $raw
-        $margin=0
-        if ($mode -eq 'file-expired') { [IO.File]::SetLastWriteTimeUtc($path,[DateTime]::UtcNow.AddSeconds(-6));$check.mtime_ticks=([IO.FileInfo]::new($path)).LastWriteTimeUtc.Ticks }
-        if ($mode -eq 'row-expired') { $check.finished_ticks=[DateTime]::UtcNow.AddSeconds(-6).Ticks }
-        if ($mode -eq 'headroom') { $check.finished_ticks=[DateTime]::UtcNow.AddSeconds(-4).Ticks;$margin=2000 }
-        if ($mode -eq 'future') { $check.finished_ticks=[DateTime]::UtcNow.AddSeconds(3).Ticks }
-        $rejected=$false
-        try { AssertCsvFile $check @{row_index=0} $margin } catch { $rejected=$true }
-        if (-not $rejected -or [bool]$script:deadlineWait -ne ($mode -ne 'future') -or [bool]$script:observationWait -ne ($mode -eq 'future')) { throw ('Wrong native expiry classification: '+$mode) }
-        $checks.Add('deadline/future classification '+$mode)
+        $check.finished_ticks=[DateTime]::UtcNow.AddSeconds(-$delay).Ticks
+        AssertCsvFile $check @{row_index=0}
+        $checks.Add('same current job/row accepted after '+$delay+' seconds')
     }
     [IO.File]::WriteAllBytes($path,$raw)
+    $future=TokenFor $raw;$future.finished_ticks=[DateTime]::UtcNow.AddSeconds(3).Ticks
+    MustReject $future 'future row clock still rejected' $true
     $token=TokenFor $raw
-    # Scoped composition, not an actual UI edit: exercise the exact production
-    # final guard after a simulated durable edit marker. Python marker-policy
-    # tests separately require AmbiguousWrite/sticky and no retry for this kind.
+    # Scoped composition: production guard after a simulated edit marker.
+    # A changed job remains invalid even though elapsed time has no cutoff.
     $editMarker=Join-Path $directory 'edit-started.txt'
     $saveMarker=Join-Path $directory 'save-started.txt'
     [IO.File]::WriteAllText($editMarker,'simulated-edit-started')
-    $afterEdit=TokenFor $raw
-    $afterEdit.finished_ticks=[DateTime]::UtcNow.AddSeconds(-6).Ticks
+    [IO.File]::AppendAllText($jobPath,"2026-11-11AM100000...[BJT - AUTO]: AutoPrint cancelled.`n")
     $rejected=$false
-    try { AssertCsvFile $afterEdit @{row_index=0} } catch { $rejected=$true }
-    $postEditComposition=@{used_production_guard=$true;ui_edit_simulated=$true;actual_ui_actions=0;deadline_wait=[bool]$script:deadlineWait;edit_marker=[IO.File]::Exists($editMarker);save_marker=[IO.File]::Exists($saveMarker)}
-    if (-not $rejected -or -not $postEditComposition.deadline_wait -or -not $postEditComposition.edit_marker -or $postEditComposition.save_marker) { throw 'Post-edit deadline guard composition failed' }
-    $checks.Add('post-edit deadline production-guard composition rejects; simulated marker; no UI action or Save')
+    try { AssertCsvFile $token @{row_index=0} } catch { $rejected=$true }
+    $postEditComposition=@{used_production_guard=$true;ui_edit_simulated=$true;actual_ui_actions=0;observation_wait=[bool]$script:observationWait;edit_marker=[IO.File]::Exists($editMarker);save_marker=[IO.File]::Exists($saveMarker)}
+    if (-not $rejected -or -not $postEditComposition.observation_wait -or -not $postEditComposition.edit_marker -or $postEditComposition.save_marker) { throw 'Post-edit changed-job guard composition failed' }
+    $checks.Add('post-edit changed-job guard rejects; simulated marker; zero UI actions')
+    [IO.File]::WriteAllBytes($jobPath,$jobBytes)
     $modified = [Text.Encoding]::UTF8.GetBytes("Id,TemperaturePostRecoating`r`n1,-1`r`n")
     [IO.File]::WriteAllBytes($path, $modified)
     [IO.File]::SetLastWriteTimeUtc($path, [DateTime]::new([long]$token.mtime_ticks, [DateTimeKind]::Utc))
@@ -157,5 +153,5 @@ try {
     AssertCsvFile $token @{ row_index = 0 }
     $watch.Stop()
     $checks.Add('32 MiB bounded two-pass content assertion accepted')
-    @{ passed = $true; checks = @($checks); post_edit_deadline_composition=$postEditComposition; maximum_csv_bytes = 33554432; two_pass_32mib_ms = $watch.Elapsed.TotalMilliseconds; hardware_actions = 0 } | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 $ResultPath
+    @{ passed = $true; checks = @($checks); post_edit_validity_composition=$postEditComposition; maximum_csv_bytes = 33554432; two_pass_32mib_ms = $watch.Elapsed.TotalMilliseconds; hardware_actions = 0 } | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 $ResultPath
 } finally { [IO.Directory]::Delete($directory, $true) }

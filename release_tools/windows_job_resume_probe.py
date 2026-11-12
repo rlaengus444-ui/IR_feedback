@@ -69,8 +69,8 @@ def exercise(exe,folder,machine,confirmation=None):
             entry={'phase':phase[0],'operation':data['operation'],'pid':data.get('pid')};begin=time.monotonic()
             if expire[0] and data['operation']=='apply':
                 expire[0]=False
-                time.sleep(5.1)  # Completed calculation, no helper/edit started.
-                entry['deadline_expired_before_native_edit']=True
+                time.sleep(10.1)  # Same job and layer; elapsed time must not discard this result.
+                entry['calculation_delayed_before_native_edit']=True
             if race[0] and data['operation']=='apply':
                 race[0]=False
                 prefix=datetime.now().strftime('%Y-%m-%d%p%I%M%S')+'...[BJT - AUTO]: '
@@ -78,6 +78,7 @@ def exercise(exe,folder,machine,confirmation=None):
                 entry['job_switched_after_python_preflight']=True
             try:
                 value=original(data,event);entry['success']=True
+                if data['operation']=='apply':entry.update(edit_marker=Path(data['edit_marker']).exists(),save_marker=Path(data['save_marker']).exists())
                 if data['operation']=='discover':entry['windows']=value.get('windows',[])
                 return value
             except Exception as e:
@@ -88,7 +89,7 @@ def exercise(exe,folder,machine,confirmation=None):
                 raise
             finally:entry['seconds']=time.monotonic()-begin;raw_calls.append(entry)
         raw._request=request;return raw
-    def wait_snapshot(layer, timeout=15):
+    def wait_snapshot(layer, timeout=25):
         deadline=time.monotonic()+timeout
         while time.monotonic()<deadline:
             try:kind,value=events.get(timeout=min(1,max(.01,deadline-time.monotonic())))
@@ -222,19 +223,19 @@ def exercise(exe,folder,machine,confirmation=None):
         phase_save('save-automatic-resume',65)
         assert saves()==delayed_count+1 and not wrapper._sticky
         result['delayed_save_automatically_resumed']=True
-        phase[0]='deadline-pre-edit';options._maximum_ir_setting.set(70)
+        phase[0]='same-layer-delayed-calculation';options._maximum_ir_setting.set(70)
         expire[0]=True;before_expiry=saves();expiry_epoch=wrapper._epoch
         expiry_deadline=time.monotonic()+45
         while expire[0] and time.monotonic()<expiry_deadline:
             layer=append();wait_snapshot(layer)
         assert not expire[0], 'No admitted apply request available for the bounded expiry injection'
-        assert saves()==before_expiry and wrapper._epoch==expiry_epoch and not wrapper._sticky
-        expired_calls=[x for x in raw_calls if x.get('deadline_expired_before_native_edit')]
-        assert len(expired_calls)==1 and not expired_calls[0]['edit_marker'] and not expired_calls[0]['save_marker']
-        assert expired_calls[0]['error_type']=='ObservationExpired'
-        phase_save('deadline-next-fresh-auto-resume',70)
-        assert wrapper._epoch==expiry_epoch and not wrapper._sticky
-        result['deadline_expiry_recovered_without_epoch_reset']=True
+        assert saves()==before_expiry+1 and wrapper._epoch==expiry_epoch and not wrapper._sticky
+        delayed_calls=[x for x in raw_calls if x.get('calculation_delayed_before_native_edit')]
+        assert len(delayed_calls)==1 and delayed_calls[0]['success']
+        assert delayed_calls[0]['edit_marker'] and delayed_calls[0]['save_marker'] and delayed_calls[0]['seconds']>=10
+        time.sleep(1)
+        assert saves()==before_expiry+1
+        result['delayed_calculation_saved_without_expiry']=True
         first_run=wrapper._pinned_job;first_reader=wrapper._reader;first_watermark=dict(wrapper._watermark)
         first_power=sequence_persistence.capture(target).power
         phase[0]='stop-start'

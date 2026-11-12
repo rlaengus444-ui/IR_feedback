@@ -243,7 +243,7 @@ function CsvContentHash([string]$path, [long]$expectedSize) {
     }
 }
 
-function AssertCsvFile($token, $observation, [int]$minimumRemainingMs = 0) {
+function AssertCsvFile($token, $observation) {
     $script:observationWait = $false
     $script:deadlineWait = $false
     $path = [string](ValueOf $token 'path')
@@ -275,7 +275,6 @@ function AssertCsvFile($token, $observation, [int]$minimumRemainingMs = 0) {
     }
     $finished = ValueOf $token 'finished_ticks'
     if (($finished -isnot [int] -and $finished -isnot [long]) -or $finished -le 0 -or $finished -gt [DateTime]::MaxValue.Ticks) { throw 'A valid integer completed-row UTC timestamp is required.' }
-    if ($minimumRemainingMs -lt 0 -or $minimumRemainingMs -gt 2000) { throw 'Invalid freshness admission margin.' }
     $index = [int]$observation.row_index
     AssertJobProof (ValueOf $token 'job') $index
     # Last check after the bounded CSV and job reads. A future clock is a
@@ -284,9 +283,7 @@ function AssertCsvFile($token, $observation, [int]$minimumRemainingMs = 0) {
     $fileAge = ($now - $file.LastWriteTimeUtc).TotalSeconds
     $rowAge = ($now.Ticks - [long]$finished) / 10000000.0
     if ($fileAge -lt -2 -or $rowAge -lt -2) { StopObservation 'The completed CSV clock is ahead; waiting for a verified new observation.' }
-    if ($fileAge -gt 5 -or $rowAge -gt 5) { StopDeadline 'The completed CSV record expired before this operation; discard the decision and resume on a fresh layer.' }
-    $limit = 5 - $minimumRemainingMs / 1000.0
-    if ($fileAge -gt $limit -or $rowAge -gt $limit) { StopDeadline 'Insufficient freshness time before IR edit; waiting for a fresh layer without replay.' }
+
 }
 
 function UniqueVisibleRecord($records, [string]$id, [bool]$required) {
@@ -725,7 +722,7 @@ try {
                 [BinderJetNativeFields]::ValidateSave($root, $save, $pidExpected)
                 AssertAutomatic $root $pidExpected $handles
                 $script:controlWait = $false
-                AssertCsvFile $request.csv_token $request.observation 2000
+                AssertCsvFile $request.csv_token $request.observation
                 [IO.File]::WriteAllText([string]$request.edit_marker, 'edit-may-have-started')
                 [BinderJetNativeFields]::SetIr($root, $ir, $pidExpected, [string]$request.power)
                 $after = ReadFields $root $pidExpected $request.field_map $scope

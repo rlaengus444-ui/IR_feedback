@@ -100,22 +100,19 @@ class AdapterTests(unittest.TestCase):
             self.assertEqual(["validate"],[c["operation"] for c in calls])
             self.assertFalse(snapshot.control_available)
 
-    def test_expired_known_row_marker_does_not_authorize_save(self):
-        with tempfile.TemporaryDirectory() as directory:
-            adapter, state, calls, path, values, append, baseline, source, audit = self.fixture(directory)
-            fresh = append()
-            self.assertIsNotNone(fresh.observation_key)
-            reading = adapter._csv.read()
-            adapter._csv = Mock(read=Mock(return_value=reading))
-            adapter._last_read = 0
-            with patch('windows_ui_adapter.time.time', return_value=reading.sample.finished.timestamp() + 6):
-                expired = adapter.read_snapshot(threading.Event())
-            self.assertIsNone(expired.observation_key)
-            self.assertEqual(expired.expired_observation_key, fresh.observation_key)
-            self.assertFalse(expired.observation_is_new)
-            with self.assertRaises(ControlUnavailable):
-                adapter.apply_ir_power(1, 67, fresh.observation_key, threading.Event())
-            self.assertEqual(state['saves'], 0)
+    def test_delayed_known_row_keeps_authority_without_elapsed_expiry(self):
+        for delay in (10,30,60,120):
+            with self.subTest(delay=delay), tempfile.TemporaryDirectory() as directory:
+                adapter,state,calls,path,values,append,baseline,source,audit=self.fixture(directory)
+                fresh=append();reading=adapter._csv.read()
+                adapter._csv=Mock(read=Mock(return_value=reading));adapter._last_read=0
+                with patch('windows_ui_adapter.time.time',return_value=reading.sample.finished.timestamp()+delay):
+                    delayed=adapter.read_snapshot(threading.Event())
+                    self.assertEqual(fresh.observation_key,delayed.observation_key)
+                    self.assertTrue(delayed.observation_fresh)
+                    self.assertIsNone(delayed.expired_observation_key)
+                    adapter.apply_ir_power(1,67,delayed.observation_key,threading.Event())
+                self.assertEqual(1,state['saves'])
 
     def test_expired_marker_requires_known_complete_valid_past_row(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -182,12 +179,12 @@ class AdapterTests(unittest.TestCase):
             with self.assertRaises(ControlUnavailable):a.apply_ir_power(1,67,snapshot.observation_key,threading.Event())
             self.assertEqual(0,state["saves"])
 
-    def test_stale_completed_record_is_not_applied(self):
+    def test_delayed_completed_record_remains_available_for_current_layer(self):
         with tempfile.TemporaryDirectory() as d:
             a,state,calls,path,values,append,baseline,source,audit=self.fixture(d)
             snapshot=append(age=30)
-            self.assertIsNone(snapshot.observation_key)
-            self.assertFalse(snapshot.observation_is_new)
+            self.assertIsNotNone(snapshot.observation_key)
+            self.assertTrue(snapshot.observation_is_new)
             self.assertEqual(0,state["saves"])
 
     def test_newer_record_between_preflight_and_edit_blocks_save(self):

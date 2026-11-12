@@ -421,7 +421,10 @@ class ResilientUiAdapter:
         try:
             source = self._reader.read()
             sample = source.sample
-            fresh = bool(sample and sample.finished is not None and -2 <= time.time() - sample.finished.timestamp() <= MonitoringCsvReader.MAX_NEW_AGE_SECONDS)
+            fresh = bool(sample and sample.finished is not None and time.time() - sample.finished.timestamp() >= -2
+                and source.token is not None and source.context.state == 'AUTO'
+                and source.context.current_layer is not None
+                and sample.layer_index <= source.context.current_layer <= sample.layer_index + 1)
             valid = getattr(sample, 'measurement_valid', True)
             return UiSnapshot(target=self._target, actual_target=self.current_target,
                 layer_index=sample.layer_index if sample else None,

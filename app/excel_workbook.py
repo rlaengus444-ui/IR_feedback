@@ -455,9 +455,11 @@ class WorkbookController:
 
     def _call(self, command, timeout=None):
         started = time.monotonic()
-        budget = self.timeout if timeout is None else timeout
-        deadline = started + budget
         operation = str(command.get("op", "unknown"))
+        # A current layer calculation has no elapsed-time validity cutoff.
+        # Cancellation, process exit and protocol errors still terminate it.
+        budget = None if operation == 'step' else (self.timeout if timeout is None else timeout)
+        deadline = None if budget is None else started + budget
         with self._lifecycle_lock:
             self._last_operation = operation
             self._operation_started = started
@@ -482,13 +484,13 @@ class WorkbookController:
             proc.stdin.flush()
             while True:
                 self._check_stopped()
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
+                remaining = None if deadline is None else deadline - time.monotonic()
+                if remaining is not None and remaining <= 0:
                     raise queue.Empty
                 try:
-                    response = self._queue.get(timeout=min(remaining, 0.1))
+                    response = self._queue.get(timeout=0.1 if remaining is None else min(remaining, 0.1))
                     self._check_stopped()
-                    if time.monotonic() >= deadline:
+                    if deadline is not None and time.monotonic() >= deadline:
                         raise queue.Empty
                     break
                 except queue.Empty:

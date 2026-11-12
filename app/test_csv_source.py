@@ -84,11 +84,11 @@ class CsvSourceTests(unittest.TestCase):
         with self.path.open("ab") as stream: stream.write(raw[quote:])
         self.assertEqual(44, self.reader.read().sample.temperature)
 
-    def test_stale_appended_record_is_not_new_control_input(self):
+    def test_delayed_arriving_record_is_new_without_age_expiry(self):
         self.reader.read()
         self.append([self.row(2,44,self.now-timedelta(seconds=30))])
         result = self.reader.read()
-        self.assertFalse(result.is_new)
+        self.assertTrue(result.is_new)
         self.assertEqual(44,result.sample.temperature)
 
     def test_multiple_new_rows_only_return_latest_without_replaying_backlog(self):

@@ -80,27 +80,25 @@ class CalculationTests(unittest.TestCase):
         self.assertEqual(self.calc.accepted_stamp, ((1, 100), None))
         self.assertEqual(self.calc.last_calculation_seconds, 1.25)
 
-    def test_new_row_while_busy_discards_and_resets_then_requires_fresh(self):
+    def test_new_row_busy_closes_owner_and_never_consumes_late_result(self):
         self.calculate(row('2'))
-        ticket = self.group.jobs[-1][0]
+        old=self.group;ticket=old.jobs[-1][0]
         self.watch(row('3'))
-        self.assertEqual(len(self.group.resets), 1)
-        self.watch(row('3'), eligible=False)
-        self.assertEqual(len(self.group.resets), 1)
-        self.group.events.append({'kind': 'result', 'ticket': ticket, 'results': {1: 7}})
-        self.watch(row('3'), eligible=False)
-        self.group.events.append({'kind': 'ready', 'ticket': self.group.resets[-1]})
+        self.assertTrue(old.closed)
+        self.assertFalse(self.calc.pending)
+        self.assertEqual(old.resets,[])
+        old.events.append({'kind':'result','ticket':ticket,'results':{1:7}})
         self.watch(row('3'))
         self.assertIsNone(self.calculate(row('3')))
-        self.assertIsNone(self.calculate(row('4')))
-        self.assertEqual(len(self.group.jobs), 2)
+        self.assertIsNone(self.calc.accepted_stamp)
 
     def test_target_aba_invalidates_pending(self):
         self.calculate(row('2'))
-        self.watch(row('2'), target_stamp=(2, 110))
-        self.watch(row('2'), target_stamp=(3, 100))
+        self.watch(row('2'),target_stamp=(2,110))
+        self.watch(row('2'),target_stamp=(3,100))
         self.assertFalse(self.calc.pending)
-        self.assertEqual(len(self.group.resets), 1)
+        self.assertTrue(self.group.closed)
+        self.assertEqual(self.group.resets,[])
 
     def test_idle_target_change_retains_accepted_history(self):
         self.calculate(row('2'))
@@ -207,7 +205,8 @@ class CalculationTests(unittest.TestCase):
                     self.group.events.append({'kind': 'result', 'ticket': ticket, 'results': {1: 7, 2: 8}})
                     self.watch(row('3', new=False))
                 self.watch(self.expired(), eligible=False, allow_idle_history=True)
-                self.assertEqual(1, len(self.group.resets))
+                self.assertEqual(1 if result_ready else 0, len(self.group.resets))
+                if not result_ready:self.assertTrue(self.group.closed)
                 self.assertIsNone(self.calc._accepted_identity)
 
     def test_image_change_resets_even_with_exact_expired_identity(self):

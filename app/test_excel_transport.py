@@ -40,15 +40,15 @@ class TransportTests(unittest.TestCase):
         p = Process()
         c = controller(p)
         with self.assertRaises(WorkbookTimeout) as caught:
-            c._call({'op': 'step'})
-        self.assertEqual(caught.exception.operation, 'step')
+            c._call({'op': 'reset'})
+        self.assertEqual(caught.exception.operation, 'reset')
         self.assertEqual(caught.exception.deadline, 0.02)
         self.assertEqual(caught.exception.process_state, 'running')
         self.assertGreaterEqual(caught.exception.elapsed, 0.02)
         self.assertEqual(p.kills, 1)
         c._queue.put({'value': 42})
         with self.assertRaises(InterruptedError):
-            c._call({'op': 'step'})
+            c._call({'op': 'reset'})
         c.close(force=True)
         self.assertEqual(p.kills, 1)
 

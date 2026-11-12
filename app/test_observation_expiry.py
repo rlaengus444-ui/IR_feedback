@@ -25,20 +25,21 @@ class ExpiryAdapterTests(unittest.TestCase):
                 self.assertEqual(0,state['saves'])
                 self.assertEqual(bool(marker),bool(raw._control_fault))
                 self.assertIsNone(raw._control_hold_reason)
-    def test_python_finished_age_expiry_and_clock_future_are_different(self):
+    def test_old_finished_time_remains_valid_but_future_is_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             raw,_,_,_,_,append,_,_,_=fixtures.AdapterTests().fixture(d)
             snap=append();source=raw._csv.read();finish=source.sample.finished.timestamp()
             with patch('windows_ui_adapter.time.time',return_value=finish+6):
-                with self.assertRaises(ObservationExpired):raw._verify_csv_observation(snap.observation_key)
+                self.assertIsNotNone(raw._verify_csv_observation(snap.observation_key))
             with patch('windows_ui_adapter.time.time',return_value=finish-3):
                 with self.assertRaises(ObservationSuspended) as e:raw._verify_csv_observation(snap.observation_key)
                 self.assertNotIsInstance(e.exception,ObservationExpired)
-    def test_snapshot_elapsed_only_veto_has_no_terminal_fault(self):
+    def test_snapshot_elapsed_does_not_discard_valid_current_layer(self):
         with tempfile.TemporaryDirectory() as d:
-            raw,_,_,_,_,append,_,_,_=fixtures.AdapterTests().fixture(d)
+            raw,state,_,_,_,append,_,_,_=fixtures.AdapterTests().fixture(d)
             snap=append();raw._last_read-=4
-            with self.assertRaises(ObservationExpired):raw.apply_ir_power(1,67,snap.observation_key,threading.Event())
+            raw.apply_ir_power(1,67,snap.observation_key,threading.Event())
+            self.assertEqual(1,state['saves'])
             self.assertIsNone(raw._control_fault)
             self.assertIsNone(raw._control_hold_reason)
 

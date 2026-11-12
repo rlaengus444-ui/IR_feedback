@@ -331,7 +331,6 @@ class MonitoringCsvReader:
     MAX_FILE_BYTES = 32 * 1024 * 1024
     MAX_ROW_BYTES = 65536
     POLL_SECONDS = 0.25
-    MAX_NEW_AGE_SECONDS = 5.0
     REQUIRED = ("Id", "TimeStart", "TimeRecoatingFinished", "TimePrintingFinished", "TemperaturePostRecoating")
 
     def __init__(self, target: MachineWindow, *, roots=None, log=None, clock=time.time):
@@ -561,10 +560,10 @@ class MonitoringCsvReader:
                     token['finished_ticks'] = int(latest.finished.timestamp() * 10000000) + 621355968000000000
             if latest is not None and not latest.measurement_valid:
                 token = None
-            fresh = latest is not None and latest.finished is not None and -2 <= self.clock() - latest.finished.timestamp() <= self.MAX_NEW_AGE_SECONDS
+            not_future = latest is not None and latest.finished is not None and self.clock() - latest.finished.timestamp() >= -2
             after_connection = latest is not None and latest.finished is not None and latest.finished.timestamp() >= self.connected_at
             is_new = bool(latest is not None and latest.measurement_valid and not reset and not self._resume_baseline_pending and changed and (not initial or after_connection)
-                          and token is not None and fresh)
+                          and token is not None and not_future)
             if latest is not None and latest.measurement_valid and token is not None:
                 self._resume_baseline_pending = False
             details = "CSV 저장된 완료 층을 읽습니다. 측정부터 층 인쇄 완료까지의 지연이 있습니다."

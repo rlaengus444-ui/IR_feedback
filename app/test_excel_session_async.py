@@ -73,6 +73,7 @@ class Harness:
                 return SimpleNamespace(power_percent=power + 1, reason='fake')
             def close(self, force=False):
                 self.closed = True
+                if force:harness.release.set()
             def retirement_status(self):
                 return {"verified": self.closed}
         self.factory = Controller
@@ -101,6 +102,7 @@ class Harness:
             self.condition.notify_all()
 
     def group_factory(self, *args, **kwargs):
+        kwargs.setdefault('prepared_workbook', object())
         self.group = AsyncWorkbookGroup(*args, fence=self.fence, **kwargs)
         return self.group
 
@@ -208,8 +210,9 @@ class SessionAsyncTests(unittest.TestCase):
     def test_target_aba_during_process_invalidates_result_and_requires_fresh_row(self):
         h = self.harness()
         h.fresh()
+        previous=h.group
         h.options._target_temperature_setting.set(70)
-        h.wait(lambda: h.group.state == 'resetting')
+        h.wait(lambda: previous.state == 'closed')
         h.options._target_temperature_setting.set(65)
         h.release.set()
         h.wait(lambda: h.group.state == 'ready')
@@ -257,29 +260,28 @@ class SessionAsyncTests(unittest.TestCase):
         h.wait(lambda: h.adapter.apply_ir_power.call_count == 1)
 
     def test_blocked_reset_continues_polling(self):
-        h = self.harness(block_reset=True)
-        h.fresh()
-        h.options._target_temperature_setting.set(70)
-        h.wait(lambda: h.group.state == 'resetting')
-        h.release.set()
+        h=self.harness(block_reset=True)
+        h.fresh();h.release.set()
+        h.wait(lambda:h.adapter.apply_ir_power.call_count==1)
+        # Completed work uses a bounded reset; pending work is now retired.
+        with h.condition:h.frame=replace(h.frame,control_epoch=1,heater1_setting_percent=51)
         h.wait(h.reset_entered.is_set)
-        self.assert_polling_without_save(h)
-        h.reset_release.set()
-        h.wait(lambda: h.group.state == 'ready')
-        self.assert_polling_without_save(h)
-        self.assertEqual(1, len(h.calls))
+        reads=h.reads;h.wait(lambda:h.reads>=reads+3)
+        self.assertEqual(1,h.adapter.apply_ir_power.call_count)
+        h.reset_release.set();h.wait(lambda:h.group.state=='ready')
+        reads=h.reads;h.wait(lambda:h.reads>=reads+3)
+        self.assertEqual(1,h.adapter.apply_ir_power.call_count)
 
     def test_image_handoff_discards_pending_features_and_waits_for_new_layer(self):
         h = self.harness(image=True, block_reset=True)
         h.fresh()
         self.assertEqual(10, h.calls[0][3]['center_coverage_pct'])
+        previous=h.group
         h.options._slice_dataset_setting.request(make_dataset('replacement', 80))
         h.wait(lambda: any(k == 'slice_activated' and p['epoch'] == 1 for k, p in h.events))
+        h.wait(lambda:previous.state=='closed')
         h.release.set()
-        h.wait(h.reset_entered.is_set)
-        self.assert_polling_without_save(h)
-        h.reset_release.set()
-        h.wait(lambda: h.group.state == 'ready')
+        h.wait(lambda:h.group is not previous and h.group.state=='ready')
         self.assert_polling_without_save(h)
         self.assertEqual(1, len(h.calls))
         h.fresh('after-image', 2)
@@ -292,6 +294,7 @@ class SessionAsyncTests(unittest.TestCase):
             with self.subTest(change=change):
                 h = self.harness()
                 h.fresh()
+                previous=h.group
                 with h.condition:
                     if change == 'settings':
                         h.frame = replace(h.frame, heater1_setting_percent=51)
@@ -299,9 +302,9 @@ class SessionAsyncTests(unittest.TestCase):
                         h.frame = replace(h.frame, control_epoch=1)
                     else:
                         h.frame = replace(h.frame, run_key='new-run')
-                h.wait(lambda: h.group.state == 'resetting')
+                h.wait(lambda: previous.state == 'closed')
                 h.release.set()
-                h.wait(lambda: h.group.state == 'ready')
+                h.wait(lambda: h.group is not previous and h.group.state == 'ready')
                 self.assert_polling_without_save(h)
                 self.assertEqual(1, len(h.calls))
                 h.close()

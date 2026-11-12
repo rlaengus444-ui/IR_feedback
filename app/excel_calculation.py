@@ -39,6 +39,9 @@ class ExcelCalculation:
         self._resetting = False
         self._environment = None
         self._heaters = None
+        self._context_restart = False
+        self._resume_context = None
+        self._restart_floor = None
         self._eligible = False
 
     def _identity(self, snapshot):
@@ -50,6 +53,8 @@ class ExcelCalculation:
                 tuple((heater, powers[heater]) for heater in heaters), self.maximum_ir_percent, cap_stamp)
 
     def reset(self, reason='제어 조건 재확인'):
+        was_pending = self.pending
+        invalidated_identity = self._context[0] if self._context is not None else None
         accepted_layer = self._accepted_identity[3] if self._accepted_identity is not None else None
         if type(accepted_layer) is not int or accepted_layer < 0:
             accepted_layer = None
@@ -67,7 +72,18 @@ class ExcelCalculation:
         self._baseline = None
         if self.group is not None and not self.latched_reason and not self._resetting and not self._clean:
             self._ticket += 1
-            if self.group.reset(self._ticket):
+            if was_pending and self.group.state == 'busy':
+                # A step has no time cutoff. Superseded work must be retired,
+                # not left blocking a reset queued behind that same step.
+                self.group.close()
+                self._context_restart = True
+                self._restart_floor = invalidated_identity
+                self._resume_context = None
+                self._recovery = 'retiring'
+                self._resetting = True
+                self.history_reset_count += 1
+                self.last_history_reset = info
+            elif self.group.reset(self._ticket):
                 self._resetting = True
                 self.history_reset_count += 1
                 self.last_history_reset = info
@@ -82,6 +98,8 @@ class ExcelCalculation:
         if self._recovery in ('retiring', 'backoff'):
             if valid:
                 self._baseline = identity
+            if self._context_restart:
+                self._resume_context = self._context_for(snapshot, powers, heaters, target_stamp, image_epoch, cap_stamp) if self._eligible else None
             self._environment = (getattr(snapshot, 'csv_generation', None), snapshot.run_key,
                                  snapshot.control_epoch, image_epoch)
             self._topology_wait = heaters != self._heaters
@@ -95,7 +113,7 @@ class ExcelCalculation:
                 prepared = getattr(self.group, 'prepared_workbook', None)
                 if status.get('verified') and prepared is not None:
                     self._prepared = prepared
-                    delay = self._retry_delays[min(self._failures - 1, len(self._retry_delays) - 1)]
+                    delay = 0 if self._context_restart else self._retry_delays[min(self._failures - 1, len(self._retry_delays) - 1)]
                     self._retry_at = self._clock() + delay
                     self._recovery = 'backoff'
             if self._recovery == 'backoff' and self._clock() >= self._retry_at and not self.stop_event.is_set():
@@ -141,6 +159,9 @@ class ExcelCalculation:
                 error = event['error']
                 from excel_workbook import WorkbookTransportError
                 if kind == 'timeout' or isinstance(error, WorkbookTransportError):
+                    self._context_restart = False
+                    self._resume_context = None
+                    self._restart_floor = None
                     self.latched_reason = ('Excel 응답 지연' if kind == 'timeout' else 'Excel 통신 오류') + ' · 자동 적용 일시정지'
                     self.diagnostic_reason = (f'{self.latched_reason} · operation={getattr(error, "operation", None)}'
                                               f' · elapsed={getattr(error, "elapsed", None)}'
@@ -168,6 +189,18 @@ class ExcelCalculation:
                     if self._recovery == 'starting':
                         self._recovery = None
                         self.latched_reason = None
+                        if self._context_restart:
+                            floor = self._restart_floor
+                            newer = (identity is not None and floor is not None
+                                and (identity[0],identity[2],identity[4]) == (floor[0],floor[2],floor[4])
+                                and identity[1] != floor[1] and identity[3] > floor[3]
+                                and snapshot.observation_is_new is True)
+                            if self._eligible and context == self._resume_context and newer:
+                                self._baseline = None
+                                self._needs_baseline = False
+                            self._context_restart = False
+                            self._resume_context = None
+                            self._restart_floor = None
             elif kind == 'result' and self.pending:
                 if event.get('ticket') == self._ticket and self._eligible and context == self._context:
                     self.pending = False

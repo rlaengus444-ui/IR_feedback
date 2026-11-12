@@ -92,6 +92,7 @@ class UiSnapshot:
     recoating_finished: object = None
     slice_lineage: str = ""
     csv_generation: str = ""
+    # Current authorized job/layer evidence, with no elapsed-time TTL.
     observation_fresh: bool = False
     measurement_valid: bool = True
     invalid_reason: str = ""

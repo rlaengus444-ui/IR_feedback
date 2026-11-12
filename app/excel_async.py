@@ -142,7 +142,7 @@ class AsyncWorkbookGroup:
             self._operation, self._phase = operation, phase
             self._active_controller = controller
             self._started = time.monotonic()
-            self._deadline = self._started + seconds
+            self._deadline = None if seconds is None else self._started + seconds
 
     def _check_deadline(self):
         diagnostic = self._diagnostic()
@@ -354,9 +354,7 @@ class AsyncWorkbookGroup:
                         calculation_started = time.monotonic()
                         results = {}
                         for heater, controller in self._controllers.items():
-                            previous = self._last_layers.get(heater)
-                            budget = 45.0 if previous is not None and layer != previous + 1 else 8.0
-                            self._begin('process', str(heater), budget, controller)
+                            self._begin('process', str(heater), None, controller)
                             controller.set_target_temperature(target)
                             results[heater] = controller.process(layer, temperature, powers[heater], slice_features=features)
                             self._check_deadline()
