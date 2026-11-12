@@ -113,8 +113,11 @@ class RawHistoryContinuityTests(unittest.TestCase):
                             wait(lambda: state['saves'] >= accepted - 2)
                         if accepted < 4:
                             key = rows[-1]['snapshot'].observation_key
+                            count=len(snapshots())
                             fake_now[0] += 7
-                            wait(lambda: any(x['snapshot'].expired_observation_key == key for x in snapshots()))
+                            wait(lambda: len(snapshots())>count and snapshots()[-1]['snapshot'].observation_key==key
+                                 and snapshots()[-1]['snapshot'].observation_fresh
+                                 and snapshots()[-1]['snapshot'].expired_observation_key is None)
                             expected_saves = max(0, accepted - 2)
                             self.assertEqual(state['saves'], expected_saves)
                             self.assertEqual(resets, [])

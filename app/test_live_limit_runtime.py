@@ -46,10 +46,13 @@ class LiveHarness:
                 if h.block_process and not h.process_release.wait(4):
                     raise RuntimeError('test did not release process')
                 return SimpleNamespace(power_percent=100, reason='synthetic')
-            def close(self, force=False): self.closed = True
+            def close(self, force=False):
+                self.closed = True
+                if force:h.process_release.set()
             def retirement_status(self): return {'verified': self.closed}
         self.factory = FakeWorkbook
         def group_factory(*args, **kwargs):
+            kwargs.setdefault('prepared_workbook',object())
             h.group = AsyncWorkbookGroup(*args, fence=h.fence, **kwargs)
             return h.group
         def runner(options, stop, emit):
@@ -195,11 +198,13 @@ class LiveLimitRuntimeTests(unittest.TestCase):
         h = self.harness(block_process=True)
         h.row(1)
         h.wait(h.process_entered.is_set)
+        previous=h.group
         h.options._maximum_ir_setting.set(60)
         h.options._maximum_ir_setting.set(80)
-        h.wait(lambda: h.group.state == 'resetting')
+        h.wait(lambda:previous.state=='closed')
         h.process_release.set()
-        h.wait(lambda: h.group.state == 'ready' and h.resets >= 1)
+        h.wait(lambda:h.group is not previous and h.group.state=='ready')
+        self.assertEqual(0,h.resets)
         reads = h.reads
         h.wait(lambda: h.reads >= reads + 2)
         h.adapter.apply_ir_power.assert_not_called()

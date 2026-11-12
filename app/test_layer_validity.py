@@ -125,3 +125,27 @@ class ArrivalAuthorityTests(unittest.TestCase):
             self.assertIsNone(current.observation_key)
             self.assertFalse(current.observation_fresh)
             self.assertEqual(0,state['saves'])
+
+
+class OfflineDisplayTests(unittest.TestCase):
+    def test_offline_csv_display_grants_no_control_or_arrival_authority(self):
+        from datetime import datetime,timedelta
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        from csv_source import CsvSnapshot,JobContext
+        from resilient_adapter import ResilientUiAdapter
+        from test_resilient_adapter import TARGET
+        for token in (None,{'sha256':'display-only'}):
+            for value,age,expected in ((42,120,42),(-1,0,None),(float('nan'),0,None),(42,-5,None)):
+                with self.subTest(token=token,value=value,age=age):
+                    sample=SimpleNamespace(layer_index=1,temperature=value,finished=datetime.now()-timedelta(seconds=age),key='row',measurement_valid=value!=-1)
+                    adapter=ResilientUiAdapter();adapter._target=TARGET
+                    adapter._reader=Mock(read=Mock(return_value=CsvSnapshot(sample,JobContext(run_key='job'),token,True,'csv')))
+                    result=adapter._offline()
+                    self.assertEqual(expected,result.t_recoating_c)
+                    self.assertEqual('row' if expected is not None and token else None,result.observation_key)
+                    self.assertEqual('unknown',result.machine_state)
+                    self.assertFalse(result.control_available)
+                    self.assertFalse(result.observation_fresh)
+                    self.assertFalse(result.observation_is_new)
+                    self.assertIsNone(adapter._raw)

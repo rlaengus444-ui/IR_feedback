@@ -28,7 +28,8 @@ class LimitExcelTests(unittest.TestCase):
         old_ticket = self.group.jobs[-1][0]
         self.watch(row('2'), (1, 60))
         self.watch(row('2'), (2, 40))
-        self.assertEqual(len(self.group.resets), 1)
+        self.assertEqual(self.group.resets,[])
+        self.assertTrue(self.group.closed)
         self.assertFalse(self.calc.pending)
         self.group.events.append({'kind': 'result', 'ticket': old_ticket, 'results': {1: 9, 2: 10}})
         self.watch(row('2'), (2, 40))

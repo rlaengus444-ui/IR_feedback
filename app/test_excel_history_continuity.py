@@ -85,17 +85,19 @@ class HistoryContinuityTests(unittest.TestCase):
         self.assertEqual(0, h.resets)
         self.assertEqual((1, 51, 'fresh-3'), h.adapter.apply_ir_power.call_args.args[:3])
 
-    def test_expiry_while_calculation_pending_discards_result_and_resets(self):
+    def test_invalidated_pending_observation_retires_owner_and_discards_result(self):
         h = self.harness(block=True)
         h.wait_frame(h.row('pending', 1))
         h.wait(h.entered.is_set)
-        h.wait_frame(h.expired('pending', 1))
+        previous=h.group
+        h.wait_frame(h.expired('pending',1))
         h.release.set()
-        h.wait(h.reset_entered.is_set)
+        h.wait(lambda:previous.retirement_status().get('verified'))
         reads = h.reads
         h.wait(lambda: h.reads >= reads + 2)
         h.adapter.apply_ir_power.assert_not_called()
-        self.assertEqual(1, h.resets)
+        self.assertEqual(0,h.resets)
+        self.assertEqual('closed',previous.state)
 
     def test_unknown_invalid_and_readiness_loss_reset_accepted_history(self):
         for kind in ('unknown', 'invalid', 'readiness'):

@@ -421,17 +421,19 @@ class ResilientUiAdapter:
         try:
             source = self._reader.read()
             sample = source.sample
-            fresh = bool(sample and sample.finished is not None and time.time() - sample.finished.timestamp() >= -2
-                and source.token is not None and source.context.state == 'AUTO'
-                and source.context.current_layer is not None
-                and sample.layer_index <= source.context.current_layer <= sample.layer_index + 1)
-            valid = getattr(sample, 'measurement_valid', True)
+            # Preserve read-only CSV display during transport recovery. These
+            # points grant no control authority while the native state is unknown.
+            fresh = bool(sample and sample.finished is not None
+                         and time.time() - sample.finished.timestamp() >= -2)
+            value = getattr(sample, 'temperature', None)
+            valid = bool(getattr(sample, 'measurement_valid', True) and isinstance(value, (int,float))
+                         and not isinstance(value, bool) and math.isfinite(value) and value != -1)
             return UiSnapshot(target=self._target, actual_target=self.current_target,
                 layer_index=sample.layer_index if sample else None,
                 t_recoating_c=sample.temperature if sample and fresh and valid else None,
                 observation_key=sample.key if sample and fresh and valid and source.token else None,
                 machine_state='unknown', details=source.details, run_key=source.context.run_key,
-                observation_is_new=bool(source.is_new and fresh and valid), observation_fresh=fresh,
+                observation_is_new=False, observation_fresh=False,
                 measurement_valid=valid, invalid_reason=getattr(sample, 'invalid_reason', ''),
                 slicing_image_path=getattr(sample, 'slicing_image_path', ''),
                 recoating_finished=getattr(sample, 'recoating_finished', None),
