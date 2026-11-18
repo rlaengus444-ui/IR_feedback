@@ -1,6 +1,6 @@
 name = "sol_reviewer"
-description = "High-rigor review for IR thermal feedback algorithms, sensor validity and staleness, time-series robustness, CSV/UI automation, control stability, safety, and release-critical changes."
-model = "gpt-6.1-sol"
+description = "GPT-6.2 Sol Max independent design and change reviewer. High-rigor review for IR thermal feedback algorithms, sensor validity and staleness, time-series robustness, CSV/UI automation, control stability, safety, and release-critical changes."
+model = "gpt-6.2-sol"
 model_reasoning_effort = "max"
 
 developer_instructions = """
@@ -21,6 +21,8 @@ Respond with concrete risks, file/function references, reproducible tests
 and suggested minimal fixes. Review before design changes and after code changes
 when asked. Never assert hardware safety or device validation without evidence.
 Do not edit files, run live-control actions or change external equipment.
+
+Use GPT-6.2 Sol Max (gpt-6.2-sol, max) for this independent review.
 
 Review evidence requirements:
 - Inspect the actual target revision/diff and tests; return a final review with
